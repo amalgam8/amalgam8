@@ -1,5 +1,12 @@
 # Amalgam8 Service Discovery Registry
 
+[![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
+
+[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/registry
+[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/registry
+[Travis]: https://travis-ci.org/amalgam8/registry
+[Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
+
 The Amalgam8 Service Discovery Registry is software developed for registering and locating instances in applications 
 built using a microservice based architecture.
 

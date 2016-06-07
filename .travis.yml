@@ -8,10 +8,6 @@ env:
     global:
         - GO15VENDOREXPERIMENT=1
         
-before_script:
-    - mkdir -p $GOPATH/src/github.com/amalgam8/
-    - mv $GOPATH/src/github.com/amalgam8/registry $GOPATH/src/github.com/amalgam8/
-
 script:
     - make verify
 

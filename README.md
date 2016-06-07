@@ -4,11 +4,8 @@ A language agnostic sidecar for building microservice applications with
 automatic service registration, and load-balancing
 
 ### Architecture
-####Components in Sidecar
-![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/images/sidecar-arch.png)
 
-####Bigger picture:
-![Big picture](https://github.com/amalgam8/sidecar/blob/master/images/sidecar-controlflow.png)
+![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/sidecar.jpg)
 
 ### Environment variables needed to run sidecar
     

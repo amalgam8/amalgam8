@@ -1,0 +1,62 @@
+# Service Proxy tenant image with optional service registration.
+#
+# The following environment variables must be set in instances of this image:
+#    RE_URL: service proxy (rulesengine) service url
+#    SP_TENANT_TOKEN: servcie proxy auth token
+#    SP_TENANT_ID: service proxy tenant id
+#
+#    The following are temporary ... image will get them from RE_URL at init time
+#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_API_KEY
+#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_USER
+#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_PASSWORD
+#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0
+#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_1
+#    ...
+#
+# If the following environment variables are set, this image will also perform the specified service registration:
+#    SD_URL: service discovery service url
+#    SD_TOKEN: authorization token for service discovery service
+#    SERVICE: microservice name with optional ":" followed by version tag (e.g., "helloworld:v1")
+#    ENDPOINT_HOST: host or ip address of microservice instance (optional - defaults to the IP of the container instance)
+#    ENDPOINT_PORT: port of microservice instance
+#
+FROM ubuntu:14.04
+
+RUN adduser --disabled-password --gecos "" nginx
+
+RUN apt-get -y update && apt-get -y install libreadline-dev libncurses5-dev libpcre3-dev \
+    libssl-dev perl make build-essential curl wget
+
+RUN mkdir /var/log/nginx
+
+RUN wget https://openresty.org/download/ngx_openresty-1.9.7.1.tar.gz
+
+RUN \
+tar -xzvf ngx_openresty-*.tar.gz && \
+  rm -f ngx_openresty-*.tar.gz && \
+  cd ngx_openresty-* && \
+  ./configure --with-pcre-jit --with-ipv6 --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --user=nginx && \
+  make && \
+  make install && \
+  make clean && \
+  cd .. && \
+  rm -rf ngx_openresty-* && \
+  ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
+  ldconfig
+
+#ENV LOG_LOCATIONS /var/log/serviceproxy.log,/var/log/nginx/access.log,/var/log/nginx/error.log
+RUN \
+    curl -L -O https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb && \
+    dpkg -i filebeat_1.2.2_amd64.deb
+
+ADD splib.lua /lua/splib.lua
+ADD filebeat.yml /etc/filebeat/filebeat.yml
+
+ADD sidecar /tenant/sidecar
+#COPY /locale /locale
+
+ENTRYPOINT ["/tenant/sidecar", "--supervise=false"]
+
+# 6379 is for NGINX must match with variable in Controller
+EXPOSE 6379
+#EXPOSE 8080

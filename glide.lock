@@ -1,0 +1,32 @@
+hash: 3a756bb3992bb8f8c6a496e253e4d413983c854892b48446945b96389929769f
+updated: 2016-06-05T14:48:37.724180237+03:00
+imports:
+- name: github.com/amalgam8/controller
+  version: ""
+  subpackages:
+  - middleware
+- name: github.com/codegangsta/cli
+  version: bca61c476e3c752594983e4c9bcd5f62fb09f157
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/queue
+  version: ded5959c0d4e360646dc9e9908cff48666781367
+- name: github.com/golang/snappy
+  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
+- name: github.com/onsi/ginkgo
+  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+- name: github.com/onsi/gomega
+  version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+- name: github.com/Shopify/sarama
+  version: 89bd629b50e1a69c40d40ded1c82a767b4859442
+- name: github.com/Sirupsen/logrus
+  version: 418b41d23a1bf978c06faea5313ba194650ac088
+devImports: []

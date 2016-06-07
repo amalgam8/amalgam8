@@ -1,0 +1,149 @@
+package main // import "github.com/amalgam8/registry"
+
+import (
+	"fmt"
+	"os"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
+
+	"github.com/amalgam8/registry/api"
+	"github.com/amalgam8/registry/auth"
+	"github.com/amalgam8/registry/cluster"
+	"github.com/amalgam8/registry/config"
+	"github.com/amalgam8/registry/replication"
+	"github.com/amalgam8/registry/store"
+	"github.com/amalgam8/registry/utils/i18n"
+	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/registry/utils/metrics"
+	"github.com/amalgam8/registry/utils/network"
+	"github.com/amalgam8/registry/utils/version"
+)
+
+func main() {
+	app := cli.NewApp()
+
+	app.Name = "registry"
+	app.Usage = "Service Registry Server"
+	app.Version = version.Build.Version
+	app.Flags = config.Flags
+	app.Action = registryCommand
+
+	err := app.Run(os.Args)
+	if err != nil {
+		fmt.Printf("failure running main: %s", err.Error())
+	}
+}
+
+func registryCommand(context *cli.Context) {
+	err := registryMain(config.NewValuesFromContext(context))
+	if err != nil {
+		// Unfortunately, cannot return an error without violating cli.App Action function definition
+		fmt.Printf("Error starting registry: %s\n", err.Error())
+	}
+}
+
+// registryMain is the logical entry point for the service registry.
+func registryMain(conf *config.Values) error {
+
+	// Configure logging
+	parsedLogLevel, err := logrus.ParseLevel(conf.LogLevel)
+	if err != nil {
+		return err
+	}
+	logrus.SetLevel(parsedLogLevel)
+
+	formatter, err := logging.GetLogFormatter(conf.LogFormat)
+	if err != nil {
+		return err
+	}
+	logrus.SetFormatter(formatter)
+
+	// Configure locales and translations
+	err = i18n.LoadLocales("./locales")
+	if err != nil {
+		return err
+	}
+
+	var rep replication.Replication
+	if conf.Replication {
+
+		// Wait for private network to become available
+		// In some cloud environments, that may take several seconds
+		networkAvailable := network.WaitForPrivateNetwork()
+		if !networkAvailable {
+			return fmt.Errorf("No private network is available within defined timeout")
+		}
+
+		// Configure and create the cluster module
+		clConfig := &cluster.Config{
+			BackendType: cluster.FilesystemBackend,
+			Directory:   conf.ClusterDirectory,
+			Size:        conf.ClusterSize,
+		}
+		cl, err := cluster.New(clConfig)
+		if err != nil {
+			return fmt.Errorf("Failed to create the cluster module: %s", err)
+		}
+
+		// Configure and create the replication module
+		self := cluster.NewMember(network.GetPrivateIP(), conf.ReplicationPort)
+		repConfig := &replication.Config{
+			Membership:  cl.Membership(),
+			Registrator: cl.Registrator(self),
+		}
+		rep, err = replication.New(repConfig)
+		if err != nil {
+			return fmt.Errorf("Failed to create the replication module: %s", err)
+		}
+	}
+
+	var authenticator auth.Authenticator
+	if len(conf.AuthModes) > 0 {
+		auths := make([]auth.Authenticator, len(conf.AuthModes))
+		for i, mode := range conf.AuthModes {
+			switch mode {
+			case "trusted":
+				auths[i] = auth.NewTrustedAuthenticator()
+			case "jwt":
+				jwtAuth, err := auth.NewJWTAuthenticator([]byte(conf.JWTSecret))
+				if err != nil {
+					return fmt.Errorf("Failed to create the authentication module: %s", err)
+				}
+				auths[i] = jwtAuth
+			default:
+				return fmt.Errorf("Failed to create the authentication module: unrecognized authentication mode '%s'", err)
+			}
+		}
+		authenticator, err = auth.NewChainAuthenticator(auths)
+		if err != nil {
+			return err
+		}
+	} else {
+		authenticator = auth.DefaultAuthenticator()
+	}
+
+	regConfig := &store.Config{
+		DefaultTTL:        conf.DefaultTTL,
+		MinimumTTL:        conf.MinTTL,
+		MaximumTTL:        conf.MaxTTL,
+		SyncWaitTime:      conf.SyncTimeout,
+		NamespaceCapacity: conf.NamespaceCapacity,
+	}
+	reg := store.New(regConfig, rep)
+
+	serverConfig := &api.Config{
+		HTTPAddressSpec: fmt.Sprintf(":%d", conf.APIPort),
+		Registry:        reg,
+		Authenticator:   authenticator,
+		RequireHTTPS:    conf.RequireHTTPS,
+	}
+	server, err := api.NewServer(serverConfig)
+	if err != nil {
+		return err
+	}
+
+	go metrics.DumpPeriodically()
+
+	return server.Start()
+}

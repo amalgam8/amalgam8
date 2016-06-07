@@ -27,10 +27,11 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV NGINX_PORT 6379
 EXPOSE 6379
 
-ENTRYPOINT ["/controller"]
+WORKDIR /opt/controller
+COPY /bin/controller /opt/controller/controller
+COPY /nginx/nginx.conf.tmpl /opt/controller/nginx/nginx.conf.tmpl
 
-COPY /nginx/nginx.conf.tmpl /nginx/nginx.conf.tmpl
-COPY /controller /
+ENTRYPOINT ["/opt/controller/controller"]
 
 ENV GIT_COMMIT={GIT_COMMIT} \
     IMAGE_NAME={IMAGE_NAME}

@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"fmt"
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/database"
@@ -11,7 +13,6 @@ import (
 	"github.com/amalgam8/controller/resources"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
-	"net/http"
 )
 
 // Tenant TODO
@@ -540,9 +541,9 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 	if updateIndex == -1 {
 		RestError(w, req, http.StatusNotFound, "invalid_service")
 		return fmt.Errorf("No registered service(s) for %v matching service name %v", tenantID, service)
-	} else {
-		proxyConfig.Filters.Versions = append(proxyConfig.Filters.Versions[:updateIndex], proxyConfig.Filters.Versions[updateIndex+1:]...)
 	}
+
+	proxyConfig.Filters.Versions = append(proxyConfig.Filters.Versions[:updateIndex], proxyConfig.Filters.Versions[updateIndex+1:]...)
 
 	// Update the entry in the database
 	err = t.rules.Set(proxyConfig)

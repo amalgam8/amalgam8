@@ -1,9 +1,10 @@
 package notification
 
 import (
+	"time"
+
 	"github.com/Shopify/sarama"
 	"github.com/Sirupsen/logrus"
-	"time"
 )
 
 // Producer interface

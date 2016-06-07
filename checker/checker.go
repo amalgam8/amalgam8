@@ -1,15 +1,16 @@
 package checker
 
 import (
+	"reflect"
+	"sort"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
-	"reflect"
-	"sort"
-	"time"
 )
 
 // Checker TODO

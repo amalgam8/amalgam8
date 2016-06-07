@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/util"
 	"github.com/codegangsta/cli"
-	"time"
 )
 
 // Database config

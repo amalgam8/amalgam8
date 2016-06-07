@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+
+	"github.com/Sirupsen/logrus"
 )
 
 // Topic for Message Hub.

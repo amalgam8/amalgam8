@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/codegangsta/cli"
 	"strings"
+
+	"github.com/codegangsta/cli"
 )
 
 const (

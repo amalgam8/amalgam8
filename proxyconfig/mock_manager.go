@@ -2,7 +2,7 @@ package proxyconfig
 
 import "github.com/amalgam8/controller/resources"
 
-// MockRules mocks interface
+// MockManager mocks interface
 type MockManager struct {
 	SetError    error
 	GetVal      resources.ProxyConfig

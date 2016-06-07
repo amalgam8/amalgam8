@@ -3,15 +3,16 @@ package api
 import (
 	"bytes"
 	"errors"
+	"net/http"
+	"path/filepath"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"net/http"
-	"path/filepath"
-	"time"
 )
 
 // NGINXConfig TODO

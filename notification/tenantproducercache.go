@@ -1,9 +1,10 @@
 package notification
 
 import (
-	"github.com/amalgam8/controller/resources"
 	"sync"
 	"time"
+
+	"github.com/amalgam8/controller/resources"
 )
 
 // TopicName topic to send events to

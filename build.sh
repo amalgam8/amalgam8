@@ -4,18 +4,16 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 STATUS=0
 
-pushd $SCRIPTDIR
-GO15VENDOREXPERIMENT=1 go build -a -o $SCRIPTDIR/controller
+make -C $SCRIPTDIR build
 STATUS=$?
-popd
-
-if [ $? -ne 0 ]; then
-    echo -e "\n***********\nFAILED: go install failed for controller.\n***********\n"
+if [ $STATUS -ne 0 ]; then
+    echo -e "\n***********\nFAILED: make failed for controller.\n***********\n"
     exit $STATUS
 fi
 
-docker build -t controller-0.1 -f $SCRIPTDIR/Dockerfile $SCRIPTDIR
-if [ $? -ne 0 ]; then
+make -C $SCRIPTDIR docker IMAGE_NAME=controller-0.1
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for controller.\n***********\n"
-    exit 1
+    exit $STATUS
 fi

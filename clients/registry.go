@@ -5,14 +5,16 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"sort"
+
+	log "github.com/Sirupsen/logrus"
 )
 
+// SDRequestID trace ID used by the registry
 // TODO: does this request ID still exist, and is it still "sd"?
 const SDRequestID = "sd-request-id"
 

@@ -18,13 +18,13 @@ func (e *BasicEntry) IDRev() (string, string) {
 	return e.ID, e.Rev
 }
 
-// SetRev
+// SetRev TODO
 func (e *BasicEntry) SetRev() {
 	if e.Rev == "" {
 		e.Rev = "0"
 	}
 	i, _ := strconv.Atoi(e.Rev)
-	i += 1
+	i++
 	e.Rev = strconv.Itoa(i)
 }
 

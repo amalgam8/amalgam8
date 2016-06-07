@@ -1,9 +1,10 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
-	"net/http"
 )
 
 // Health TODO

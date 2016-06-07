@@ -1,12 +1,13 @@
 package proxyconfig
 
 import (
+	"net/http"
+
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
 )
 
 var _ = Describe("ProxyConfigManager", func() {

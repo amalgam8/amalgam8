@@ -1,9 +1,10 @@
 package middleware
 
 import (
-	"github.com/ant0ine/go-json-rest/rest"
 	"net/http"
 	"strings"
+
+	"github.com/ant0ine/go-json-rest/rest"
 )
 
 // XForwardedProtoHeader HTTPS headers expected from bluemix

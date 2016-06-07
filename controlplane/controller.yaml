@@ -1,0 +1,45 @@
+##################################################################################################
+# Amalgam8 controller service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller
+  labels:
+    name: controller
+spec:
+  clusterIP: 10.0.0.240
+  ports:
+  - port: 6379
+    targetPort: 6379
+    nodePort: 31200
+    protocol: TCP
+  selector:
+    name: controller
+  type: NodePort
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: controller
+  labels:
+    name: controller
+spec:
+  replicas: 1
+  selector:
+    name: controller
+  template:
+    metadata:
+      labels:
+        name: controller
+    spec:
+      containers:
+      - name: controller
+        image: controller-0.1
+        env:
+        - name: POLL_INTERVAL
+          value: "5s"
+        - name: LOG_LEVEL
+          value: debug
+        ports:
+        - containerPort: 6379

@@ -1,0 +1,29 @@
+{
+    "log_server" : "192.168.33.33:30200",
+    "checks" : [
+	    {
+	        "name" : "bounded_response_time",
+	        "source" : "gateway",
+	        "dest" : "productpage",
+	        "max_latency" : "7s"
+	    },
+	    {
+	        "name" : "http_status",
+            "source" : "gateway",
+            "dest" : "productpage",
+            "status" : [200, 302]
+	    },
+        {
+	        "name" : "http_status",
+            "source" : "productpage",
+            "dest" : "reviews",
+            "status" : 200
+	    },
+        {
+	        "name" : "http_status",
+            "source" : "reviews",
+            "dest" : "ratings",
+            "status" : 200
+	    }
+    ]
+}

@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    name: kafka
+spec:
+  type: ClusterIP
+  clusterIP: 10.0.0.200
+  ports:
+  - port: 9092
+    targetPort: 9092
+    protocol: TCP
+  selector:
+    name: kafka
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: kafka
+  labels:
+    name: kafka
+spec:
+  replicas: 1
+  selector:
+    name: kafka
+  template:
+    metadata:
+      labels:
+        name: kafka
+    spec:
+      containers:
+      - name: kafka
+        image: rshriram/kafka-0.9
+        ports:
+        - containerPort: 9092
+        env:
+        - name: ADVERTISED_HOST
+          value: '10.0.0.200'
+        - name: AUTO_CREATE_TOPICS
+          value: 'true'
+        - name: ADVERTISED_PORT
+          value: '9092'

@@ -1,0 +1,15 @@
+es:
+    image: elasticsearch:1.7
+    command: elasticsearch -Des.index.analysis.analyzer.default.type=keyword
+    ports:
+        - "29200:9200"
+        - "29300:9300"
+fluentd:
+    image: logstore_fluentd
+    ports:
+        - "24224:24224"
+        - "5140:5140"
+    links:
+        - es
+    volumes:
+        - /var/lib/docker/containers:/var/lib/docker/containers

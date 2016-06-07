@@ -1,0 +1,10 @@
+{
+   "gremlins" : [
+       {
+            "scenario" : "delay_requests",
+            "source" : "reviews",
+            "dest" : "ratings",
+            "delaytime" : "7s"
+       }
+   ]
+}

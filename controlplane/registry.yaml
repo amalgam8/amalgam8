@@ -1,0 +1,40 @@
+##################################################################################################
+# Amalgam8 registry service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: registry
+  labels:
+    name: registry
+spec:
+  type: ClusterIP
+  clusterIP: 10.0.0.230
+  ports:
+  - port: 5080
+    targetPort: 8080
+    protocol: TCP
+  selector:
+    name: registry
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: registry
+  labels:
+    name: registry
+spec:
+  replicas: 1
+  selector:
+    name: registry
+  template:
+    metadata:
+      labels:
+        name: registry
+    spec:
+      containers:
+      - name: registry
+        image: registry-0.1
+        args: ["-auth_mode=jwt", "-jwt_secret=12345"]
+        ports:
+        - containerPort: 8080

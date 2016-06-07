@@ -1,0 +1,36 @@
+package: github.com/amalgam8/controller
+
+import:
+
+- package: github.com/Shopify/sarama
+  version: 89bd629b50e1a69c40d40ded1c82a767b4859442
+
+- package: github.com/Sirupsen/logrus
+  version: 0.8.7
+
+- package: github.com/ant0ine/go-json-rest
+  version: 3.3.1
+  subpackages:
+  - rest
+
+- package: github.com/cactus/go-statsd-client
+  version: 3.0.2
+  subpackages:
+  - statsd
+
+- package: github.com/codegangsta/cli
+  version: bca61c476e3c752594983e4c9bcd5f62fb09f157
+
+- package: github.com/nicksnyder/go-i18n
+  version: 1.4.0
+  subpackages:
+  - i18n
+
+- package: github.com/pborman/uuid
+  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
+
+- package: github.com/onsi/ginkgo
+  version: 1.2.0
+
+- package: github.com/onsi/gomega
+  version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1

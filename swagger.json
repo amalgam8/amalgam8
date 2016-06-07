@@ -1,0 +1,238 @@
+{
+  "swagger" : "2.0",
+  "info" : {
+    "description" : "FIXME: this is completely out of date",
+    "version" : "1.0.0",
+    "title" : "Rules Engine API for Service Proxy"
+  },
+  "schemes" : [ "https" ],
+  "consumes" : [ "application/json" ],
+  "produces" : [ "application/json", "text/plain" ],
+  "paths" : {
+    "/health" : {
+      "parameters" : [ ],
+      "get" : {
+        "tags" : [ "Health" ],
+        "summary" : "Status of service",
+        "description" : "Returns status of current service based upon status of its dependent services",
+        "responses" : {
+          "200" : {
+            "description" : "Service and its dependencies are healthy"
+          },
+          "503" : {
+            "description" : "The service or one of its dependencies is unhealthy"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get" : {
+        "tags" : [ "Tenants", "Info" ],
+        "summary" : "Info of a tenant",
+        "description" : "Returns the canonical info of a tenant in the Rules Engine polling list",
+        "responses" : {
+          "200" : {
+            "description" : "Canonical info of tenant",
+            "schema" : {
+              "$ref" : "#/definitions/TenantInfo"
+            }
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ "Tenants", "Info" ],
+        "summary" : "Change the info of a tenant",
+        "description" : "Changes the canonical info of a tenant in the Rules Engine polling list",
+        "parameters" : [
+          {
+            "name": "tenant_info",
+            "in": "body",
+            "description": "New info for tenant",
+            "schema": {
+              "$ref": "#/definitions/TenantInfo"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Tenant info successfully updated"
+          },
+          "400" : {
+            "description" : "Malformed JSON in request"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/rules" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get" : {
+        "produces" : [ "text/plain" ],
+        "tags" : [ "Tenants", "Rules", "NGINX", "Config" ],
+        "summary" : "Proxy configuration of a tenant",
+        "description" : "Returns the proxy configuration for a given tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Proxy configuration of tenant"
+          },
+          "403" : {
+            "description" : "Provided token invalid"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "500" : {
+            "description" : "Error generating configuration"
+          },
+          "503" : {
+            "description" : "Error communicating with external service"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/update" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "post" : {
+        "tags" : [ "Tenants", "Rules" ],
+        "summary" : "Notify tenant of update",
+        "description" : "Notifies the given tenant that the tenant's rules have changed",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully created notification"
+          },
+          "404" : {
+            "description" : "Tenant does not exist"
+          },
+          "500" : {
+            "description" : "Notification failed"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      }
+    }
+  },
+  "definitions" : {
+    "TenantInfo" : {
+      "properties" : {
+        "status" : {
+          "type" : "string",
+          "description" : "Status of tenant ('enabled' or 'disabled')"
+        },
+        "load_balance" : {
+          "type" : "string",
+          "description" : "Load balancing algorithm for tenant"
+        },
+        "filters" : {
+          "$ref" : "#/definitions/FilterEntry"
+        }
+      }
+    },
+    "FilterEntry" : {
+      "properties" : {
+        "delays" : {
+          "type" : "array",
+          "description" : "delay filters for tenant",
+          "items" : {
+            "$ref" : "#/definitions/DelayFilterEntry"
+          }
+        },
+        "aborts" : {
+          "type" : "array",
+          "description" : "abort filters for tenant",
+          "items" : {
+            "$ref" : "#/definitions/AbortFilterEntry"
+          }
+        }
+      }
+    },
+    "DelayFilterEntry" : {
+      "properties" : {
+        "source" : {
+          "type" : "string",
+          "description" : "IP address"
+        },
+        "dest" : {
+          "type" : "string",
+          "description" : "IP address"
+        },
+        "delay" : {
+          "type" : "number",
+          "description" : "Delay in ms"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Header pattern to enable delay"
+        },
+        "probability" : {
+          "type" : "number",
+          "description" : "Probability between 0 and 1 of filter to occur"
+        }
+      }
+    },
+    "AbortFilterEntry" : {
+      "properties" : {
+        "source" : {
+          "type" : "string",
+          "description" : "IP address"
+        },
+        "dest" : {
+          "type" : "string",
+          "description" : "IP address"
+        },
+        "return_code" : {
+          "type" : "integer",
+          "description" : "Return code to return on abort"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Header pattern to enable delay"
+        },
+        "probability" : {
+          "type" : "number",
+          "description" : "Probability between 0 and 1 of filter to occur"
+        }
+      }
+    }
+  }
+}

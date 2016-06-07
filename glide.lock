@@ -1,0 +1,48 @@
+hash: 704599bdd525e74aba6e0f700171df049889d8b2469b67a18640312e43e56530
+updated: 2016-06-06T13:31:47.406384659-05:00
+imports:
+- name: github.com/ant0ine/go-json-rest
+  version: 37ad7dc626602a8355801da6acd85155655520f8
+  subpackages:
+  - rest
+  - rest/trie
+- name: github.com/cactus/go-statsd-client
+  version: 622d25e1032a3c551f821cf36267f2286c426531
+  subpackages:
+  - statsd
+- name: github.com/codegangsta/cli
+  version: bca61c476e3c752594983e4c9bcd5f62fb09f157
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/eapache/go-resiliency
+  version: b86b1ec0dd4209a588dc1285cdd471e73525c0b3
+  subpackages:
+  - breaker
+- name: github.com/eapache/queue
+  version: ded5959c0d4e360646dc9e9908cff48666781367
+- name: github.com/golang/snappy
+  version: d9eb7a3d35ec988b8585d4a0068e462c27d28380
+- name: github.com/klauspost/crc32
+  version: 19b0b332c9e4516a6370a0456e6182c3b5036720
+- name: github.com/nicksnyder/go-i18n
+  version: 37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3
+  subpackages:
+  - i18n
+  - i18n/bundle
+  - i18n/language
+  - i18n/translation
+- name: github.com/onsi/ginkgo
+  version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+- name: github.com/onsi/gomega
+  version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+- name: github.com/pborman/uuid
+  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
+- name: github.com/Shopify/sarama
+  version: 89bd629b50e1a69c40d40ded1c82a767b4859442
+- name: github.com/Sirupsen/logrus
+  version: 418b41d23a1bf978c06faea5313ba194650ac088
+- name: gopkg.in/yaml.v2
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
+devImports: []

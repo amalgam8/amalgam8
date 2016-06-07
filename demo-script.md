@@ -2,7 +2,15 @@
 
 ## Overview
 
-The test and deploy demo is a walkthrough end-to-end of the samples, to test out some features so that you can think how you might want to use Amalgam8.
+The test and deploy demo is a walkthrough end-to-end example, to test out some features so that you can see how you might want to use Amalgam8.
+
+What you will see in the demo:
+
+1. How to start and deploy (i.e., enable web traffic for) an application consisting of 4 microservices, using kubernetes and amalgam8 CLI commands.
+2. How with amalgam8 we can send traffic for a specific user to a second version of one of the microservices without impacting other users in a production deployment.
+3. How amalgam8 allows us to test the live application by injecting a delay in the call path between 2 of the microservices.
+4. How amalgam8 enables using the Gremlin SDK to perform systematic resilience testing with reproducible failure scenarios and assertions to uncover the cause of the problem.
+5. How the CLI can be used to deploy a new (fixed) version of a microservice by gradually transferring traffic using amalgam8 percentage-based routing.
 
 ### Check the controlplane and API gateway are running
 

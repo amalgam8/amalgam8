@@ -2,6 +2,7 @@ package checker
 
 import (
 	"bytes"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/clients"
 	"github.com/amalgam8/sidecar/config"

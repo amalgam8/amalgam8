@@ -2,11 +2,12 @@ package checker
 
 import (
 	"bytes"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/clients"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/nginx"
-	"time"
 )
 
 // Poller performs a periodic poll on Controller for changes to the NGINX config

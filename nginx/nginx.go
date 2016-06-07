@@ -1,11 +1,12 @@
 package nginx
 
 import (
-	"github.com/Sirupsen/logrus"
 	"io"
 	"io/ioutil"
 	"strings"
 	"sync"
+
+	"github.com/Sirupsen/logrus"
 )
 
 var log = logrus.WithFields(logrus.Fields{

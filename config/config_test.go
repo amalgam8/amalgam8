@@ -1,11 +1,12 @@
 package config
 
 import (
+	"os"
+	"time"
+
 	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"os"
-	"time"
 )
 
 var _ = Describe("Config", func() {

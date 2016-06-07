@@ -2,12 +2,13 @@ package checker
 
 import (
 	"errors"
+	"io"
+	"time"
+
 	"github.com/amalgam8/sidecar/clients"
 	"github.com/amalgam8/sidecar/config"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io"
-	"time"
 )
 
 type mockNginx struct {

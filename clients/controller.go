@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/config"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/sidecar/config"
 )
 
 // Controller TODO

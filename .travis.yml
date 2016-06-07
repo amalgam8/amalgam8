@@ -1,0 +1,18 @@
+language: go
+
+go:
+    - 1.6
+    - 1.5
+
+env:
+    global:
+        - GO15VENDOREXPERIMENT=1
+        
+before_script:
+    - mkdir -p $GOPATH/src/github.com/amalgam8/
+    - mv $GOPATH/src/github.ibm.com/amalgam8/sidecar $GOPATH/src/github.com/amalgam8/
+
+script:
+    - make verify
+
+sudo: false

@@ -49,13 +49,13 @@ RUN \
     curl -L -O https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb && \
     dpkg -i filebeat_1.2.2_amd64.deb
 
-ADD splib.lua /lua/splib.lua
-ADD filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/splib.lua /lua/splib.lua
+ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
 
-ADD sidecar /tenant/sidecar
+ADD /bin/sidecar /opt/sidecar/
 #COPY /locale /locale
 
-ENTRYPOINT ["/tenant/sidecar", "--supervise=false"]
+ENTRYPOINT ["/opt/sidecar/sidecar", "--supervise=false"]
 
 # 6379 is for NGINX must match with variable in Controller
 EXPOSE 6379

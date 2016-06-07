@@ -9,9 +9,9 @@
 #
 FROM ubuntu:14.04
 
-ADD sidecar /tenant/sidecar
+ADD /bin/sidecar /opt/sidecar/
 #COPY /locale /locale
 
-ENTRYPOINT ["/tenant/sidecar", "--proxy=false", "--log=false", "--supervise=false"]
+ENTRYPOINT ["/opt/sidecar/sidecar", "--proxy=false", "--log=false", "--supervise=false"]
 
 #EXPOSE 8080

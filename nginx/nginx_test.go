@@ -3,9 +3,10 @@ package nginx
 import (
 	"bytes"
 	"errors"
+	"io"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io"
 )
 
 type configMock struct {

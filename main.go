@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"strings"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/checker"
 	"github.com/amalgam8/sidecar/clients"
@@ -9,9 +13,6 @@ import (
 	"github.com/amalgam8/sidecar/register"
 	"github.com/amalgam8/sidecar/supervisor"
 	"github.com/codegangsta/cli"
-	"os"
-	"strings"
-	"time"
 )
 
 func main() {

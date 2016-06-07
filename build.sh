@@ -4,24 +4,23 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 STATUS=0
 
-pushd $SCRIPTDIR
-GO15VENDOREXPERIMENT=1 go build -a -o $SCRIPTDIR/docker/sidecar
+make -C $SCRIPTDIR build
 STATUS=$?
-popd
-
-if [ $STATUS -ne 0 ]; then 
-    echo "Compilation failed"
+if [ $STATUS -ne 0 ]; then
+    echo -e "\n***********\nFAILED: make failed for sidecar.\n***********\n"
     exit $STATUS
 fi
 
-docker build -t kube-sidecar-proxy:0.1 -f $SCRIPTDIR/docker/Dockerfile.kube.proxy $SCRIPTDIR/docker
-if [ $? -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build Dockerfile.kube.proxy failed.\n***********\n"
-    exit 1
+make -C $SCRIPTDIR docker IMAGE_NAME=kube-sidecar-reg:0.1 DOCKERFILE=./docker/Dockerfile.kube.reg
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+    echo -e "\n***********\nFAILED: docker build failed for sidecar register.\n***********\n"
+    exit $STATUS
 fi
 
-docker build -t kube-sidecar-reg:0.1 -f $SCRIPTDIR/docker/Dockerfile.kube.reg $SCRIPTDIR/docker
-if [ $? -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build Dockerfile.kube.reg failed.\n***********\n"
-    exit 1
+make -C $SCRIPTDIR docker IMAGE_NAME=kube-sidecar-proxy:0.1 DOCKERFILE=./docker/Dockerfile.kube.proxy
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+    echo -e "\n***********\nFAILED: docker build failed for sidecar proxy.\n***********\n"
+    exit $STATUS
 fi

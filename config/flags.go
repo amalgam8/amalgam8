@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/codegangsta/cli"
 	"strings"
 	"time"
+
+	"github.com/codegangsta/cli"
 )
 
 const (

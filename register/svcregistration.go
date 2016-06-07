@@ -4,14 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/config"
 	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"strings"
 	"time"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/amalgam8/sidecar/config"
 )
 
 // DoServiceRegistrationAndHeartbeat perform service registration if requested

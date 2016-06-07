@@ -2,9 +2,10 @@ package checker
 
 import (
 	"errors"
+	"time"
+
 	"github.com/Shopify/sarama"
 	log "github.com/Sirupsen/logrus"
-	"time"
 )
 
 //Consumer interface

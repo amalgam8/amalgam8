@@ -3,11 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/util"
 	"github.com/codegangsta/cli"
-	"os"
-	"time"
 )
 
 // Tenant stores tenant configuration

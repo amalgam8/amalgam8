@@ -64,7 +64,7 @@ type server struct {
 	membership  cluster.Membership
 	registrator cluster.Registrator
 
-	// Recieve channel for incoming messages used to notify external listeners (e.g. Registry)
+	// Receive channel for incoming messages used to notify external listeners (e.g. Registry)
 	notifyChannel chan *InMessage
 
 	// Sync channel for incoming sync requests

@@ -28,7 +28,7 @@ func (mrc *mockupReplicator) Send(memberID cluster.MemberID, data []byte) error 
 }
 
 type mockupReplication struct {
-	// Recieve channel for incoming messages used to notify external listeners (e.g. Registry)
+	// Receive channel for incoming messages used to notify external listeners (e.g. Registry)
 	NotifyChannel chan *replication.InMessage
 
 	// Sync channel for incoming sync requests

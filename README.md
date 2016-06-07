@@ -1,5 +1,12 @@
 # sidecar
 
+[![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
+
+[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/sidecar
+[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/sidecar
+[Travis]: https://travis-ci.org/amalgam8/sidecar
+[Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
+
 A language agnostic sidecar for building microservice applications with
 automatic service registration, and load-balancing
 

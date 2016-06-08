@@ -1,4 +1,4 @@
-# Controller
+# Amalgam8 Controller
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
@@ -7,18 +7,81 @@
 [Travis]: https://travis-ci.org/amalgam8/controller
 [Travis Widget]: https://travis-ci.org/amalgam8/controller.svg?branch=master
 
-Amalgam8 Controller
+The Amalgam8 controller is software developed for ... in applications built using a microservice based architecture.
 
-## Running
-Locally:
+## Building and Running
 
-    go run ./main.go
+A recent prebuilt Amalgam8 controller image can be found at TBD.
+```sh
+$ docker pull amalgam8/controller
+```
 
-For help on command line arguments, run:
+If you wish to build the controller from source, clone this repository and follow 
 
-    go run ./main.go -h
+### Preprequisites
+A developer tested development environment requires the following:
+* Linux host (tested with TBD)
+* Docker (tested with TBD)
+* Go toolchain (tested with TBD). See [TBD](link) for installation instructions.
 
-In a container:
 
-    ./build.sh
-    docker run -p 6379:6379 --name controller controller
+### Building a Docker Image
+
+The Amalgam8 controller may be built by simply typing `make` with the [Docker
+daemon](https://docs.docker.com/installation/) (v1.8.0) running.
+
+This will produce an image tagged `TBD` which you may run as described below.
+
+### Standalone
+
+The Amalgam8 ccntroller may also be run outside of a docker container as a Go binary. 
+This is not recommended for production, but it can be useful for development or easier integration with 
+your local Go tools.
+
+The following commands will build and run it outside of Docker:
+
+```
+make build
+./bin/controller
+```
+
+### Make Targets
+
+The following targets are available. Each may be run with `make <target>`.
+
+| Make Target      | Description |
+|:-----------------|:------------|
+| `release`        | *(Default)* `release` builds the controller within a docker container and packages it into a image |
+| `test`           | `test` runs all tests using `go test` |
+| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
+
+## Usage
+
+The controller supports a number of configuration options. The configuration options can be set through environment variables or command line flags.
+
+### Command Line Flags and Environment Variables
+
+The following environment variables are available. All of them are optional. They are listed in a general order of likelihood that a user may want to configure them as something other than the defaults.
+
+| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
+|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
+| `key` | `-f | --flag` | Sample value for this option | Description. | none |
+| `etc` | `-e` | anything | Something | undefined |
+
+
+## API
+
+Controller API documentation is available in Swagger format.
+
+Refer to Swagger in local repo?
+
+## Contributing
+
+Contributions and feedback are welcome! 
+Proposals and Pull Requests will be considered and responded to. Please see the
+[CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
+file for more information.
+
+## License
+
+The Amalgam8 Controller is licensed under the TBD License.

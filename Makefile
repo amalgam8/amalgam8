@@ -8,7 +8,7 @@ SHELL 		:= /bin/bash
 APP_NAME	:= sidecar
 APP_VER		:= 0.1
 IMAGE_NAME  := $(APP_NAME):$(APP_VER)
-DOCKERFILE  := ./docker/Dockerfile.kube.proxy
+DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin
 
 GO			:= GO15VENDOREXPERIMENT=1 go

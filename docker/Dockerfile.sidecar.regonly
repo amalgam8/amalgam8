@@ -9,9 +9,9 @@
 #
 FROM ubuntu:14.04
 
-ADD /bin/sidecar /opt/sidecar/
+ADD /bin/sidecar /usr/bin/a8sidecar
 #COPY /locale /locale
 
-ENTRYPOINT ["/opt/sidecar/sidecar", "--proxy=false", "--log=false", "--supervise=false"]
+ENTRYPOINT ["/usr/bin/a8sidecar", "--proxy=false", "--log=false", "--supervise=false"]
 
 #EXPOSE 8080

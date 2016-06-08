@@ -52,10 +52,10 @@ RUN \
 ADD docker/splib.lua /lua/splib.lua
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
 
-ADD /bin/sidecar /opt/sidecar/
+ADD /bin/sidecar /usr/bin/a8sidecar
 #COPY /locale /locale
 
-ENTRYPOINT ["/opt/sidecar/sidecar", "--supervise=false"]
+ENTRYPOINT ["/usr/bin/a8sidecar", "--supervise=false"]
 
 # 6379 is for NGINX must match with variable in Controller
 EXPOSE 6379

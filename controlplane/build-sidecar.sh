@@ -11,16 +11,9 @@ if [ $STATUS -ne 0 ]; then
     exit $STATUS
 fi
 
-make -C $MAKEDIR docker IMAGE_NAME=kube-sidecar-reg:0.1 DOCKERFILE=./docker/Dockerfile.kube.reg
+make -C $MAKEDIR docker IMAGE_NAME=a8-sidecar:0.1 DOCKERFILE=./docker/Dockerfile.ubuntu
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build failed for sidecar register.\n***********\n"
-    exit $STATUS
-fi
-
-make -C $MAKEDIR docker IMAGE_NAME=kube-sidecar-proxy:0.1 DOCKERFILE=./docker/Dockerfile.kube.proxy
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build failed for sidecar proxy.\n***********\n"
+    echo -e "\n***********\nFAILED: docker build failed for sidecar (ubuntu version)\n***********\n"
     exit $STATUS
 fi

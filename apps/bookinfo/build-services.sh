@@ -13,22 +13,22 @@ pushd productpage
   else
     cp Dockerfile Dockerfile.tmp
   fi
-  docker build -t productpage:v1 -f Dockerfile.tmp .
+  docker build -t a8-examples-bookinfo-productpage:v1 -f Dockerfile.tmp .
 popd
 
 pushd details
-  docker build -t details:v1 .
+  docker build -t a8-examples-bookinfo-details:v1 .
 popd
 
 pushd reviews
   #plain build -- no ratings
-  docker build -t reviews:v1 .
+  docker build -t a8-examples-bookinfo-reviews:v1 .
   #with ratings black stars
-  docker build -t reviews:v2 --build-arg enable_ratings=true .
+  docker build -t a8-examples-bookinfo-reviews:v2 --build-arg enable_ratings=true .
   #with ratings red stars
-  docker build -t reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
+  docker build -t a8-examples-bookinfo-reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
 popd
 
 pushd ratings
-  docker build -t ratings:v1 .
+  docker build -t a8-examples-bookinfo-ratings:v1 .
 popd

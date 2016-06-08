@@ -97,7 +97,7 @@ pip install parse
 pip install pygremlin
 sudo cat >/usr/local/bin/a8ctl <<EOF
 #!/bin/sh
-python /home/vagrant/sandbox/src/github.com/amalgam8/controller/cli/a8ctl/v1/a8ctl.py \\\$*
+python /home/vagrant/sandbox/src/github.com/amalgam8/a8ctl/a8ctl/v1/a8ctl.py \\\$*
 EOF
 sudo chmod +x /usr/local/bin/a8ctl
 # >>>>>>>>>
@@ -123,6 +123,10 @@ Vagrant.configure('2') do |config|
 
   if FileTest::directory?("../registry")
     config.vm.synced_folder "../registry", "/home/vagrant/sandbox/src/github.com/amalgam8/registry"
+  end
+
+  if FileTest::directory?("../a8ctl")
+    config.vm.synced_folder "../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/a8ctl"
   end
 
   config.vm.provider :virtualbox do |vb|

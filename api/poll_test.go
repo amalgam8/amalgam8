@@ -2,13 +2,14 @@ package api
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
+
 	"github.com/amalgam8/controller/checker"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"net/http"
-	"net/http/httptest"
 )
 
 var _ = Describe("NGINX API", func() {

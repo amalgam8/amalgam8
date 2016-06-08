@@ -1,12 +1,13 @@
 package nginx
 
 import (
-	"github.com/amalgam8/controller/checker"
-	"github.com/amalgam8/controller/proxyconfig"
-	"github.com/amalgam8/controller/resources"
 	"io"
 	"strings"
 	"text/template"
+
+	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/proxyconfig"
+	"github.com/amalgam8/controller/resources"
 )
 
 // Generator produces NGINX configurations for tenants

@@ -3,6 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/checker"
@@ -16,9 +20,6 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/codegangsta/cli"
-	"net/http"
-	"os"
-	"time"
 )
 
 const (

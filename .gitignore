@@ -1,12 +1,7 @@
-#go install output
-controller
-
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
 *.a
 *.so
-*.pyc
-*.pyo
 
 # Folders
 _obj
@@ -27,3 +22,17 @@ _testmain.go
 *.exe
 *.test
 *.prof
+
+# Eclipse
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+
+# Build
+bin/
+
+# Logs
+*.log

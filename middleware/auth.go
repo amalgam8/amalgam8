@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"github.com/Sirupsen/logrus"
-	"github.com/ant0ine/go-json-rest/rest"
 	"net/http"
 	"regexp"
+
+	"github.com/Sirupsen/logrus"
+	"github.com/ant0ine/go-json-rest/rest"
 )
 
 // AuthHeader control plane authorization header

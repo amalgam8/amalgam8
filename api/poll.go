@@ -1,10 +1,11 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/amalgam8/controller/checker"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
-	"net/http"
 )
 
 // Poll handles poll API

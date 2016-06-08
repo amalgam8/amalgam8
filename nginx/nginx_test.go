@@ -2,6 +2,7 @@ package nginx
 
 import (
 	"bytes"
+
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"

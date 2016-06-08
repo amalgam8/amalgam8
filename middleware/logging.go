@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
-	"net/http"
 )
 
 // LoggingMiddleware logs information about the request

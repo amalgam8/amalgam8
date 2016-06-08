@@ -5,7 +5,7 @@ metadata:
   labels:
     name: helloworld-v1
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     name: helloworld-v1
   template:
@@ -15,15 +15,20 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: hello:vx
+        image: amalgam8/a8-examples-helloworld:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
         - name: SERVICE
           value: helloworld:v1
       - name: servicereg
-        image: kube-sidecar-reg:0.1
-        #image: servicereg-python
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - --proxy=false
+          - --log=false
+          - --supervise=false
         env:
         - name: SERVICE
           value: helloworld:v1
@@ -45,7 +50,7 @@ metadata:
   labels:
     name: helloworld-v2
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     name: helloworld-v2
   template:
@@ -55,15 +60,20 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: hello:vx
+        image: amalgam8/a8-examples-helloworld:v2
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
         - name: SERVICE
           value: helloworld:v2
       - name: servicereg
-        image: kube-sidecar-reg:0.1
-        #image: servicereg-python
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - --proxy=false
+          - --log=false
+          - --supervise=false
         env:
         - name: SERVICE
           value: helloworld:v2

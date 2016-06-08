@@ -34,7 +34,8 @@ spec:
     spec:
       containers:
       - name: registry
-        image: registry-0.1
+        image: amalgam8/a8-registry:0.1
+        imagePullPolicy: IfNotPresent
         args: ["-auth_mode=jwt", "-jwt_secret=12345"]
         ports:
         - containerPort: 8080

@@ -15,11 +15,17 @@ spec:
     spec:
       containers:
       - name: details
-        image: details:v1
+        image: amalgam8/a8-examples-bookinfo-details:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: servicereg
-        image: kube-sidecar-reg:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - --proxy=false
+          - --log=false
+          - --supervise=false
         env:
         - name: SERVICE
           value: details:v1
@@ -51,11 +57,17 @@ spec:
     spec:
       containers:
       - name: ratings
-        image: ratings:v1
+        image: amalgam8/a8-examples-bookinfo-ratings:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: servicereg
-        image: kube-sidecar-reg:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
+        args:
+          - --proxy=false
+          - --log=false
+          - --supervise=false
         env:
         - name: SERVICE
           value: ratings:v1
@@ -87,11 +99,13 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: reviews:v1
+        image: amalgam8/a8-examples-bookinfo-reviews:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: kube-sidecar-proxy:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         env:
@@ -133,11 +147,13 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: reviews:v2
+        image: amalgam8/a8-examples-bookinfo-reviews:v2
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: kube-sidecar-proxy:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         env:
@@ -179,11 +195,13 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: reviews:v3
+        image: amalgam8/a8-examples-bookinfo-reviews:v3
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: kube-sidecar-proxy:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         env:
@@ -225,11 +243,13 @@ spec:
     spec:
       containers:
       - name: productpage
-        image: productpage:v1
+        image: amalgam8/a8-examples-bookinfo-productpage:v1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: kube-sidecar-proxy:0.1
+        image: amalgam8/a8-sidecar:0.1
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
         env:

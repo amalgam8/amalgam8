@@ -35,7 +35,8 @@ spec:
     spec:
       containers:
       - name: controller
-        image: controller-0.1
+        image: amalgam8/a8-controller:0.1
+        imagePullPolicy: IfNotPresent
         env:
         - name: POLL_INTERVAL
           value: "5s"

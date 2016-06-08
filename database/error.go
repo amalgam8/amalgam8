@@ -14,7 +14,7 @@ type DBError struct {
 	Reason     string `json:"reason"`
 }
 
-// Error TODO
+// Error for database
 func (e *DBError) Error() string {
 	return fmt.Sprintf(
 		"DatabaseError: status_code=%v error=%v reason=%v",

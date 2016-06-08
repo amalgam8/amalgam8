@@ -104,7 +104,7 @@ func (c *registry) GetServices(token string, url string) ([]string, error) {
 	return registeredServ.Services, nil
 }
 
-// GetService TODO
+// GetService returns instances for a given service
 func (c *registry) GetService(name, token string, url string) (ServiceInfo, error) {
 	var serviceInfo ServiceInfo
 	header := http.Header{}
@@ -119,7 +119,7 @@ func (c *registry) GetService(name, token string, url string) (ServiceInfo, erro
 	return serviceInfo, nil
 }
 
-// CheckUptime TODO
+// CheckUptime return Registry uptime
 func (c *registry) CheckUptime(url string) error {
 	err := c.doRequest("GET", url, "/uptime", http.StatusOK, nil, nil, nil)
 	if err != nil {
@@ -129,7 +129,7 @@ func (c *registry) CheckUptime(url string) error {
 	return nil
 }
 
-// DoRequest TODO
+// DoRequest performs http request
 func (c *registry) doRequest(method, url, path string, desiredCode int, reqJSON, respJSON interface{}, header http.Header) error {
 
 	var err error
@@ -209,13 +209,13 @@ func (c *registry) doRequest(method, url, path string, desiredCode int, reqJSON,
 	return nil
 }
 
-// RegistryError TODO
+// RegistryError struct
 type RegistryError struct {
 	StatusCode int
 	Content    string
 }
 
-// NewRegistryError TODO
+// NewRegistryError creates error
 func NewRegistryError(resp *http.Response) error {
 	e := new(RegistryError)
 	e.StatusCode = resp.StatusCode
@@ -225,12 +225,12 @@ func NewRegistryError(resp *http.Response) error {
 	return e
 }
 
-// Error TODO
+// Error implements interface
 func (e *RegistryError) Error() string {
 	return fmt.Sprintf("RegistryError: status_code=%v content=%v", e.StatusCode, e.Content)
 }
 
-// LocalIP TODO
+// LocalIP gets local IP of running container
 func LocalIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {

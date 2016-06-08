@@ -4,7 +4,7 @@ import (
 	"github.com/amalgam8/controller/resources"
 )
 
-// Rules TODO
+// Rules client
 type Rules interface {
 	Create(catalog resources.ProxyConfig) error
 	Read(id string) (resources.ProxyConfig, error)
@@ -17,21 +17,21 @@ type rules struct {
 	db CloudantDB
 }
 
-// NewRules TODO
+// NewRules creates Rules instance
 func NewRules(db CloudantDB) Rules {
 	return &rules{
 		db: db,
 	}
 }
 
-// Create TODO
+// Create database entry
 func (r *rules) Create(proxy resources.ProxyConfig) error {
 
 	//TODO need to do struct conversion
 	return r.db.InsertEntry(&proxy)
 }
 
-// Read TODO
+// Read database entry
 func (r *rules) Read(id string) (resources.ProxyConfig, error) {
 	proxyConfig := resources.ProxyConfig{}
 	err := r.db.ReadEntry(id, &proxyConfig)
@@ -41,7 +41,7 @@ func (r *rules) Read(id string) (resources.ProxyConfig, error) {
 	return proxyConfig, err
 }
 
-//Update TODO
+//Update database entry
 func (r *rules) Update(proxy resources.ProxyConfig) error {
 
 	//TODO struct conversion
@@ -49,12 +49,12 @@ func (r *rules) Update(proxy resources.ProxyConfig) error {
 	return r.db.InsertEntry(&proxy)
 }
 
-// Delete
+// Delete database entry
 func (r *rules) Delete(id string) error {
 	return r.db.DeleteEntry(id)
 }
 
-// List TODO
+// List all database entry IDs
 func (r *rules) List() ([]resources.ProxyConfig, error) {
 	all := AllProxyConfigs{}
 	err := r.db.ReadAllDocsContent(&all)
@@ -74,7 +74,7 @@ func (r *rules) List() ([]resources.ProxyConfig, error) {
 	return configs, nil
 }
 
-// AllProxyConfigs TODO
+// AllProxyConfigs struct
 type AllProxyConfigs struct {
 	Rows []struct {
 		Doc resources.ProxyConfig `json:"doc"`
@@ -82,7 +82,7 @@ type AllProxyConfigs struct {
 	TotalRows int `json:"total_rows"`
 }
 
-// GetEntries TODO
+// GetEntries returns all database entries
 func (at *AllProxyConfigs) GetEntries() []Entry {
 	entries := make([]Entry, len(at.Rows))
 	for i := 0; i < len(at.Rows); i++ {

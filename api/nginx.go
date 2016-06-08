@@ -15,21 +15,21 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-// NGINXConfig TODO
+// NGINXConfig options
 type NGINXConfig struct {
 	Statsd    statsd.Statter
 	Generator nginx.Generator
 	Checker   checker.Checker
 }
 
-// NGINX TODO
+// NGINX handles NGINX API calls
 type NGINX struct {
 	statsd    statsd.Statter
 	generator nginx.Generator
 	checker   checker.Checker
 }
 
-// NewNGINX TODO
+// NewNGINX creates struct
 func NewNGINX(nc NGINXConfig) *NGINX {
 	return &NGINX{
 		statsd:    nc.Statsd,
@@ -38,7 +38,7 @@ func NewNGINX(nc NGINXConfig) *NGINX {
 	}
 }
 
-// Routes TODO
+// Routes for NGINX API calls
 func (n *NGINX) Routes() []*rest.Route {
 	return []*rest.Route{
 		rest.Get("/v1/tenants/#id/nginx", ReportMetric(n.statsd, n.GetNGINX, "tenants_nginx")),

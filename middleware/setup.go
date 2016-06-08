@@ -20,18 +20,18 @@ func NewSetupHandler() *SetupHandler {
 	return h
 }
 
-// SetHandler TODO
+// SetHandler creates handler
 func (h *SetupHandler) SetHandler(handler http.Handler) {
 	h.handler = handler
 	h.SetError(nil)
 }
 
-// SetError TODO
+// SetError for handler
 func (h *SetupHandler) SetError(err error) {
 	h.err = err
 }
 
-// ServeHTTP TODO
+// ServeHTTP serve http or return 503 while setup is still in progress
 func (h *SetupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if h.err != nil {

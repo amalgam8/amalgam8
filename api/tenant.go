@@ -421,7 +421,15 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		RestError(w, req, http.StatusServiceUnavailable, "database_fail")
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusNotFound {
+				RestError(w, req, http.StatusNotFound, "no matching id")
+				return err
+			}
+			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
+			return err
+		}
+		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
 		return err
 	}
 
@@ -460,7 +468,15 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		RestError(w, req, http.StatusServiceUnavailable, "database_fail")
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusNotFound {
+				RestError(w, req, http.StatusNotFound, "no matching id")
+				return err
+			}
+			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
+			return err
+		}
+		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
 		return err
 	}
 
@@ -527,7 +543,15 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		RestError(w, req, http.StatusServiceUnavailable, "database_fail")
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusNotFound {
+				RestError(w, req, http.StatusNotFound, "no matching id")
+				return err
+			}
+			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
+			return err
+		}
+		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
 		return err
 	}
 

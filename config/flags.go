@@ -18,7 +18,7 @@ const (
 	logLevel     = "log_level"
 )
 
-// Flags TODO
+// Flags command line args for Controller
 var Flags = []cli.Flag{
 
 	cli.IntFlag{

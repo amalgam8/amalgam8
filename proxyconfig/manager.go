@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Manager TODO
+// Manager client
 type Manager interface {
 	Set(rules resources.ProxyConfig) error
 	Get(id string) (resources.ProxyConfig, error)
@@ -19,13 +19,13 @@ type manager struct {
 	producerCache notification.TenantProducerCache
 }
 
-// Config TODO
+// Config options
 type Config struct {
 	Database      database.Rules
 	ProducerCache notification.TenantProducerCache
 }
 
-// NewManager TODO
+// NewManager creates Manager instance
 func NewManager(conf Config) Manager {
 	return &manager{
 		db:            conf.Database,
@@ -33,7 +33,7 @@ func NewManager(conf Config) Manager {
 	}
 }
 
-// Set TODO
+// Set database entry
 func (p *manager) Set(rules resources.ProxyConfig) error {
 	var err error
 	if err := p.validate(rules); err != nil {
@@ -77,12 +77,12 @@ func (p *manager) Set(rules resources.ProxyConfig) error {
 	return nil
 }
 
-// Get TODO
+// Get database entry
 func (p *manager) Get(id string) (resources.ProxyConfig, error) {
 	return p.db.Read(id)
 }
 
-// Delete TODO
+// Delete database entry
 func (p *manager) Delete(id string) error {
 	return p.db.Delete(id)
 }

@@ -7,13 +7,13 @@ import (
 	"net/http"
 )
 
-// Poll TODO
+// Poll handles poll API
 type Poll struct {
 	checker checker.Checker
 	statsd  statsd.Statter
 }
 
-// NewPoll TODO
+// NewPoll create struct
 func NewPoll(statsd statsd.Statter, checker checker.Checker) *Poll {
 	return &Poll{
 		statsd:  statsd,
@@ -21,14 +21,14 @@ func NewPoll(statsd statsd.Statter, checker checker.Checker) *Poll {
 	}
 }
 
-// Routes TODO
+// Routes for poll API
 func (p *Poll) Routes() []*rest.Route {
 	return []*rest.Route{
 		rest.Post("/v1/poll", ReportMetric(p.statsd, p.Poll, "poll")),
 	}
 }
 
-// Poll TODO
+// Poll Registry for latest changes
 func (p *Poll) Poll(w rest.ResponseWriter, req *rest.Request) error {
 	if err := p.checker.Check(nil); err != nil {
 		RestError(w, req, http.StatusInternalServerError, "failed")

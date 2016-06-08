@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// Checker TODO
+// Checker client
 type Checker interface {
 	Register(id string) error
 	Deregister(id string) error

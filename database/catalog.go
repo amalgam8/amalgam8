@@ -4,7 +4,7 @@ import (
 	"github.com/amalgam8/controller/resources"
 )
 
-// Catalog TODO
+// Catalog client
 type Catalog interface {
 	Create(catalog resources.ServiceCatalog) error
 	Read(id string) (resources.ServiceCatalog, error)
@@ -17,36 +17,36 @@ type catalog struct {
 	db CloudantDB
 }
 
-// NewCatalog TODO
+// NewCatalog creates catalog instance
 func NewCatalog(db CloudantDB) Catalog {
 	return &catalog{
 		db: db,
 	}
 }
 
-// Create TODO
+// Create database entry
 func (c *catalog) Create(catalog resources.ServiceCatalog) error {
 	return c.db.InsertEntry(&catalog)
 }
 
-// Read TODO
+// Read databse entry
 func (c *catalog) Read(id string) (resources.ServiceCatalog, error) {
 	serviceCatalog := resources.ServiceCatalog{}
 	err := c.db.ReadEntry(id, &serviceCatalog)
 	return serviceCatalog, err
 }
 
-// Update TODO
+// Update database entry
 func (c *catalog) Update(catalog resources.ServiceCatalog) error {
 	return c.db.InsertEntry(&catalog)
 }
 
-// Delete TODO
+// Delete database entry
 func (c *catalog) Delete(id string) error {
 	return c.db.DeleteEntry(id)
 }
 
-// List TODO
+// List all database IDs
 func (c *catalog) List(ids []string) ([]resources.ServiceCatalog, error) {
 	all := AllServiceCatalogs{}
 	err := c.db.ReadAllDocsContent(&all)
@@ -62,7 +62,7 @@ func (c *catalog) List(ids []string) ([]resources.ServiceCatalog, error) {
 	return catalogs, nil
 }
 
-// AllServiceCatalogs TODO
+// AllServiceCatalogs struct
 type AllServiceCatalogs struct {
 	Rows []struct {
 		Doc resources.ServiceCatalog `json:"doc"`
@@ -70,7 +70,7 @@ type AllServiceCatalogs struct {
 	TotalRows int `json:"total_rows"`
 }
 
-// GetEntries TODO
+// GetEntries returns all database entries
 func (at *AllServiceCatalogs) GetEntries() []Entry {
 	entries := make([]Entry, len(at.Rows))
 	for i := 0; i < len(at.Rows); i++ {

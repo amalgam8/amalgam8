@@ -14,21 +14,21 @@ import (
 	"net/http"
 )
 
-// Tenant TODO
+// Tenant handles tenant API calls
 type Tenant struct {
 	statsd  statsd.Statter
 	catalog checker.Checker
 	rules   proxyconfig.Manager
 }
 
-// TenantConfig TODO
+// TenantConfig options
 type TenantConfig struct {
 	Statsd      statsd.Statter
 	Checker     checker.Checker
 	ProxyConfig proxyconfig.Manager
 }
 
-// TenantInfo TODO
+// TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
 	ID                string                `json:"id"`
 	Credentials       resources.Credentials `json:"credentials"`
@@ -38,7 +38,7 @@ type TenantInfo struct {
 	Filters           resources.Filters     `json:"filters"`
 }
 
-// NewTenant TODO
+// NewTenant creates struct
 func NewTenant(conf TenantConfig) *Tenant {
 	return &Tenant{
 		statsd:  conf.Statsd,
@@ -47,7 +47,7 @@ func NewTenant(conf TenantConfig) *Tenant {
 	}
 }
 
-// Routes TODO
+// Routes for tenant API calls
 func (t *Tenant) Routes() []*rest.Route {
 	return []*rest.Route{
 		rest.Post("/v1/tenants", ReportMetric(t.statsd, t.PostTenant, "tenants_create")),
@@ -60,7 +60,7 @@ func (t *Tenant) Routes() []*rest.Route {
 	}
 }
 
-// PostTenant TODO
+// PostTenant initializes a tenant in the Controller
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
@@ -246,7 +246,7 @@ func validateRules(w rest.ResponseWriter, req *rest.Request, filters []resources
 	return nil
 }
 
-// PutTenant TODO
+// PutTenant updates credentials and/or metadata for a tenant
 // TODO: if an update succeeds for one, but not the other we end up partially updating the state
 func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
@@ -362,7 +362,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// GetTenant TODO
+// GetTenant returns credentials and metadata for a tenant
 func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// validate auth header
 	// if this tenant has orphans, CSB will know that the token is invalid
@@ -411,7 +411,7 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// GetServiceVersions TODO
+// GetServiceVersions returns versioning info for a service of a tenant
 func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
@@ -450,7 +450,7 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 	return nil
 }
 
-// PutServiceVersions TODO
+// PutServiceVersions adds versioning info for a service of a tenant
 func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
@@ -517,7 +517,7 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 	return nil
 }
 
-// DeleteServiceVersions TODO
+// DeleteServiceVersions deletes versioning info for a service of a tenant
 func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
@@ -571,7 +571,7 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 	return nil
 }
 
-// DeleteTenant TODO
+// DeleteTenant removes tenant from Controller
 func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 

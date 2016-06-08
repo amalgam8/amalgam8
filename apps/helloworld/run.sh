@@ -2,7 +2,8 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-docker build -t hello:vx $SCRIPTDIR
+docker build -t helloworld:v1 $SCRIPTDIR
+docker build -t helloworld:v2 $SCRIPTDIR
 kubectl create -f $SCRIPTDIR/helloworld.yaml
 
 #AC=`kubectl get svc controller --no-headers|awk '{print $2}'`

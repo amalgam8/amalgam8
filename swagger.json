@@ -3,7 +3,7 @@
   "info" : {
     "description" : "FIXME: this is completely out of date",
     "version" : "1.0.0",
-    "title" : "Rules Engine API for Service Proxy"
+    "title" : "Controller API for Amalgam8"
   },
   "schemes" : [ "https" ],
   "consumes" : [ "application/json" ],
@@ -12,15 +12,61 @@
     "/health" : {
       "parameters" : [ ],
       "get" : {
-        "tags" : [ "Health" ],
+        "tags" : [ ],
         "summary" : "Status of service",
         "description" : "Returns status of current service based upon status of its dependent services",
         "responses" : {
           "200" : {
             "description" : "Service and its dependencies are healthy"
+          }
+        }
+      }
+    },
+    "/v1/poll" : {
+      "parameters" : [ ],
+      "post" : {
+        "tags" : [ ],
+        "summary" : "Poll Regsitry",
+        "description" : "Performs a poll of Regsitry for each registered tenant for changes",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully polled Registry for all tenants"
+          },
+          "500" : {
+            "description" : "Failed to poll Registry for one or more tenants"
+          }
+        }
+      }
+    },
+    "/v1/tenants/" : {
+      "post" : {
+        "tags" : [ ],
+        "summary" : "Create a tenant",
+        "description" : "Initializes a tenant entry in the Controller",
+        "parameters" : [
+          {
+            "name": "tenant_info",
+            "in": "body",
+            "description": "New info for tenant",
+            "schema": {
+              "$ref": "#/definitions/TenantInfo"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "201" : {
+            "description" : "Tenant entry created"
+          },
+          "400" : {
+            "description" : "Missing or invalid JSON in request body"
+          },
+          "409" : {
+            "description" : "Entry already exists for tenant"
           },
           "503" : {
-            "description" : "The service or one of its dependencies is unhealthy"
+            "description" : "Error communicating with database"
           }
         }
       }
@@ -35,10 +81,27 @@
           "required": true
         }
       ],
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Deletes a tenant",
+        "description" : "Deletes a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Tenant successfully deleted"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
       "get" : {
-        "tags" : [ "Tenants", "Info" ],
-        "summary" : "Info of a tenant",
-        "description" : "Returns the canonical info of a tenant in the Rules Engine polling list",
+        "tags" : [ ],
+        "summary" : "Credentials and configuration of a tenant",
+        "description" : "Returns the credentials and configuration of a tenant",
         "responses" : {
           "200" : {
             "description" : "Canonical info of tenant",
@@ -55,9 +118,9 @@
         }
       },
       "put" : {
-        "tags" : [ "Tenants", "Info" ],
+        "tags" : [ ],
         "summary" : "Change the info of a tenant",
-        "description" : "Changes the canonical info of a tenant in the Rules Engine polling list",
+        "description" : "Changes the canonical info of a tenant",
         "parameters" : [
           {
             "name": "tenant_info",
@@ -85,7 +148,177 @@
         }
       }
     },
-    "/v1/tenants/{id}/rules" : {
+
+    "/v1/tenants/{id}/filters" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Deletes the filters for a tenant",
+        "description" : "Deletes the filters for a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully deleted filters"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "get" : {
+        "tags" : [ ],
+        "summary" : "Returns the filters for a tenant",
+        "description" : "Returns the filters for a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully retrieved filters",
+            "schema" : {
+              "$ref" : "#/definitions/Rules"
+            }
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or service name"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "post" : {
+        "tags" : [ ],
+        "summary" : "Create a service version filter for a tenant",
+        "description" : "Creates a version filter for a tenant for a service",
+        "parameters" : [
+          {
+            "name": "filters",
+            "in": "body",
+            "description": "New version filter for tenant",
+            "schema": {
+              "$ref": "#/definitions/Rules"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully created version filter",
+            "schema": {
+              "$ref": "#/definitions/Rules"
+            }
+          },
+          "400" : {
+            "description" : "Missing or invalid JSON"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/filters/{filter}" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "filter",
+          "in": "path",
+          "description": "Filter ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Deletes a filter for a tenant",
+        "description" : "Deletes the filters for a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully deleted filter"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or filter ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "get" : {
+        "tags" : [ ],
+        "summary" : "Returns a filter for a tenant",
+        "description" : "Returns a filter for a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully retrieved filter",
+            "schema" : {
+              "$ref" : "#/definitions/RuleEntry"
+            }
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or filter ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ ],
+        "summary" : "Update a filter for a tenant",
+        "description" : "Updates a filter for a tenant",
+        "parameters" : [
+          {
+            "name": "filter",
+            "in": "body",
+            "description": "Updated filter for tenant",
+            "schema": {
+              "$ref": "#/definitions/RuleEntry"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully updated filter",
+            "schema": {
+              "$ref": "#/definitions/RuleEntry"
+            }
+          },
+          "400" : {
+            "description" : "Missing or invalid JSON"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or filter ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{id}/nginx" : {
       "parameters" : [
         {
           "name": "id",
@@ -97,7 +330,7 @@
       ],
       "get" : {
         "produces" : [ "text/plain" ],
-        "tags" : [ "Tenants", "Rules", "NGINX", "Config" ],
+        "tags" : [ ],
         "summary" : "Proxy configuration of a tenant",
         "description" : "Returns the proxy configuration for a given tenant",
         "parameters" : [ ],
@@ -105,8 +338,8 @@
           "200" : {
             "description" : "Proxy configuration of tenant"
           },
-          "403" : {
-            "description" : "Provided token invalid"
+          "204" : {
+            "description" : "No configuration changes"
           },
           "404" : {
             "description" : "No information exists for tenant ID"
@@ -120,7 +353,9 @@
         }
       }
     },
-    "/v1/tenants/{id}/update" : {
+
+
+    "/v1/tenants/{id}/versions/{service}" : {
       "parameters" : [
         {
           "name": "id",
@@ -128,22 +363,76 @@
           "description": "Tenant ID",
           "type": "string",
           "required": true
+        },
+        {
+          "name": "service",
+          "in": "path",
+          "description": "Service Name",
+          "type": "string",
+          "required": true
         }
       ],
-      "post" : {
-        "tags" : [ "Tenants", "Rules" ],
-        "summary" : "Notify tenant of update",
-        "description" : "Notifies the given tenant that the tenant's rules have changed",
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Deletes the service version filter for a tenant",
+        "description" : "Deletes the version filter for a tenant for a service",
         "parameters" : [ ],
         "responses" : {
           "200" : {
-            "description" : "Successfully created notification"
+            "description" : "Successfully deleted version filter"
           },
           "404" : {
-            "description" : "Tenant does not exist"
+            "description" : "No information exists for tenant ID or service name"
           },
-          "500" : {
-            "description" : "Notification failed"
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "get" : {
+        "tags" : [ ],
+        "summary" : "Returns the service version filter for a tenant",
+        "description" : "Returns the version filter for a tenant for a service",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully retrieved version filter",
+            "schema" : {
+              "$ref" : "#/definitions/Version"
+            }
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or service name"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "put" : {
+        "tags" : [ ],
+        "summary" : "Create a service version filter for a tenant",
+        "description" : "Creates a version filter for a tenant for a service",
+        "parameters" : [
+          {
+            "name": "version",
+            "in": "body",
+            "description": "New version filter for tenant",
+            "schema": {
+              "$ref": "#/definitions/Version"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully created version filter"
+          },
+          "400" : {
+            "description" : "Missing or invalid JSON"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
           },
           "503" : {
             "description" : "Error communicating with database"
@@ -155,82 +444,200 @@
   "definitions" : {
     "TenantInfo" : {
       "properties" : {
-        "status" : {
+        "id" : {
           "type" : "string",
-          "description" : "Status of tenant ('enabled' or 'disabled')"
+          "description" : "ID for tenant"
+        },
+        "port" : {
+          "type" : "integer",
+          "description" : "Port for NGINX running on tenant"
         },
         "load_balance" : {
           "type" : "string",
           "description" : "Load balancing algorithm for tenant"
         },
+        "req_tracking_header" : {
+          "type" : "string",
+          "description" : "Tracking header for tenant"
+        },
+        "credentials" : {
+          "$ref" : "#/definitions/Credentials"
+        },
         "filters" : {
-          "$ref" : "#/definitions/FilterEntry"
+          "$ref" : "#/definitions/Filter"
         }
       }
     },
-    "FilterEntry" : {
+    "Credentials" : {
       "properties" : {
-        "delays" : {
+        "kafka" : {
+          "$ref" : "#/definitions/Kafka"
+        },
+        "registry" : {
+          "$ref" : "#/definitions/Registry"
+        }
+      }
+    },
+    "Registry" : {
+      "properties" : {
+        "url" : {
+          "type" : "string",
+          "description" : "url for Registry"
+        },
+        "token" : {
+          "type" : "string",
+          "description" : "token for Registry"
+        }
+      }
+    },
+    "Kafka" : {
+      "properties" : {
+        "api_key" : {
+          "type" : "string",
+          "description" : "token for Kafka REST API"
+        },
+        "admin_url" : {
+          "type" : "string",
+          "description" : "url for Kafka admin url"
+        },
+        "rest_url" : {
+          "type" : "string",
+          "description" : "url for Kafka REST url"
+        },
+        "brokers" : {
+          "type" : "array",
+          "description" : "Kafka brokers",
+          "items" : {
+            "type" : "string"
+          }
+        },
+        "user" : {
+          "type" : "string",
+          "description" : "username for SASL authentication"
+        },
+        "password" : {
+          "type" : "string",
+          "description" : "password for SASL authentication"
+        },
+        "sasl" : {
+          "type" : "boolean",
+          "description" : "enable or disable SASL authentication"
+        }
+      }
+    },
+    "Filter" : {
+      "properties" : {
+        "rules" : {
           "type" : "array",
           "description" : "delay filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/DelayFilterEntry"
+            "$ref" : "#/definitions/Rule"
           }
         },
         "aborts" : {
           "type" : "array",
           "description" : "abort filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/AbortFilterEntry"
+            "$ref" : "#/definitions/Version"
           }
         }
       }
     },
-    "DelayFilterEntry" : {
+    "Rule" : {
       "properties" : {
         "source" : {
           "type" : "string",
-          "description" : "IP address"
+          "description" : "Service name of request source"
         },
-        "dest" : {
+        "destination" : {
           "type" : "string",
-          "description" : "IP address"
+          "description" : "Service name of request destination"
+        },
+        "header" : {
+          "type" : "string",
+          "description" : "Request tracking header for tenant - DEPRECIATED - REMOVE ME"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Header pattern"
         },
         "delay" : {
           "type" : "number",
           "description" : "Delay in ms"
         },
-        "pattern" : {
-          "type" : "string",
-          "description" : "Header pattern to enable delay"
-        },
-        "probability" : {
+        "delay_probability" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of filter to occur"
-        }
-      }
-    },
-    "AbortFilterEntry" : {
-      "properties" : {
-        "source" : {
-          "type" : "string",
-          "description" : "IP address"
+          "description" : "Probability between 0 and 1 of delay to occur"
         },
-        "dest" : {
-          "type" : "string",
-          "description" : "IP address"
+        "abort_probability" : {
+          "type" : "number",
+          "description" : "Probability between 0 and 1 of abort to occur"
         },
         "return_code" : {
           "type" : "integer",
-          "description" : "Return code to return on abort"
+          "description" : "Failure code returned by abort"
+        }
+      }
+    },
+    "Rules" : {
+      "type" : "array",
+      "items" : {
+        "$ref" : "#/definitions/RuleEntry"
+      }
+    },
+    "RuleEntry" : {
+      "properties" : {
+        "id" : {
+          "type" : "string",
+          "description" : "ID of rule"
+        },
+        "source" : {
+          "type" : "string",
+          "description" : "Service name of request source"
+        },
+        "destination" : {
+          "type" : "string",
+          "description" : "Service name of request destination"
+        },
+        "header" : {
+          "type" : "string",
+          "description" : "Request tracking header for tenant - DEPRECIATED - REMOVE ME"
         },
         "pattern" : {
           "type" : "string",
-          "description" : "Header pattern to enable delay"
+          "description" : "Header pattern"
         },
-        "probability" : {
+        "delay" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of filter to occur"
+          "description" : "Delay in ms"
+        },
+        "delay_probability" : {
+          "type" : "number",
+          "description" : "Probability between 0 and 1 of delay to occur"
+        },
+        "abort_probability" : {
+          "type" : "number",
+          "description" : "Probability between 0 and 1 of abort to occur"
+        },
+        "return_code" : {
+          "type" : "integer",
+          "description" : "Failure code returned by abort"
+        }
+      }
+    },
+    "Version" : {
+      "properties" : {
+        "service" : {
+          "type" : "string",
+          "description" : "Service to apply versioning to"
+        },
+        "default" : {
+          "type" : "string",
+          "description" : "Default Service version to use"
+        },
+        "selector" : {
+          "type" : "string",
+          "description" : "TODO FIXME - struct will be changing soon"
         }
       }
     }

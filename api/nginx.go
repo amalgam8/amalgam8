@@ -13,6 +13,7 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"github.com/amalgam8/controller/database"
 )
 
 // NGINXConfig options
@@ -80,7 +81,15 @@ func (n *NGINX) GetNGINX(w rest.ResponseWriter, req *rest.Request) error {
 
 	catalog, err := n.checker.Get(id)
 	if err != nil {
-		RestError(w, req, http.StatusServiceUnavailable, "")
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusNotFound {
+				RestError(w, req, http.StatusNotFound, "no matching id")
+				return err
+			}
+			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
+			return err
+		}
+		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
 		return err
 	}
 

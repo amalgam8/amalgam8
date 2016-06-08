@@ -240,11 +240,11 @@ select `inspect`.
   (Left as an exercise for the reader - change the gremlin recipe to use
   a 2.8 second delay and then run it against the v3 version of reviews.)
 
-  However, we already have this fix running in v3 of the reviews service, so we can next demonstrate active deploy.
+  However, we already have this fix running in v3 of the reviews service, so we can next demonstrate deployment of a new version.
 
-### Stop traffic to v2 and then do active deploy of v3 to all users
+### Stop traffic to v2 and then move to v3 for all users
 
-  We will now rollout the new v3 version of the reviews service to all users who were previously on v2.
+  We will now switch to the new v3 version of the reviews service for all users who were previously on v1 or v2.
 
 13. Stop v2 traffic by running the following commands:
 
@@ -253,20 +253,20 @@ select `inspect`.
     Set routing rules for microservice reviews
   ```
 
-14. Rollout v3, in a series of commands and reviewing the progress, in the following format:
+14. Transfer default traffic from v1 to v3 with a series of commands, in the following format:
 
   ```
-    $ a8ctl rollout-start reviews v3
-    Rollout starting for reviews: diverting 10% of traffic from v1 to v3
+    $ a8ctl traffic-start reviews v3
+    Transfer starting for reviews: diverting 10% of traffic from v1 to v3
 
-    $ a8ctl rollout-step reviews
-    Rollout step for reviews: diverting 20% of traffic from v1 to v3
+    $ a8ctl traffic-step reviews
+    Transfer step for reviews: diverting 20% of traffic from v1 to v3
 
-    $ a8ctl rollout-step reviews --amount 30
-    Rollout step for reviews: diverting 50% of traffic from v1 to v3
+    $ a8ctl traffic-step reviews --amount 50
+    Transfer step for reviews: diverting 50% of traffic from v1 to v3
 
-    $ a8ctl rollout-step reviews --amount 50
-    Rollout complete for reviews: sending 100% of traffic to v3
+    $ a8ctl traffic-step reviews --amount 100
+    Transfer complete for reviews: sending 100% of traffic to v3
 
   ```
 

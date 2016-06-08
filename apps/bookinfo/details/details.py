@@ -8,13 +8,13 @@ from json2html import *
 app = Flask(__name__)
 
 details_resp="""
-<h4 class="text-center text-primary">Product Details</h4>
+<h4 class="text-center text-primary">Book Details</h4>
 <dl>
 <dt>Paperback:</dt>200 pages
-<dt>Publisher:</dt>O'Reilly Media; 1 edition (March 25, 2015)
+<dt>Publisher:</dt> PublisherA
 <dt>Language:</dt>English
-<dt>ISBN-10:</dt>1491914254
-<dt>ISBN-13:</dt>978-1491914250
+<dt>ISBN-10:</dt>1234567890
+<dt>ISBN-13:</dt>123-1234567980
 </dl>
 """
 

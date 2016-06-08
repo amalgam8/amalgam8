@@ -16,16 +16,15 @@ ratings_service = {
 reviews_resp="""
 <blockquote>
 <p>
-An extremely entertaining and comic series by Herge, with expressive drawings!
-</p> <small>Reviewer1 <cite>New York Times</cite></small>
+An extremely entertaining play by Shakespeare. The slapstick humour is refreshing!
+</p> <small>Reviewer1 <cite>Affiliation1</cite></small>
 {}
 </blockquote>
 <blockquote>
 <p>
-Its well-researched plots straddle a variety of genres: 
-swashbuckling adventures with elements of fantasy, mysteries, 
-political thrillers, and science fiction.
-</p> <small>Reviewer2 <cite>Barnes and Noble</cite></small>
+Absolutely fun and entertaining. The play lacks thematic depth when compared 
+to other plays by Shakespeare.
+</p> <small>Reviewer2 <cite>Affiliation2</cite></small>
 {}
 </blockquote>
 """

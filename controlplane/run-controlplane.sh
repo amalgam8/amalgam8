@@ -9,17 +9,17 @@ mhfile="messagehub.yaml"
 lgfile="logserver.yaml"
 
 if [ "$1" == "compile" ]; then
-    $SCRIPTDIR/../../sidecar/build.sh
+    $SCRIPTDIR/build-sidecar.sh
     if [ $? -ne 0 ]; then
         echo "Sidecar failed to compile"
         exit 1
     fi
-    $SCRIPTDIR/../../registry/build.sh
+    $SCRIPTDIR/build-registry.sh
     if [ $? -ne 0 ]; then
         echo "Registry failed to compile"
         exit 1
     fi
-    $SCRIPTDIR/../../controller/build.sh
+    $SCRIPTDIR/build-controller.sh
     if [ $? -ne 0 ]; then
         echo "Controller failed to compile"
         exit 1

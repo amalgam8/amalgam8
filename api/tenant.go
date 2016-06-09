@@ -27,6 +27,7 @@ import (
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/pborman/uuid"
 )
 
 // Tenant handles tenant API calls
@@ -69,11 +70,88 @@ func (t *Tenant) Routes() []*rest.Route {
 		rest.Put("/v1/tenants/#id", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
 		rest.Get("/v1/tenants/#id", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
 		rest.Delete("/v1/tenants/#id", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
+
+		rest.Get("/v1/tenants/#id/filters", reportMetric(t.reporter, t.GetFilters, "filters_read")),
+		rest.Delete("/v1/tenants/#id/filters", reportMetric(t.reporter, t.DeleteFilters, "filters_delete")),
+		rest.Post("/v1/tenants/#id/filters", reportMetric(t.reporter, t.PostFilters, "filters_create")),
+		rest.Put("/v1/tenants/#id/filters", reportMetric(t.reporter, t.PutFilters, "filters_update")),
+
 		rest.Put("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
 		rest.Get("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
-		rest.Delete("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
+		rest.Delete("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_delete")),
 	}
 }
+
+// PostFilters initializes a tenant in the Controller
+func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+
+	filtersJSON := struct {
+		Filters []resources.Rule
+	} {}
+	err := req.DecodeJsonPayload(&filtersJSON)
+	if err != nil {
+		RestError(w, req, http.StatusBadRequest, "json_error")
+		return err
+	}
+
+
+
+
+	//filterID := uuid.New()
+
+	return nil
+}
+
+// PutFilters initializes a tenant in the Controller
+func (t *Tenant) PutFilters(w rest.ResponseWriter, req *rest.Request) error {
+
+	return nil
+}
+
+// GetFilters initializes a tenant in the Controller
+func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+	filterIDs := getQueryIDs("id", req)
+
+	respJSON := struct {
+		Filters []resources.Rule `json:"filters"`
+	} {}
+
+	proxyConfig, err := t.rules.Get(id)
+	if err != nil {
+		handleDBError(w, req, err)
+		return err
+	}
+
+	if len(filterIDs) == 0 {
+		respJSON.Filters = proxyConfig.Filters.Rules
+	} else {
+		for _, rule := range proxyConfig.Filters.Rules {
+			for _, filterID := range filterIDs {
+
+				//FIXME
+				if filterID == rule.ID {
+					respJSON.Filters = append(respJSON.Filters, rule)
+				}
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&respJSON)
+
+	return nil
+}
+
+// DeleteFilters initializes a tenant in the Controller
+func (t *Tenant) DeleteFilters(w rest.ResponseWriter, req *rest.Request) error {
+
+	return nil
+}
+
+
+
 
 // PostTenant initializes a tenant in the Controller
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {

@@ -160,6 +160,7 @@ type Filters struct {
 
 // Rule TODO
 type Rule struct {
+	ID               string `json:"id"`
 	Source           string  `json:"source"`
 	Destination      string  `json:"destination"`
 	Header           string  `json:"header"`

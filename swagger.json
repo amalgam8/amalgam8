@@ -152,6 +152,42 @@
       }
     },
 
+    "/v1/tenants/{id}/nginx" : {
+      "parameters" : [
+        {
+          "name": "id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get" : {
+        "produces" : [ "text/plain" ],
+        "tags" : [ ],
+        "summary" : "Proxy configuration of a tenant",
+        "description" : "Returns the proxy configuration for a given tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Proxy configuration of tenant"
+          },
+          "204" : {
+            "description" : "No configuration changes"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "500" : {
+            "description" : "Error generating configuration"
+          },
+          "503" : {
+            "description" : "Error communicating with external service"
+          }
+        }
+      }
+    },
+
     "/v1/tenants/{id}/filters" : {
       "parameters" : [
         {
@@ -170,9 +206,9 @@
           {
             "name": "filters",
             "in": "body",
-            "description": "New version filter for tenant",
+            "description": "New filters for tenant",
             "schema": {
-              "$ref": "#/definitions/filters"
+              "$ref": "#/definitions/rules"
             },
             "required": true
           }
@@ -181,7 +217,7 @@
           "200" : {
             "description" : "Successfully created version filter",
             "schema": {
-              "$ref": "#/definitions/filters"
+              "$ref": "#/definitions/rules"
             }
           },
           "400" : {
@@ -204,7 +240,7 @@
           "200" : {
             "description" : "Successfully retrieved filters",
             "schema" : {
-              "$ref" : "#/definitions/filters"
+              "$ref" : "#/definitions/rules"
             }
           },
           "404" : {
@@ -233,6 +269,7 @@
         }
       }
     },
+
     "/v1/tenants/{id}/filters/{filter}" : {
       "parameters" : [
         {
@@ -250,23 +287,6 @@
           "required": true
         }
       ],
-      "delete" : {
-        "tags" : [ ],
-        "summary" : "Deletes a filter for a tenant",
-        "description" : "Deletes the filters for a tenant",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully deleted filter"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID or filter ID"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
       "get" : {
         "tags" : [ ],
         "summary" : "Returns a filter for a tenant",
@@ -319,39 +339,21 @@
             "description" : "Error communicating with database"
           }
         }
-      }
-    },
-    "/v1/tenants/{id}/nginx" : {
-      "parameters" : [
-        {
-          "name": "id",
-          "in": "path",
-          "description": "Tenant ID",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "get" : {
-        "produces" : [ "text/plain" ],
+      },
+      "delete" : {
         "tags" : [ ],
-        "summary" : "Proxy configuration of a tenant",
-        "description" : "Returns the proxy configuration for a given tenant",
+        "summary" : "Deletes a filter for a tenant",
+        "description" : "Deletes the filters for a tenant",
         "parameters" : [ ],
         "responses" : {
           "200" : {
-            "description" : "Proxy configuration of tenant"
-          },
-          "204" : {
-            "description" : "No configuration changes"
+            "description" : "Successfully deleted filter"
           },
           "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "500" : {
-            "description" : "Error generating configuration"
+            "description" : "No information exists for tenant ID or filter ID"
           },
           "503" : {
-            "description" : "Error communicating with external service"
+            "description" : "Error communicating with database"
           }
         }
       }
@@ -534,7 +536,7 @@
           "type" : "array",
           "description" : "delay filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/filter"
+            "$ref" : "#/definitions/rules"
           }
         },
         "aborts" : {
@@ -546,7 +548,7 @@
         }
       }
     },
-    "filter" : {
+    "rule" : {
       "properties" : {
         "source" : {
           "type" : "string",

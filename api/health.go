@@ -3,26 +3,26 @@ package api
 import (
 	"net/http"
 
+	"github.com/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 )
 
 // Health handles health API calls
 type Health struct {
-	statsdClient statsd.Statter
+	reporter metrics.Reporter
 }
 
 // NewHealth creates struct
-func NewHealth(statter statsd.Statter) *Health {
+func NewHealth(reporter metrics.Reporter) *Health {
 	return &Health{
-		statsdClient: statter,
+		reporter: reporter,
 	}
 }
 
 // Routes for health check API
 func (h *Health) Routes() []*rest.Route {
 	return []*rest.Route{
-		rest.Get("/health", ReportMetric(h.statsdClient, h.GetHealth, "controller_health")),
+		rest.Get("/health", reportMetric(h.reporter, h.GetHealth, "controller_health")),
 	}
 }
 

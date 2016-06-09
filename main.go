@@ -13,12 +13,12 @@ import (
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/codegangsta/cli"
 )
 
@@ -75,12 +75,7 @@ func controllerMain(conf config.Config) error {
 		return validationErr
 	}
 
-	statsdClient, err := statsd.NewBufferedClient(conf.StatsdHost, statsdPrefix, time.Duration(0), 0)
-	if err != nil {
-		logrus.WithError(err)
-		setupHandler.SetError(err)
-		return err
-	}
+	reporter := metrics.NewReporter()
 
 	var catalogDB database.Catalog
 	var rulesDB database.Rules
@@ -123,20 +118,20 @@ func controllerMain(conf config.Config) error {
 	}
 
 	n := api.NewNGINX(api.NGINXConfig{
-		Statsd:    statsdClient,
+		Reporter:  reporter,
 		Generator: g,
 		Checker:   c,
 	})
 
 	t := api.NewTenant(api.TenantConfig{
-		Statsd:      statsdClient,
+		Reporter:    reporter,
 		Checker:     c,
 		ProxyConfig: r,
 	})
 
-	p := api.NewPoll(statsdClient, c)
+	p := api.NewPoll(reporter, c)
 
-	h := api.NewHealth(statsdClient)
+	h := api.NewHealth(reporter)
 
 	routes := n.Routes()
 	routes = append(routes, t.Routes()...)

@@ -131,22 +131,25 @@ func New(context *cli.Context) *Config {
 // Validate the configuration
 func (c *Config) Validate() error {
 
-	// Create list of validation checks
-	validators := []ValidatorFunc{
-		IsNotEmpty("Service Name", c.ServiceName),
-		IsNotEmpty("Registry token", c.Registry.Token),
-		IsValidURL("Regsitry URL", c.Registry.URL),
-		func() error {
-			if c.Tenant.TTL.Seconds() < c.Tenant.Heartbeat.Seconds() {
-				return fmt.Errorf("Tenant TTL (%v) is less than heartbeat interval (%v)", c.Tenant.TTL, c.Tenant.Heartbeat)
-			}
-			return nil
-		},
-		IsInRange("Tenant port", c.Nginx.Port, 1, 65535),
+	if !c.Register && !c.Proxy {
+		return errors.New("Sidecar serves no purpose. Please enable either proxy or registry or both")
 	}
+
+	// Create list of validation checks
+	validators := []ValidatorFunc{}
 
 	if c.Register {
 		validators = append(validators,
+			func() error {
+				if c.Tenant.TTL.Seconds() < c.Tenant.Heartbeat.Seconds() {
+					return fmt.Errorf("Tenant TTL (%v) is less than heartbeat interval (%v)", c.Tenant.TTL, c.Tenant.Heartbeat)
+				}
+				return nil
+			},
+			IsNotEmpty("Service Name", c.ServiceName),
+			IsNotEmpty("Registry token", c.Registry.Token),
+			IsValidURL("Regsitry URL", c.Registry.URL),
+			IsInRange("Tenant port", c.Nginx.Port, 1, 65535),
 			IsNotEmpty("Service Endpoint Host", c.EndpointHost),
 			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
 			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),

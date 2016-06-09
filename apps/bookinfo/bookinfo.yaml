@@ -29,6 +29,8 @@ spec:
         env:
         - name: SERVICE
           value: details:v1
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -71,6 +73,8 @@ spec:
         env:
         - name: SERVICE
           value: ratings:v1
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -119,6 +123,8 @@ spec:
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
           value: reviews:v1
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -167,6 +173,8 @@ spec:
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
           value: reviews:v2
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -215,6 +223,8 @@ spec:
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
           value: reviews:v3
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -263,6 +273,8 @@ spec:
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
           value: productpage:v1
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN

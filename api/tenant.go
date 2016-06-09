@@ -8,23 +8,23 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 )
 
 // Tenant handles tenant API calls
 type Tenant struct {
-	statsd  statsd.Statter
-	catalog checker.Checker
-	rules   proxyconfig.Manager
+	reporter metrics.Reporter
+	catalog  checker.Checker
+	rules    proxyconfig.Manager
 }
 
 // TenantConfig options
 type TenantConfig struct {
-	Statsd      statsd.Statter
+	Reporter    metrics.Reporter
 	Checker     checker.Checker
 	ProxyConfig proxyconfig.Manager
 }
@@ -42,22 +42,22 @@ type TenantInfo struct {
 // NewTenant creates struct
 func NewTenant(conf TenantConfig) *Tenant {
 	return &Tenant{
-		statsd:  conf.Statsd,
-		catalog: conf.Checker,
-		rules:   conf.ProxyConfig,
+		reporter: conf.Reporter,
+		catalog:  conf.Checker,
+		rules:    conf.ProxyConfig,
 	}
 }
 
 // Routes for tenant API calls
 func (t *Tenant) Routes() []*rest.Route {
 	return []*rest.Route{
-		rest.Post("/v1/tenants", ReportMetric(t.statsd, t.PostTenant, "tenants_create")),
-		rest.Put("/v1/tenants/#id", ReportMetric(t.statsd, t.PutTenant, "tenants_update")),
-		rest.Get("/v1/tenants/#id", ReportMetric(t.statsd, t.GetTenant, "tenants_read")),
-		rest.Delete("/v1/tenants/#id", ReportMetric(t.statsd, t.DeleteTenant, "tenants_delete")),
-		rest.Put("/v1/tenants/#id/versions/#service", ReportMetric(t.statsd, t.PutServiceVersions, "versions_update")),
-		rest.Get("/v1/tenants/#id/versions/#service", ReportMetric(t.statsd, t.GetServiceVersions, "versions_read")),
-		rest.Delete("/v1/tenants/#id/versions/#service", ReportMetric(t.statsd, t.DeleteServiceVersions, "versions_update")),
+		rest.Post("/v1/tenants", reportMetric(t.reporter, t.PostTenant, "tenants_create")),
+		rest.Put("/v1/tenants/#id", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
+		rest.Get("/v1/tenants/#id", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
+		rest.Delete("/v1/tenants/#id", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
+		rest.Put("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
+		rest.Get("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
+		rest.Delete("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
 	}
 }
 
@@ -264,7 +264,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// Only allow changes to registered tenants
 	_, err = t.catalog.Get(id)
 	if err != nil {
-		RestError(w, req, http.StatusNotFound, "not_registered")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -306,7 +306,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// TODO: only read and set proxyconfig if necessary
 	proxyConf, err := t.rules.Get(id)
 	if err != nil {
-		RestError(w, req, http.StatusServiceUnavailable, "get_proxy_conf_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -372,29 +372,13 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 	_, err := t.catalog.Get(id)
 	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
 	proxyConfig, err := t.rules.Get(id)
 	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -421,15 +405,7 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -468,15 +444,7 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -543,15 +511,7 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 
 	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "rules_database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "get_rules_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 
@@ -605,15 +565,7 @@ func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// Deregister from catalog
 	if err = t.catalog.Deregister(id); err != nil {
 		logrus.WithError(err).Error("Could not deregister tenant")
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching registered id")
-				return err
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "database_error")
-			return err
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "error_deregister_failed")
+		handleDBError(w, req, err)
 		return err
 	}
 

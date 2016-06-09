@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 
 	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -20,11 +20,10 @@ var _ = Describe("NGINX API", func() {
 	)
 
 	BeforeEach(func() {
-		statsdClient, err := statsd.NewClient("", "") // TODO: mock out statsd?
-		Expect(err).ToNot(HaveOccurred())
+		reporter := metrics.NewReporter()
 		ch = &checker.MockChecker{}
 
-		api = NewPoll(statsdClient, ch)
+		api = NewPoll(reporter, ch)
 
 		a := rest.NewApi()
 		router, err := rest.MakeRouter(api.Routes()...)

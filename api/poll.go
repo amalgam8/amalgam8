@@ -4,28 +4,28 @@ import (
 	"net/http"
 
 	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 )
 
 // Poll handles poll API
 type Poll struct {
-	checker checker.Checker
-	statsd  statsd.Statter
+	checker  checker.Checker
+	reporter metrics.Reporter
 }
 
 // NewPoll create struct
-func NewPoll(statsd statsd.Statter, checker checker.Checker) *Poll {
+func NewPoll(reporter metrics.Reporter, checker checker.Checker) *Poll {
 	return &Poll{
-		statsd:  statsd,
-		checker: checker,
+		reporter: reporter,
+		checker:  checker,
 	}
 }
 
 // Routes for poll API
 func (p *Poll) Routes() []*rest.Route {
 	return []*rest.Route{
-		rest.Post("/v1/poll", ReportMetric(p.statsd, p.Poll, "poll")),
+		rest.Post("/v1/poll", reportMetric(p.reporter, p.Poll, "poll")),
 	}
 }
 

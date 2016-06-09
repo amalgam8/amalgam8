@@ -5,10 +5,10 @@ import (
 	"net/http/httptest"
 
 	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/resources"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/cactus/go-statsd-client/statsd"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -22,8 +22,7 @@ var _ = Describe("NGINX API", func() {
 	)
 
 	BeforeEach(func() {
-		statsdClient, err := statsd.NewClient("", "") // TODO: mock out statsd?
-		Expect(err).ToNot(HaveOccurred())
+		reporter := metrics.NewReporter()
 		generator = &nginx.MockGenerator{}
 		chker = new(checker.MockChecker)
 		chker.GetVal = resources.ServiceCatalog{
@@ -31,7 +30,7 @@ var _ = Describe("NGINX API", func() {
 		}
 
 		api = NewNGINX(NGINXConfig{
-			Statsd:    statsdClient,
+			Reporter:  reporter,
 			Generator: generator,
 			Checker:   chker,
 		})

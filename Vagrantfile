@@ -71,6 +71,7 @@ docker restart kubelet
 
 # Install kubernetes CLI
 sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
+sudo chmod +x /usr/local/bin/kubectl
 
 ##Make API server accessible outside vagrant. Enable if you wish to 
 #sleep 5

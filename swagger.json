@@ -2,7 +2,7 @@
   "swagger" : "2.0",
   "info" : {
     "description" : "FIXME: this is completely out of date",
-    "version" : "1.0.0",
+    "version" : "0.1.0",
     "title" : "Controller API for Amalgam8"
   },
   "schemes" : [ "https" ],
@@ -13,11 +13,14 @@
       "parameters" : [ ],
       "get" : {
         "tags" : [ ],
-        "summary" : "Status of service",
-        "description" : "Returns status of current service based upon status of its dependent services",
+        "summary" : "Status of the controller",
+        "description" : "Returns status of the controller",
         "responses" : {
           "200" : {
-            "description" : "Service and its dependencies are healthy"
+            "description" : "Controller is healthy"
+          },
+          "503": {
+            "description" : "Controller is unhealthy"
           }
         }
       }
@@ -26,44 +29,44 @@
       "parameters" : [ ],
       "post" : {
         "tags" : [ ],
-        "summary" : "Poll Regsitry",
-        "description" : "Performs a poll of Regsitry for each registered tenant for changes",
+        "summary" : "Poll registry",
+        "description" : "Performs a poll of registry for each registered tenant and checks for changes",
         "parameters" : [ ],
         "responses" : {
           "200" : {
-            "description" : "Successfully polled Registry for all tenants"
+            "description" : "Successfully polled registry for all tenants"
           },
           "500" : {
-            "description" : "Failed to poll Registry for one or more tenants"
+            "description" : "Failed to poll registry for one or more tenants"
           }
         }
       }
     },
-    "/v1/tenants/" : {
+    "/v1/tenants" : {
       "post" : {
         "tags" : [ ],
-        "summary" : "Create a tenant",
-        "description" : "Initializes a tenant entry in the Controller",
+        "summary" : "Register a tenant",
+        "description" : "Registers a tenant with the controller",
         "parameters" : [
           {
-            "name": "tenant_info",
+            "name": "tenant",
             "in": "body",
-            "description": "New info for tenant",
+            "description": "Tenant information",
             "schema": {
-              "$ref": "#/definitions/TenantInfo"
+              "$ref": "#/definitions/tenant"
             },
             "required": true
           }
         ],
         "responses" : {
           "201" : {
-            "description" : "Tenant entry created"
+            "description" : "Tenant registered"
           },
           "400" : {
-            "description" : "Missing or invalid JSON in request body"
+            "description" : "Invalid request"
           },
           "409" : {
-            "description" : "Entry already exists for tenant"
+            "description" : "Tenant already registered"
           },
           "503" : {
             "description" : "Error communicating with database"
@@ -81,32 +84,15 @@
           "required": true
         }
       ],
-      "delete" : {
-        "tags" : [ ],
-        "summary" : "Deletes a tenant",
-        "description" : "Deletes a tenant",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Tenant successfully deleted"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
       "get" : {
         "tags" : [ ],
-        "summary" : "Credentials and configuration of a tenant",
+        "summary" : "credentials and configuration of a tenant",
         "description" : "Returns the credentials and configuration of a tenant",
         "responses" : {
           "200" : {
             "description" : "Canonical info of tenant",
             "schema" : {
-              "$ref" : "#/definitions/TenantInfo"
+              "$ref" : "#/definitions/tenant"
             }
           },
           "404" : {
@@ -127,7 +113,7 @@
             "in": "body",
             "description": "New info for tenant",
             "schema": {
-              "$ref": "#/definitions/TenantInfo"
+              "$ref": "#/definitions/tenant"
             },
             "required": true
           }
@@ -138,6 +124,23 @@
           },
           "400" : {
             "description" : "Malformed JSON in request"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Deletes a tenant",
+        "description" : "Deletes a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Tenant successfully deleted"
           },
           "404" : {
             "description" : "No information exists for tenant ID"
@@ -159,14 +162,30 @@
           "required": true
         }
       ],
-      "delete" : {
+      "post" : {
         "tags" : [ ],
-        "summary" : "Deletes the filters for a tenant",
-        "description" : "Deletes the filters for a tenant",
-        "parameters" : [ ],
+        "summary" : "Create a service version filter for a tenant",
+        "description" : "Creates a version filter for a tenant for a service",
+        "parameters" : [
+          {
+            "name": "filters",
+            "in": "body",
+            "description": "New version filter for tenant",
+            "schema": {
+              "$ref": "#/definitions/filters"
+            },
+            "required": true
+          }
+        ],
         "responses" : {
           "200" : {
-            "description" : "Successfully deleted filters"
+            "description" : "Successfully created version filter",
+            "schema": {
+              "$ref": "#/definitions/filters"
+            }
+          },
+          "400" : {
+            "description" : "Missing or invalid JSON"
           },
           "404" : {
             "description" : "No information exists for tenant ID"
@@ -185,7 +204,7 @@
           "200" : {
             "description" : "Successfully retrieved filters",
             "schema" : {
-              "$ref" : "#/definitions/Rules"
+              "$ref" : "#/definitions/filters"
             }
           },
           "404" : {
@@ -196,30 +215,14 @@
           }
         }
       },
-      "post" : {
+      "delete" : {
         "tags" : [ ],
-        "summary" : "Create a service version filter for a tenant",
-        "description" : "Creates a version filter for a tenant for a service",
-        "parameters" : [
-          {
-            "name": "filters",
-            "in": "body",
-            "description": "New version filter for tenant",
-            "schema": {
-              "$ref": "#/definitions/Rules"
-            },
-            "required": true
-          }
-        ],
+        "summary" : "Deletes the filters for a tenant",
+        "description" : "Deletes the filters for a tenant",
+        "parameters" : [ ],
         "responses" : {
           "200" : {
-            "description" : "Successfully created version filter",
-            "schema": {
-              "$ref": "#/definitions/Rules"
-            }
-          },
-          "400" : {
-            "description" : "Missing or invalid JSON"
+            "description" : "Successfully deleted filters"
           },
           "404" : {
             "description" : "No information exists for tenant ID"
@@ -242,7 +245,7 @@
         {
           "name": "filter",
           "in": "path",
-          "description": "Filter ID",
+          "description": "filter ID",
           "type": "string",
           "required": true
         }
@@ -273,7 +276,7 @@
           "200" : {
             "description" : "Successfully retrieved filter",
             "schema" : {
-              "$ref" : "#/definitions/RuleEntry"
+              "$ref" : "#/definitions/ruleentry"
             }
           },
           "404" : {
@@ -294,7 +297,7 @@
             "in": "body",
             "description": "Updated filter for tenant",
             "schema": {
-              "$ref": "#/definitions/RuleEntry"
+              "$ref": "#/definitions/ruleentry"
             },
             "required": true
           }
@@ -303,7 +306,7 @@
           "200" : {
             "description" : "Successfully updated filter",
             "schema": {
-              "$ref": "#/definitions/RuleEntry"
+              "$ref": "#/definitions/ruleentry"
             }
           },
           "400" : {
@@ -398,7 +401,7 @@
           "200" : {
             "description" : "Successfully retrieved version filter",
             "schema" : {
-              "$ref" : "#/definitions/Version"
+              "$ref" : "#/definitions/version"
             }
           },
           "404" : {
@@ -419,7 +422,7 @@
             "in": "body",
             "description": "New version filter for tenant",
             "schema": {
-              "$ref": "#/definitions/Version"
+              "$ref": "#/definitions/version"
             },
             "required": true
           }
@@ -442,15 +445,15 @@
     }
   },
   "definitions" : {
-    "TenantInfo" : {
+    "tenant" : {
       "properties" : {
         "id" : {
           "type" : "string",
-          "description" : "ID for tenant"
+          "description" : "ID of tenant"
         },
         "port" : {
           "type" : "integer",
-          "description" : "Port for NGINX running on tenant"
+          "description" : "NGINX port"
         },
         "load_balance" : {
           "type" : "string",
@@ -461,52 +464,52 @@
           "description" : "Tracking header for tenant"
         },
         "credentials" : {
-          "$ref" : "#/definitions/Credentials"
+          "$ref" : "#/definitions/credentials"
         },
         "filters" : {
-          "$ref" : "#/definitions/Filter"
+          "$ref" : "#/definitions/filter"
         }
       }
     },
-    "Credentials" : {
+    "credentials" : {
       "properties" : {
         "kafka" : {
-          "$ref" : "#/definitions/Kafka"
+          "$ref" : "#/definitions/kafka"
         },
         "registry" : {
-          "$ref" : "#/definitions/Registry"
+          "$ref" : "#/definitions/registry"
         }
       }
     },
-    "Registry" : {
+    "registry" : {
       "properties" : {
         "url" : {
           "type" : "string",
-          "description" : "url for Registry"
+          "description" : "url for registry"
         },
         "token" : {
           "type" : "string",
-          "description" : "token for Registry"
+          "description" : "token for registry"
         }
       }
     },
-    "Kafka" : {
+    "kafka" : {
       "properties" : {
         "api_key" : {
           "type" : "string",
-          "description" : "token for Kafka REST API"
+          "description" : "token for kafka REST API"
         },
         "admin_url" : {
           "type" : "string",
-          "description" : "url for Kafka admin url"
+          "description" : "kafka admin url"
         },
         "rest_url" : {
           "type" : "string",
-          "description" : "url for Kafka REST url"
+          "description" : "kafka REST url"
         },
         "brokers" : {
           "type" : "array",
-          "description" : "Kafka brokers",
+          "description" : "kafka brokers",
           "items" : {
             "type" : "string"
           }
@@ -525,25 +528,25 @@
         }
       }
     },
-    "Filter" : {
+    "filter" : {
       "properties" : {
         "rules" : {
           "type" : "array",
           "description" : "delay filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/Rule"
+            "$ref" : "#/definitions/filter"
           }
         },
         "aborts" : {
           "type" : "array",
           "description" : "abort filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/Version"
+            "$ref" : "#/definitions/version"
           }
         }
       }
     },
-    "Rule" : {
+    "filter" : {
       "properties" : {
         "source" : {
           "type" : "string",
@@ -563,15 +566,15 @@
         },
         "delay" : {
           "type" : "number",
-          "description" : "Delay in ms"
+          "description" : "Delay in seconds"
         },
         "delay_probability" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of delay to occur"
+          "description" : "Delay probability in range [0.0, 1.0]"
         },
         "abort_probability" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of abort to occur"
+          "description" : "Abort probability in range [0.0, 1.0]"
         },
         "return_code" : {
           "type" : "integer",
@@ -579,13 +582,13 @@
         }
       }
     },
-    "Rules" : {
+    "rules" : {
       "type" : "array",
       "items" : {
-        "$ref" : "#/definitions/RuleEntry"
+        "$ref" : "#/definitions/ruleentry"
       }
     },
-    "RuleEntry" : {
+    "ruleentry" : {
       "properties" : {
         "id" : {
           "type" : "string",
@@ -609,15 +612,15 @@
         },
         "delay" : {
           "type" : "number",
-          "description" : "Delay in ms"
+          "description" : "Delay in seconds"
         },
         "delay_probability" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of delay to occur"
+          "description" : "Delay probability in range [0.0, 1.0]"
         },
         "abort_probability" : {
           "type" : "number",
-          "description" : "Probability between 0 and 1 of abort to occur"
+          "description" : "Abort probability in range [0.0, 1.0]"
         },
         "return_code" : {
           "type" : "integer",
@@ -625,7 +628,7 @@
         }
       }
     },
-    "Version" : {
+    "version" : {
       "properties" : {
         "service" : {
           "type" : "string",

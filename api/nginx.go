@@ -9,11 +9,11 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/cactus/go-statsd-client/statsd"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"github.com/amalgam8/controller/database"
 )
 
 // NGINXConfig options

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/util"
 	"github.com/codegangsta/cli"
 )
 
@@ -133,35 +132,35 @@ func New(context *cli.Context) *Config {
 func (c *Config) Validate() error {
 
 	// Create list of validation checks
-	validators := []util.ValidatorFunc{
-		util.IsNotEmpty("Service Name", c.ServiceName),
-		util.IsNotEmpty("Registry token", c.Registry.Token),
-		util.IsValidURL("Regsitry URL", c.Registry.URL),
+	validators := []ValidatorFunc{
+		IsNotEmpty("Service Name", c.ServiceName),
+		IsNotEmpty("Registry token", c.Registry.Token),
+		IsValidURL("Regsitry URL", c.Registry.URL),
 		func() error {
 			if c.Tenant.TTL.Seconds() < c.Tenant.Heartbeat.Seconds() {
 				return fmt.Errorf("Tenant TTL (%v) is less than heartbeat interval (%v)", c.Tenant.TTL, c.Tenant.Heartbeat)
 			}
 			return nil
 		},
-		util.IsInRange("Tenant port", c.Nginx.Port, 1, 65535),
+		IsInRange("Tenant port", c.Nginx.Port, 1, 65535),
 	}
 
 	if c.Register {
 		validators = append(validators,
-			util.IsNotEmpty("Service Endpoint Host", c.EndpointHost),
-			util.IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
-			util.IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
-			util.IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
+			IsNotEmpty("Service Endpoint Host", c.EndpointHost),
+			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
+			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
+			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 		)
 	}
 
 	if c.Proxy {
 		validators = append(validators,
-			util.IsNotEmpty("Tenant ID", c.Tenant.ID),
-			util.IsNotEmpty("Tenant token", c.Tenant.Token),
-			util.IsInRange("Tenant port", c.Tenant.Port, 1, 65535),
-			util.IsValidURL("Controller URL", c.Controller.URL),
-			util.IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
+			IsNotEmpty("Tenant ID", c.Tenant.ID),
+			IsNotEmpty("Tenant token", c.Tenant.Token),
+			IsInRange("Tenant port", c.Tenant.Port, 1, 65535),
+			IsValidURL("Controller URL", c.Controller.URL),
+			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
 	}
 
@@ -174,7 +173,7 @@ func (c *Config) Validate() error {
 				}
 
 				for _, broker := range c.Kafka.Brokers {
-					if err := util.IsNotEmpty("Kafka broker", broker)(); err != nil {
+					if err := IsNotEmpty("Kafka broker", broker)(); err != nil {
 						return err
 					}
 				}
@@ -183,10 +182,10 @@ func (c *Config) Validate() error {
 		)
 		if c.Kafka.SASL {
 			validators = append(validators,
-				util.IsNotEmpty("Kafka username", c.Kafka.Username),
-				util.IsNotEmpty("Kafka password", c.Kafka.Password),
-				util.IsNotEmpty("Kafka token", c.Kafka.APIKey),
-				util.IsValidURL("Kafka Rest URL", c.Kafka.RestURL),
+				IsNotEmpty("Kafka username", c.Kafka.Username),
+				IsNotEmpty("Kafka password", c.Kafka.Password),
+				IsNotEmpty("Kafka token", c.Kafka.APIKey),
+				IsValidURL("Kafka Rest URL", c.Kafka.RestURL),
 			)
 		} else {
 			validators = append(validators,
@@ -204,5 +203,5 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	return util.Validate(validators)
+	return Validate(validators)
 }

@@ -5,8 +5,8 @@ import (
 	"io"
 	"time"
 
-	"github.com/amalgam8/sidecar/clients"
 	"github.com/amalgam8/sidecar/config"
+	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

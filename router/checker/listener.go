@@ -4,9 +4,9 @@ import (
 	"bytes"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/clients"
 	"github.com/amalgam8/sidecar/config"
-	"github.com/amalgam8/sidecar/nginx"
+	"github.com/amalgam8/sidecar/router/clients"
+	"github.com/amalgam8/sidecar/router/nginx"
 )
 
 // Listener listens for events from Message Hub and updates NGINX

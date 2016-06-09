@@ -12,6 +12,16 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
+func getQueryIDs(key string, req *rest.Request) []string {
+
+	queries := req.URL.Query()
+	values, ok := queries[key]
+	if !ok || len(values) == 0 {
+		return []string{}
+	}
+	return values
+}
+
 func handleDBError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
 		if ce, ok := err.(*database.DBError); ok {

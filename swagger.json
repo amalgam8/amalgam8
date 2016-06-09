@@ -1,9 +1,9 @@
 {
   "swagger" : "2.0",
   "info" : {
-    "description" : "FIXME: this is completely out of date",
-    "version" : "0.1.0",
-    "title" : "Controller API for Amalgam8"
+    "title" : "Controller API for Amalgam8",
+    "description": "TODO",
+    "version" : "0.1"
   },
   "schemes" : [ "https" ],
   "consumes" : [ "application/json" ],
@@ -208,7 +208,7 @@
             "in": "body",
             "description": "New filters for tenant",
             "schema": {
-              "$ref": "#/definitions/rules"
+              "$ref": "#/definitions/in_filters"
             },
             "required": true
           }
@@ -217,7 +217,7 @@
           "200" : {
             "description" : "Successfully created version filter",
             "schema": {
-              "$ref": "#/definitions/rules"
+              "$ref": "#/definitions/filters"
             }
           },
           "400" : {
@@ -240,7 +240,7 @@
           "200" : {
             "description" : "Successfully retrieved filters",
             "schema" : {
-              "$ref" : "#/definitions/rules"
+              "$ref" : "#/definitions/filters"
             }
           },
           "404" : {
@@ -296,7 +296,7 @@
           "200" : {
             "description" : "Successfully retrieved filter",
             "schema" : {
-              "$ref" : "#/definitions/ruleentry"
+              "$ref" : "#/definitions/filter"
             }
           },
           "404" : {
@@ -317,7 +317,7 @@
             "in": "body",
             "description": "Updated filter for tenant",
             "schema": {
-              "$ref": "#/definitions/ruleentry"
+              "$ref": "#/definitions/filter"
             },
             "required": true
           }
@@ -326,7 +326,7 @@
           "200" : {
             "description" : "Successfully updated filter",
             "schema": {
-              "$ref": "#/definitions/ruleentry"
+              "$ref": "#/definitions/filter"
             }
           },
           "400" : {
@@ -532,11 +532,11 @@
     },
     "filter" : {
       "properties" : {
-        "rules" : {
+        "filters" : {
           "type" : "array",
           "description" : "delay filters for tenant",
           "items" : {
-            "$ref" : "#/definitions/rules"
+            "$ref" : "#/definitions/filters"
           }
         },
         "aborts" : {
@@ -548,7 +548,17 @@
         }
       }
     },
-    "rule" : {
+    "in_filters" : {
+      "properties" : {
+        "filters": {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/in_filter"
+          }
+        }
+      }
+    },
+    "in_filter" : {
       "properties" : {
         "source" : {
           "type" : "string",
@@ -584,17 +594,21 @@
         }
       }
     },
-    "rules" : {
-      "type" : "array",
-      "items" : {
-        "$ref" : "#/definitions/ruleentry"
+    "filters" : {
+      "properties" : {
+        "filters": {
+          "type" : "array",
+          "items" : {
+            "$ref" : "#/definitions/injection_filter"
+          }
+        }
       }
     },
-    "ruleentry" : {
+    "injection_filter" : {
       "properties" : {
         "id" : {
           "type" : "string",
-          "description" : "ID of rule"
+          "description" : "ID of filter"
         },
         "source" : {
           "type" : "string",

@@ -1,15 +1,14 @@
-FROM a8-appbase-reg-0.1
+FROM amalgam8/a8-sidecar:0.1
 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update -qq && \
-   apt-get install -y -q --no-install-recommends \
-   python2.7 python-pip build-essential python-dev
+RUN apt-get update && apt-get install -y -q --no-install-recommends \
+   python2.7 python-pip python-dev
    
-RUN pip install Flask Flask-Cache pymongo
+RUN pip install Flask
 
-# application source code including static files, templates, etc
-ADD app.py /opt/
-
+RUN mkdir -p /opt/microservices
+ADD app.py /opt/microservices/
 EXPOSE 5000
+WORKDIR /opt/microservices
 
-CMD ["python", "-u", "/opt/app.py"]
+ENTRYPOINT ["a8sidecar", "--proxy=false", "--log=false", "--supervise", "python", "-u", "app.py"]

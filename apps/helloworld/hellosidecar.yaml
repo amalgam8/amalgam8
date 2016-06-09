@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: helloworld-v1
+  labels:
+    name: helloworld-v1
+spec:
+  replicas: 1
+  selector:
+    name: helloworld-v1
+  template:
+    metadata:
+      labels:
+        name: helloworld-v1
+    spec:
+      containers:
+      - name: helloworld
+        image: hellosidecar
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: SERVICE
+          value: helloworld:v1
+        - name: REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: REGISTRY_TOKEN
+          value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+        - name: ENDPOINT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENDPOINT_PORT
+          value: "5000"
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: helloworld-v2
+  labels:
+    name: helloworld-v2
+spec:
+  replicas: 1
+  selector:
+    name: helloworld-v2
+  template:
+    metadata:
+      labels:
+        name: helloworld-v2
+    spec:
+      containers:
+      - name: helloworld
+        image: hellosidecar
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: SERVICE
+          value: helloworld:v2
+        - name: REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: REGISTRY_TOKEN
+          value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+        - name: ENDPOINT_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: ENDPOINT_PORT
+          value: "5000"

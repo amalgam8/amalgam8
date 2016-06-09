@@ -79,9 +79,9 @@ func Shutdown(exitCode int) {
 }
 
 // DoLogManagement TODO
-func DoLogManagement() {
+func DoLogManagement(filebeatConf string) {
 	// starting filebeat
-	logcmd := exec.Command("filebeat", "-c", "/etc/filebeat/filebeat.yml")
+	logcmd := exec.Command("filebeat", "-c", filebeatConf)
 	logcmd.Stdin = os.Stdin
 	logcmd.Stdout = os.Stdout
 	err := logcmd.Run()

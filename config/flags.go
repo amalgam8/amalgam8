@@ -34,6 +34,7 @@ const (
 	endpointPort    = "endpoint_port"
 	serviceName     = "service"
 	logLevel        = "log_level"
+	logstashServer  = "logstash_server"
 )
 
 // TenantFlags defines all expected args for Tenant
@@ -146,6 +147,13 @@ var TenantFlags = []cli.Flag{
 		EnvVar: strings.ToUpper(controllerPoll),
 		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
+	},
+
+	// Logserver
+	cli.StringFlag{
+		Name:   logstashServer,
+		EnvVar: strings.ToUpper(logstashServer),
+		Usage:  "Logstash target for nginx logs",
 	},
 
 	// Kafka

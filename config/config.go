@@ -49,19 +49,20 @@ type Controller struct {
 
 // Config TODO
 type Config struct {
-	ServiceName  string
-	EndpointHost string
-	EndpointPort int
-	Register     bool
-	Proxy        bool
-	Log          bool
-	Supervise    bool
-	Tenant       Tenant
-	Controller   Controller
-	Registry     Registry
-	Kafka        Kafka
-	Nginx        Nginx
-	LogLevel     logrus.Level
+	ServiceName    string
+	EndpointHost   string
+	EndpointPort   int
+	LogstashServer string
+	Register       bool
+	Proxy          bool
+	Log            bool
+	Supervise      bool
+	Tenant         Tenant
+	Controller     Controller
+	Registry       Registry
+	Kafka          Kafka
+	Nginx          Nginx
+	LogLevel       logrus.Level
 }
 
 // New TODO
@@ -90,13 +91,14 @@ func New(context *cli.Context) *Config {
 	}
 
 	return &Config{
-		ServiceName:  context.String(serviceName),
-		EndpointHost: context.String(endpointHost),
-		EndpointPort: context.Int(endpointPort),
-		Register:     context.BoolT(register),
-		Proxy:        context.BoolT(proxy),
-		Log:          context.BoolT(log),
-		Supervise:    context.Bool(supervise),
+		ServiceName:    context.String(serviceName),
+		EndpointHost:   context.String(endpointHost),
+		EndpointPort:   context.Int(endpointPort),
+		LogstashServer: context.String(logstashServer),
+		Register:       context.BoolT(register),
+		Proxy:          context.BoolT(proxy),
+		Log:            context.BoolT(log),
+		Supervise:      context.Bool(supervise),
 		Controller: Controller{
 			URL:  context.String(controllerURL),
 			Poll: context.Duration(controllerPoll),
@@ -137,6 +139,12 @@ func (c *Config) Validate() error {
 
 	// Create list of validation checks
 	validators := []ValidatorFunc{}
+
+	if c.Log {
+		validators = append(validators,
+			IsNotEmpty("Logstash Host", c.LogstashServer),
+		)
+	}
 
 	if c.Register {
 		validators = append(validators,

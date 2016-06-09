@@ -278,7 +278,7 @@ output:
   ### Logstash as output
   logstash:
     # The Logstash hosts
-    hosts: [${LOGSTASH_HOSTS:"10.0.0.220:8092"}]
+    hosts: [LOGSTASH_REPLACEME]
 
     # Number of workers per Logstash host.
     #worker: 1

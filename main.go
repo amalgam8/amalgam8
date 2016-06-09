@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -64,8 +65,27 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Log {
+		//Replace the LOGSTASH_REPLACEME string in filebeat.yml with
+		//the value provided by the user
+
+		//TODO: Make this configurable
+		filebeatConf := "/etc/filebeat/filebeat.yml"
+		filebeat, err := ioutil.ReadFile(filebeatConf)
+		if err != nil {
+			logrus.WithError(err).Error("Could not read filebeat conf")
+			return err
+		}
+
+		fileContents := strings.Replace(string(filebeat), "LOGSTASH_REPLACEME", conf.LogstashServer, -1)
+
+		err = ioutil.WriteFile("/tmp/filebeat.yml", []byte(fileContents), 0)
+		if err != nil {
+			logrus.WithError(err).Error("Could not write filebeat conf")
+			return err
+		}
+
 		// TODO: Log failure?
-		go supervisor.DoLogManagement()
+		go supervisor.DoLogManagement("/tmp/filebeat.yml")
 	}
 
 	if conf.Proxy {

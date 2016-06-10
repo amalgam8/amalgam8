@@ -9,36 +9,43 @@
 
 The Amalgam8 controller is software developed for ... in applications built using a microservice based architecture.
 
-## Building and Running
+## Image
 
 A recent prebuilt Amalgam8 controller image can be found at TBD.
 ```sh
 $ docker pull amalgam8/controller
 ```
 
-If you wish to build the controller from source, clone this repository and follow 
+To build from source instead, see [build](https://github.com/amalgam8/controller#building).
+
+## Building from source
 
 ### Preprequisites
-A developer tested development environment requires the following:
-* Linux host (tested with TBD)
-* Docker (tested with TBD)
-* Go toolchain (tested with TBD). See [TBD](link) for installation instructions.
 
+* Docker 1.8 or 1.9
+* Go 1.6
+
+### Clone
+
+Clone the repository manually, or use `go get`:
+
+```go get github.com/amalgam8/controller```
 
 ### Building a Docker Image
 
-The Amalgam8 controller may be built by simply typing `make` with the [Docker
-daemon](https://docs.docker.com/installation/) (v1.8.0) running.
+```
+cd $GOPATH/src/github.com/amalgam8/controller
+make build
+make docker IMAGE=a8-controller
+```
 
-This will produce an image tagged `TBD` which you may run as described below.
+This will produce an image tagged `a8-controller:latest`.
 
 ### Standalone
 
-The Amalgam8 controller may also be run outside of a docker container as a Go binary. 
-This is not recommended for production, but it can be useful for development or easier integration with 
-your local Go tools.
+The Amalgam8 controller may also be run outside of a docker container as a Go binary for testing.
 
-The following commands will build and run it outside of Docker:
+The following commands will build and run the controller:
 
 ```
 make build

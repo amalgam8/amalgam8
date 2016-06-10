@@ -42,20 +42,20 @@ if [ "$1" == "compile" ]; then
     fi
     exit
 elif [ "$1" == "start" ]; then
-    echo "Starting Message Hub Local using Kubernertes at 10.0.0.200:9092"
+    echo "Starting integration bus (kafka)"
     kubectl create -f $SCRIPTDIR/$mhfile
-    echo "Starting Logmet local using Kubernertes at 10.0.0.220:8092, elasticsearch at 10.0.0.220:9200"
+    echo "Starting logging service (ELK)"
     kubectl create -f $SCRIPTDIR/$lgfile
-    echo "Starting Registry using Kubernetes..."
+    echo "Starting multi-tenant service registry"
     kubectl create -f $SCRIPTDIR/$rfile
-    echo "Starting Controller using Kubernetes..."
+    echo "Starting multi-tenant controller"
     kubectl create -f $SCRIPTDIR/$cfile
-    echo "Waiting for Controller to initialize..."
+    echo "Waiting for controller to initialize..."
     sleep 60
     AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     AC=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    echo "Setting up a new tenant named 'local' whose app tracks requests using header 'X-Request-ID'"
+    echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
     "id": "local",

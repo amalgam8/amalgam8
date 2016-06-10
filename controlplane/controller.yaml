@@ -22,7 +22,6 @@ metadata:
   labels:
     name: controller
 spec:
-  clusterIP: 10.0.0.240
   ports:
   - port: 6379
     targetPort: 6379

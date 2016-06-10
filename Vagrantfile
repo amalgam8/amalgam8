@@ -78,7 +78,9 @@ docker run \
         --address="0.0.0.0" \
         --api-servers=http://0.0.0.0:8080 \
         --config=/etc/kubernetes/manifests \
-        --allow-privileged=true --v=2
+        --allow-privileged=true --v=2 \
+  	    --cluster-dns=10.0.0.10 \
+        --cluster-domain=cluster.local
 # ##Make API server accessible on host OS
 sleep 10
 docker exec kubelet perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json

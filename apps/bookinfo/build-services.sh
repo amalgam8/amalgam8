@@ -23,22 +23,22 @@
 set -o errexit
 
 pushd productpage
-  docker build -t a8-examples-bookinfo-productpage:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-productpage:v1 .
 popd
 
 pushd details
-  docker build -t a8-examples-bookinfo-details:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-details:v1 .
 popd
 
 pushd reviews
   #plain build -- no ratings
-  docker build -t a8-examples-bookinfo-reviews:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews:v1 .
   #with ratings black stars
-  docker build -t a8-examples-bookinfo-reviews:v2 --build-arg enable_ratings=true .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews:v2 --build-arg enable_ratings=true .
   #with ratings red stars
-  docker build -t a8-examples-bookinfo-reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
 popd
 
 pushd ratings
-  docker build -t a8-examples-bookinfo-ratings:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-ratings:v1 .
 popd

@@ -22,6 +22,6 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 #################################################################################
 # Build the helloworld image
 #################################################################################
-docker build -t a8-examples-helloworld:v1 $SCRIPTDIR
-docker build -t a8-examples-helloworld:v2 $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld:v1 $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld:v2 $SCRIPTDIR
 #docker build -t hello:vx $SCRIPTDIR

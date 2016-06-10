@@ -34,7 +34,7 @@ This will produce an image tagged `TBD` which you may run as described below.
 
 ### Standalone
 
-The Amalgam8 ccntroller may also be run outside of a docker container as a Go binary. 
+The Amalgam8 controller may also be run outside of a docker container as a Go binary. 
 This is not recommended for production, but it can be useful for development or easier integration with 
 your local Go tools.
 
@@ -69,18 +69,9 @@ The following environment variables are available. All of them are optional. The
 | `etc` | `-e` | anything | Something | undefined |
 
 
-## API
+## REST API
 
-Controller API documentation is available in Swagger format.
-
-Refer to Swagger in local repo?
-
-## Contributing
-
-Contributions and feedback are welcome! 
-Proposals and Pull Requests will be considered and responded to. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
-file for more information.
+The controller REST API documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
 
 ## License
 Copyright 2016 IBM Corporation
@@ -90,3 +81,10 @@ Licensed under the Apache License, Version 2.0 (the "License"); you may not use 
 http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+## Contributing
+
+Contributions and feedback are welcome! 
+Proposals and Pull Requests will be considered and responded to. Please see the
+[CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
+file for more information.

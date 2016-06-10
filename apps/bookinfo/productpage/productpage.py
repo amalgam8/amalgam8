@@ -85,13 +85,13 @@ def index():
 @app.route('/login', methods=['POST'])
 def login():
     user = request.values.get('username')
-    response = app.make_response(redirect(publicurl+"/productpage/productpage")) # why does url_for('front') not work?
+    response = app.make_response(redirect(request.referrer))
     response.set_cookie('user', user)
     return response
 
 @app.route('/logout', methods=['GET'])
 def logout():
-    response = app.make_response(redirect(publicurl+"/productpage/productpage"))
+    response = app.make_response(redirect(request.referrer))
     response.set_cookie('user', '', expires=0)
     return response
 
@@ -138,5 +138,4 @@ if __name__ == '__main__':
 
     p = int(sys.argv[1])
     proxyurl = sys.argv[2]
-    publicurl = sys.argv[3]
     app.run(host='0.0.0.0', port=p)

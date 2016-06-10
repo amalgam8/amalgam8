@@ -23,13 +23,7 @@
 set -o errexit
 
 pushd productpage
-  if [ -n "$GATEWAY_URL" ]
-  then
-    sed -e "s#http://192.168.33.33:32000#${GATEWAY_URL}#" Dockerfile > Dockerfile.tmp
-  else
-    cp Dockerfile Dockerfile.tmp
-  fi
-  docker build -t a8-examples-bookinfo-productpage:v1 -f Dockerfile.tmp .
+  docker build -t a8-examples-bookinfo-productpage:v1 .
 popd
 
 pushd details

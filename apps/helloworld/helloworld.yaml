@@ -32,6 +32,8 @@ spec:
         env:
         - name: SERVICE
           value: helloworld:v1
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -77,6 +79,8 @@ spec:
         env:
         - name: SERVICE
           value: helloworld:v2
+        - name: LOGSTASH_SERVER
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN

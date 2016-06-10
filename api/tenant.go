@@ -88,7 +88,7 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 
 	filtersJSON := struct {
 		Filters []resources.Rule `json:"filters"`
-	} {}
+	}{}
 	err := req.DecodeJsonPayload(&filtersJSON)
 	if err != nil {
 		RestError(w, req, http.StatusBadRequest, "json_error")
@@ -123,7 +123,6 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 // PutFilters updates filters in bulk
 func (t *Tenant) PutFilters(w rest.ResponseWriter, req *rest.Request) error {
 	w.WriteHeader(http.StatusTeapot)
-
 	return nil
 }
 
@@ -137,7 +136,7 @@ func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 
 	respJSON := struct {
 		Filters []resources.Rule `json:"filters"`
-	} {}
+	}{}
 
 	proxyConfig, err := t.rules.Get(id)
 	if err != nil {
@@ -199,9 +198,6 @@ func (t *Tenant) DeleteFilters(w rest.ResponseWriter, req *rest.Request) error {
 
 	return nil
 }
-
-
-
 
 // PostTenant initializes a tenant in the Controller
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {

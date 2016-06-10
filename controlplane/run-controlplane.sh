@@ -42,6 +42,12 @@ if [ "$1" == "compile" ]; then
     fi
     exit
 elif [ "$1" == "start" ]; then
+    echo "starting system namespace kube-system"
+    kubectl create namespace kube-system
+    sleep 3
+    echo "starting skydns"
+    kubectl create -f skydns.yaml
+    sleep 5
     echo "Starting integration bus (kafka)"
     kubectl create -f $SCRIPTDIR/$mhfile
     echo "Starting logging service (ELK)"

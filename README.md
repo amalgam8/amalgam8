@@ -78,7 +78,7 @@ The following environment variables are available. All of them are optional. The
 
 ## REST API
 
-The controller REST API documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
+Documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
 
 ## License
 Copyright 2016 IBM Corporation

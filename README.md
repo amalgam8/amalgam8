@@ -36,10 +36,10 @@ Clone the repository manually, or use `go get`:
 ```
 cd $GOPATH/src/github.com/amalgam8/controller
 make build
-make docker IMAGE=a8-controller
+make docker IMAGE=controller
 ```
 
-This will produce an image tagged `a8-controller:latest`.
+This will produce an image tagged `controller:latest`.
 
 ### Standalone
 

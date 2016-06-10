@@ -12,14 +12,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+# A simple ELK stack where the application logs end up. In addition to monitoring,
+# the logs here will be used by Gremlin to validate assertions
 apiVersion: v1
 kind: Service
 metadata: 
   labels: 
     name: logserver
   name: logserver
-spec: 
-  clusterIP: "10.0.0.220"
+spec:
   ports: 
     - 
       name: kibana
@@ -35,13 +36,11 @@ spec:
       targetPort: 9200
     - 
       name: es2
-      nodePort: 30300
       port: 9300
       protocol: TCP
       targetPort: 9300
     - 
       name: logstashport
-      nodePort: 30092
       port: 8092
       protocol: TCP
       targetPort: 8092

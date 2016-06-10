@@ -22,14 +22,14 @@ metadata:
   labels:
     name: registry
 spec:
-  type: ClusterIP
-  clusterIP: 10.0.0.230
   ports:
   - port: 5080
     targetPort: 8080
+    nodePort: 31300
     protocol: TCP
   selector:
     name: registry
+  type: NodePort
 ---
 apiVersion: v1
 kind: ReplicationController

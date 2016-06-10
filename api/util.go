@@ -27,7 +27,6 @@ import (
 )
 
 func getQueryIDs(key string, req *rest.Request) []string {
-
 	queries := req.URL.Query()
 	values, ok := queries[key]
 	if !ok || len(values) == 0 {

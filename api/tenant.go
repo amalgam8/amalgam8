@@ -82,12 +82,12 @@ func (t *Tenant) Routes() []*rest.Route {
 	}
 }
 
-// PostFilters initializes a tenant in the Controller
+// PostFilters creates filters in bulk
 func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 
 	filtersJSON := struct {
-		Filters []resources.Rule
+		Filters []resources.Rule `json:"filters"`
 	} {}
 	err := req.DecodeJsonPayload(&filtersJSON)
 	if err != nil {
@@ -95,21 +95,42 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
+	// Validate filters
 
+	proxyConfig, err := t.rules.Get(id)
+	if err != nil {
+		handleDBError(w, req, err)
+		return err
+	}
 
+	for i := 0; i < len(filtersJSON.Filters); i++ {
+		filtersJSON.Filters[i].ID = uuid.New()
+	}
 
-	//filterID := uuid.New()
+	proxyConfig.Filters.Rules = append(proxyConfig.Filters.Rules, filtersJSON.Filters...)
+
+	if err = t.rules.Set(proxyConfig); err != nil {
+		handleDBError(w, req, err)
+		return err
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&filtersJSON)
 
 	return nil
 }
 
-// PutFilters initializes a tenant in the Controller
+// PutFilters updates filters in bulk
 func (t *Tenant) PutFilters(w rest.ResponseWriter, req *rest.Request) error {
+	w.WriteHeader(http.StatusTeapot)
 
 	return nil
 }
 
-// GetFilters initializes a tenant in the Controller
+// GetFilters reads filters in bulk
+// No ID query param provided => all filters
+// ID query param of valid filters provided => return filters
+// ID query param for some non-existent filters => return 404? return 404 and valid filters? return 404 and list of not found ids?
 func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 	filterIDs := getQueryIDs("id", req)
@@ -129,13 +150,15 @@ func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 	} else {
 		for _, rule := range proxyConfig.Filters.Rules {
 			for _, filterID := range filterIDs {
-
-				//FIXME
 				if filterID == rule.ID {
 					respJSON.Filters = append(respJSON.Filters, rule)
 				}
 			}
 		}
+	}
+
+	if respJSON.Filters == nil {
+		respJSON.Filters = []resources.Rule{}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -144,8 +167,35 @@ func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// DeleteFilters initializes a tenant in the Controller
+// DeleteFilters deletes filters in bulk
 func (t *Tenant) DeleteFilters(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+	filterIDs := getQueryIDs("id", req)
+
+	proxyConfig, err := t.rules.Get(id)
+	if err != nil {
+		handleDBError(w, req, err)
+		return err
+	}
+
+	if len(filterIDs) == 0 {
+		proxyConfig.Filters.Rules = []resources.Rule{}
+	} else {
+		for _, rule := range proxyConfig.Filters.Rules {
+			for i, filterID := range filterIDs {
+				if filterID == rule.ID {
+					proxyConfig.Filters.Rules = append(proxyConfig.Filters.Rules[:i], proxyConfig.Filters.Rules[i+1:]...)
+				}
+			}
+		}
+	}
+
+	if err = t.rules.Set(proxyConfig); err != nil {
+		handleDBError(w, req, err)
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
 
 	return nil
 }

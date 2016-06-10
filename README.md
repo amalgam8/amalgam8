@@ -16,7 +16,7 @@ A recent prebuilt Amalgam8 controller image can be found at TBD.
 $ docker pull amalgam8/controller
 ```
 
-To build from source instead, see [build](https://github.com/amalgam8/controller#building).
+To build from source instead, see [build](https://github.com/amalgam8/controller#building-from-source).
 
 ## Building from source
 

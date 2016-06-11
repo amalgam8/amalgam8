@@ -77,6 +77,7 @@ type Config struct {
 	Kafka          Kafka
 	Nginx          Nginx
 	LogLevel       logrus.Level
+	AppArgs        []string
 }
 
 // New TODO
@@ -141,6 +142,7 @@ func New(context *cli.Context) *Config {
 			Port: context.Int(nginxPort),
 		},
 		LogLevel: loggingLevel,
+		AppArgs: context.Args(),
 	}
 }
 

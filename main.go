@@ -31,7 +31,7 @@ import (
 )
 
 func main() {
-	// TODO: make configurable
+	// Initial logging until we parse the user provided log_level arg
 	logrus.SetLevel(logrus.DebugLevel)
 	logrus.SetOutput(os.Stderr)
 
@@ -43,6 +43,11 @@ func main() {
 	app.Flags = config.TenantFlags
 	app.Action = sidecarCommand
 
+	// Gulp all args upto --supervise
+	// The rest will be stored in cli's context variable in context.Args()
+	// which will then be stored in conf.AppArgs()
+	// The content of conf.AppArgs() constitutes the args for launching
+	// the user's application
 	args := os.Args
 	index := -1
 	for i, arg := range os.Args {
@@ -116,20 +121,7 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Supervise {
-		// TODO: do this more cleanly
-		args := os.Args
-		index := -1
-		for i, arg := range os.Args {
-			if arg == "--supervise" {
-				index = i
-				break
-			}
-		}
-		if index != -1 {
-			args = args[0 : index+1]
-		}
-
-		supervisor.DoAppSupervision(args)
+		supervisor.DoAppSupervision(conf.AppArgs)
 	} else {
 		select {}
 	}

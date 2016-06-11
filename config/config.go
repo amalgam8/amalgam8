@@ -156,6 +156,17 @@ func (c *Config) Validate() error {
 	// Create list of validation checks
 	validators := []ValidatorFunc{}
 
+	if c.Supervise {
+		validators = append(validators,
+			func() error {
+				if len(c.AppArgs) == 0 {
+					return fmt.Errorf("Supervision mode requires application launch arguments")
+				}
+				return nil
+			},
+		)
+	}
+
 	if c.Log {
 		validators = append(validators,
 			IsNotEmpty("Logstash Host", c.LogstashServer),

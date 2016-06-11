@@ -323,10 +323,10 @@ cd $GOPATH/src/github.com/amalgam8/examples
 ./install-kubernetes
 
 # if previous run needs to be stopped
-./controlplane/run-controlplane.sh stop
+./controlplane/run-controlplane-local.sh stop
 kubectl delete -f gateway/gateway.yaml
 
 # Start control plane and gateway
-./controlplane/run-controlplane.sh compile # if code changes need to be picked up
-./controlplane/run-controlplane.sh start
+./controlplane/run-controlplane-local.sh compile # if code changes need to be picked up
+./controlplane/run-controlplane-local.sh start
 kubectl create -f gateway/gateway.yaml

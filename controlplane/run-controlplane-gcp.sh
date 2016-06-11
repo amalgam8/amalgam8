@@ -42,12 +42,6 @@ if [ "$1" == "compile" ]; then
     fi
     exit
 elif [ "$1" == "start" ]; then
-    echo "starting system namespace kube-system"
-    kubectl create namespace kube-system
-    sleep 3
-    echo "starting skydns"
-    kubectl create -f skydns.yaml
-    sleep 5
     echo "Starting integration bus (kafka)"
     kubectl create -f $SCRIPTDIR/$mhfile
     echo "Starting logging service (ELK)"
@@ -79,9 +73,13 @@ elif [ "$1" == "start" ]; then
     }
 }
 EOF
+    export TENANT_REG=$tenant
+    echo "Please assign a public IP to your controller and then issue the following curl command"
+    echo 'echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
+
     echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
 elif [ "$1" == "stop" ]; then
-    echo "Stopping Ctrlr, Reg, Lg, and Mh using Kubernetes.."
+    echo "Stopping control plane services.."
     kubectl delete -f $SCRIPTDIR/$cfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$rfile
@@ -90,6 +88,6 @@ elif [ "$1" == "stop" ]; then
     sleep 3
     kubectl delete -f $SCRIPTDIR/$mhfile
 else
-    echo "usage: run-controlplane.sh compile|start|stop"
+    echo "usage: $0 compile|start|stop"
     exit 1
 fi

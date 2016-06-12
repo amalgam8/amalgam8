@@ -2,7 +2,14 @@
 
 Sample microservice-based applications and local sandbox environment for Amalgam8
 
-## Overview
+## Table of Contents
+
+* [Overview](#overview)
+* [Amalgam8 on Kubernetes (local)](#local-k8s)
+* [Amalgam8 on Marathon/Mesos (local)](#local-marathon)
+* [Amalgam8 on Google Compute Cloud](#gcp)
+
+## Overview <a id="overview"></a>
 
 This project includes a number of Amalgam8 sample programs, and a preconfigured environment to allow
 you to easily run, build, and experiment with the provided samples.
@@ -21,7 +28,7 @@ them to any kubernetes based environment such as OpenShift, Google Cloud
 Platform, Azure, etc. See the last section of this README for details on
 how to deploy Amalgam8 on Google Cloud Platform.
 
-## Local sandbox environment (Vagrant)
+## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 
 The repository's root directory includes a Vagrant file that provides an environment with everything installed and ready to build/run the samples:
 
@@ -206,7 +213,47 @@ To get started, install a recent version of Vagrant and follow the steps below.
     controlplane/run-controlplane-local.sh stop
   ```
 
-## Amalgam8 on Google Cloud Platform
+## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
+
+This section assumes that the IP address of your mesos slave where all the
+apps will be running is 192.168.33.33.
+
+1. The `run-controlplane-mesos.sh` script in the `mesos` folder sets up a
+   local marathon/mesos cluster (based on Holiday Check's
+   [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
+   registry as apps in the marathon framework.
+   
+```bash
+cd mesos
+./run-controlplane-mesos.sh start
+```
+
+Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+
+Verify that the controller is up and running via the Marathon dashboard.
+
+2. Launch the API Gateway
+
+```bash
+cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+```
+
+Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
+
+3. Launch the Bookinfo application
+
+```bash
+cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+```
+
+Verify that the application group has been successfully launched via the marathon dashboard.
+
+4. You can now use the `a8ctl` command line tool to set the default
+versions for various services in the Bookinfo app, do version-based
+routing, resilience testing etc. For more details, refer to the
+[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+
+## Amalgam8 on Google Cloud Platform <a id="gcp"></a>
 
 1. Setup [Google Cloud SDK](https://cloud.google.com/sdk/) on your machine
 

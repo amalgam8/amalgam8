@@ -43,24 +43,7 @@ func main() {
 	app.Flags = config.TenantFlags
 	app.Action = sidecarCommand
 
-	// Gulp all args upto --supervise
-	// The rest will be stored in cli's context variable in context.Args()
-	// which will then be stored in conf.AppArgs()
-	// The content of conf.AppArgs() constitutes the args for launching
-	// the user's application
-	args := os.Args
-	index := -1
-	for i, arg := range os.Args {
-		if arg == "--supervise" {
-			index = i
-			break
-		}
-	}
-	if index != -1 {
-		args = args[0 : index+1]
-	}
-
-	err := app.Run(args)
+	err := app.Run(os.Args)
 	if err != nil {
 		logrus.WithError(err).Error("Failure running main")
 	}

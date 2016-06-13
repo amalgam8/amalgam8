@@ -9,15 +9,15 @@ Demo goals:
 1. Deploy a simple web application consisting of 4 microservices using
    kubernetes.
 2. Route traffic to specific versions of microservices using the `a8ctl`
-   command line client that interacts with A8 Control Plane.
+   command line client that interacts with the A8 Control Plane.
 3. Exercise the resiliency testing capabilities in Amalgam8 using the
    Gremlin framework to conduct systematic resilience testing, i.e., inject
    reproducible failure scenarios and run automated assertions on recovery
    behavior of the microservices. Specifically,
-   * (Ad-hoc approch) Inject failures in the call path between two
+   * (Ad-hoc approach) Inject failures in the call path between two
    microservices while restricting the failure impact to a test user. You
    (the test user) would notice (manual) that the application is failing in
-   an unexpected matter.
+   an unexpected way.
    * (Systematic approach) Using the Gremlin framework (automated) to
      inject the same failure and verify whether the microservices recover
      in the expected manner.
@@ -40,9 +40,9 @@ vagrant up
 vagrant ssh
 ```
 
-**Note**: If you stopped a previous Vagrant VM and restarted it, Kubernetes
+**Note:** If you stopped a previous Vagrant VM and restarted it, Kubernetes
 might not run correctly. If you have problems, try uninstalling Kubernetes
-by running the following commands:
+by running the following command:
   
 ```bash
 sudo examples/uninstall-kubernetes.sh
@@ -72,7 +72,7 @@ running:
 kubectl get svc
 ```
 
-If the registry and controller services are running, the output will resemble the following example:
+If the registry and controller services are running, the output should include the following services:
 
 ```
 NAME               CLUSTER_IP   EXTERNAL_IP   PORT(S)                              SELECTOR                AGE
@@ -85,13 +85,13 @@ logserver          10.0.0.250   ...           9200/TCP,9300/TCP,5601/TCP,8092/TC
 
 You can reach the registry at http://192.168.33.33:5080 from the host machine
 (outside the vagrant box), and the controller at http://192.168.33.33:31200 .
-To access the control plane details of tenat *local*, access
+To access the control plane details of tenant *local*, access
 http://192.168.33.33:31200/v1/tenants/local/ from your browser.
 
 ## Deploy the tenant application
 
 Every tenant application should have
-an[API Gateway](http://microservices.io/patterns/apigateway.html) that
+an [API Gateway](http://microservices.io/patterns/apigateway.html) that
 provides a single user-facing entry point for a microservices-based
 application.  You can control the Amalgam8 gateway for different purposes,
 such as version routing, red/black deployments, canary testing, resiliency
@@ -117,7 +117,7 @@ Confirm that the API gateway is running by accessing the
 http://192.168.33.33:32000 from your browser. If all is well, you should
 see a simple **Welcome to nginx!** page in your browser.
 
-Note: You only need one gateway per tenant. A single gateway can front more
+**Note:** You only need one gateway per tenant. A single gateway can front more
 than one application under the tenant at the same time, so long as they
 don't implement any conflicting microservices.
 
@@ -203,13 +203,13 @@ You should see the following output:
 
 Open http://192.168.33.33:32000/productpage/productpage from your browser
 and you should see the bookinfo application displayed. Notice that the
-product page is displayed, with no rating stars since *reviews:v1* will not
-access ratings service.
+product page is displayed, with no rating stars since `reviews:v1` does not
+access the ratings service.
 
 ### Version-aware routing
 
-Lets enable ratings service for test user "jason" by routing productpage
-traffic to reviews:v2 instances.
+Lets enable the ratings service for test user "jason" by routing productpage
+traffic to `reviews:v2` instances.
 
 ```bash
 a8ctl route-set reviews --default v1 --selector 'v2(user="jason")'
@@ -300,8 +300,8 @@ experience any delays.
 #### Use a Gremlin Recipe to systematically test the application
 
 We'll now use a *gremlin recipe* that describes the application topology
-(`topology.json`), the reproduces the failure scenario (i.e., 7 seconds
-delay) (`gremlins.json`), and a adds set of assertions (`checklist.json`)
+(`topology.json`), reproduces the (7 seconds delay) failure scenario (`gremlins.json`),
+and adds a set of assertions (`checklist.json`)
 that we expect to pass: each service in the call chain should return `HTTP
 200 OK` and the productpage should respond in 7 seconds.
 
@@ -372,7 +372,7 @@ Now that we have tested the reviews service, fixed the bug and deployed a
 new version (`reviews:v3`), lets route all user traffic from `reviews:v1`
 to `reviews:v3` in a gradual manner.
 
-First, stop any traffic to reviews:v2 traffic:
+First, stop any `reviews:v2` traffic:
 
 ```bash
 a8ctl route-set reviews --default v1
@@ -477,7 +477,6 @@ kubectl delete -f gateway/gateway.yaml
 
 To start control plane and gateway:
 ```bash
-examples/controlplane/run-controlplane-local.sh compile # if code changes need to be picked up
 examples/controlplane/run-controlplane-local.sh start
 kubectl create -f gateway/gateway.yaml
 ```

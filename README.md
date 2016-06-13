@@ -17,7 +17,7 @@ A prebuilt Docker image is available. Install Docker 1.8 or 1.9 and run the foll
 
 ```docker pull amalgam8/a8-controller```
 
-Provide [configuration options]() as environment variables. For example:
+Provide [configuration options](https://github.com/amalgam8/controller/blob/master/README.md#configuration-options) as environment variables. For example:
 
 ```docker run amalgam8/a8-controller -e poll_interval=60s```
 
@@ -34,7 +34,7 @@ Configuration options can be set through environment variables or command line f
 Documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
 
 ## Build from source
-The follow section describes options for building the controller from source. A prebuilt Docker image is available [here](http://xxx).
+The follow section describes options for building the controller from source. Instructions on using a prebuilt Docker image are available [here](https://github.com/amalgam8/controller#usage).
 
 ### Preprequisites
 * Docker 1.8 or 1.9

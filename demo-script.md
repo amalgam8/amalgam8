@@ -65,26 +65,26 @@ cd examples/controlplane
 ```
 
 The above command also creates a tenant named "local" in the
-control plane. Confirm that the registry and controller services are
-running:
+control plane. 
+
+You can confirm everything is up and running with the following command:
 
 ```bash
-kubectl get svc
+a8ctl service-list
 ```
 
-If the registry and controller services are running, the output should include the following services:
+The command shouldn't return any services, since we haven't started any yet, 
+but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
 
 ```
-NAME               CLUSTER_IP   EXTERNAL_IP   PORT(S)                              SELECTOR                AGE
-kubernetes         10.0.0.1     <none>        443/TCP                              <none>                  40d
-registry           10.0.0.230   ...           5080/TCP                             name=registry           1m
-controller         10.0.0.240   ...           6379/TCP                             name=controller         1m
-kafka              10.0.0.200   ...           9092/TCP                             name=kafka              1m
-logserver          10.0.0.250   ...           9200/TCP,9300/TCP,5601/TCP,8092/TCP  name=logserver          1m
++---------+-----------------+-------------------+
+| Service | Default Version | Version Selectors |
++---------+-----------------+-------------------+
++---------+-----------------+-------------------+
 ```
 
-You can reach the registry at http://192.168.33.33:5080 from the host machine
-(outside the vagrant box), and the controller at http://192.168.33.33:31200 .
+You can also access the registry at http://192.168.33.33:5080 from the host machine
+(outside the vagrant box), and the controller at http://192.168.33.33:31200.
 To access the control plane details of tenant *local*, access
 http://192.168.33.33:31200/v1/tenants/local/ from your browser.
 

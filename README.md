@@ -16,14 +16,14 @@ you to easily run, build, and experiment with the provided samples.
 
 The following samples are available for Amalgam8:
 
-* **Helloworld** is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
-* **Bookinfo** is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
+* [Helloworld](https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
+* [Bookinfo](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
 
 There is an end-to-end
 [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
 that you can try out on your local vagrant box.
 
-In addition, the scripts are generic enough such that you can easily deploy
+In addition, the scripts are generic enough that you can easily deploy
 them to any kubernetes based environment such as OpenShift, Google Cloud
 Platform, Azure, etc. See the last section of this README for details on
 how to deploy Amalgam8 on Google Cloud Platform.
@@ -38,169 +38,113 @@ The repository's root directory includes a Vagrant file that provides an environ
 * [Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli)
 * [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python)
 
-To get started, install a recent version of Vagrant and follow the steps below.
+To get started, install a recent version of Vagrant and then if you just want to run the demos, see the highlights, and kick the tires,
+follow the instructions below. If you'd like to also be able to better understand the APIs, change and compile the code, or build the images,
+refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md) instead.
 
 1. Clone the Amalgam8 repos and start the vagrant environment.
 
-  ```
-    git clone git@github.com:amalgam8/examples.git
-    git clone git@github.com:amalgam8/registry.git
-    git clone git@github.com:amalgam8/controller.git
-    git clone git@github.com:amalgam8/sidecar.git
+```bash
+git clone git@github.com:amalgam8/examples.git
 
-    cd examples
-    vagrant up
-    vagrant ssh
-  ```
+cd examples
+vagrant up
+vagrant ssh
+```
 
-  *Note*: If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
+*Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
   
-  ```
-    cd $GOPATH/src/github.com/amalgam8/examples
-    sudo ./uninstall-kubernetes.sh
-  ```
+```
+cd $GOPATH/src/github.com/amalgam8/examples
+sudo ./uninstall-kubernetes.sh
+```
 
-  Then re-install Kubernetes, by running the following command:
+Then re-install Kubernetes, by running the following command:
 
-  ```
-    sudo ./install-kubernetes.sh
-  ```
+```
+sudo ./install-kubernetes.sh
+```
 
 ### Running the controlplane services
 
 2. Start the local control plane services (registry and controller) by running the following commands:
 
-  ```
+    ```
     cd $GOPATH/src/github.com/amalgam8/examples/controlplane
-    ./run-controlplane-local.sh compile
     ./run-controlplane-local.sh start
-  ```
+    ```
 
-3. Run the following commands to confirm whether the registry and controller services are running:
+3. Run the following command to confirm the control plane is running:
 
-  ```
-    kubectl get svc
-  ```
+    ```bash
+    a8ctl service-list
+    ```
 
-  If the registry and controller services are running, the output will resemble the following example:
+The command shouldn't return any services, since we haven't started any yet, 
+but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
 
-  ```
-    NAME               CLUSTER_IP   EXTERNAL_IP   PORT(S)    SELECTOR                AGE
-    kubernetes         10.0.0.1     <none>        443/TCP    <none>                  40d
-    registry           10.0.0.230    <none>        5080/TCP   name=registry           1m
-    controller         10.0.0.240    <none>        6379/TCP   name=controller         1m
-  ```
+```
++---------+-----------------+-------------------+
+| Service | Default Version | Version Selectors |
++---------+-----------------+-------------------+
++---------+-----------------+-------------------+
+```
 
-  You can reach the registry at 10.0.0.230:5080, and the controller at
-  10.0.0.240:6379. You can also reach the controller from
-  outside the vagrant box at 192.168.33.33:31200. You can use cURL if
-  you want to see them working.
-
-4. (a) To list your registered services, use the following command format:
-
-  ```
-    $ export TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
-    $ curl -X GET -H "Authorization: Bearer ${TOKEN}" http://10.0.0.230:5080/api/v1/services | jq .
-    {
-      "services": []
-    }
-  ```
-
-5. (b) To view your tenant entry in the controller, use the following command format:
-
-  ```
-    curl http://10.0.0.240:6379/v1/tenants/local | jq .
-    {
-      "filters": {
-        "versions": [],
-        "rules": []
-      },
-      "port": 6379,
-      "load_balance": "round_robin",
-      "credentials": {
-        "registry": {
-          "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
-          "url": "http://10.0.0.230:5080"
-        },
-        "message_hub": {
-          "sasl": false,
-          "password": "",
-          "user": "",
-          "kafka_broker_sasl": [
-            "10.0.0.200:9092"
-          ],
-          "kafka_rest_url": "",
-          "kafka_admin_url": "",
-          "api_key": ""
-        }
-      },
-      "id": "local"
-    }
-  ```
+You can also access the registry at http://192.168.33.33:5080 from the host machine
+(outside the vagrant box), and the controller at http://192.168.33.33:31200.
+To access the control plane details of tenant *local*, access
+http://192.168.33.33:31200/v1/tenants/local/ from your browser.
 
 ### Running the API Gateway
 
 An [API Gateway](http://microservices.io/patterns/apigateway.html) provides
 a single user-facing entry point for a microservices-based application.
-You can control the Amalgam8 gateway for different purposes, such as
-version routing, red/black deployments, canary testing, resiliency
-testing, and so on.
+We will use an Amalgam8 proxy for this purpose, so we can control the
+version routing and testing of edge-facing microservices, instead
+of just mid-tier ones.
 
-6. To start the API gateway, run the following commands:
+To start the API gateway, run the following commands:
 
-  ```
-    cd $GOPATH/src/github.com/amalgam8/examples/gateway
-    kubectl create -f gateway.yaml
-  ```
+```bash
+cd examples
+kubectl create -f examples/gateway/gateway.yaml
+```
 
-  Usually, the API gateway is mapped to a DNS route. However, in our local standalone environment, you can access it by using
-  the fixed IP address and port (192.168.33.33:32000), which was preconfigured for the sandbox environment.
+Usually, the API gateway is mapped to a DNS route. However, in our local
+standalone environment, you can access it by using the fixed IP address and
+port (http://192.168.33.33:32000), which was pre-configured for the sandbox
+environment.
 
-7. Confirm that the API gateway is running by running the following command:
+Confirm that the API gateway is running by accessing the
+http://192.168.33.33:32000 from your browser. If all is well, you should
+see a simple **Welcome to nginx!** page in your browser.
 
-  ```
-    curl 192.168.33.33:32000/
-  ```
+**Note:** You only need one gateway per tenant. A single gateway can front more
+than one application under the tenant at the same time, so long as they
+don't implement any conflicting microservices.
 
-  If the gateway is running, the output will resemble the following example:
+Confirm that the control plane and API gateway are active by running the
+following command:
 
-  ```
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <title>Welcome to nginx!</title>
-    <style>
-        body {
-            width: 35em;
-            margin: 0 auto;
-            font-family: Tahoma, Verdana, Arial, sans-serif;
-        }
-    </style>
-    </head>
-    <body>
-    <h1>Welcome to nginx!</h1>
-    <p>If you see this page, the nginx web server is successfully installed and
-    working. Further configuration is required.</p>
+```bash
+kubectl get po
+```
 
-    <p>For online documentation and support please refer to
-    <a href="http://nginx.org/">nginx.org</a>.<br/>
-    Commercial support is available at
-    <a href="http://nginx.com/">nginx.com</a>.</p>
+The returned list should include at least the following 5 pods:
 
-    <p><em>Thank you for using nginx.</em></p>
-    </body>
-    </html>
-  ```
-
-  Note: You only need one gateway per tenant. A single gateway can front
-  more than one application under the tenant at the same time, so long as
-  they don't implement any conflicting microservices.
-
-  Now that the control plane services and gateway are running, you can run the samples.
+```
+NAME                   READY     STATUS    RESTARTS   AGE
+controller-yab4n       1/1       Running   0          55m
+gateway-dzh1w          1/1       Running   0          55m
+kafka-s7xvb            1/1       Running   0          55m
+logserver-gkpbw        3/3       Running   0          55m
+registry-aat8k         1/1       Running   0          55m
+```
 
 ### Running the samples
 
 8. Follow the instructions in the README for the sample that you want to use.
+
   (a) *helloworld* sample
 
   See https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -213,11 +157,11 @@ testing, and so on.
 
 9. When you are finished, to shut down the gateway and control plane servers, run the following commands:
 
-  ```
-    cd $GOPATH/src/github.com/amalgam8/examples
-    kubectl delete -f gateway/gateway.yaml
-    controlplane/run-controlplane-local.sh stop
-  ```
+```
+cd $GOPATH/src/github.com/amalgam8/examples
+kubectl delete -f gateway/gateway.yaml
+controlplane/run-controlplane-local.sh stop
+```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 
@@ -229,35 +173,35 @@ apps will be running is 192.168.33.33.
    [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
    registry as apps in the marathon framework.
    
-```bash
-cd mesos
-./run-controlplane-mesos.sh start
-```
+    ```bash
+    cd mesos
+    ./run-controlplane-mesos.sh start
+    ```
 
 Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
 
 Verify that the controller is up and running via the Marathon dashboard.
 
 2. Launch the API Gateway
-
-```bash
-cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
-```
+    
+    ```bash
+    cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    ```
 
 Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
 
 3. Launch the Bookinfo application
 
-```bash
-cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
-```
-
-Verify that the application group has been successfully launched via the marathon dashboard.
+    ```bash
+    cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    ```
+    
+    Verify that the application group has been successfully launched via the marathon dashboard.
 
 4. You can now use the `a8ctl` command line tool to set the default
-versions for various services in the Bookinfo app, do version-based
-routing, resilience testing etc. For more details, refer to the
-[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+    versions for various services in the Bookinfo app, do version-based
+    routing, resilience testing etc. For more details, refer to the
+    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
 
 ## Amalgam8 on Google Cloud Platform <a id="gcp"></a>
 
@@ -267,45 +211,45 @@ routing, resilience testing etc. For more details, refer to the
 
 3. Launch the control plane services
 
-```bash
-controlplane/run-controlplane-gcp.sh start
-```
+    ```bash
+    controlplane/run-controlplane-gcp.sh start
+    ```
 
 4. Locate the node where the controller is running and assign an
-  external IP to the node if needed
+   external IP to the node if needed
 
 5. Initialize the first tenant. The `run-controlplane-gcp.sh` script stores
    the JSON payload to initialize the tenant in the `TENANT_REG` environment variable.
 
-```bash
-echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
-```
+    ```bash
+    echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
+    ```
 
 6. Deploy the API gateway
 
-```bash
-kubectl create -f gateway/gateway.yaml
-```
+    ```bash
+    kubectl create -f gateway/gateway.yaml
+    ```
 
-Obtain the public IP of the node where the gateway is running. This will be
-the be IP at which the sample app will be accessible.
+    Obtain the public IP of the node where the gateway is running. This will be
+    the be IP at which the sample app will be accessible.
 
 7. You can now deploy the sample apps as described in "Running the sample
-  apps" section above. Remember to replace the IP address `192.168.33.33`
-  with the public IP address of the node where the gateway service is
-  running on the Google Cloud Platform.
+    apps" section above. Remember to replace the IP address `192.168.33.33`
+    with the public IP address of the node where the gateway service is
+    running on the Google Cloud Platform.
 
 8. Visualizing your deployment with Weave Scope
 
-```bash
-kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.yaml' --validate=false
-```
+    ```bash
+    kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.yaml' --validate=false
+    ```
 
-Once weavescope is up and running, you can view the weavescope dashboard
-on your local host using the following commands
+    Once weavescope is up and running, you can view the weavescope dashboard
+    on your local host using the following commands
   
-```bash
-kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath={.items..metadata.name}) 4040
-```
+    ```bash
+    kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath={.items..metadata.name}) 4040
+    ```
   
-You can open http://localhost:4040 on your browser to access the Scope UI.
+    You can open http://localhost:4040 on your browser to access the Scope UI.

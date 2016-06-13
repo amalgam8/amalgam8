@@ -7,21 +7,36 @@
 [Travis]: https://travis-ci.org/amalgam8/controller
 [Travis Widget]: https://travis-ci.org/amalgam8/controller.svg?branch=master
 
-The Amalgam8 controller is software developed for ... in applications built using a microservice based architecture.
+The Amalgam8 controller is software developed for managing load balancing and failure injection in applications built using a microservice based architecture.
 
-## Image
+An overview of the Amalgam8 project is available here: http://amalgam8.io/
 
-A recent prebuilt Amalgam8 controller image can be found at TBD.
-```sh
-$ docker pull amalgam8/controller
-```
+## Usage
 
-To build from source instead, see [build](https://github.com/amalgam8/controller#building-from-source).
+A prebuilt Docker image is available. Install Docker 1.8 or 1.9 and run the following:
 
-## Building from source
+```docker pull amalgam8/a8-controller```
+
+Provide [configuration options]() as environment variables. For example:
+
+```docker run amalgam8/a8-controller -e poll_interval=60s```
+
+### Configuration options
+Configuration options can be set through environment variables or command line flags. 
+
+| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
+|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
+| `key` | `-f | --flag` | Sample value for this option | Description. | none |
+| `etc` | `-e` | anything | Something | undefined |
+
+### REST API
+
+Documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
+
+## Build from source
+The follow section describes options for building the controller from source. A prebuilt Docker image is available [here](http://xxx).
 
 ### Preprequisites
-
 * Docker 1.8 or 1.9
 * Go 1.6
 
@@ -31,29 +46,7 @@ Clone the repository manually, or use `go get`:
 
 ```go get github.com/amalgam8/controller```
 
-### Building a Docker Image
-
-```
-cd $GOPATH/src/github.com/amalgam8/controller
-make build
-make docker IMAGE=controller
-```
-
-This will produce an image tagged `controller:latest`.
-
-### Standalone
-
-The Amalgam8 controller may also be run outside of a docker container.
-
-The following commands will build and run the controller:
-
-```
-make build
-./bin/controller
-```
-
-### Make Targets
-
+### Make targets
 The following targets are available. Each may be run with `make <target>`.
 
 | Make Target      | Description |
@@ -62,23 +55,25 @@ The following targets are available. Each may be run with `make <target>`.
 | `test`           | `test` runs all tests using `go test` |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
 
-## Usage
+### Build Docker image
+Docker must be configured and running to build a Docker image.
+```
+cd $GOPATH/src/github.com/amalgam8/controller
+make build
+make docker IMAGE=controller
+```
 
-Configuration options can be set through environment variables or command line flags.
+This will produce an image tagged `controller:latest`.
 
-### Command Line Flags and Environment Variables
+### Build executable
+The Docker image is the recommended way of deploying the controller. However, manually building the executable may be useful for testing.
 
-The following configuration options are available.
+The following commands will build and run the controller:
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `key` | `-f | --flag` | Sample value for this option | Description. | none |
-| `etc` | `-e` | anything | Something | undefined |
-
-
-## REST API
-
-Documentation is available in [Swagger](https://github.com/amalgam8/controller/blob/master/swagger.json) format.
+```target
+make build
+./bin/controller
+```
 
 ## License
 Copyright 2016 IBM Corporation
@@ -92,6 +87,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ## Contributing
 
 Contributions and feedback are welcome! 
-Proposals and Pull Requests will be considered and responded to. Please see the
+Proposals and pull requests will be considered. Please see the
 [CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
 file for more information.

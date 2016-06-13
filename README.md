@@ -235,7 +235,7 @@ Verify that the controller is up and running via the Marathon dashboard.
 2. Launch the API Gateway
 
 ```bash
-cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
 ```
 
 Verify that the gateway is reacheable by accessing http://192.168.33.33:32000

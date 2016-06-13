@@ -142,7 +142,7 @@ func New(context *cli.Context) *Config {
 			Port: context.Int(nginxPort),
 		},
 		LogLevel: loggingLevel,
-		AppArgs: context.Args(),
+		AppArgs:  context.Args(),
 	}
 }
 

@@ -140,8 +140,11 @@ To get started, install a recent version of Vagrant and follow the steps below.
 
 ### Running the API Gateway
 
-  An [API Gateway](http://microservices.io/patterns/apigateway.html) provides a single user-facing entry point for a microservices-based application.
-  You can control the Amalgam8 gateway for different purposes, such as active deploy, resiliency testing, and so on.
+An [API Gateway](http://microservices.io/patterns/apigateway.html) provides
+a single user-facing entry point for a microservices-based application.
+You can control the Amalgam8 gateway for different purposes, such as
+version routing, red/black deployments, canary testing, resiliency
+testing, and so on.
 
 6. To start the API gateway, run the following commands:
 
@@ -189,7 +192,9 @@ To get started, install a recent version of Vagrant and follow the steps below.
     </html>
   ```
 
-  Note: A single gateway can front more than one sample app at the same time, so long as they don't implement any conflicting microservices.
+  Note: You only need one gateway per tenant. A single gateway can front
+  more than one application under the tenant at the same time, so long as
+  they don't implement any conflicting microservices.
 
   Now that the control plane services and gateway are running, you can run the samples.
 

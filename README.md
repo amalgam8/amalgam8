@@ -36,6 +36,7 @@ The repository's root directory includes a Vagrant file that provides an environ
 * [Docker](http://www.docker.com/)
 * [Kubernetes](http://kubernetes.io/)
 * [Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli)
+* [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python)
 
 To get started, install a recent version of Vagrant and follow the steps below.
 

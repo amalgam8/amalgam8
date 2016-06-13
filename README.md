@@ -44,28 +44,26 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 
 1. Clone the Amalgam8 repos and start the vagrant environment.
 
-```bash
-git clone git@github.com:amalgam8/examples.git
-
-cd examples
-vagrant up
-vagrant ssh
-```
-
-*Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
-  
-```
-cd $GOPATH/src/github.com/amalgam8/examples
-sudo ./uninstall-kubernetes.sh
-```
-
-Then re-install Kubernetes, by running the following command:
-
-```
-sudo ./install-kubernetes.sh
-```
-
-### Running the controlplane services
+    ```bash
+    git clone git@github.com:amalgam8/examples.git
+    
+    cd examples
+    vagrant up
+    vagrant ssh
+    ```
+    
+    *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
+      
+    ```
+    cd $GOPATH/src/github.com/amalgam8/examples
+    sudo ./uninstall-kubernetes.sh
+    ```
+    
+    Then re-install Kubernetes, by running the following command:
+    
+    ```
+    sudo ./install-kubernetes.sh
+    ```
 
 2. Start the local control plane services (registry and controller) by running the following commands:
 
@@ -74,76 +72,48 @@ sudo ./install-kubernetes.sh
     ./run-controlplane-local.sh start
     ```
 
-3. Run the following command to confirm the control plane is running:
+3. Run the following command to confirm the control plane is working:
 
     ```bash
     a8ctl service-list
     ```
 
-The command shouldn't return any services, since we haven't started any yet, 
-but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
+    The command shouldn't return any services, since we haven't started any yet, 
+    but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
+    
+    ```
+    +---------+-----------------+-------------------+
+    | Service | Default Version | Version Selectors |
+    +---------+-----------------+-------------------+
+    +---------+-----------------+-------------------+
+    ```
+    
+    You can also access the registry at http://192.168.33.33:5080 from the host machine
+    (outside the vagrant box), and the controller at http://192.168.33.33:31200.
+    To access the control plane details of tenant *local*, access
+    http://192.168.33.33:31200/v1/tenants/local/ from your browser.
 
-```
-+---------+-----------------+-------------------+
-| Service | Default Version | Version Selectors |
-+---------+-----------------+-------------------+
-+---------+-----------------+-------------------+
-```
+1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
-You can also access the registry at http://192.168.33.33:5080 from the host machine
-(outside the vagrant box), and the controller at http://192.168.33.33:31200.
-To access the control plane details of tenant *local*, access
-http://192.168.33.33:31200/v1/tenants/local/ from your browser.
+    ```bash
+    cd examples
+    kubectl create -f examples/gateway/gateway.yaml
+    ```
+    
+    Usually, the API gateway is mapped to a DNS route. However, in our local
+    standalone environment, you can access it by using the fixed IP address and
+    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
+    environment.
 
-### Running the API Gateway
+1. Confirm that the API gateway is running by accessing the
+    http://192.168.33.33:32000 from your browser. If all is well, you should
+    see a simple **Welcome to nginx!** page in your browser.
 
-An [API Gateway](http://microservices.io/patterns/apigateway.html) provides
-a single user-facing entry point for a microservices-based application.
-We will use an Amalgam8 proxy for this purpose, so we can control the
-version routing and testing of edge-facing microservices, instead
-of just mid-tier ones.
+    **Note:** You only need one gateway per tenant. A single gateway can front more
+    than one application under the tenant at the same time, so long as they
+    don't implement any conflicting microservices.
 
-To start the API gateway, run the following commands:
-
-```bash
-cd examples
-kubectl create -f examples/gateway/gateway.yaml
-```
-
-Usually, the API gateway is mapped to a DNS route. However, in our local
-standalone environment, you can access it by using the fixed IP address and
-port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-environment.
-
-Confirm that the API gateway is running by accessing the
-http://192.168.33.33:32000 from your browser. If all is well, you should
-see a simple **Welcome to nginx!** page in your browser.
-
-**Note:** You only need one gateway per tenant. A single gateway can front more
-than one application under the tenant at the same time, so long as they
-don't implement any conflicting microservices.
-
-Confirm that the control plane and API gateway are active by running the
-following command:
-
-```bash
-kubectl get po
-```
-
-The returned list should include at least the following 5 pods:
-
-```
-NAME                   READY     STATUS    RESTARTS   AGE
-controller-yab4n       1/1       Running   0          55m
-gateway-dzh1w          1/1       Running   0          55m
-kafka-s7xvb            1/1       Running   0          55m
-logserver-gkpbw        3/3       Running   0          55m
-registry-aat8k         1/1       Running   0          55m
-```
-
-### Running the samples
-
-8. Follow the instructions in the README for the sample that you want to use.
+1. Following instructions in the README for the sample that you want to run.
 
   (a) *helloworld* sample
 
@@ -153,15 +123,13 @@ registry-aat8k         1/1       Running   0          55m
 
   See https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
 
-### Shutting down
+1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
-9. When you are finished, to shut down the gateway and control plane servers, run the following commands:
-
-```
-cd $GOPATH/src/github.com/amalgam8/examples
-kubectl delete -f gateway/gateway.yaml
-controlplane/run-controlplane-local.sh stop
-```
+    ```
+    cd $GOPATH/src/github.com/amalgam8/examples
+    kubectl delete -f gateway/gateway.yaml
+    controlplane/run-controlplane-local.sh stop
+    ```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 
@@ -178,9 +146,9 @@ apps will be running is 192.168.33.33.
     ./run-controlplane-mesos.sh start
     ```
 
-Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+    Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
 
-Verify that the controller is up and running via the Marathon dashboard.
+    Verify that the controller is up and running via the Marathon dashboard.
 
 2. Launch the API Gateway
     
@@ -188,7 +156,7 @@ Verify that the controller is up and running via the Marathon dashboard.
     cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
     ```
 
-Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
+    Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
 
 3. Launch the Bookinfo application
 

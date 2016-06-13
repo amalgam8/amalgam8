@@ -42,7 +42,7 @@ spec:
           value: "12345"
         - name: TENANT_ID
           value: local
-        - name: VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0
+        - name: KAFKA_BROKER
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)

@@ -17,6 +17,7 @@ package config
 import (
 	"strings"
 	"time"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -199,8 +200,8 @@ var TenantFlags = []cli.Flag{
 		Usage:  "Use SASL/PLAIN authentication for Kafka",
 	},
 	cli.StringSliceFlag{
-		Name: kafkaBrokers,
+		Name:   kafkaBrokers,
 		EnvVar: strings.ToUpper(kafkaBrokers),
-		Usage: "Kafka broker",
+		Usage:  "Kafka broker",
 	},
 }

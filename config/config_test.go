@@ -94,43 +94,43 @@ var _ = Describe("Config", func() {
 		})
 
 		It("accepts a valid config", func() {
-			Expect(c.Validate()).ToNot(HaveOccurred())
+			Expect(c.Validate(true)).ToNot(HaveOccurred())
 		})
 
 		It("accepts a valid config without Kafka", func() {
 			c.Kafka = Kafka{}
-			Expect(c.Validate()).ToNot(HaveOccurred())
+			Expect(c.Validate(true)).ToNot(HaveOccurred())
 		})
 
 		It("rejects an invalid URL", func() {
 			c.Controller.URL = "123456"
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects an empty tenant ID", func() {
 			c.Tenant.ID = ""
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects an invalid port", func() {
 			c.Nginx.Port = 0
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects an excessively large poll interval", func() {
 			c.Controller.Poll = 48 * time.Hour
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects a TTL that is less than the heartbeat", func() {
 			c.Tenant.Heartbeat = 5 * time.Minute
 			c.Tenant.TTL = 2 * time.Minute
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects empty brokers", func() {
 			c.Kafka.Brokers = []string{}
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects invalid brokers", func() {
@@ -139,12 +139,12 @@ var _ = Describe("Config", func() {
 				"",
 				"",
 			}
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("rejects partial config", func() {
 			c.Kafka.Username = ""
-			Expect(c.Validate()).To(HaveOccurred())
+			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 
 		It("accepts local kafka config", func() {
@@ -156,7 +156,7 @@ var _ = Describe("Config", func() {
 				},
 				SASL: false,
 			}
-			Expect(c.Validate()).ToNot(HaveOccurred())
+			Expect(c.Validate(true)).ToNot(HaveOccurred())
 		})
 
 	})

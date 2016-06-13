@@ -62,7 +62,6 @@ var _ = Describe("Tenant Poller", func() {
 				Token:     "token",
 				TTL:       60 * time.Second,
 				Heartbeat: 30 * time.Second,
-				Port:      8080,
 			},
 			Registry: config.Registry{
 				URL:   "http://regsitry",

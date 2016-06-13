@@ -120,14 +120,14 @@ func New(context *cli.Context) *Config {
 			Password: context.String(kafkaPassword),
 			APIKey:   context.String(kafkaToken),
 			RestURL:  context.String(kafkaRestURL),
-			Brokers: context.StringSlice(kafkaBrokers),
-			SASL:    context.Bool(kafkaSASL),
+			Brokers:  context.StringSlice(kafkaBrokers),
+			SASL:     context.Bool(kafkaSASL),
 		},
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),
 		},
 		LogLevel: loggingLevel,
-		AppArgs: context.Args(),
+		AppArgs:  context.Args(),
 	}
 }
 

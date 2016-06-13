@@ -34,7 +34,7 @@ func DoServiceRegistrationAndHeartbeat(conf *config.Config, startThread bool) {
 	var sd *SvcRegistryClient
 	sd = NewSvcRegistryClient(conf.Registry.URL)
 	//TODO make ttl and interval configurable
-	sd.RegisterAndHeartbeat(conf.ServiceName, conf.EndpointHost, conf.EndpointPort, conf.Registry.Token, 45, 30, startThread)
+	sd.RegisterAndHeartbeat(conf.ServiceName, conf.ServiceVerion, conf.EndpointHost, conf.EndpointPort, conf.Registry.Token, 45, 30, startThread)
 }
 
 // // SvcRegistryClient Interface for communicating with Service Registry
@@ -137,7 +137,6 @@ func (c *SvcRegistryClient) RegisterService(reqJSON *RegisteredService, token st
 		return "", err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("X-Forwarded-Proto", "https")
 	req.Header.Set("Content-type", "application/json")
 
 	resp, err := c.client.Do(req)
@@ -183,11 +182,6 @@ func (c *SvcRegistryClient) RegisterService(reqJSON *RegisteredService, token st
 
 	// Set our new heartbeat URL
 	heartbeatURL := respJSON.Links.Heartbeat
-	if strings.Contains(c.url, "http:") {
-		heartbeatURL = strings.Replace(heartbeatURL, "https:/", "http:/", -1)
-	} else if strings.Contains(c.url, "https:") {
-		heartbeatURL = strings.Replace(heartbeatURL, "http:/", "https:/", -1)
-	}
 
 	log.WithFields(log.Fields{
 		"heartbeat_url": heartbeatURL,
@@ -207,7 +201,6 @@ func (c *SvcRegistryClient) SendHeartbeat(regJSON *RegisteredService, heartbeatU
 		return heartbeatURL, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("X-Forwarded-Proto", "https")
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -273,7 +266,7 @@ func LocalIP() string {
 }
 
 // RegisterAndHeartbeat registers and sends heartbeats
-func (c *SvcRegistryClient) RegisterAndHeartbeat(service, endpointHost string, endpointPort int, sdToken string, ttl, interval int, startThread bool) {
+func (c *SvcRegistryClient) RegisterAndHeartbeat(serviceName, serviceVersion, endpointHost string, endpointPort int, sdToken string, ttl, interval int, startThread bool) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	ip := endpointHost
 	if ip == "" {
@@ -289,9 +282,6 @@ func (c *SvcRegistryClient) RegisterAndHeartbeat(service, endpointHost string, e
 		log.Info("Retrieved local IP")
 	}
 
-	s := strings.Split(service, ":")
-	serviceName := s[0]
-
 	regJSON := &RegisteredService{
 		ServiceName: serviceName,
 		Endpoint: Endpoint{
@@ -300,10 +290,9 @@ func (c *SvcRegistryClient) RegisterAndHeartbeat(service, endpointHost string, e
 			Value: fmt.Sprintf("%v:%v", ip, endpointPort),
 		},
 		TTL: ttl,
-	}
-
-	if len(s) > 1 {
-		regJSON.MetaData.Version = s[1]
+		MetaData: MetaData{
+			Version: serviceVersion,
+		},
 	}
 
 	heartbeatURL := ""

@@ -46,7 +46,6 @@ var _ = Describe("Config", func() {
 
 		It("has expected default ports", func() {
 			// Expected defaults specified in documentation
-			Expect(c.Tenant.Port).To(Equal(8080))
 			Expect(c.Nginx.Port).To(Equal(6379))
 		})
 
@@ -61,7 +60,6 @@ var _ = Describe("Config", func() {
 					Token:     "token",
 					TTL:       60 * time.Second,
 					Heartbeat: 30 * time.Second,
-					Port:      8080,
 				},
 				Registry: Registry{
 					URL:   "http://registry",
@@ -115,7 +113,7 @@ var _ = Describe("Config", func() {
 		})
 
 		It("rejects an invalid port", func() {
-			c.Tenant.Port = 0
+			c.Nginx.Port = 0
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 

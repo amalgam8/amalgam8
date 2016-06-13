@@ -17,7 +17,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -30,7 +29,6 @@ type Tenant struct {
 	Token     string
 	TTL       time.Duration
 	Heartbeat time.Duration
-	Port      int
 }
 
 // Registry configuration
@@ -64,6 +62,7 @@ type Controller struct {
 // Config TODO
 type Config struct {
 	ServiceName    string
+	ServiceVerion  string
 	EndpointHost   string
 	EndpointPort   int
 	LogstashServer string
@@ -82,19 +81,6 @@ type Config struct {
 
 // New TODO
 func New(context *cli.Context) *Config {
-	// TODO
-	// Read from VCAP JSON object if present?
-
-	mhBrokers := []string{}
-	count := 0
-	for {
-		broker := os.Getenv(fmt.Sprintf("%v%v", "VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_", count))
-		if broker == "" {
-			break
-		}
-		mhBrokers = append(mhBrokers, broker)
-		count++
-	}
 
 	// TODO: parse this more gracefully
 	loggingLevel := logrus.DebugLevel
@@ -107,6 +93,7 @@ func New(context *cli.Context) *Config {
 
 	return &Config{
 		ServiceName:    context.String(serviceName),
+		ServiceVerion:  context.String(serviceVersion),
 		EndpointHost:   context.String(endpointHost),
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),
@@ -123,7 +110,6 @@ func New(context *cli.Context) *Config {
 			Token:     context.String(tenantToken),
 			TTL:       context.Duration(tenantTTL),
 			Heartbeat: context.Duration(tenantHeartbeat),
-			Port:      context.Int(tenantPort),
 		},
 		Registry: Registry{
 			URL:   context.String(registryURL),
@@ -134,8 +120,7 @@ func New(context *cli.Context) *Config {
 			Password: context.String(kafkaPassword),
 			APIKey:   context.String(kafkaToken),
 			RestURL:  context.String(kafkaRestURL),
-			// FIXME brokers handled properly?
-			Brokers: mhBrokers,
+			Brokers: context.StringSlice(kafkaBrokers),
 			SASL:    context.Bool(kafkaSASL),
 		},
 		Nginx: Nginx{
@@ -147,7 +132,7 @@ func New(context *cli.Context) *Config {
 }
 
 // Validate the configuration
-func (c *Config) Validate() error {
+func (c *Config) Validate(validateCreds bool) error {
 
 	if !c.Register && !c.Proxy {
 		return errors.New("Sidecar serves no purpose. Please enable either proxy or registry or both")
@@ -182,28 +167,32 @@ func (c *Config) Validate() error {
 				return nil
 			},
 			IsNotEmpty("Service Name", c.ServiceName),
-			IsNotEmpty("Registry token", c.Registry.Token),
-			IsValidURL("Regsitry URL", c.Registry.URL),
-			IsInRange("Tenant port", c.Nginx.Port, 1, 65535),
+			IsInRange("NGINX port", c.Nginx.Port, 1, 65535),
 			IsNotEmpty("Service Endpoint Host", c.EndpointHost),
 			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
 			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 		)
+
+		if validateCreds {
+			validators = append(validators,
+				IsNotEmpty("Registry token", c.Registry.Token),
+				IsValidURL("Regsitry URL", c.Registry.URL),
+			)
+		}
 	}
 
 	if c.Proxy {
 		validators = append(validators,
 			IsNotEmpty("Tenant ID", c.Tenant.ID),
 			IsNotEmpty("Tenant token", c.Tenant.Token),
-			IsInRange("Tenant port", c.Tenant.Port, 1, 65535),
 			IsValidURL("Controller URL", c.Controller.URL),
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
 	}
 
 	// If any of the Message Hub config is present validate the Message Hub config
-	if len(c.Kafka.Brokers) > 0 || c.Kafka.Username != "" || c.Kafka.Password != "" {
+	if validateCreds && (len(c.Kafka.Brokers) > 0 || c.Kafka.Username != "" || c.Kafka.Password != "") {
 		validators = append(validators,
 			func() error {
 				if len(c.Kafka.Brokers) == 0 {

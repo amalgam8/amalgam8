@@ -61,7 +61,7 @@ func sidecarMain(conf config.Config) error {
 
 	logrus.SetLevel(conf.LogLevel)
 
-	if err = conf.Validate(); err != nil {
+	if err = conf.Validate(false); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
 		return err
 	}
@@ -91,14 +91,16 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		go func() {
-			if err = startProxy(&conf); err != nil {
-				logrus.WithError(err).Error("Could not start proxy")
-			}
-		}()
+		if err = startProxy(&conf); err != nil {
+			logrus.WithError(err).Error("Could not start proxy")
+		}
 	}
 
 	if conf.Register {
+		if err = conf.Validate(true); err != nil {
+			logrus.WithError(err).Error("Validation of config failed")
+			return err
+		}
 		logrus.Info("Registering")
 		register.DoServiceRegistrationAndHeartbeat(&conf, true)
 	}
@@ -117,9 +119,7 @@ func startProxy(conf *config.Config) error {
 
 	rc := clients.NewController(conf)
 
-	// FIXME: hack until we add this as an argument (right now we are passing in "serviceName:version")
-	serviceName := strings.Split(conf.ServiceName, ":")
-	nginx := nginx.NewNginx(serviceName[0])
+	nginx := nginx.NewNginx(conf.ServiceName)
 
 	err = checkIn(rc, conf)
 	if err != nil {
@@ -161,10 +161,11 @@ func startProxy(conf *config.Config) error {
 	}
 
 	poller := checker.NewPoller(conf, rc, nginx)
-	if err = poller.Start(); err != nil {
-		logrus.WithError(err).Error("Could not poll Controller")
-		return err
-	}
+	go func() {
+		if err = poller.Start(); err != nil {
+			logrus.WithError(err).Error("Could not poll Controller")
+		}
+	}()
 
 	return nil
 }
@@ -175,7 +176,12 @@ func checkIn(rc clients.Controller, conf *config.Config) error {
 		// TODO If controller returns 404, we need to register
 		if strings.Contains(err.Error(), "ID not found") {
 			logrus.Info("ID not found, registering with controller")
-			// TODO validate creds before registering?
+
+			if err = conf.Validate(true); err != nil {
+				logrus.WithError(err).Error("Validation of config failed")
+				return err
+			}
+
 			if err = rc.Register(); err != nil {
 				// TODO if register returns 409, possible race condition, try to get creds again
 				if strings.Contains(err.Error(), "ID already present") {

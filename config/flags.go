@@ -17,7 +17,6 @@ package config
 import (
 	"strings"
 	"time"
-
 	"github.com/codegangsta/cli"
 )
 
@@ -28,7 +27,6 @@ const (
 	supervise       = "supervise"
 	tenantID        = "tenant_id"
 	tenantToken     = "tenant_token"
-	tenantPort      = "tenant_port"
 	kafkaToken      = "kafka_token"
 	kafkaUsername   = "kafka_user"
 	kafkaPassword   = "kafka_pass"
@@ -37,7 +35,6 @@ const (
 	kafkaAdminURL   = "kafka_admin_url"
 	kafkaSASL       = "kafka_sasl"
 	registryToken   = "registry_token"
-	apiPort         = "api_port"
 	registryURL     = "registry_url"
 	nginxPort       = "nginx_port"
 	controllerURL   = "controller_url"
@@ -47,6 +44,7 @@ const (
 	endpointHost    = "endpoint_host"
 	endpointPort    = "endpoint_port"
 	serviceName     = "service"
+	serviceVersion  = "service_version"
 	logLevel        = "log_level"
 	logstashServer  = "logstash_server"
 )
@@ -64,6 +62,11 @@ var TenantFlags = []cli.Flag{
 		Name:   serviceName,
 		EnvVar: strings.ToUpper(serviceName),
 		Usage:  "Service name to register with",
+	},
+	cli.StringFlag{
+		Name:   serviceVersion,
+		EnvVar: strings.ToUpper(serviceVersion),
+		Usage:  "Service version to register with",
 	},
 	cli.StringFlag{
 		Name:   endpointHost,
@@ -122,12 +125,6 @@ var TenantFlags = []cli.Flag{
 		EnvVar: strings.ToUpper(tenantHeartbeat),
 		Value:  time.Duration(time.Second * 45),
 		Usage:  "Tenant heartbeat interval to Registry",
-	},
-	cli.IntFlag{
-		Name:   tenantPort,
-		EnvVar: strings.ToUpper(tenantPort),
-		Value:  8080,
-		Usage:  "Tenant API port",
 	},
 
 	// Registry
@@ -200,5 +197,10 @@ var TenantFlags = []cli.Flag{
 		Name:   kafkaSASL,
 		EnvVar: strings.ToUpper(kafkaSASL),
 		Usage:  "Use SASL/PLAIN authentication for Kafka",
+	},
+	cli.StringSliceFlag{
+		Name: kafkaBrokers,
+		EnvVar: strings.ToUpper(kafkaBrokers),
+		Usage: "Kafka broker",
 	},
 }

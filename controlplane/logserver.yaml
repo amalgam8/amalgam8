@@ -1,11 +1,26 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+# A simple ELK stack where the application logs end up. In addition to monitoring,
+# the logs here will be used by Gremlin to validate assertions
 apiVersion: v1
 kind: Service
 metadata: 
   labels: 
     name: logserver
   name: logserver
-spec: 
-  clusterIP: "10.0.0.220"
+spec:
   ports: 
     - 
       name: kibana
@@ -21,13 +36,11 @@ spec:
       targetPort: 9200
     - 
       name: es2
-      nodePort: 30300
       port: 9300
       protocol: TCP
       targetPort: 9300
     - 
       name: logstashport
-      nodePort: 30092
       port: 8092
       protocol: TCP
       targetPort: 8092

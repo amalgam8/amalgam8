@@ -1,0 +1,194 @@
+{
+    "id": "a8-bookinfo",
+    "groups" : [
+	{
+	    "id" : "bookinfoapp",
+	    "apps" : [
+		{
+		    "id" : "productpage-v1",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python productpage.py 9080 http://localhost:6379",
+		    "env": {
+			"CONTROLLER_URL":"http://192.168.33.33:31200",
+			"TENANT_TOKEN":"12345",
+			"TENANT_ID": "local",
+			"VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0": "192.168.33.33:9092",
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "productpage:v1",
+			"LOGSTASH_SERVER" : "'192.168.33.33:8092'",
+			"CONTROLLER_POLL" : "15s"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 256
+		},
+		{
+		    "id" : "details-v1",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python details.py 9080 http://localhost:6379",
+		    "env": {
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "details:v1",
+			"LOG" : "false",
+			"PROXY" : "false"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 128
+		},
+		{
+		    "id" : "ratings-v1",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-ratings-sidecar:v1",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python ratings.py 9080 http://localhost:6379",
+		    "env": {
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "ratings:v1",
+			"LOG" : "false",
+			"PROXY" : "false"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 128
+		},
+		{
+		    "id" : "reviews-v1",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
+		    "env": {
+			"CONTROLLER_URL":"http://192.168.33.33:31200",
+			"TENANT_TOKEN":"12345",
+			"TENANT_ID": "local",
+			"VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0": "192.168.33.33:9092",
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "reviews:v1",
+			"LOGSTASH_SERVER" : "'192.168.33.33:8092'",
+			"CONTROLLER_POLL" : "15s"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 256
+		},
+		{
+		    "id" : "reviews-v2",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
+		    "env": {
+			"CONTROLLER_URL":"http://192.168.33.33:31200",
+			"TENANT_TOKEN":"12345",
+			"TENANT_ID": "local",
+			"VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0": "192.168.33.33:9092",
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "reviews:v2",
+			"LOGSTASH_SERVER" : "'192.168.33.33:8092'",
+			"CONTROLLER_POLL" : "15s"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 256
+		},
+		{
+		    "id" : "reviews-v3",
+		    "container": {
+			"type": "DOCKER",
+			"docker": {
+			    "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3",
+			    "network": "BRIDGE",
+			    "portMappings": [
+				{
+				    "containerPort": 9080,
+				    "hostPort": 0,
+				    "protocol" : "tcp"
+				}
+			    ]
+			}
+		    },
+            "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
+		    "env": {
+			"CONTROLLER_URL":"http://192.168.33.33:31200",
+			"TENANT_TOKEN":"12345",
+			"TENANT_ID": "local",
+			"VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0": "192.168.33.33:9092",
+			"REGISTRY_URL": "http://192.168.33.33:31300",
+			"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			"SERVICE" : "reviews:v3",
+			"LOGSTASH_SERVER" : "'192.168.33.33:8092'",
+			"CONTROLLER_POLL" : "15s"
+		    },
+		    "instances": 1,
+		    "cpus": 0.1,
+		    "mem": 256
+		}
+	    ]
+	}
+    ]
+}

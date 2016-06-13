@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # Copyright 2016 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,22 +12,18 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+FROM amalgam8/a8-sidecar:0.1
 
-set -x
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y -q --no-install-recommends \
+   python2.7 python-pip python-dev
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$SCRIPTDIR/../../sidecar/
+ADD requirements.txt /opt
+RUN pip install -r /opt/requirements.txt
 
-make -C $MAKEDIR build
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: make failed for sidecar.\n***********\n"
-    exit $STATUS
-fi
+RUN mkdir -p /opt/microservices
+COPY . /opt/microservices/
+EXPOSE 9080
+WORKDIR /opt/microservices
 
-make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:0.1 DOCKERFILE=./docker/Dockerfile.ubuntu
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build failed for sidecar (ubuntu version)\n***********\n"
-    exit $STATUS
-fi
+ENTRYPOINT ["a8sidecar", "--supervise", "python", "productpage.py", "9080", "http://localhost:6379"]

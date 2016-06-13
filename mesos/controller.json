@@ -1,0 +1,24 @@
+{
+    "id": "a8-controller",
+    "container": {
+	"type": "DOCKER",
+	"docker": {
+	    "image": "amalgam8/a8-controller:0.1",
+	    "network": "BRIDGE",
+	    "portMappings": [
+		{
+		    "containerPort": 6379,
+		    "hostPort": 31200,
+		    "protocol" : "tcp"
+		}
+	    ]
+	}
+    },
+    "env": {
+	"POLL_INTERVAL":"5s",
+	"LOG_LEVEL":"info"
+    },
+    "instances": 1,
+    "cpus": 0.1,
+    "mem": 128
+}

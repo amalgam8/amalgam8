@@ -43,7 +43,7 @@ This will produce an image tagged `controller:latest`.
 
 ### Standalone
 
-The Amalgam8 controller may also be run outside of a docker container as a Go binary for testing.
+The Amalgam8 controller may also be run outside of a docker container.
 
 The following commands will build and run the controller:
 
@@ -64,11 +64,11 @@ The following targets are available. Each may be run with `make <target>`.
 
 ## Usage
 
-The controller supports a number of configuration options. The configuration options can be set through environment variables or command line flags.
+Configuration options can be set through environment variables or command line flags.
 
 ### Command Line Flags and Environment Variables
 
-The following environment variables are available. All of them are optional. They are listed in a general order of likelihood that a user may want to configure them as something other than the defaults.
+The following configuration options are available.
 
 | Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
 |:----------------|:----------------------------|:----------------------------|:------------|:--------------|

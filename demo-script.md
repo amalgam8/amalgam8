@@ -38,6 +38,8 @@ git clone https://github.com/amalgam8/examples
 cd examples
 vagrant up
 vagrant ssh
+
+cd $GOPATH/src/github.com/amalgam8
 ```
 
 **Note:** If you stopped a previous Vagrant VM and restarted it, Kubernetes
@@ -57,11 +59,10 @@ sudo examples/install-kubernetes.sh
 ## Start the multi-tenant control plane and a tenant
 
 Start the control plane services (registry and controller) by running the
-following commands:
+following command:
 
 ```bash
-cd examples/controlplane
-./run-controlplane-local.sh start
+examples/run-controlplane-local.sh start
 ```
 
 The above command also creates a tenant named "local" in the
@@ -101,10 +102,9 @@ server that is controlled by the control plane.
 
 ### Deploy the API gateway
 
-To start the API gateway, run the following commands:
+To start the API gateway, run the following command:
 
 ```bash
-cd examples
 kubectl create -f examples/gateway/gateway.yaml
 ```
 
@@ -143,10 +143,9 @@ registry-aat8k         1/1       Running   0          55m
 
 An overview of the Bookinfo application can be found under the
 [Bookinfo app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md). Bring
-up the bookinfo sample app by running the following commands:
+up the bookinfo sample app by running the following command:
 
 ```bash
-cd examples
 kubectl create -f examples/apps/bookinfo/bookinfo.yaml
 ```
 
@@ -451,7 +450,6 @@ a8ctl traffic-step reviews --amount 100 # 100%
 #### Cleanup to restart demo
 
 ```
-cd examples
 kubectl delete -f examples/apps/bookinfo.yaml
 a8ctl route-delete productpage
 a8ctl route-delete ratings
@@ -464,19 +462,20 @@ To (re)start the control plane:
 If `kubectl get svc` not working, then
 
 ```bash
-cd examples
-sudo controlplane/uninstall-kubernetes
-sudo controlplane/install-kubernetes
+sudo examples/uninstall-kubernetes.sh
+sudo examples/install-kubernetes.sh
 ```
 
 To stop an operational control plane and the API gateway
+
 ```bash
 examples/controlplane/run-controlplane-local.sh stop
-kubectl delete -f gateway/gateway.yaml
+kubectl delete -f examples/gateway/gateway.yaml
 ```
 
-To start control plane and gateway:
+To start control plane and gateway
+
 ```bash
 examples/controlplane/run-controlplane-local.sh start
-kubectl create -f gateway/gateway.yaml
+kubectl create -f examples/gateway/gateway.yaml
 ```

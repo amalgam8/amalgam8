@@ -5,31 +5,29 @@ Sample microservice-based applications and local sandbox environment for Amalgam
 ## Table of Contents
 
 * [Overview](#overview)
-* [Amalgam8 on Kubernetes (local)](#local-k8s)
-* [Amalgam8 on IBM Bluemix](#bluemix)
-* [Amalgam8 on Marathon/Mesos (local)](#local-marathon)
-* [Amalgam8 on Google Compute Cloud](#gcp)
+* Localhost Deployment
+    * [Docker](#local-docker)
+    * [Kubernetes](#local-k8s) (recommended full instructions)
+    * [Marathon/Mesos](#local-marathon)
+* Cloud Deployment
+    * [IBM Bluemix](#bluemix)
+    * [Google Compute Cloud](#gcp)
 
 ## Overview <a id="overview"></a>
 
-This project includes a number of Amalgam8 sample programs, and a preconfigured environment to allow
-you to easily run, build, and experiment with the provided samples.
+This project includes a number of Amalgam8 sample programs, scripts and a preconfigured environment to allow
+you to easily run, build, and experiment with the provided samples, in several platforms.
+In addition, the scripts are generic enough that you can easily deploy
+the samples to other environments.
 
 The following samples are available for Amalgam8:
 
 * [Helloworld](https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
 * [Bookinfo](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
 
-There is an end-to-end
+There is also an end-to-end
 [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
 that you can try out on your local vagrant box.
-
-In addition, the scripts are generic enough that you can easily deploy
-them to any kubernetes based environment such as OpenShift, Google Cloud
-Platform, Azure, etc. See the last section of this README for details on
-how to deploy Amalgam8 on Google Cloud Platform.
-
-## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 
 The repository's root directory includes a Vagrant file that provides an environment with everything installed and ready to build/run the samples:
 
@@ -39,11 +37,20 @@ The repository's root directory includes a Vagrant file that provides an environ
 * [Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli)
 * [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python)
 
-To get started, install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and then if you just want to run the demos, see the highlights, and kick the tires,
-follow the instructions below. If you'd like to also be able to better understand the APIs, change and compile the code, or build the images,
+The easiest way to get started is to install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and then
+if you just want to run the demos and see the highlights, follow the instructions corresponding to the environment that you want to use.
+If you'd like to also be able to better understand the APIs, change and compile the code, or build the images,
 refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md) instead.
 
-1. Clone the Amalgam8 repos and start the vagrant environment.
+
+## Amalgam8 with Docker - local environment <a id="local-docker"></a>
+
+TBD ... You can use the provided vagrant file to run on docker, or you can just install docker, docker-compose, a8ctl. That's all you need, I think
+
+
+## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
+
+1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
 
     ```bash
     git clone git@github.com:amalgam8/examples.git
@@ -67,13 +74,13 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
     sudo examples/install-kubernetes.sh
     ```
 
-2. Start the local control plane services (registry and controller) by running the following commands:
+1. Start the local control plane services (registry and controller) by running the following commands:
 
     ```
     examples/controlplane/run-controlplane-local.sh start
     ```
 
-3. Run the following command to confirm the control plane is working:
+1. Run the following command to confirm the control plane is working:
 
     ```bash
     a8ctl service-list
@@ -130,6 +137,47 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
     examples/controlplane/run-controlplane-local.sh stop
     ```
 
+## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
+
+This section assumes that the IP address of your mesos slave where all the
+apps will be running is 192.168.33.33.
+
+1. The `run-controlplane-mesos.sh` script in the `mesos` folder sets up a
+   local marathon/mesos cluster (based on Holiday Check's
+   [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
+   registry as apps in the marathon framework.
+   
+    ```bash
+    cd mesos
+    ./run-controlplane-mesos.sh start
+    ```
+
+    Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+
+    Verify that the controller is up and running via the Marathon dashboard.
+
+1. Launch the API Gateway
+    
+    ```bash
+    cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    ```
+
+    Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
+
+1. Launch the Bookinfo application
+
+    ```bash
+    cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    ```
+    
+    Verify that the application group has been successfully launched via the marathon dashboard.
+
+1. You can now use the `a8ctl` command line tool to set the default
+    versions for various services in the Bookinfo app, do version-based
+    routing, resilience testing etc. For more details, refer to the
+    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+
+
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
 
 Running Amalgam8 applications on [IBM Bluemix](http://bluemix.net/) is particulary simple because the control plane services are provided as
@@ -140,36 +188,39 @@ on Bluemix, follow the instructions below.
 If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.net/).
 
 1. Deploy the following services from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/)
-    1. [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html) - Amalgam8 Registry Service
-    2. Service Proxy version 2.0 (Coming Soon) - Amalgam8 Controller Service
-    3. [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) - Kafka (optional)
-    4. Logmet/ELK ???
+    * [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html) - Amalgam8 Registry Service
+    * Service Proxy version 2.0 (Coming Soon) - Amalgam8 Controller Service
+    * [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) - Kafka (optional)
+    * Logmet/ELK ???
 
     *Note:* The Amalgam8 controller service is not yet available on Bluemix, so the current demo runs a local instance of
     the A8 controller in the tenant space. This will no longer be needed in the near future.
 
-2. Configure the [envrc file](bluemix/envrc) to your environment variable values
-  1. NAMESPACE should be your Bluemix registry namespace, e.g. *cf ic namespace get*
-  2. REGISTRY_SVC should be the Service Discovery service instance name
-  3. ...
+1. Configure the [envrc file](bluemix/envrc) to your environment variable values
+    * NAMESPACE should be your Bluemix registry namespace, e.g. *cf ic namespace get*
+    * REGISTRY_SVC should be the Service Discovery service instance name
+    * ...
 
-3. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
+1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
   [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
   [IBM Container CLI extension](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_ov),
   and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
   
-4. [Login to IBM Bluemix container service](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_login)
+1. [Login to IBM Bluemix container service](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_login)
   using *cf login* and *cf ic login*
 
-5. (Temporary - see Note: above) Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
+1. (Temporary - see Note: above) Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
     Verify that the controller is running by ...
 
-4. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
+1. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
 
-5. Configure the Amalgam8 CLI.
+1. Configure the Amalgam8 CLI
+
+    ```
     export A8_CONTROLLER_URL=...
+    ```
 
-6. Confirm the microservices are running
+1. Confirm the microservices are running
 
     ```
     a8ctl service-list
@@ -188,7 +239,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+---------------------+
      ```
 
-6. Route all traffic to version v1 of each microservice
+1. Route all traffic to version v1 of each microservice
 
     ```bash
     a8ctl route-set productpage --default v1
@@ -197,7 +248,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     a8ctl route-set reviews --default v1
     ```
 
-7. Confirm the routes are set by running the following command
+1. Confirm the routes are set by running the following command
 
     ```bash
     a8ctl route-list
@@ -219,73 +270,33 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     Open http://192.168.33.33:32000/productpage/productpage from your browser
     and you should see the bookinfo application displayed.
   
-8. Now that the application is up and running, you can try out the other a8ctl commands as described in
+1. Now that the application is up and running, you can try out the other a8ctl commands as described in
   [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
    
-
-## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
-
-This section assumes that the IP address of your mesos slave where all the
-apps will be running is 192.168.33.33.
-
-1. The `run-controlplane-mesos.sh` script in the `mesos` folder sets up a
-   local marathon/mesos cluster (based on Holiday Check's
-   [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
-   registry as apps in the marathon framework.
-   
-    ```bash
-    cd mesos
-    ./run-controlplane-mesos.sh start
-    ```
-
-    Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
-
-    Verify that the controller is up and running via the Marathon dashboard.
-
-2. Launch the API Gateway
-    
-    ```bash
-    cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
-    ```
-
-    Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
-
-3. Launch the Bookinfo application
-
-    ```bash
-    cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
-    ```
-    
-    Verify that the application group has been successfully launched via the marathon dashboard.
-
-4. You can now use the `a8ctl` command line tool to set the default
-    versions for various services in the Bookinfo app, do version-based
-    routing, resilience testing etc. For more details, refer to the
-    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
 
 ## Amalgam8 on Google Cloud Platform <a id="gcp"></a>
 
 1. Setup [Google Cloud SDK](https://cloud.google.com/sdk/) on your machine
 
-2. Setup a cluster of 3 nodes
+1. Setup a cluster of 3 nodes
 
-3. Launch the control plane services
+1. Launch the control plane services
 
     ```bash
     controlplane/run-controlplane-gcp.sh start
     ```
 
-4. Locate the node where the controller is running and assign an
+1. Locate the node where the controller is running and assign an
    external IP to the node if needed
 
-5. Initialize the first tenant. The `run-controlplane-gcp.sh` script stores
+1. Initialize the first tenant. The `run-controlplane-gcp.sh` script stores
    the JSON payload to initialize the tenant in the `TENANT_REG` environment variable.
 
     ```bash
     echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
     ```
 
-6. Deploy the API gateway
+1. Deploy the API gateway
 
     ```bash
     kubectl create -f gateway/gateway.yaml
@@ -294,12 +305,12 @@ apps will be running is 192.168.33.33.
     Obtain the public IP of the node where the gateway is running. This will be
     the be IP at which the sample app will be accessible.
 
-7. You can now deploy the sample apps as described in "Running the sample
+1. You can now deploy the sample apps as described in "Running the sample
     apps" section above. Remember to replace the IP address `192.168.33.33`
     with the public IP address of the node where the gateway service is
     running on the Google Cloud Platform.
 
-8. Visualizing your deployment with Weave Scope
+1. Visualizing your deployment with Weave Scope
 
     ```bash
     kubectl create -f 'https://scope.weave.works/launch/k8s/weavescope.yaml' --validate=false

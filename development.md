@@ -1,5 +1,7 @@
 # Amalgam8 Developer Instructions
 
+*Note: These instructions are currently only available for Amalgam8 on local Kubernetes.*
+
 The easiest way to set up an environment where you can compile and experiment with Amalgam8 source code
 is by using the same vagrant VM that is used for the kick-the-tires demos in
 the [examples](https://github.com/amalgam8/examples) project, only in this case you need to pull more

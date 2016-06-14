@@ -42,7 +42,9 @@ spec:
           - --supervise=false
         env:
         - name: SERVICE
-          value: details:v1
+          value: details
+        - name: SERVICE_VERSION
+          value: v1
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
@@ -86,7 +88,9 @@ spec:
           - --supervise=false
         env:
         - name: SERVICE
-          value: ratings:v1
+          value: ratings
+        - name: SERVICE_VERSION
+          value: v1
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
@@ -136,7 +140,9 @@ spec:
         - name: KAFKA_BROKER
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
-          value: reviews:v1
+          value: reviews
+        - name: SERVICE_VERSION
+          value: v1
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
@@ -186,7 +192,9 @@ spec:
         - name: KAFKA_BROKER
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
-          value: reviews:v2
+          value: reviews
+        - name: SERVICE_VERSION
+          value: v2
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
@@ -236,7 +244,9 @@ spec:
         - name: KAFKA_BROKER
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
-          value: reviews:v3
+          value: reviews
+        - name: SERVICE_VERSION
+          value: v3
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL
@@ -286,7 +296,9 @@ spec:
         - name: KAFKA_BROKER
           value: $(KAFKA_SERVICE_HOST):$(KAFKA_SERVICE_PORT)
         - name: SERVICE
-          value: productpage:v1
+          value: productpage
+        - name: SERVICE_VERSION
+          value: v1
         - name: LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: REGISTRY_URL

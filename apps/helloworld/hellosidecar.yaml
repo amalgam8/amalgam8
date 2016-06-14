@@ -35,7 +35,9 @@ spec:
         - containerPort: 5000
         env:
         - name: SERVICE
-          value: helloworld:v1
+          value: helloworld
+        - name: SERVICE_VERSION
+          value: v1
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN
@@ -70,7 +72,9 @@ spec:
         - containerPort: 5000
         env:
         - name: SERVICE
-          value: helloworld:v2
+          value: helloworld
+        - name: SERVICE_VERSION
+          value: v2
         - name: REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: REGISTRY_TOKEN

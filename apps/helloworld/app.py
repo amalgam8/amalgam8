@@ -18,8 +18,8 @@ app = Flask(__name__)
 
 @app.route("/hello")
 def hello():
-    service_version = os.environ.get('SERVICE').split(':')
-    version = service_version[1] if len(service_version) == 2 else 'UNVERSIONED'
+    service_version = os.environ.get('SERVICE_VERSION')
+    version = service_version if service_version != "" else 'UNVERSIONED'
     return "Hello version: %s, container: %s\n" % (version, os.environ.get('HOSTNAME'))
 
 if __name__ == "__main__":

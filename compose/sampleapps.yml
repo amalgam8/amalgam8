@@ -1,0 +1,60 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##API Gateway##
+gateway:
+  image: amalgam8/a8-sidecar:0.1
+  environment:
+    - CONTROLLER_URL=http://controller:6379
+    - TENANT_TOKEN=12345
+    - TENANT_ID=local
+    - VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0=kafka:9092
+    - REGISTER=false
+    - SERVICE=gateway
+    - LOGSTASH_SERVER='logstash:8092'
+    - CONTROLLER_POLL=15s
+  ports:
+    - "32000:6379"
+  external_links:
+    - compose_kafka_1:kafka
+    - compose_logstash_1:logstash
+    - compose_controller_1:controller
+
+helloworld-v1:
+  image: amalgam8/a8-examples-helloworld-sidecar:v1
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=helloworld:v1
+    - LOG=false
+    - PROXY=false
+    - ENDPOINT_PORT=5000
+    - ENDPOINT_HOST=''
+  command: a8sidecar --supervise python -u app.py
+  external_links:
+    - compose_registry_1:registry
+
+helloworld-v2:
+  image: amalgam8/a8-examples-helloworld-sidecar:v2
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=helloworld:v2
+    - LOG=false
+    - PROXY=false
+    - ENDPOINT_PORT=5000
+    - ENDPOINT_HOST=''
+  command: a8sidecar --supervise python -u app.py
+  external_links:
+    - compose_registry_1:registry

@@ -31,7 +31,7 @@ Configuration options can be set through environment variables or command line f
 
 ### REST API
 
-Documentation is available[here](http://amalgam8.io/controller/#/default).
+Documentation is available [here](http://amalgam8.io/controller/#/default).
 
 ## Build from source
 The follow section describes options for building the controller from source. Instructions on using a prebuilt Docker image are available [here](https://github.com/amalgam8/controller#usage).

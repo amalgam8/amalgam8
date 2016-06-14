@@ -1,6 +1,7 @@
 # Amalgam8 examples
 
-Sample microservice-based applications and local sandbox environment for Amalgam8
+Sample microservice-based applications and local sandbox environment for Amalgam8.
+An overview of Amalgam8 can be found at www.amalgam8.io.
 
 ## Table of Contents
 
@@ -16,9 +17,9 @@ Sample microservice-based applications and local sandbox environment for Amalgam
 ## Overview <a id="overview"></a>
 
 This project includes a number of Amalgam8 sample programs, scripts and a preconfigured environment to allow
-you to easily run, build, and experiment with the provided samples, in several platforms.
+you to easily run, build, and experiment with the provided samples, in several environments.
 In addition, the scripts are generic enough that you can easily deploy
-the samples to other environments.
+the samples to other environments as well.
 
 The following samples are available for Amalgam8:
 
@@ -27,7 +28,7 @@ The following samples are available for Amalgam8:
 
 There is also an end-to-end
 [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
-that you can try out on your local vagrant box.
+that you can try out on your local vagrant box. This is a good place to start, if you're new to Amalgam8.
 
 The repository's root directory includes a Vagrant file that provides an environment with everything installed and ready to build/run the samples:
 
@@ -180,36 +181,38 @@ apps will be running is 192.168.33.33.
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
 
-Running Amalgam8 applications on [IBM Bluemix](http://bluemix.net/) is particulary simple because the control plane services are provided as
-multi-tenanted Bluemix services, making it a matter of simply configuring and then running the tenant application itself.
-
 To run the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md)
 on Bluemix, follow the instructions below.
 If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.net/).
 
-1. Deploy the following services from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/)
-    * [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html) - Amalgam8 Registry Service
-    * Service Proxy version 2.0 (Coming Soon) - Amalgam8 Controller Service
-    * [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) - Kafka (optional)
-    * Logmet/ELK ???
+1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
+    [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
+    [IBM Bluemix CLI](http://clis.ng.bluemix.net/ui/home.html),
+    and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
+  
+1. [Login to bluemix and initialize the containers environment]
+    using ```bx login``` and ```bx ic init```
 
-    *Note:* The Amalgam8 controller service is not yet available on Bluemix, so the current demo runs a local instance of
-    the A8 controller in the tenant space. This will no longer be needed in the near future.
+1. Deploy the A8 registry
+
+    The A8 registry is available as a multi-tenanted Bluemix service,
+    [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html),
+    so you can simply deploy it from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/).
+    
+    Note: If you would rather run a particular version yourself, you customize and then run
+    [bluemix/deploy-registry.sh](bluemix/deploy-controller.sh) instead.
+
+1. Optionally deploy the [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) service from the 
+    [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/)
+    
+    Note: If you don't use Message Hub, the A8 Proxies will use a slower polling algorithm to get changes from the A8 Controller
 
 1. Configure the [envrc file](bluemix/envrc) to your environment variable values
-    * NAMESPACE should be your Bluemix registry namespace, e.g. *cf ic namespace get*
+    * NAMESPACE should be your Bluemix registry namespace, e.g. ```bx ic namespace-get```
     * REGISTRY_SVC should be the Service Discovery service instance name
     * ...
 
-1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
-  [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-  [IBM Container CLI extension](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_ov),
-  and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
-  
-1. [Login to IBM Bluemix container service](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_login)
-  using *cf login* and *cf ic login*
-
-1. (Temporary - see Note: above) Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
+1. Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
     Verify that the controller is running by ...
 
 1. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
@@ -267,11 +270,11 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+-----------------+-------------------+
     ```
 
-    Open http://192.168.33.33:32000/productpage/productpage from your browser
+    Open http://${BOOKINFO_HOSTNAME}.mybluemix.net/productpage/productpage from your browser
     and you should see the bookinfo application displayed.
   
 1. Now that the application is up and running, you can try out the other a8ctl commands as described in
-  [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
    
 
 ## Amalgam8 on Google Cloud Platform <a id="gcp"></a>

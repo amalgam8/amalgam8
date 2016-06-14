@@ -69,4 +69,4 @@ controller:
   links:
     - kafka
     - registry
-    container_name: controller
+  container_name: controller

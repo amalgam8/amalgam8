@@ -1,0 +1,125 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+details-v1:
+  image: amalgam8/a8-examples-bookinfo-details-sidecar:v1
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=details
+    - SERVICE_VERSION=v1
+    - LOG=false
+    - PROXY=false
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+  external_links:
+    - registry
+
+ratings-v1:
+  image: amalgam8/a8-examples-bookinfo-ratings-sidecar:v1
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=ratings
+    - SERVICE_VERSION=v1
+    - LOG=false
+    - PROXY=false
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+  external_links:
+    - registry
+
+reviews-v1:
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=reviews
+    - SERVICE_VERSION=v1
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+    - CONTROLLER_URL=http://controller:6379
+    - TENANT_TOKEN=12345
+    - TENANT_ID=local
+    - KAFKA_BROKER=kafka:9092
+    - LOGSTASH_SERVER='logstash:8092'
+    - CONTROLLER_POLL=15s
+  external_links:
+    - kafka
+    - logstash
+    - controller
+    - registry
+
+reviews-v2:
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=reviews
+    - SERVICE_VERSION=v2
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+    - CONTROLLER_URL=http://controller:6379
+    - TENANT_TOKEN=12345
+    - TENANT_ID=local
+    - KAFKA_BROKER=kafka:9092
+    - LOGSTASH_SERVER='logstash:8092'
+    - CONTROLLER_POLL=15s
+  external_links:
+    - kafka
+    - logstash
+    - controller
+    - registry
+
+reviews-v3:
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=reviews
+    - SERVICE_VERSION=v3
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+    - CONTROLLER_URL=http://controller:6379
+    - TENANT_TOKEN=12345
+    - TENANT_ID=local
+    - KAFKA_BROKER=kafka:9092
+    - LOGSTASH_SERVER='logstash:8092'
+    - CONTROLLER_POLL=15s
+  external_links:
+    - kafka
+    - logstash
+    - controller
+    - registry
+
+productpage-v1:
+  image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1
+  environment:
+    - REGISTRY_URL=http://registry:8080
+    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    - SERVICE=productpage
+    - SERVICE_VERSION=v1
+    - ENDPOINT_PORT=9080
+    - ENDPOINT_HOST=''
+    - CONTROLLER_URL=http://controller:6379
+    - TENANT_TOKEN=12345
+    - TENANT_ID=local
+    - KAFKA_BROKER=kafka:9092
+    - LOGSTASH_SERVER='logstash:8092'
+    - CONTROLLER_POLL=15s
+  external_links:
+    - kafka
+    - logstash
+    - controller
+    - registry

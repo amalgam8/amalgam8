@@ -29,15 +29,15 @@
       "parameters" : [ ],
       "post" : {
         "tags" : [ ],
-        "summary" : "Poll registry",
-        "description" : "Performs a poll of registry for each registered tenant and checks for changes",
+        "summary" : "Poll for changes in registries",
+        "description" : "Performs a poll of the registry for each registered tenant and checks for changes",
         "parameters" : [ ],
         "responses" : {
           "200" : {
-            "description" : "Successfully polled registry for all tenants"
+            "description" : "Successfully polled registries for all tenants"
           },
           "500" : {
-            "description" : "Failed to poll registry for one or more tenants"
+            "description" : "Failed to poll registries for one or more tenants"
           }
         }
       }
@@ -86,11 +86,11 @@
       ],
       "get" : {
         "tags" : [ ],
-        "summary" : "credentials and configuration of a tenant",
+        "summary" : "Credentials and configuration of a tenant",
         "description" : "Returns the credentials and configuration of a tenant",
         "responses" : {
           "200" : {
-            "description" : "Canonical info of tenant",
+            "description" : "Tenant information",
             "schema" : {
               "$ref" : "#/definitions/tenant"
             }
@@ -105,13 +105,13 @@
       },
       "put" : {
         "tags" : [ ],
-        "summary" : "Change the info of a tenant",
-        "description" : "Changes the canonical info of a tenant",
+        "summary" : "Update tenant information",
+        "description" : "Updates the ",
         "parameters" : [
           {
             "name": "tenant_info",
             "in": "body",
-            "description": "New info for tenant",
+            "description": "Information to update",
             "schema": {
               "$ref": "#/definitions/tenant"
             },
@@ -135,8 +135,8 @@
       },
       "delete" : {
         "tags" : [ ],
-        "summary" : "Deletes a tenant",
-        "description" : "Deletes a tenant",
+        "summary" : "Unregisters a tenant",
+        "description" : "Unregisters a tenant",
         "parameters" : [ ],
         "responses" : {
           "200" : {
@@ -287,23 +287,6 @@
           "required": true
         }
       ],
-      "delete" : {
-        "tags" : [ ],
-        "summary" : "Deletes the service version filter for a tenant",
-        "description" : "Deletes the version filter for a tenant for a service",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully deleted version filter"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID or service name"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
       "get" : {
         "tags" : [ ],
         "summary" : "Returns the service version filter for a tenant",
@@ -348,6 +331,23 @@
           },
           "404" : {
             "description" : "No information exists for tenant ID"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+      "delete" : {
+        "tags" : [ ],
+        "summary" : "Delete the service version filter for a tenant",
+        "description" : "Deletes the service version filter for a tenant",
+        "parameters" : [ ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully deleted version filter"
+          },
+          "404" : {
+            "description" : "No information exists for tenant ID or service name"
           },
           "503" : {
             "description" : "Error communicating with database"

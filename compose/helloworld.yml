@@ -12,25 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-##API Gateway##
-gateway:
-  image: amalgam8/a8-sidecar:0.1
-  environment:
-    - CONTROLLER_URL=http://controller:6379
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
-    - KAFKA_BROKER=kafka:9092
-    - REGISTER=false
-    - SERVICE=gateway
-    - LOGSTASH_SERVER='logstash:8092'
-    - CONTROLLER_POLL=15s
-  ports:
-    - "32000:6379"
-  external_links:
-    - compose_kafka_1:kafka
-    - compose_logstash_1:logstash
-    - compose_controller_1:controller
-
 helloworld-v1:
   image: amalgam8/a8-examples-helloworld-sidecar:v1
   environment:
@@ -42,9 +23,8 @@ helloworld-v1:
     - PROXY=false
     - ENDPOINT_PORT=5000
     - ENDPOINT_HOST=''
-  command: a8sidecar --supervise python -u app.py
   external_links:
-    - compose_registry_1:registry
+    - registry
 
 helloworld-v2:
   image: amalgam8/a8-examples-helloworld-sidecar:v2
@@ -57,6 +37,5 @@ helloworld-v2:
     - PROXY=false
     - ENDPOINT_PORT=5000
     - ENDPOINT_HOST=''
-  command: a8sidecar --supervise python -u app.py
   external_links:
-    - compose_registry_1:registry
+    - registry

@@ -23,6 +23,7 @@ kafka:
   ports:
     - "9092:9092"
   hostname: kafka
+  container_name: kafka
 
 ##########ELK Stack##############
 es:
@@ -30,6 +31,7 @@ es:
   ports:
     - 9300
     - "30200:9200"
+  container_name: elasticsearch
 logstash:
   image: logstash
   command: logstash --verbose -e "input { beats {codec=>'json' port=>8092 type=>'nginx'}} output {elasticsearch {hosts =>'es:9200' codec=>'json' index=>'nginx'} stdout { codec => rubydebug }}"
@@ -37,6 +39,7 @@ logstash:
     - "8092:8092"
   links:
     - es
+  container_name: logstash
 kibana:
   image: kibana
   links:
@@ -45,6 +48,7 @@ kibana:
     - ELASTICSEARCH_URL=http://es:9200
   ports:
     - "30500:5601"
+  container_name: kibana
 
 #######Service Registry###########
 
@@ -52,7 +56,8 @@ registry:
   image: amalgam8/a8-registry:0.1
   ports:
     - "31300:8080"
-  command: /opt/registry/registry -auth_mode jwt -jwt_secret 12345
+  command: -auth_mode=jwt -jwt_secret=12345
+  container_name: registry
 
 controller:
   image: amalgam8/a8-controller:0.1
@@ -64,3 +69,4 @@ controller:
   links:
     - kafka
     - registry
+    container_name: controller

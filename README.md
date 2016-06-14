@@ -38,7 +38,7 @@ The repository's root directory includes a Vagrant file that provides an environ
 * [Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli)
 * [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python)
 
-To get started, install a recent version of Vagrant and then if you just want to run the demos, see the highlights, and kick the tires,
+To get started, install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and then if you just want to run the demos, see the highlights, and kick the tires,
 follow the instructions below. If you'd like to also be able to better understand the APIs, change and compile the code, or build the images,
 refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md) instead.
 

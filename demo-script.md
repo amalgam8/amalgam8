@@ -28,7 +28,7 @@ Demo goals:
 
 ## Bring up a Kubernetes cluster in Vagrant
 
-To get started, install a recent version of Vagrant and follow the steps below.
+To get started, install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and follow the steps below.
 
 1. Clone the Amalgam8 example repo and start the vagrant environment.
 
@@ -223,14 +223,14 @@ a8ctl route-list
 You should see the following output:
 
 ```
-+-------------+-----------------+--------------------+
-| Service     | Default Version | Version Selectors  |
-+-------------+-----------------+--------------------+
-| ratings     | v1              |                    |
-| productpage | v1              |                    |
-| details     | v1              |                    |
-| reviews     | v1              | v2(user="jason") |
-+-------------+-----------------+--------------------+
++-------------+-----------------+-------------------+
+| Service     | Default Version | Version Selectors |
++-------------+-----------------+-------------------+
+| ratings     | v1              |                   |
+| productpage | v1              |                   |
+| details     | v1              |                   |
+| reviews     | v1              | v2(user="jason")  |
++-------------+-----------------+-------------------+
 ```
 
 Log in as user "jason" at the url http://192.168.33.33:32000/productpage/productpage

@@ -19,7 +19,7 @@ gateway:
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=12345
     - TENANT_ID=local
-    - VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0=kafka:9092
+    - KAFKA_BROKER=kafka:9092
     - REGISTER=false
     - SERVICE=gateway
     - LOGSTASH_SERVER='logstash:8092'
@@ -36,7 +36,8 @@ helloworld-v1:
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
-    - SERVICE=helloworld:v1
+    - SERVICE=helloworld
+    - SERVICE_VERSION=v1
     - LOG=false
     - PROXY=false
     - ENDPOINT_PORT=5000
@@ -50,7 +51,8 @@ helloworld-v2:
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
-    - SERVICE=helloworld:v2
+    - SERVICE=helloworld
+    - SERVICE_VERSION=v2
     - LOG=false
     - PROXY=false
     - ENDPOINT_PORT=5000

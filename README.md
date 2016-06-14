@@ -8,7 +8,7 @@ An overview of Amalgam8 can be found at www.amalgam8.io.
 * [Overview](#overview)
 * Localhost Deployment
     * [Docker](#local-docker)
-    * [Kubernetes](#local-k8s) (recommended full instructions)
+    * [Kubernetes](#local-k8s)
     * [Marathon/Mesos](#local-marathon)
 * Cloud Deployment
     * [IBM Bluemix](#bluemix)
@@ -190,16 +190,15 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     [IBM Bluemix CLI](http://clis.ng.bluemix.net/ui/home.html),
     and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
   
-1. [Login to bluemix and initialize the containers environment]
-    using ```bx login``` and ```bx ic init```
+1. Login to Bluemix and initialize the containers environment using ```bx login``` and ```bx ic init```
 
-1. Deploy the A8 registry
+1. Deploy the A8 Registry service
 
     The A8 registry is available as a multi-tenanted Bluemix service,
     [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html),
     so you can simply deploy it from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/).
     
-    Note: If you would rather run a particular version yourself, you customize and then run
+    Note: If you would rather run a particular version yourself, you can customize and then run
     [bluemix/deploy-registry.sh](bluemix/deploy-controller.sh) instead.
 
 1. Optionally deploy the [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) service from the 
@@ -212,7 +211,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     * REGISTRY_SVC should be the Service Discovery service instance name
     * ...
 
-1. Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
+1. Deploy the A8 Controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
     Verify that the controller is running by ...
 
 1. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)

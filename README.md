@@ -6,6 +6,7 @@ Sample microservice-based applications and local sandbox environment for Amalgam
 
 * [Overview](#overview)
 * [Amalgam8 on Kubernetes (local)](#local-k8s)
+* [Amalgam8 on IBM Bluemix](#bluemix)
 * [Amalgam8 on Marathon/Mesos (local)](#local-marathon)
 * [Amalgam8 on Google Compute Cloud](#gcp)
 
@@ -50,26 +51,26 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
     cd examples
     vagrant up
     vagrant ssh
+
+    cd $GOPATH/src/github.com/amalgam8
     ```
     
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
       
     ```
-    cd $GOPATH/src/github.com/amalgam8/examples
-    sudo ./uninstall-kubernetes.sh
+    sudo examples/uninstall-kubernetes.sh
     ```
     
     Then re-install Kubernetes, by running the following command:
     
     ```
-    sudo ./install-kubernetes.sh
+    sudo examples/install-kubernetes.sh
     ```
 
 2. Start the local control plane services (registry and controller) by running the following commands:
 
     ```
-    cd $GOPATH/src/github.com/amalgam8/examples/controlplane
-    ./run-controlplane-local.sh start
+    examples/controlplane/run-controlplane-local.sh start
     ```
 
 3. Run the following command to confirm the control plane is working:
@@ -96,7 +97,6 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
     ```bash
-    cd examples
     kubectl create -f examples/gateway/gateway.yaml
     ```
     
@@ -126,10 +126,102 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```
-    cd $GOPATH/src/github.com/amalgam8/examples
-    kubectl delete -f gateway/gateway.yaml
-    controlplane/run-controlplane-local.sh stop
+    kubectl delete -f examples/gateway/gateway.yaml
+    examples/controlplane/run-controlplane-local.sh stop
     ```
+
+## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
+
+Running Amalgam8 applications on [IBM Bluemix](http://bluemix.net/) is particulary simple because the control plane services are provided as
+multi-tenanted Bluemix services, making it a matter of simply configuring and then running the tenant application itself.
+
+To run the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md)
+on Bluemix, follow the instructions below.
+If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.net/).
+
+1. Deploy the following services from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/)
+    1. [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html) - Amalgam8 Registry Service
+    2. Service Proxy version 2.0 (Coming Soon) - Amalgam8 Controller Service
+    3. [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) - Kafka (optional)
+    4. Logmet/ELK ???
+
+    *Note:* The Amalgam8 controller service is not yet available on Bluemix, so the current demo runs a local instance of
+    the A8 controller in the tenant space. This will no longer be needed in the near future.
+
+2. Configure the [envrc file](bluemix/envrc) to your environment variable values
+  1. NAMESPACE should be your Bluemix registry namespace, e.g. *cf ic namespace get*
+  2. REGISTRY_SVC should be the Service Discovery service instance name
+  3. ...
+
+3. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
+  [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
+  [IBM Container CLI extension](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_ov),
+  and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
+  
+4. [Login to IBM Bluemix container service](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html#container_cli_login)
+  using *cf login* and *cf ic login*
+
+5. (Temporary - see Note: above) Deploy the A8 controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
+    Verify that the controller is running by ...
+
+4. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
+
+5. Configure the Amalgam8 CLI.
+    export A8_CONTROLLER_URL=...
+
+6. Confirm the microservices are running
+
+    ```
+    a8ctl service-list
+    ```
+    
+    Should produce the following output:
+    
+    ```
+    +-------------+---------------------+
+    | Service     | Instances           |
+    +-------------+---------------------+
+    | productpage | v1(1)               |
+    | ratings     | v1(1)               |
+    | details     | v1(1)               |
+    | reviews     | v1(1), v2(1), v3(1) |
+    +-------------+---------------------+
+     ```
+
+6. Route all traffic to version v1 of each microservice
+
+    ```bash
+    a8ctl route-set productpage --default v1
+    a8ctl route-set ratings --default v1
+    a8ctl route-set details --default v1
+    a8ctl route-set reviews --default v1
+    ```
+
+7. Confirm the routes are set by running the following command
+
+    ```bash
+    a8ctl route-list
+    ```
+
+    You should see the following output:
+
+    ```
+    +-------------+-----------------+-------------------+
+    | Service     | Default Version | Version Selectors |
+    +-------------+-----------------+-------------------+
+    | ratings     | v1              |                   |
+    | productpage | v1              |                   |
+    | details     | v1              |                   |
+    | reviews     | v1              |                   |
+    +-------------+-----------------+-------------------+
+    ```
+
+    Open http://192.168.33.33:32000/productpage/productpage from your browser
+    and you should see the bookinfo application displayed.
+  
+8. Now that the application is up and running, you can try out the other a8ctl commands as described in
+  [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+   
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 

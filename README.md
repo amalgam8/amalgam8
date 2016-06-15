@@ -48,6 +48,30 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 
 TBD ... You can use the provided vagrant file to run on docker, or you can just install docker, docker-compose, a8ctl. That's all you need, I think
 
+```
+cd compose
+./run-controlplane-docker.sh start
+
+docker-compose -f gateway.yml up -d
+
+docker-compose -f bookinfo.yml up -d
+
+export A8_CONTROLLER_URL=http://localhost:31200
+
+a8ctl service-list
+```
+
+To shutdown:
+
+```
+docker-compose -f bookinfo.yml kill
+docker-compose -f bookinfo.yml rm -f
+
+docker-compose -f gateway.yml kill
+docker-compose -f gateway.yml rm -f
+
+./run-controlplane-docker.sh stop
+```
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 

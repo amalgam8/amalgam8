@@ -1,28 +1,42 @@
 # Amalgam8 helloworld sample
 
-## Overview
-
 The helloworld sample starts two versions of a helloworld microservice, to demonstrate how Amalgam8 can be used to split the incoming traffic between the two versions. You can define the proportion of traffic to each microservice as a percentage.
-
-## Starting the helloworld instances
 
 Before you begin, follow the environment set up instructions at https://github.com/amalgam8/examples/blob/master/README.md
 
 1. Start the helloworld sample by running the following commands:
-  ```
+    ```
     cd $GOPATH/src/github.com/amalgam8/examples/apps/helloworld
     ./run.sh
-  ```
+    ```
 
-2. After the helloworld instances are created, view their entries in the registry, by running the following cURL command:
-  ```
-    curl -X GET -H "Authorization: Bearer ${TOKEN}" http://${AR}/api/v1/services/helloworld | jq .
-  ```
+1. Confirm that the microservices are running, by running the following command:
 
-  There are 4 registered instances, 2 instances named "v1" and 2 that are named "v2". These represent the different versions of the helloworld instance. The output will resemble the following example:
+    ```bash
+    a8ctl service-list
+    ```
+    
+    The expected output is the following:
+    
+    ```
+    +------------+--------------+
+    | Service    | Instances    |
+    +------------+--------------+
+    | helloworld | v1(2), v2(2) |
+    +------------+--------------+
+    ```
 
-  ```
-    $ curl -X GET -H "Authorization: Bearer ${TOKEN}" http://${AR}/api/v1/services/helloworld | jq .
+    There are 4 instances, of the helloworld service: 2 are instances of version "v1" and 2 are version "v2". 
+
+1. You can also look at the registration details in the A8 registry, by running the following cURL command:
+    ```
+    export TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
+    curl -X GET -H "Authorization: Bearer ${TOKEN}" http://192.168.33.33:31300/api/v1/services/helloworld | jq .
+    ```
+
+    The output should look something like this:
+
+    ```
     {
       "instances": [
         {
@@ -79,37 +93,56 @@ Before you begin, follow the environment set up instructions at https://github.c
         }
       ],
       "service_name": "helloworld"
-  }
-  ```
+    }
+    ```
 
-### Sending traffic to helloworld v1
+1. Send all traffic to the v1 version of helloworld, by running the following command:
 
-3. Send all traffic to the v1 version of helloworld, by setting the rules with the following cURL command:
+    ```
+    a8ctl route-set helloworld --default v1
+    ```
 
-  ```
-    curl -X PUT http://${AC}/v1/tenants/local/versions/helloworld -d '{"default": "v1"}' -H "Content-Type: application/json"
-  ```
+    FYI, you can do the same thing using the following cURL command:
+    ```
+    curl -X PUT http://192.168.33.33:31200/v1/tenants/local/versions/helloworld -d '{"default": "v1"}' -H "Content-Type: application/json"
+    ```
 
-4. If you want to view the rules that are applied to helloworld v1, run the following cURL command:
+1. You can confirm the routes are set by running the following command:
 
-  ```
-    curl http://${AC}/v1/tenants/local/versions/helloworld | jq .
+    ```bash
+    a8ctl route-list
+    ```
+
+    You should see the following output:
+
+    ```
+    +------------+-----------------+-------------------+
+    | Service    | Default Version | Version Selectors |
+    +------------+-----------------+-------------------+
+    | helloworld | v1              |                   |
+    +------------+-----------------+-------------------+
+    ```
+
+    Or, using cURL:
+
+    ```
+    curl http://192.168.33.33:31200/v1/tenants/local/versions/helloworld | jq .
     {
       "selectors": "",
       "default": "v1",
       "service": "helloworld"
     }
-  ```
+    ```
 
-5. Confirm that all traffic is being directed to the v1 instance, by running the following cURL command multiple times:
+1. Confirm that all traffic is being directed to the v1 instance, by running the following cURL command multiple times:
 
-  ```
+    ```
     curl 192.168.33.33:32000/helloworld/hello
-  ```
+    ```
 
-  You can see that the traffic is continually routed between the v1 instances only, in a round-robin configuration:
+  You can see that the traffic is continually routed between the v1 instances only, in a round-robin fashion:
 
-  ```
+    ```
     $ curl 192.168.33.33:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
     $ curl 192.168.33.33:32000/helloworld/hello
@@ -119,27 +152,31 @@ Before you begin, follow the environment set up instructions at https://github.c
     $ curl 192.168.33.33:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-qwpex
     ...
-  ```
+    ```
 
-### Splitting traffic between helloworld v1 and v2
+1. Next, we will split traffic between helloworld v1 and v2
 
-  Next, we will route some of the traffic to helloworld v1, and some to helloworld v2.
+    Run the following command to send 25% of the traffic to helloworld v2, leaving the rest (75%) on v1:
+    
+    ```
+    a8ctl route-set helloworld --default v1 --selector 'v2(weight=0.25)'
+    ```
 
-6. Run the following cURL command to change the rule to send 25% of the traffic to helloworld v2:
+    Alternatively, you an run the following cURL command to do the same thing:
 
-  ```
+    ```
     curl -X PUT http://${AC}/v1/tenants/local/versions/helloworld -d '{"default": "v1", "selectors": "{v2={weight=0.25}}"}' -H "Content-Type: application/json"
-  ```
+    ```
 
-7. Run this cURL command several times:
+1. Run this cURL command several times:
 
-  ```
+    ```
     curl 192.168.33.33:32000/helloworld/hello
-  ```
+    ```
 
-  You will see alternating responses from all 4 helloworld instances, where approximately 1 out of every 4 (25%) responses will be from a "v2" instance, and the other responses from "v1":
+    You will see alternating responses from all 4 helloworld instances, where approximately 1 out of every 4 (25%) responses will be from a "v2" instance, and the other responses from "v1":
 
-  ```
+    ```
     $ curl 192.168.33.33:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
     $ curl 192.168.33.33:32000/helloworld/hello
@@ -149,17 +186,15 @@ Before you begin, follow the environment set up instructions at https://github.c
     $ curl 192.168.33.33:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
     ...
-  ```
+    ```
 
-  Note: if you use a browser instead of cURL to access the service and continually refresh the page, 
-  it will always return the same version (v1 or v2), because a cookie is set to maintain version affinity.
-  However, the browser still round-robins between the specific version instances that it returns.
+    Note: if you use a browser instead of cURL to access the service and continually refresh the page, 
+    it will always return the same version (v1 or v2), because a cookie is set to maintain version affinity.
+    However, the browser still round-robins between the specific version instances that it returns.
 
-## Shutting down
+1. To shutdown the helloworld instances, run the following commands:
 
-8. To shutdown the helloworld instances, run the following commands:
-
-  ```
+    ```
     cd $GOPATH/src/github.com/amalgam8/examples/apps/helloworld
     kubectl delete -f helloworld.yaml
-  ```
+    ```

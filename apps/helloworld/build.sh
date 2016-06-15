@@ -24,4 +24,3 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 #################################################################################
 docker build -t amalgam8/a8-examples-helloworld:v1 $SCRIPTDIR
 docker build -t amalgam8/a8-examples-helloworld:v2 $SCRIPTDIR
-#docker build -t hello:vx $SCRIPTDIR

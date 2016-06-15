@@ -170,62 +170,103 @@ func startProxy(conf *config.Config) error {
 	return nil
 }
 
-func checkIn(rc clients.Controller, conf *config.Config) error {
-	creds, err := rc.GetCredentials()
-	if err != nil {
-		// TODO If controller returns 404, we need to register
-		if strings.Contains(err.Error(), "ID not found") {
-			logrus.Info("ID not found, registering with controller")
+func getCredentials(controller clients.Controller) (clients.TenantCredentials, error) {
 
-			if err = conf.Validate(true); err != nil {
-				logrus.WithError(err).Error("Validation of config failed")
+	for {
+		creds, err := controller.GetCredentials()
+		if err != nil {
+			if isRetryable(err) {
+				time.Sleep(time.Second * 5)
+				continue
+			} else {
+				return creds, err
+			}
+		}
+
+		return creds, err
+	}
+}
+
+func registerWithProxy(controller clients.Controller, confNotValidErr error) error {
+	if confNotValidErr != nil {
+		// Config not valid, can't register
+		logrus.WithError(confNotValidErr).Error("Validation of config failed")
+		return confNotValidErr
+	}
+
+	for {
+		err := controller.Register()
+		if err != nil {
+			if isRetryable(err) {
+				time.Sleep(time.Second * 5)
+				continue
+			} else {
 				return err
 			}
+		}
 
-			if err = rc.Register(); err != nil {
-				// TODO if register returns 409, possible race condition, try to get creds again
-				if strings.Contains(err.Error(), "ID already present") {
+		return err
+	}
+}
+
+func checkIn(controller clients.Controller, conf *config.Config) error {
+
+	confNotValidErr := conf.Validate(true)
+
+	creds, err := getCredentials(controller)
+	if err != nil {
+		// if id not found error
+		if _, ok := err.(*clients.TenantNotFoundError); ok {
+			logrus.Info("ID not found, registering with controller")
+			err = registerWithProxy(controller, confNotValidErr)
+			if err != nil {
+				// tenant already exists, possible race condition in container group
+				if _, ok = err.(*clients.ConflictError); ok {
 					logrus.Warn("Possible race condition occurred during register")
-					creds, err = rc.GetCredentials()
-					if err != nil {
-						// no idea what state is, return error
-						logrus.WithError(err).Error("ID is in unknown state with control plane")
-						return err
-					}
-					logrus.Info("Successfully retrieved credentials")
-					conf.Kafka.APIKey = creds.Kafka.APIKey
-					conf.Kafka.Brokers = creds.Kafka.Brokers
-					conf.Kafka.Password = creds.Kafka.Password
-					conf.Kafka.RestURL = creds.Kafka.RestURL
-					conf.Kafka.SASL = creds.Kafka.SASL
-					conf.Kafka.Username = creds.Kafka.User
-
-					conf.Registry.Token = creds.Registry.Token
-					conf.Registry.URL = creds.Registry.URL
 					return nil
-
 				}
-				// something other than 409 was returned
+				// unrecoverable error occurred registering with controller
 				logrus.WithError(err).Error("Could not register with Controller")
 				return err
-
 			}
+
 			// register succeeded
 			return nil
 		}
-		// get creds returned something other than 404
+		// unrecoverable error occurred getting credentials from controller
 		logrus.WithError(err).Error("Could not retrieve credentials")
 		return err
 	}
 
-	conf.Kafka.APIKey = creds.Kafka.APIKey
-	conf.Kafka.Brokers = creds.Kafka.Brokers
-	conf.Kafka.Password = creds.Kafka.Password
-	conf.Kafka.RestURL = creds.Kafka.RestURL
-	conf.Kafka.SASL = creds.Kafka.SASL
-	conf.Kafka.Username = creds.Kafka.User
+	// if sidecar already has valid config do not need to set anything
+	if confNotValidErr != nil {
+		logrus.Info("Updating credentials with those from controller")
+		conf.Kafka.APIKey = creds.Kafka.APIKey
+		conf.Kafka.Brokers = creds.Kafka.Brokers
+		conf.Kafka.Password = creds.Kafka.Password
+		conf.Kafka.RestURL = creds.Kafka.RestURL
+		conf.Kafka.SASL = creds.Kafka.SASL
+		conf.Kafka.Username = creds.Kafka.User
 
-	conf.Registry.Token = creds.Registry.Token
-	conf.Registry.URL = creds.Registry.URL
+		conf.Registry.Token = creds.Registry.Token
+		conf.Registry.URL = creds.Registry.URL
+	}
 	return nil
+}
+
+func isRetryable(err error) bool {
+
+	if _, ok := err.(*clients.ConnectionError); ok {
+		return true
+	}
+
+	if _, ok := err.(*clients.NetworkError); ok {
+		return true
+	}
+
+	if _, ok := err.(*clients.ServiceUnavailable); ok {
+		return true
+	}
+
+	return false
 }

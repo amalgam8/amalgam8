@@ -18,7 +18,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -116,20 +115,41 @@ func (c *controller) Register() error {
 	req.Header.Set("Authorization", c.config.Tenant.Token)
 
 	resp, err := c.client.Do(req)
-
 	if err != nil {
-		return err
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			//			"request_id": reqID,
+			"tenant_id": c.config.Tenant.ID,
+		}).Warn("Failed to register with Controller")
+		return &ConnectionError{Message: err.Error()}
 	}
 
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusCreated {
 		respBytes, _ := ioutil.ReadAll(resp.Body)
-		if resp.StatusCode == http.StatusConflict {
-			respBytes, _ := ioutil.ReadAll(resp.Body)
-			// TODO return custom error object
-			return fmt.Errorf("ID already present: %v", string(respBytes))
+		logrus.WithFields(logrus.Fields{
+			"status_code": resp.StatusCode,
+			//			"request_id": reqID,
+			"tenant_id": c.config.Tenant.ID,
+			"body":      string(respBytes),
+		}).Warn("Controller returned bad response code")
+
+		if resp.Header.Get("request-id") == "" {
+			return &NetworkError{Response: resp}
 		}
-		return fmt.Errorf("Controller error.  Expected %v got status code %v.  %v", http.StatusCreated, resp.StatusCode, string(respBytes))
+
+		switch resp.StatusCode {
+		case http.StatusNotFound:
+			return &TenantNotFoundError{}
+
+		case http.StatusServiceUnavailable:
+			return &ServiceUnavailable{}
+		case http.StatusConflict:
+			return &ConflictError{}
+		default:
+			return errors.New("Controller returned bad response code") // FIXME: custom error?
+		}
+
 	}
 
 	return nil
@@ -228,7 +248,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 			//			"request_id": reqID,
 			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Failed to retrieve creds from Controller")
-		return respJSON.Credentials, err
+		return respJSON.Credentials, &ConnectionError{Message: err.Error()}
 	}
 
 	defer resp.Body.Close()
@@ -240,12 +260,22 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 			"tenant_id": c.config.Tenant.ID,
 			"body":      string(respBytes),
 		}).Warn("Controller returned bad response code")
-		if resp.StatusCode == http.StatusNotFound {
-			respBytes, _ := ioutil.ReadAll(resp.Body)
-			// TODO return custom error object
-			return respJSON.Credentials, fmt.Errorf("ID not found: %v", string(respBytes))
+
+		if resp.Header.Get("request-id") == "" {
+			return respJSON.Credentials, &NetworkError{Response: resp}
 		}
-		return respJSON.Credentials, errors.New("Controller returned bad response code") // FIXME: custom error?
+
+		switch resp.StatusCode {
+		case http.StatusNotFound:
+			return respJSON.Credentials, &TenantNotFoundError{}
+
+		case http.StatusServiceUnavailable:
+			return respJSON.Credentials, &ServiceUnavailable{}
+
+		default:
+			return respJSON.Credentials, errors.New("Controller returned bad response code") // FIXME: custom error?
+		}
+
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)

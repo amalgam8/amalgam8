@@ -188,6 +188,13 @@ func (c *Config) Validate(validateCreds bool) error {
 			IsValidURL("Controller URL", c.Controller.URL),
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
+
+		if validateCreds {
+			validators = append(validators,
+				IsNotEmpty("Registry token", c.Registry.Token),
+				IsValidURL("Regsitry URL", c.Registry.URL),
+			)
+		}
 	}
 
 	// If any of the Message Hub config is present validate the Message Hub config

@@ -52,6 +52,7 @@ reviews-v1:
     - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
+    - LOG=false
   external_links:
     - kafka
     - logstash
@@ -72,6 +73,7 @@ reviews-v2:
     - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
+    - LOG=false
   external_links:
     - kafka
     - logstash
@@ -92,6 +94,7 @@ reviews-v3:
     - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
+    - LOG=false
   external_links:
     - kafka
     - logstash
@@ -112,6 +115,7 @@ productpage-v1:
     - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
+    - LOG=false
   external_links:
     - kafka
     - logstash

@@ -22,7 +22,6 @@ helloworld-v1:
     - LOG=false
     - PROXY=false
     - ENDPOINT_PORT=5000
-    - ENDPOINT_HOST=''
   external_links:
     - registry
 
@@ -36,6 +35,5 @@ helloworld-v2:
     - LOG=false
     - PROXY=false
     - ENDPOINT_PORT=5000
-    - ENDPOINT_HOST=''
   external_links:
     - registry

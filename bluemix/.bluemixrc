@@ -1,0 +1,55 @@
+
+#################################################################################
+# Bluemix login
+#################################################################################
+
+BLUEMIX_HOST=api.ng.bluemix.net
+BLUEMIX_ORG=zvic@il.ibm.com
+BLUEMIX_SPACE=dev
+
+#################################################################################
+# Bluemix services enablement
+#################################################################################
+
+ENABLE_SERVICEDISCOVERY=true
+ENABLE_MESSAGEHUB=true
+
+#################################################################################
+# Image names
+#################################################################################
+
+PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar
+DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar
+REVIEWS_IMAGE=a8-examples-bookinfo-reviews-sidecar
+RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar
+
+GATEWAY_IMAGE=a8-sidecar:0.1
+CONTROLLER_IMAGE=a8-controller:0.1
+REGISTRY_IMAGE=a8-registry:0.1
+
+#################################################################################
+# Image registries
+#################################################################################
+
+BLUEMIX_REGISTRY_HOST=registry.ng.bluemix.net
+BLUEMIX_REGISTRY_NAMESPACE=zvic
+DOCKERHUB_NAMESPACE=amalgam8
+
+#################################################################################
+# Routes
+#################################################################################
+
+ROUTES_DOMAIN=mybluemix.net
+
+CONTROLLER_HOSTNAME=amalgam8-controller
+BOOKINFO_HOSTNAME=amalgam8-bookinfo
+
+CONTROLLER_URL=https://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
+BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
+
+#################################################################################
+# Misc
+#################################################################################
+
+CONTROLLER_TENANT_ID=local
+CONTROLLER_TENANT_TOKEN=12345

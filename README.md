@@ -187,39 +187,30 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 
 1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-    [IBM Bluemix CLI](http://clis.ng.bluemix.net/ui/home.html),
+    [CF CLI IBM Containers plugin](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html),
     and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
   
-1. Login to Bluemix and initialize the containers environment using ```bx login``` and ```bx ic init```
+1. Login to Bluemix and initialize the containers environment using ```cf login``` and ```cf ic init```
 
-1. Deploy the A8 Registry service
-
-    The A8 registry is available as a multi-tenanted Bluemix service,
-    [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html),
-    so you can simply deploy it from the [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/).
-    
-    Note: If you would rather run a particular version yourself, you can customize and then run
-    [bluemix/deploy-registry.sh](bluemix/deploy-controller.sh) instead.
-
-1. Optionally deploy the [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub) service from the 
-    [Bluemix Service catalog](https://console.ng.bluemix.net/catalog/)
-    
-    Note: If you don't use Message Hub, the A8 Proxies will use a slower polling algorithm to get changes from the A8 Controller
-
-1. Configure the [envrc file](bluemix/envrc) to your environment variable values
-    * NAMESPACE should be your Bluemix registry namespace, e.g. ```bx ic namespace-get```
-    * REGISTRY_SVC should be the Service Discovery service instance name
+1. Configure the [.bluemixrc file](bluemix/.bluemixrc) to your environment variable values
+    * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```cf ic namespace get```
+    * CONTROLLER_HOSTNAME should be the (globally unique) cf route to be attached to the controller
+    * ENABLE_SERVICEDISCOVERY determines whether to use the Bluemix-provided [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html)
+      instead of the A8 registry. When set to false, you can deploy your own customized A8 registry (not yet implemented).
+    * ENABLE_MESSAGEHUB determines whether to use the Bluemix-provided [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub).
+      When set to false, the A8 proxies will use a slower polling algorithm to get changes from the A8 Controller.  
+      Note that the Message Hub Bluemix service is not a free service, and using it might incur costs.
     * ...
 
-1. Deploy the A8 Controller service by running [bluemix/deploy-controller.sh](bluemix/deploy-controller.sh).
-    Verify that the controller is running by ...
+1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
+    Verify that the controller is running by ```cf ic group list``` and checking if the ```amalgam8_controller``` group is running.
 
 1. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
 
-1. Configure the Amalgam8 CLI
+1. Configure the Amalgam8 CLI according to the routes defined in [.bluemixrc file](bluemix/.bluemixrc)
 
     ```
-    export A8_CONTROLLER_URL=...
+    export A8_CONTROLLER_URL=https://amalgam8-controller.mybluemix.net
     ```
 
 1. Confirm the microservices are running
@@ -269,8 +260,8 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+-----------------+-------------------+
     ```
 
-    Open http://${BOOKINFO_HOSTNAME}.mybluemix.net/productpage/productpage from your browser
-    and you should see the bookinfo application displayed.
+    Open the ${BOOKINFO_URL}/productpage/productpage from your browser and you should see the bookinfo application displayed.  
+    (Replace BOOKINFO_URL with the value defined in [.bluemixrc file](bluemix/.bluemixrc))
   
 1. Now that the application is up and running, you can try out the other a8ctl commands as described in
     [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)

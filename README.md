@@ -46,22 +46,76 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
-TBD ... You can use the provided vagrant file to run on docker, or you can just install docker, docker-compose, a8ctl. That's all you need, I think
+To run in the local docker environemnt, you can either use the vagrant sandbox environment
+or you can simply install [Docker](https://docs.docker.com/engine/installation/),
+[Docker Compose](https://docs.docker.com/compose/install/),
+and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2).
+
+To start the demo, run the following commands:
 
 ```
 cd compose
 ./run-controlplane-docker.sh start
-
 docker-compose -f gateway.yml up -d
-
 docker-compose -f bookinfo.yml up -d
-
 export A8_CONTROLLER_URL=http://localhost:31200
+```
+This will start the Amalgam8 control plane services, an API gateway,
+and the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) microservices.
 
+To confirm that the services have started, run the following command:
+
+```
 a8ctl service-list
 ```
 
-To shutdown:
+Should produce the following output:
+   
+```
++-------------+---------------------+
+| Service     | Instances           |
++-------------+---------------------+
+| productpage | v1(1)               |
+| ratings     | v1(1)               |
+| details     | v1(1)               |
+| reviews     | v1(1), v2(1), v3(1) |
++-------------+---------------------+
+```
+
+Now you can route all traffic to version v1 of each microservice with the following commands:
+
+```bash
+a8ctl route-set productpage --default v1
+a8ctl route-set ratings --default v1
+a8ctl route-set details --default v1
+a8ctl route-set reviews --default v1
+```
+
+Confirm the routes are set by running the following command:
+
+```bash
+a8ctl route-list
+```
+
+You should see the following output:
+
+```
++-------------+-----------------+-------------------+
+| Service     | Default Version | Version Selectors |
++-------------+-----------------+-------------------+
+| ratings     | v1              |                   |
+| productpage | v1              |                   |
+| details     | v1              |                   |
+| reviews     | v1              |                   |
++-------------+-----------------+-------------------+
+```
+
+Open http://localhost:32000/productpage/productpage from your browser and you should see the bookinfo application displayed.  
+  
+Now that the application is up and running, you can try out the other a8ctl commands as described in
+[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+
+To completely shudown the demo, run the follwing commands
 
 ```
 docker-compose -f bookinfo.yml kill

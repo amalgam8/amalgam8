@@ -64,8 +64,8 @@ controller:
   ports:
     - "31200:6379"
   environment:
-    - POLL_INTERVAL="5s"
-    - LOG_LEVEL="info"
+    - POLL_INTERVAL=5s
+    - LOG_LEVEL=info
   links:
     - kafka
     - registry

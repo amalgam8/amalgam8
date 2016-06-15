@@ -115,7 +115,7 @@ If you open http://localhost:32000/productpage/productpage from your browser, yo
   
 Now that the application is up and running, you can try out the other a8ctl commands as described in
 [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md). 
-Just make sure to replace "192.168.33.33" with "localhost" in the URLs used in the instruction.
+Just make sure to replace "192.168.33.33" with "localhost" in the URLs used in the instructions.
 
 When you are finished, you can run the following commands to completely shudown the demo:
 

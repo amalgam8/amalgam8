@@ -46,10 +46,11 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
-To run in the local docker environemnt, you can either use the vagrant sandbox environment
+To run in a local docker environemnt, you can either use the vagrant sandbox
 or you can simply install [Docker](https://docs.docker.com/engine/installation/),
 [Docker Compose](https://docs.docker.com/compose/install/),
-and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2).
+and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl/0.1.2)
+on your own machine.
 
 To start the demo, run the following commands:
 
@@ -69,7 +70,7 @@ To confirm that the services have started, run the following command:
 a8ctl service-list
 ```
 
-Should produce the following output:
+This should produce the following output:
    
 ```
 +-------------+---------------------+
@@ -91,13 +92,13 @@ a8ctl route-set details --default v1
 a8ctl route-set reviews --default v1
 ```
 
-Confirm the routes are set by running the following command:
+Confirm the routes are set as follows:
 
 ```bash
 a8ctl route-list
 ```
 
-You should see the following output:
+You should see a table like this:
 
 ```
 +-------------+-----------------+-------------------+
@@ -110,12 +111,13 @@ You should see the following output:
 +-------------+-----------------+-------------------+
 ```
 
-Open http://localhost:32000/productpage/productpage from your browser and you should see the bookinfo application displayed.  
+If you open http://localhost:32000/productpage/productpage from your browser, you should see the bookinfo application displayed.  
   
 Now that the application is up and running, you can try out the other a8ctl commands as described in
-[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md). 
+Just make sure to replace "192.168.33.33" with "localhost" in the URLs used in the instruction.
 
-To completely shudown the demo, run the follwing commands
+When you are finished, you can run the following commands to completely shudown the demo:
 
 ```
 docker-compose -f bookinfo.yml kill

@@ -168,7 +168,6 @@ func (c *Config) Validate(validateCreds bool) error {
 			},
 			IsNotEmpty("Service Name", c.ServiceName),
 			IsInRange("NGINX port", c.Nginx.Port, 1, 65535),
-			IsNotEmpty("Service Endpoint Host", c.EndpointHost),
 			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
 			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),

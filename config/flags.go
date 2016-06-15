@@ -72,7 +72,7 @@ var TenantFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   endpointHost,
 		EnvVar: strings.ToUpper(endpointHost),
-		Usage:  "Service endpoint host name",
+		Usage:  "Service endpoint host name (local IP is used if none specified)",
 	},
 	cli.IntFlag{
 		Name:   endpointPort,

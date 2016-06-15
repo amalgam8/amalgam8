@@ -53,7 +53,8 @@ cf ic group create --name bookinfo_productpage \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
-  --env SERVICE=productpage:v1 \
+  --env SERVICE=productpage \
+  --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${PRODUCTPAGE_IMAGE}:v1 
@@ -69,7 +70,8 @@ cf ic group create --name bookinfo_details \
   --min 1 --max 2 --desired 1 \
   --env REGISTRY_URL=$REGISTRY_URL \
   --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
-  --env SERVICE=details:v1 \
+  --env SERVICE=details \
+  --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${DETAILS_IMAGE}:v1
 
@@ -84,7 +86,8 @@ cf ic group create --name bookinfo_ratings \
   --min 1 --max 2 --desired 1 \
   --env REGISTRY_URL=$REGISTRY_URL \
   --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
-  --env SERVICE=ratings:v1 \
+  --env SERVICE=ratings \
+  --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${RATINGS_IMAGE}:v1
     
@@ -102,7 +105,8 @@ cf ic group create --name bookinfo_reviews1 \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
   --env REGISTRY_URL=$REGISTRY_URL \
   --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
-  --env SERVICE=reviews:v1 \
+  --env SERVICE=reviews \
+  --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v1
@@ -117,7 +121,8 @@ cf ic group create --name bookinfo_reviews2 \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
   --env REGISTRY_URL=$REGISTRY_URL \
   --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
-  --env SERVICE=reviews:v2 \
+  --env SERVICE=reviews \
+  --env SERVICE_VERSION=v2 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v2
@@ -132,7 +137,8 @@ cf ic group create --name bookinfo_reviews3 \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
   --env REGISTRY_URL=$REGISTRY_URL \
   --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
-  --env SERVICE=reviews:v3 \
+  --env SERVICE=reviews \
+  --env SERVICE_VERSION=v3 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v3

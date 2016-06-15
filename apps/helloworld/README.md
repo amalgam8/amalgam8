@@ -31,7 +31,7 @@ Before you begin, follow the environment set up instructions at https://github.c
     +------------+--------------+
     ```
 
-    There are 4 instances, of the helloworld service: 2 are instances of version "v1" and 2 are version "v2". 
+    There are 4 instances of the helloworld service. 2 are instances of version "v1" and 2 are version "v2". 
 
 1. Send all traffic to the v1 version of helloworld, by running the following command:
 
@@ -83,19 +83,14 @@ Before you begin, follow the environment set up instructions at https://github.c
     a8ctl route-set helloworld --default v1 --selector 'v2(weight=0.25)'
     ```
 
-    Alternatively, you an run the following cURL command to do the same thing:
-
-    ```
-    curl -X PUT http://192.168.33.33:31200/v1/tenants/local/versions/helloworld -d '{"default": "v1", "selectors": "{v2={weight=0.25}}"}' -H "Content-Type: application/json"
-    ```
-
 1. Run this cURL command several times:
 
     ```
     curl 192.168.33.33:32000/helloworld/hello
     ```
 
-    You will see alternating responses from all 4 helloworld instances, where approximately 1 out of every 4 (25%) responses will be from a "v2" instance, and the other responses from "v1":
+    You will see alternating responses from all 4 helloworld instances, where approximately 1 out of every 4 (25%) responses
+    will be from a "v2" instances, and the other responses from the "v1" instances:
 
     ```
     $ curl 192.168.33.33:32000/helloworld/hello
@@ -190,7 +185,7 @@ To list the routes for a service, run the following cURL command:
 curl http://192.168.33.33:31200/v1/tenants/local/versions/helloworld | jq .
 ```
 
-At the end of the demo, the output should be as follows:
+After running the demo, the output should be as follows:
 
 ```
 {

@@ -21,119 +21,79 @@ There are 3 versions of the reviews microservice:
 
 ![Microservice dependencies](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/dependencies.jpg)
 
-## Running the microservices
+## Running the bookinfo demo
 
 Before you begin, follow the environment set up instructions at https://github.com/amalgam8/examples/blob/master/README.md
 
 1. Start the bookinfo sample app by running the following commands:
 
-  ```
+    ```
     cd $GOPATH/src/github.com/amalgam8/examples/apps/bookinfo
     ./run.sh
-  ```
-  The run.sh script starts the 4 bookinfo microservices. 
+    ```
+    The run.sh script starts the 4 bookinfo microservices. 
 
-2. Confirm the microservices are running by running the following cURL command:
+1. Confirm the microservices are running by running the following command:
 
-  ```
-    curl -X GET -H "Authorization: Bearer ${TOKEN}" http://${AR}/api/v1/services | jq .
-     {
-       "services": [
-         "reviews",
-         "ratings",
-         "details",
-         "productpage"
-       ]
-     }
-   ```
+    ```bash
+    a8ctl service-list
+    ```
+    
+    The following 4 microservices are displayed:
+    
+    ```
+    +-------------+---------------------+
+    | Service     | Instances           |
+    +-------------+---------------------+
+    | productpage | v1(1)               |
+    | ratings     | v1(1)               |
+    | details     | v1(1)               |
+    | reviews     | v1(1), v2(1), v3(1) |
+    +-------------+---------------------+
+    ```
 
-3. Navigate in your browser to http://192.168.33.33:32000/productpage/productpage 
+    The script started the v1 version of the `productpage`, `ratings`, and `details` services, and one 
+    instance of each of the 3 different versions of the `reviews` service (v1, v2, and v3).
 
-  The page displays information about a book titled, "NEW BOOK NAME HERE".
+1. Route all of the incoming traffic to version v1 only for each service, by running the following commands:
 
-4. Review how the script operates, by running the following cURL command to see the instances of the reviews microservice:
+    ```bash
+    a8ctl route-set productpage --default v1
+    a8ctl route-set ratings --default v1
+    a8ctl route-set details --default v1
+    a8ctl route-set reviews --default v1
+    ```
+    
+1. Open http://192.168.33.33:32000/productpage/productpage from your browser
+    and you should see the bookinfo application displayed. Notice that the
+    product page is displayed, with no rating stars since `reviews:v1` does not
+    access the ratings service.
 
-  ```
-    curl -X GET -H "Authorization: Bearer ${TOKEN}" http://${AR}/api/v1/services/reviews | jq .
-    {
-      "instances": [
-        {
-          "last_heartbeat": "2016-05-25T20:58:26.135709018Z",
-          "metadata": {
-            "version": "v1"
-          },
-          "status": "UP",
-          "ttl": 45,
-          "endpoint": {
-            "value": "172.17.0.9:9080",
-            "type": "http"
-          },
-          "service_name": "reviews",
-          "id": "5f940f0ddee732bb"
-        },
-        {
-          "last_heartbeat": "2016-05-25T20:58:26.262514572Z",
-          "metadata": {
-            "version": "v3"
-          },
-          "status": "UP",
-          "ttl": 45,
-          "endpoint": {
-            "value": "172.17.0.11:9080",
-            "type": "http"
-          },
-          "service_name": "reviews",
-          "id": "eea7a5a4d9b10a1f"
-        },
-        {
-          "last_heartbeat": "2016-05-25T20:58:26.367771984Z",
-          "metadata": {
-            "version": "v2"
-          },
-          "status": "UP",
-          "ttl": 45,
-          "endpoint": {
-            "value": "172.17.0.10:9080",
-            "type": "http"
-          },
-          "service_name": "reviews",
-          "id": "05f853b7b4ab8b37"
-        }
-      ],
-      "service_name": "reviews"
-    }
-  ```
+1. Run the following command to send traffic to the v2 and v3 versions of the `reviews` service:
 
- The script started one instance of each of the 3 different versions of the reviews service (v1, v2, and v3).
+    ```
+    a8ctl route-set reviews --default v1 --selector 'v2(user="john")' --selector 'v3(user="katherine")'
+    ```
 
-5. Open the run-services.sh script that was used to run the example. Review the following line of code:
+    This command specifies that only the designated user (john) will see v2 of the reviews service,
+    and another designated user (katherine) will see v3 of the reviews service. 
+    Any other user (including anonymous or not logged in) will use v1. 
+  
+1. Before you log in (or if you log in as anyone other than "john" or "katherine"), notice that there is no "rating" associated with the
+    book reviews on the page. This is the v1 version of the reviews microservice. 
 
-  ```
-   curl -X PUT ${AC}/v1/tenants/local/versions/reviews -d '{"default": "v1", "selectors": "{v2={user=\"frankb\"},v3={user=\"shriram\"}}" }'  -H "Content-Type: application/json"
-  ```
+1. Click the *Sign in* button at the top-right corner of the web page, and log in as "john" (no password required). You will see a rating of 1-5 black stars next to each review, which was defined in the v2 version.
 
- This command specifies that only the designated user (frankb) can use v2 of the reviews service, and another designated user (shriram) only uses v3 of the reviews service. Any other user (including anonymous or not logged in) will use v1. To review this in action:
- 
-6. Before you log in (or if you log in as anyone other than "frankb" or "shriram"), notice that there is no "rating" associated with the
-book reviews on the page. This is the v1 version of the reviews microservice. 
+1. Click the *Sign in* button at the top-right corner of the web page, and log in as "katherine" (no password required). You will see the ratings displayed using red stars, which was defined in the v3 version.
 
-7. Click the *Sign in* button at the top-right corner of the web page, and log in as "frankb" (no password required). You will see a rating of 1-5 black stars next to each review, which was defined in the v2 version.
-
-8. Click the *Sign in* button at the top-right corner of the web page, and log in as "shriram" (no password required). You will see the ratings displayed using red stars, which was defined in the v3 version.
-
-  There are many other features of the Amalgam8 microservice fabric that will be highlighted in future, using this bookinfo sample. Stay tuned!
+There are many other features of the Amalgam8 microservice fabric that are highlighted using the bookinfo sample.
+For example, you might want to take a look at the end-to-end
+[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md) next.
 
 ## Shutting down
 
-9. When you are finished, you can stop the bookinfo services with the following command:
+When you are finished, you can stop the bookinfo services with the following command:
 
-  ```
-    ./kill-services.sh
-  ```
-
-10. If you want to restart the services, without rebuilding the images, 
-you can use the following script in place of run.sh from step (1):
-
-  ```
-    ./run-services.sh
-  ```
+```
+./kill-services.sh
+```

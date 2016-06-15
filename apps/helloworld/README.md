@@ -1,6 +1,7 @@
 # Amalgam8 helloworld sample
 
-The helloworld sample starts two versions of a helloworld microservice, to demonstrate how Amalgam8 can be used to split the incoming traffic between the two versions. You can define the proportion of traffic to each microservice as a percentage.
+The helloworld sample starts two versions of a helloworld microservice, to demonstrate how Amalgam8 can be used to split 
+incoming traffic between the two versions. You can define the proportion of traffic to each microservice as a percentage.
 
 Before you begin, follow the environment set up instructions at https://github.com/amalgam8/examples/blob/master/README.md
 
@@ -165,7 +166,7 @@ Before you begin, follow the environment set up instructions at https://github.c
     Alternatively, you an run the following cURL command to do the same thing:
 
     ```
-    curl -X PUT http://${AC}/v1/tenants/local/versions/helloworld -d '{"default": "v1", "selectors": "{v2={weight=0.25}}"}' -H "Content-Type: application/json"
+    curl -X PUT http://192.168.33.33:31200/v1/tenants/local/versions/helloworld -d '{"default": "v1", "selectors": "{v2={weight=0.25}}"}' -H "Content-Type: application/json"
     ```
 
 1. Run this cURL command several times:

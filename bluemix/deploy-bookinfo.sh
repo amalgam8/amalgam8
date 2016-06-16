@@ -152,7 +152,7 @@ cf ic group create --name bookinfo_reviews3 \
 echo "Starting bookinfo gateway"
 
 cf ic group create --name bookinfo_gateway \
-  --publish 80 --memory 256 --auto \
+  --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_TOKEN=12345 \

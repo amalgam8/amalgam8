@@ -62,7 +62,7 @@ if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
     
     SDKEY=$(cf service-key sd sdkey | tail -n +3)
     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
-    REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_TOKEN')
+    REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
 else
     # TODO: Deploy registry containers
     echo "Not not implemented"

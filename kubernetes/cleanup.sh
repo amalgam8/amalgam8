@@ -16,7 +16,13 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-#gunicorn -D -w 1 -b 0.0.0.0:10081 --reload details:app
-#gunicorn -D -w 1 -b 0.0.0.0:10082 --reload reviews:app
-#gunicorn -w 1 -b 0.0.0.0:19080 --reload --access-logfile prod.log --error-logfile prod.log productpage:app >>prod.log 2>&1 &
-kubectl delete -f $SCRIPTDIR/bookinfo.yaml
+kubectl delete -f $SCRIPTDIR/../gateway/gateway.yaml
+$SCRIPTDIR/run-controlplane-local.sh stop
+kubectl delete -f $SCRIPTDIR/skydns.yaml
+kubectl delete namespace kube-system
+
+kubectl delete -f $SCRIPTDIR/../apps/helloworld/helloworld.yaml
+
+$SCRIPTDIR/../apps/bookinfo/kill-services.sh
+
+

@@ -16,7 +16,13 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-#gunicorn -D -w 1 -b 0.0.0.0:10081 --reload details:app
-#gunicorn -D -w 1 -b 0.0.0.0:10082 --reload reviews:app
-#gunicorn -w 1 -b 0.0.0.0:19080 --reload --access-logfile prod.log --error-logfile prod.log productpage:app >>prod.log 2>&1 &
-kubectl delete -f $SCRIPTDIR/bookinfo.yaml
+docker-compose -f $SCRIPTDIR/bookinfo.yaml kill
+docker-compose -f $SCRIPTDIR/bookinfo.yaml rm -f
+
+docker-compose -f $SCRIPTDIR/helloworld.yaml kill
+docker-compose -f $SCRIPTDIR/helloworld.yaml rm -f
+
+docker-compose -f $SCRIPTDIR/gateway.yaml kill
+docker-compose -f $SCRIPTDIR/gateway.yaml rm -f
+
+$SCRIPTDIR/run-controlplane-docker.sh stop

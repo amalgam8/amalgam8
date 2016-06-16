@@ -41,15 +41,12 @@ ratings-v1:
 reviews-v1:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
     - SERVICE=reviews
     - SERVICE_VERSION=v1
     - ENDPOINT_PORT=9080
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=12345
     - TENANT_ID=local
-    - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
     - LOG=false
@@ -62,15 +59,12 @@ reviews-v1:
 reviews-v2:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
     - SERVICE=reviews
     - SERVICE_VERSION=v2
     - ENDPOINT_PORT=9080
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=12345
     - TENANT_ID=local
-    - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
     - LOG=false
@@ -83,15 +77,12 @@ reviews-v2:
 reviews-v3:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
     - SERVICE=reviews
     - SERVICE_VERSION=v3
     - ENDPOINT_PORT=9080
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=12345
     - TENANT_ID=local
-    - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
     - LOG=false
@@ -104,15 +95,12 @@ reviews-v3:
 productpage-v1:
   image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
     - SERVICE=productpage
     - SERVICE_VERSION=v1
     - ENDPOINT_PORT=9080
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=12345
     - TENANT_ID=local
-    - KAFKA_BROKER=kafka:9092
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_POLL=15s
     - LOG=false

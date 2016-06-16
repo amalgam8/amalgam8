@@ -200,7 +200,7 @@ func TestInstanceDelete(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(instances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(instances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -235,7 +235,7 @@ func TestInstanceHeartbeat(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(instances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(instances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -273,7 +273,7 @@ func TestServiceInstancesMethods(t *testing.T) {
 
 func TestServiceInstancesFilteringByFieldValues(t *testing.T) {
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateServices(services)
+	c.CatalogMap.(*mockCatalog).prepopulateServices(services)
 	serviceInstance1 := store.ServiceInstance{ID: "http-1", ServiceName: "http-1", Protocol: protocol.Amalgam8,
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
 	serviceInstance2 := store.ServiceInstance{ID: "http-2", ServiceName: "http-1", Protocol: protocol.Amalgam8,
@@ -284,7 +284,7 @@ func TestServiceInstancesFilteringByFieldValues(t *testing.T) {
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "OUT_OF_SERVICE", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
 	serviceInstance5 := store.ServiceInstance{ID: "http-5", ServiceName: "http-1", Protocol: protocol.Amalgam8,
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "user_defined", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
-	c.Registry.(*mockCatalog).prepopulateInstances([]mockInstance{
+	c.CatalogMap.(*mockCatalog).prepopulateInstances([]mockInstance{
 		mockInstance{serviceInstance1},
 		mockInstance{serviceInstance2},
 		mockInstance{serviceInstance3},
@@ -436,10 +436,10 @@ func TestServiceInstancesFiltering(t *testing.T) {
 	}{"http-1", http.StatusOK}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateServices(services)
+	c.CatalogMap.(*mockCatalog).prepopulateServices(services)
 	serviceInstance := store.ServiceInstance{ID: "http-1", ServiceName: "http-1", Protocol: protocol.Amalgam8,
 		Endpoint: &store.Endpoint{Value: "192.168.0.1:80", Type: "tcp"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata}
-	c.Registry.(*mockCatalog).prepopulateInstances([]mockInstance{{serviceInstance}})
+	c.CatalogMap.(*mockCatalog).prepopulateInstances([]mockInstance{{serviceInstance}})
 
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
@@ -507,7 +507,7 @@ func TestServiceInstances(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(instances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(instances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -569,7 +569,7 @@ func TestServicesList(t *testing.T) {
 
 	url := serverURL + amalgam8.ServiceNamesURL()
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateServices(services)
+	c.CatalogMap.(*mockCatalog).prepopulateServices(services)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 

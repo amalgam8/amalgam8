@@ -127,7 +127,7 @@ func TestEurekaInstanceDelete(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -162,7 +162,7 @@ func TestEurekaInstanceHeartbeat(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -189,7 +189,7 @@ func TestEurekaInstanceStatus(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -232,7 +232,7 @@ func TestEurekaAppInstances(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 

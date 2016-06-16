@@ -22,7 +22,7 @@ import (
 // Config encapsulates REST server configuration parameters
 type Config struct {
 	HTTPAddressSpec string
-	Registry        store.Registry
+	CatalogMap      store.CatalogMap
 	Authenticator   auth.Authenticator
 	RequireHTTPS    bool
 }

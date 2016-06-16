@@ -16,6 +16,8 @@ package store
 
 import (
 	"time"
+
+	"github.com/amalgam8/registry/replication"
 )
 
 const (
@@ -27,7 +29,7 @@ const (
 )
 
 // DefaultConfig is the default configuration parameters for the registry
-var DefaultConfig = NewConfig(defaultDefaultTTL, defaultMinimumTTL, defaultMaximumTTL, defaultNamespaceCapacity)
+var DefaultConfig = NewConfig(defaultDefaultTTL, defaultMinimumTTL, defaultMaximumTTL, defaultNamespaceCapacity, nil, nil)
 
 // Config encapsulates the registry configuration parameters
 type Config struct {
@@ -38,10 +40,13 @@ type Config struct {
 	NamespaceCapacity int
 
 	SyncWaitTime time.Duration
+
+	AddsOn      []CatalogFactory
+	Replication replication.Replication
 }
 
 // NewConfig creates a new registry configuration according to the specified TTL values
-func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapacity int) *Config {
+func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapacity int, addsOn []CatalogFactory, rep replication.Replication) *Config {
 	validate(defaultTTL, minimumTTL, maximumTTL, namespaceCapacity)
 	return &Config{
 		DefaultTTL:        defaultTTL,
@@ -49,6 +54,8 @@ func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapaci
 		MaximumTTL:        maximumTTL,
 		SyncWaitTime:      defaultSyncTimeout,
 		NamespaceCapacity: namespaceCapacity,
+		AddsOn:            addsOn,
+		Replication:       rep,
 	}
 }
 

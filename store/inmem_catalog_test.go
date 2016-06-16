@@ -35,8 +35,6 @@ const (
 	testMaxTTL    = time.Duration(10) * time.Minute
 	testShortTTL  = time.Duration(100) * time.Millisecond
 	testMediumTTL = time.Duration(3) * time.Second
-
-	testProtocol = 1
 )
 
 func TestNewInMemoryCatalogNilConfiguration(t *testing.T) {
@@ -145,7 +143,7 @@ func TestRegisterInstanceWithCatalogTTL(t *testing.T) {
 	assert.NotNil(t, registeredInstance)
 	assert.NotNil(t, registeredInstance.ID)
 	assert.NotEmpty(t, registeredInstance.ID)
-	assert.EqualValues(t, conf.DefaultTTL, registeredInstance.TTL)
+	assert.EqualValues(t, conf.defaultTTL, registeredInstance.TTL)
 
 }
 
@@ -717,7 +715,7 @@ func TestFindInstanceByID(t *testing.T) {
 func TestSingleServiceQuota(t *testing.T) {
 	var instanceID string
 	namespaceCapacity := 10
-	conf := NewConfig(defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity)
+	conf := &inmemConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
 	catalog := newInMemoryCatalog(conf)
 
 	for i := 0; i < namespaceCapacity; i++ {
@@ -750,7 +748,7 @@ func TestSingleServiceQuota(t *testing.T) {
 func TestMultipleServicesQuota(t *testing.T) {
 	var instanceID string
 	namespaceCapacity := 10
-	conf := NewConfig(defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity)
+	conf := &inmemConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
 	catalog := newInMemoryCatalog(conf)
 
 	for i := 0; i < namespaceCapacity; i++ {
@@ -1545,8 +1543,8 @@ func doRegister(catalog Catalog, si *ServiceInstance) (string, error) {
 	return si.ID, err
 }
 
-func createNewConfig(defaultTTL time.Duration) *Config {
-	return NewConfig(defaultTTL, testMinTTL, testMaxTTL, -1)
+func createNewConfig(defaultTTL time.Duration) *inmemConfig {
+	return &inmemConfig{defaultTTL, testMinTTL, testMaxTTL, -1}
 }
 
 // This function is used instead of the assert.Contains because the instance
@@ -1593,4 +1591,8 @@ func randPercent(low, high float64) float64 {
 func randPercentOfDuration(low, high float64, duration time.Duration) time.Duration {
 	percent := randPercent(low, high)
 	return time.Duration(percent * float64(duration))
+}
+
+func extractErrorCode(err error) ErrorCode {
+	return err.(*Error).Code
 }

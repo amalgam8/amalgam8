@@ -137,18 +137,19 @@ func registryMain(conf *config.Values) error {
 		authenticator = auth.DefaultAuthenticator()
 	}
 
-	regConfig := &store.Config{
+	cmConfig := &store.Config{
 		DefaultTTL:        conf.DefaultTTL,
 		MinimumTTL:        conf.MinTTL,
 		MaximumTTL:        conf.MaxTTL,
 		SyncWaitTime:      conf.SyncTimeout,
 		NamespaceCapacity: conf.NamespaceCapacity,
+		Replication:       rep,
 	}
-	reg := store.New(regConfig, rep)
+	cm := store.New(cmConfig)
 
 	serverConfig := &api.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.APIPort),
-		Registry:        reg,
+		CatalogMap:      cm,
 		Authenticator:   authenticator,
 		RequireHTTPS:    conf.RequireHTTPS,
 	}

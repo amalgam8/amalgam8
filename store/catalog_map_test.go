@@ -15,16 +15,19 @@
 package store
 
 import (
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	"encoding/json"
-
 	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/cluster"
 	"github.com/amalgam8/registry/replication"
+)
+
+const (
+	testProtocol = 1
 )
 
 type mockupReplicator struct {
@@ -66,20 +69,26 @@ func (mr *mockupReplication) SyncRequest() <-chan chan []byte {
 func (mr *mockupReplication) Stop() {
 }
 
-func TestFactory(t *testing.T) {
+func TestNewCatalogMap(t *testing.T) {
 
-	r := newInMemoryRegistry(nil, nil)
+	r := New(nil)
 	assert.NotNil(t, r)
 }
 
-func TestNonEmptyCreationRegistry(t *testing.T) {
-	r := newInMemoryRegistry(nil, nil).(*inMemoryRegistry)
-	catalog, err := r.create(auth.NamespaceFrom("ns1"))
+func TestFactory(t *testing.T) {
+
+	cm := New(nil)
+	assert.NotNil(t, cm)
+}
+
+func TestNonEmptyCreationCatalogMap(t *testing.T) {
+	cm := New(nil)
+	catalog, err := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, catalog)
 	assert.NotEmpty(t, catalog)
 
-	otherCatalog, err2 := r.GetCatalog(auth.NamespaceFrom("ns1"))
+	otherCatalog, err2 := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 	assert.NoError(t, err2)
 	assert.NotNil(t, otherCatalog)
 	assert.NotEmpty(t, otherCatalog)
@@ -87,18 +96,18 @@ func TestNonEmptyCreationRegistry(t *testing.T) {
 }
 
 func TestGetCatalogMultipleRegistrations(t *testing.T) {
-	r := newInMemoryRegistry(nil, nil)
-	catalog1, err1 := r.GetCatalog(auth.NamespaceFrom("ns1"))
+	cm := New(nil)
+	catalog1, err1 := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 	assert.NoError(t, err1)
 	assert.NotNil(t, catalog1)
 	assert.NotEmpty(t, catalog1)
 
-	catalog2, err2 := r.GetCatalog(auth.NamespaceFrom("ns2"))
+	catalog2, err2 := cm.GetCatalog(auth.NamespaceFrom("ns2"))
 	assert.NoError(t, err2)
 	assert.NotNil(t, catalog2)
 	assert.NotEmpty(t, catalog2)
 
-	catalog3, err3 := r.GetCatalog(auth.NamespaceFrom("ns3"))
+	catalog3, err3 := cm.GetCatalog(auth.NamespaceFrom("ns3"))
 	assert.NoError(t, err3)
 	assert.NotNil(t, catalog3)
 	assert.NotEmpty(t, catalog3)
@@ -109,9 +118,11 @@ func TestRPCCreationOfDiffInstanceDiffCatalog(t *testing.T) {
 	rep := createMockupReplication()
 	close(rep.(*mockupReplication).syncChan) //Make sure no deadlock occur
 
-	r := newInMemoryRegistry(nil, rep)
+	var conf = *DefaultConfig
+	conf.Replication = rep
+	cm := New(&conf)
 
-	catalog, err := r.GetCatalog(auth.NamespaceFrom("ns1"))
+	catalog, err := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 	assert.NoError(t, err)
 	assert.NotNil(t, catalog)
 	assert.NotEmpty(t, catalog)
@@ -122,7 +133,7 @@ func TestRPCCreationOfDiffInstanceDiffCatalog(t *testing.T) {
 	assert.NoError(t, err2)
 	assert.NotNil(t, instance1)
 
-	otherCatalog, err1 := r.GetCatalog(auth.NamespaceFrom("ns1"))
+	otherCatalog, err1 := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 	assert.NoError(t, err1)
 	assert.NotNil(t, otherCatalog)
 	assert.NotEmpty(t, otherCatalog)
@@ -134,7 +145,7 @@ func TestRPCCreationOfDiffInstanceDiffCatalog(t *testing.T) {
 	assert.NoError(t, err3)
 	assert.NotNil(t, instance2)
 
-	instances, err4 := catalog.List("Calc", protocolPredicate)
+	instances, err4 := catalog.List("Calc", nil)
 	assert.NoError(t, err4)
 	assert.Len(t, instances, 2)
 	assertContainsInstance(t, instances, instance1)
@@ -151,22 +162,24 @@ func TestIncomingReplication(t *testing.T) {
 
 	ns := auth.NamespaceFrom("ns1")
 
-	r := newInMemoryRegistry(nil, rep)
-	assert.NotContains(t, r.(*inMemoryRegistry).namespaces, ns)
+	var conf = *DefaultConfig
+	conf.Replication = rep
+	cm := New(&conf)
+	assert.NotContains(t, cm.(*catalogMap).catalogs, ns)
 
 	inst := newServiceInstance("Calc1", "192.168.0.1", 9080)
 	payload, _ := json.Marshal(inst)
 	data, _ := json.Marshal(&replicatedMsg{RepType: REGISTER, Payload: payload})
 	rep.(*mockupReplication).NotifyChannel <- &replication.InMessage{cluster.MemberID("192.1.1.3:6100"), ns, data}
 
-	catalog, err := r.GetCatalog(auth.NamespaceFrom("ns1"))
+	catalog, err := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 
 	// NOTICE, it may fail, since a race between the registry and the test...
 	time.Sleep(time.Duration(5) * time.Second)
 
 	assert.NoError(t, err)
 
-	instances1, err1 := catalog.List("Calc1", protocolPredicate)
+	instances1, err1 := catalog.List("Calc1", nil)
 	assert.NoError(t, err1)
 	assert.Len(t, instances1, 1)
 }

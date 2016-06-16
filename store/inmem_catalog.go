@@ -24,6 +24,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/rcrowley/go-metrics"
 
+	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/utils/logging"
 )
 
@@ -32,9 +33,7 @@ const (
 	valueMaxLength       int = 64
 	statusMaxLength      int = 32
 	metadataMaxLength    int = 1024
-)
 
-const (
 	instancesMetricName  = "store.instances.count"
 	expirationMetricName = "store.instances.expiration"
 	lifetimeMetricName   = "store.instances.lifetime"
@@ -45,12 +44,34 @@ const (
 	tagsInstancesMetricName     = "store.tags.instances"
 )
 
+var defaultInmemConfig = &inmemConfig{DefaultConfig.DefaultTTL, DefaultConfig.MinimumTTL, DefaultConfig.MaximumTTL, DefaultConfig.NamespaceCapacity}
+
+type inmemConfig struct {
+	defaultTTL time.Duration
+	minimumTTL time.Duration
+	maximumTTL time.Duration
+
+	namespaceCapacity int
+}
+
+type inmemFactory struct {
+	conf *inmemConfig
+}
+
+func newInmemFactory(conf *inmemConfig) CatalogFactory {
+	return &inmemFactory{conf: conf}
+}
+
+func (f *inmemFactory) CreateCatalog(namespace auth.Namespace) (Catalog, error) {
+	return newInMemoryCatalog(f.conf), nil
+}
+
 type inMemoryService map[string]*ServiceInstance
 
 type inMemoryCatalog struct {
 	services  map[string]inMemoryService
 	instances map[string]*ServiceInstance
-	conf      *Config
+	conf      *inmemConfig
 	logger    *log.Entry
 
 	// Metrics
@@ -65,10 +86,9 @@ type inMemoryCatalog struct {
 	sync.RWMutex
 }
 
-func newInMemoryCatalog(conf *Config) Catalog {
-	var actualConf = conf
+func newInMemoryCatalog(conf *inmemConfig) Catalog {
 	if conf == nil {
-		actualConf = DefaultConfig
+		conf = defaultInmemConfig
 	}
 
 	counterFactory := func() metrics.Counter { return metrics.NewCounter() }
@@ -78,7 +98,7 @@ func newInMemoryCatalog(conf *Config) Catalog {
 	catalog := &inMemoryCatalog{
 		services:  make(map[string]inMemoryService),
 		instances: make(map[string]*ServiceInstance),
-		conf:      actualConf,
+		conf:      conf,
 		logger:    logging.GetLogger(module),
 
 		instancesMetric:         metrics.GetOrRegister(instancesMetricName, counterFactory).(metrics.Counter),
@@ -134,11 +154,11 @@ func (imc *inMemoryCatalog) Register(si *ServiceInstance) (*ServiceInstance, err
 	newSI := si.DeepClone()
 	newSI.ID = instanceID
 	if newSI.TTL == 0 {
-		newSI.TTL = imc.conf.DefaultTTL
-	} else if newSI.TTL < imc.conf.MinimumTTL {
-		newSI.TTL = imc.conf.MinimumTTL
-	} else if newSI.TTL > imc.conf.MaximumTTL {
-		newSI.TTL = imc.conf.MaximumTTL
+		newSI.TTL = imc.conf.defaultTTL
+	} else if newSI.TTL < imc.conf.minimumTTL {
+		newSI.TTL = imc.conf.minimumTTL
+	} else if newSI.TTL > imc.conf.maximumTTL {
+		newSI.TTL = imc.conf.maximumTTL
 	}
 
 	// isReplication indicates whether this is a replication request or a client request
@@ -158,8 +178,8 @@ func (imc *inMemoryCatalog) Register(si *ServiceInstance) (*ServiceInstance, err
 	}
 
 	// Capacity validation - we don't check capacity for replication requests nor reregister requests
-	if !isReplication && !alreadyExists && imc.conf.NamespaceCapacity >= 0 {
-		if len(imc.instances) >= imc.conf.NamespaceCapacity {
+	if !isReplication && !alreadyExists && imc.conf.namespaceCapacity >= 0 {
+		if len(imc.instances) >= imc.conf.namespaceCapacity {
 			imc.logger.Warnf("Failed to register service instance %s becuase quota exceeded (%d)", serviceName, len(imc.instances))
 			return nil, NewError(ErrorNamespaceQuotaExceeded, "Quota exceeded", "")
 		}

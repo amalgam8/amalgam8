@@ -34,13 +34,13 @@ const (
 
 // Routes encapsulates information needed for the aykesd protocol routes
 type Routes struct {
-	registry store.Registry
-	logger   *log.Entry
+	catalogMap store.CatalogMap
+	logger     *log.Entry
 }
 
 // New creates a Routes object for the amalgam8 protocol routes
-func New(registry store.Registry) *Routes {
-	return &Routes{registry, logging.GetLogger(module)}
+func New(catalogMap store.CatalogMap) *Routes {
+	return &Routes{catalogMap, logging.GetLogger(module)}
 }
 
 // RouteHandlers returns an array of route handlers
@@ -105,7 +105,7 @@ func (routes *Routes) catalog(w rest.ResponseWriter, r *rest.Request) store.Cata
 		return nil
 	}
 	namespace := r.Env[middleware.NamespaceKey].(auth.Namespace)
-	if catalog, err := routes.registry.GetCatalog(namespace); err != nil {
+	if catalog, err := routes.catalogMap.GetCatalog(namespace); err != nil {
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		return nil
 	} else if catalog == nil {

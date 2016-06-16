@@ -34,15 +34,15 @@ const (
 
 // Routes encapsulates information needed for the eureka protocol routes
 type Routes struct {
-	registry store.Registry
-	logger   *log.Entry
+	catalogMap store.CatalogMap
+	logger     *log.Entry
 }
 
 // New creates a new eureka Server instance
-func New(registry store.Registry) *Routes {
+func New(catalogMap store.CatalogMap) *Routes {
 	return &Routes{
-		registry: registry,
-		logger:   logging.GetLogger(module),
+		catalogMap: catalogMap,
+		logger:     logging.GetLogger(module),
 	}
 }
 
@@ -129,7 +129,7 @@ func (routes *Routes) catalog(w rest.ResponseWriter, r *rest.Request) store.Cata
 		return nil
 	}
 	namespace := r.Env[middleware.NamespaceKey].(auth.Namespace)
-	if catalog, err := routes.registry.GetCatalog(namespace); err != nil {
+	if catalog, err := routes.catalogMap.GetCatalog(namespace); err != nil {
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		return nil
 	} else if catalog == nil {

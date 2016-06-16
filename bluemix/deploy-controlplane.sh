@@ -96,7 +96,6 @@ if [ "$ENABLE_MESSAGEHUB" = true ]; then
     KAFKA_BROKERS=$(echo "$MHKEY" | jq -r '.kafka_brokers_sasl')
     KAFKA_USER=$(echo "$MHKEY" | jq -r '.user')
     KAFKA_PASSWORD=$(echo "$MHKEY" | jq -r '.password')
-    KAFKA_SASL="true"    
 fi
 
 #################################################################################
@@ -147,7 +146,7 @@ if [ "$ENABLE_MESSAGEHUB" = true ]; then
             "brokers": ${KAFKA_BROKERS},
             "user": "${KAFKA_USER}",
             "password": "${KAFKA_PASSWORD}",
-            "sasl": "${KAFKA_SASL}"
+            "sasl": true
         }
     }
 }

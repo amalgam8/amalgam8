@@ -308,7 +308,7 @@ that we expect to pass: each service in the call chain should return `HTTP
 * Run the recipe using the following command from the main examples folder:
 
 ```bash
-a8ctl recipe-run --topology apps/bookfino/topology.json --scenarios apps/bookinfo/gremlins.json --checks apps/bookinfo/checklist.json --header 'Cookie' --pattern='user=jason'
+a8ctl recipe-run --topology apps/bookinfo/topology.json --scenarios apps/bookinfo/gremlins.json --checks apps/bookinfo/checklist.json --header 'Cookie' --pattern='user=jason'
 ```
 
 You should see the following output:

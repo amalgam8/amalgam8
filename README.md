@@ -60,6 +60,7 @@ cd compose
 docker-compose -f gateway.yml up -d
 docker-compose -f bookinfo.yml up -d
 export A8_CONTROLLER_URL=http://localhost:31200
+export A8_REGISTRY_URL=http://localhost:31300
 ```
 This will start the Amalgam8 control plane services, an API gateway,
 and the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) microservices.

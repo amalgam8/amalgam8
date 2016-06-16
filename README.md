@@ -1,18 +1,7 @@
-# Amalgam8 examples
+# Amalgam8 Examples
 
 Sample microservice-based applications and local sandbox environment for Amalgam8.
 An overview of Amalgam8 can be found at www.amalgam8.io.
-
-## Table of Contents
-
-* [Overview](#overview)
-* Localhost Deployment
-    * [Docker](#local-docker)
-    * [Kubernetes](#local-k8s)
-    * [Marathon/Mesos](#local-marathon)
-* Cloud Deployment
-    * [IBM Bluemix](#bluemix)
-    * [Google Compute Cloud](#gcp)
 
 ## Overview <a id="overview"></a>
 
@@ -26,22 +15,24 @@ The following samples are available for Amalgam8:
 * [Helloworld](https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
 * [Bookinfo](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
 
-There is also an end-to-end
-[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
-that you can try out on your local vagrant box. This is a good place to start, if you're new to Amalgam8.
+The repository's root directory includes a Vagrant file that provides an environment with everything 
+needed to run, and build, the samples
+([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/),
+[Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli), [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python))
+already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
 
-The repository's root directory includes a Vagrant file that provides an environment with everything installed and ready to build/run the samples:
+To run the demos, proceed to the instructions corresponding to the environment that you want to use:
 
-* [Go](http://golang.org/)
-* [Docker](http://www.docker.com/)
-* [Kubernetes](http://kubernetes.io/)
-* [Amalgam8 CLI](https://github.com/amalgam8/controller/tree/master/cli)
-* [Gremlin SDK](https://github.com/ResilienceTesting/gremlinsdk-python)
+* Localhost Deployment
+    * [Docker](#local-docker)
+    * [Kubernetes](#local-k8s)
+    * [Marathon/Mesos](#local-marathon)
+* Cloud Deployment
+    * [IBM Bluemix](#bluemix)
+    * [Google Compute Cloud](#gcp)
 
-The easiest way to get started is to install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and then
-if you just want to run the demos and see the highlights, follow the instructions corresponding to the environment that you want to use.
-If you'd like to also be able to better understand the APIs, change and compile the code, or build the images,
-refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md) instead.
+If you'd like to also be able to change and compile the code, or build the images,
+refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md).
 
 
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>

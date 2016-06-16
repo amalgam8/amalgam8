@@ -112,15 +112,6 @@ read -d '' tenant << EOF
     "id": "${CONTROLLER_TENANT_ID}",
     "req_tracking_header" : "X-Request-ID",
     "credentials": {
-        "kafka": {
-            "api_key": "${KAFKA_API_KEY},"
-            "admin_url": "${KAFKA_ADMIN_URL}",
-            "rest_url": "${KAFKA_REST_URL}",
-            "brokers": "${KAFKA_BROKERS}",
-            "user": "${KAFKA_USER}",
-            "password": "${KAFKA_PASSWORD}",
-            "sasl": "${KAFKA_SASL}"
-        },
         "registry": {
             "url": "${REGISTRY_URL}",
             "token": "${REGISTRY_TOKEN}"
@@ -128,4 +119,24 @@ read -d '' tenant << EOF
     }
 }
 EOF
+
+if [ "$ENABLE_MESSAGEHUB" = true ]; then
+    read -d '' kafka << EOF
+{
+    "credentials": {
+        "kafka": {
+            "api_key": "${KAFKA_API_KEY}",
+            "admin_url": "${KAFKA_ADMIN_URL}",
+            "rest_url": "${KAFKA_REST_URL}",
+            "brokers": ${KAFKA_BROKERS},
+            "user": "${KAFKA_USER}",
+            "password": "${KAFKA_PASSWORD}",
+            "sasl": "${KAFKA_SASL}"
+        }
+    }
+}
+EOF
+    tenant=$(jq -s '.[0] * .[1]' <(echo $tenant) <(echo $kafka))
+fi
+
 echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"

@@ -93,19 +93,19 @@ The following environment variables are available. All of them are optional.
 
 #### Authentication and Authorization
 
-He Amalgam8 Service Registry optionally supports multi-tenancy, by isolating each tenant into a separate namespace.
+The Amalgam8 Service Registry optionally supports multi-tenancy, by isolating each tenant into a separate namespace.
 A namespace is defined by an opaque string carried in the HTTP `Authorization` header of API requests. The following
 namespace authorization methods are supported and controlled via the `AUTH_MODE` environment variable (or `--auth_mode`
 flag):
 * None: if no authorization mode is defined, all instances are registered into a default shared namespace. 
-* Truested: namespace is retrived directly from the Authorization header. This provides namesapce separation in a trusted
+* Trusted: namespace is retrieved directly from the Authorization header. This provides namespace separation in a trusted
 environment (e.g., single tenant with multiple applications or environments)
 * JWT: encodes the namespace value in a signed JWT token claim. 
 
 | Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
 |:----------------|:----------------------------|:----------------------------|:------------|:--------------|
 | `AUTH_MODE` | `--auth_mode` | `jwt` | Authentication modes. Supported values are: `trusted`, `jwt` | none (no isolation) |
-| `JWT_SECRET` | `--jwt_secret` | `53cr3t` | Secret key for JWT authentication | none (must be set if ``AUTH_MODE` is `jwt`) |
+| `JWT_SECRET` | `--jwt_secret` | `53cr3t` | Secret key for JWT authentication | none (must be set if `AUTH_MODE` is `jwt`) |
 | `REQUIRE_HTTPS` | `--require_https` | `true` | Require clients to use HTTPS for API calls | `false` |
 
 If `jwt` is specified, `JWT_SECRET` (or `--jwt_secret`) must be set as well to allow encryption and decryption.
@@ -134,7 +134,7 @@ Alternative discovery mechanisms are being explored.
 
 ## API
 
-Service Discovery [API documentation](https://amalgam8.io/registry) is avaialble in Swagger format.
+Service Discovery [API documentation](https://amalgam8.io/registry) is available in Swagger format.
 
 ## Contributing
 

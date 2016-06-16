@@ -21,7 +21,7 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
     echo "starting Control plane components (kafka, ELK stack, registry, and controller)"
-    docker-compose -f controlplane.yml up -d
+    docker-compose -f $SCRIPTDIR/controlplane.yml up -d
     echo "waiting for the cluster to initialize.."
     sleep 60
     AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
@@ -48,8 +48,8 @@ EOF
     echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    docker-compose -f controlplane.yml kill
-    docker-compose -f controlplane.yml rm -f
+    docker-compose -f $SCRIPTDIR/controlplane.yml kill
+    docker-compose -f $SCRIPTDIR/controlplane.yml rm -f
 else
     echo "usage: $0 start|stop"
     exit 1

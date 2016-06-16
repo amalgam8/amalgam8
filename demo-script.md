@@ -125,7 +125,7 @@ Confirm that the control plane and API gateway are active by running the
 following command:
 
 ```bash
-kubectl get po
+kubectl get pods
 ```
 
 The returned list should include at least the following 5 pods:

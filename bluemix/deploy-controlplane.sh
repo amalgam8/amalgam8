@@ -40,9 +40,6 @@ sleep 15s
 echo "Mapping route to controller: $CONTROLLER_URL"
 cf ic route map --hostname $CONTROLLER_HOSTNAME --domain $ROUTES_DOMAIN amalgam8_controller
 
-echo "Waiting for route to be mapped..."
-sleep 15s
-
 #################################################################################
 # Provision Service Discovery, or start a local registry
 #################################################################################
@@ -65,7 +62,7 @@ if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
     
     SDKEY=$(cf service-key sd sdkey | tail -n +3)
     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
-    REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_TOKEN')
+    REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
 else
     # TODO: Deploy registry containers
     echo "Not not implemented"
@@ -99,12 +96,30 @@ if [ "$ENABLE_MESSAGEHUB" = true ]; then
     KAFKA_BROKERS=$(echo "$MHKEY" | jq -r '.kafka_brokers_sasl')
     KAFKA_USER=$(echo "$MHKEY" | jq -r '.user')
     KAFKA_PASSWORD=$(echo "$MHKEY" | jq -r '.password')
-    KAFKA_SASL="true"    
 fi
 
 #################################################################################
 # Post the local tenant to controller
 #################################################################################
+
+# Wait for controller route to set up
+echo "Waiting for controller route to set up"
+attempt=0
+while true; do
+    code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+    if [ "$code" = "200" ]; then
+        echo "Controller route is ready"
+        break
+    fi
+    
+    attempt=$((attempt + 1))
+    if [ "$attempt" -gt 10 ]; then
+        echo "Timeout waiting for controller route..."
+        echo "Deploying the controlplane has failed"
+        exit 1
+    fi
+    sleep 10s
+done
 
 echo "Setting up a new controller tenant named 'local'"
 read -d '' tenant << EOF
@@ -131,7 +146,7 @@ if [ "$ENABLE_MESSAGEHUB" = true ]; then
             "brokers": ${KAFKA_BROKERS},
             "user": "${KAFKA_USER}",
             "password": "${KAFKA_PASSWORD}",
-            "sasl": "${KAFKA_SASL}"
+            "sasl": true
         }
     }
 }

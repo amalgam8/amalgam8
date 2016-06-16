@@ -1,16 +1,14 @@
-# Amalgam8 Test and Deploy Demo
+# Getting Started with Amalgam8 using Kubernetes
 
 ## Overview
 
-The test and deploy demo is a walkthrough end-to-end example, to test out some features so that you can see how you might want to use Amalgam8.
+We will first deploy the Amalgam8 control plane and then a sample web
+application made of 4 microservices. We will then use Amalgam8's control
+plane to accomplish the following tasks:
 
-Demo goals:
-
-1. Deploy a simple web application consisting of 4 microservices using
-   kubernetes.
-2. Route traffic to specific versions of microservices using the `a8ctl`
+1. Route traffic to specific versions of microservices using the `a8ctl`
    command line client that interacts with the A8 Control Plane.
-3. Exercise the resiliency testing capabilities in Amalgam8 using the
+2. Exercise the resiliency testing capabilities in Amalgam8 using the
    Gremlin framework to conduct systematic resilience testing, i.e., inject
    reproducible failure scenarios and run automated assertions on recovery
    behavior of the microservices. Specifically,
@@ -21,12 +19,12 @@ Demo goals:
    * (Systematic approach) Using the Gremlin framework (automated) to
      inject the same failure and verify whether the microservices recover
      in the expected manner.
-5. Exercise the version routing capabilities in Amalgam8 by gradually
+3. Exercise the version routing capabilities in Amalgam8 by gradually
    increasing traffic from an old to a new version of an internal
    microservice.
 
 
-## Bring up a Kubernetes cluster in Vagrant
+## Pre-requisites
 
 To get started, install a recent version of [Vagrant](https://www.vagrantup.com/downloads.html) and follow the steps below.
 
@@ -39,7 +37,7 @@ cd examples
 vagrant up
 vagrant ssh
 
-cd $GOPATH/src/github.com/amalgam8
+cd $GOPATH/src/github.com/amalgam8/examples
 ```
 
 **Note:** If you stopped a previous Vagrant VM and restarted it, Kubernetes
@@ -47,13 +45,13 @@ might not run correctly. If you have problems, try uninstalling Kubernetes
 by running the following command:
   
 ```bash
-sudo examples/uninstall-kubernetes.sh
+sudo kubernetes/uninstall-kubernetes.sh
 ```
 
 Then re-install Kubernetes, by running the following command:
 
 ```bash
-sudo examples/install-kubernetes.sh
+sudo kubernetes/install-kubernetes.sh
 ```
 
 ## Start the multi-tenant control plane and a tenant
@@ -62,7 +60,7 @@ Start the control plane services (registry and controller) by running the
 following command:
 
 ```bash
-examples/run-controlplane-local.sh start
+kubernetes/run-controlplane-local-k8s.sh start
 ```
 
 The above command also creates a tenant named "local" in the
@@ -105,7 +103,7 @@ server that is controlled by the control plane.
 To start the API gateway, run the following command:
 
 ```bash
-kubectl create -f examples/gateway/gateway.yaml
+kubectl create -f kubernetes/gateway.yaml
 ```
 
 Usually, the API gateway is mapped to a DNS route. However, in our local
@@ -146,7 +144,7 @@ An overview of the Bookinfo application can be found under the
 up the bookinfo sample app by running the following command:
 
 ```bash
-kubectl create -f examples/apps/bookinfo/bookinfo.yaml
+kubectl create -f kubernetes/bookinfo.yaml
 ```
 
 Confirm that the microservices are running, by running the following command:
@@ -307,7 +305,7 @@ that we expect to pass: each service in the call chain should return `HTTP
 * Run the recipe using the following command:
 
 ```bash
-a8ctl recipe-run --topology topology.json --scenarios gremlins.json --checks checklist.json --header 'Cookie' --pattern='user=jason'
+a8ctl recipe-run --topology apps/bookinfo/topology.json --scenarios apps/bookinfo/gremlins.json --checks apps/bookinfo/checklist.json --header 'Cookie' --pattern='user=jason'
 ```
 
 You should see the following output:
@@ -424,7 +422,7 @@ review.
 ### TL;DR - Command summary (post K8S and control plane deployment)
 
 ```
-kubectl create -f examples/apps/bookinfo/bookinfo.yaml
+kubectl create -f kubernetes/bookinfo.yaml
 a8ctl service-list
 
 a8ctl route-set productpage --default v1
@@ -438,7 +436,7 @@ a8ctl route-list
 
 a8ctl rule-set --source reviews --destination ratings --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
 a8ctl rule-list
-a8ctl recipe-run --topology topology.json --scenarios gremlins.json --checks checklist.json --header 'Cookie' --pattern='user=jason'
+a8ctl recipe-run --topology apps/bookinfo/topology.json --scenarios apps/bookinfo/gremlins.json --checks apps/bookinfo/checklist.json --header 'Cookie' --pattern='user=jason'
 
 a8ctl route-set reviews --default v1
 a8ctl traffic-start reviews v3 # 10%
@@ -450,7 +448,7 @@ a8ctl traffic-step reviews --amount 100 # 100%
 #### Cleanup to restart demo
 
 ```
-kubectl delete -f examples/apps/bookinfo.yaml
+kubectl delete -f kubernetes/bookinfo.yaml
 a8ctl route-delete productpage
 a8ctl route-delete ratings
 a8ctl route-delete details
@@ -462,20 +460,20 @@ To (re)start the control plane:
 If `kubectl get svc` not working, then
 
 ```bash
-sudo examples/uninstall-kubernetes.sh
-sudo examples/install-kubernetes.sh
+sudo kubernetes/uninstall-kubernetes.sh
+sudo kubernetes/install-kubernetes.sh
 ```
 
 To stop an operational control plane and the API gateway
 
 ```bash
-examples/controlplane/run-controlplane-local.sh stop
-kubectl delete -f examples/gateway/gateway.yaml
+kubernetes/run-controlplane-local-k8s.sh stop
+kubectl delete -f kubernetes/gateway.yaml
 ```
 
 To start control plane and gateway
 
 ```bash
-examples/controlplane/run-controlplane-local.sh start
-kubectl create -f examples/gateway/gateway.yaml
+kubernetes/run-controlplane-local-k8s.sh start
+kubectl create -f kubernetes/gateway.yaml
 ```

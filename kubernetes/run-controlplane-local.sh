@@ -24,24 +24,7 @@ cfile="controller.yaml"
 mhfile="messagehub.yaml"
 lgfile="logserver.yaml"
 
-if [ "$1" == "compile" ]; then
-    $SCRIPTDIR/build-sidecar.sh
-    if [ $? -ne 0 ]; then
-        echo "Sidecar failed to compile"
-        exit 1
-    fi
-    $SCRIPTDIR/build-registry.sh
-    if [ $? -ne 0 ]; then
-        echo "Registry failed to compile"
-        exit 1
-    fi
-    $SCRIPTDIR/build-controller.sh
-    if [ $? -ne 0 ]; then
-        echo "Controller failed to compile"
-        exit 1
-    fi
-    exit
-elif [ "$1" == "start" ]; then
+if [ "$1" == "start" ]; then
     echo "starting system namespace kube-system"
     kubectl create namespace kube-system
     sleep 3
@@ -90,6 +73,6 @@ elif [ "$1" == "stop" ]; then
     sleep 3
     kubectl delete -f $SCRIPTDIR/$mhfile
 else
-    echo "usage: $0 compile|start|stop"
+    echo "usage: $0 start|stop"
     exit 1
 fi

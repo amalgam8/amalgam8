@@ -58,7 +58,7 @@ func TestEmptyCatalog(t *testing.T) {
 
 	catalog := newInMemoryCatalog(nil)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
@@ -77,7 +77,7 @@ func TestRegisterInstance(t *testing.T) {
 	assert.NotNil(t, id)
 	assert.NotEmpty(t, id)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 1)
@@ -90,7 +90,6 @@ func TestRegisterInstanceWithID(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		ID:          "some-nonsense-id",
@@ -109,7 +108,6 @@ func TestRegisterInstanceWithTTL(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		TTL:         time.Duration(15) * time.Second,
@@ -131,7 +129,6 @@ func TestRegisterInstanceWithCatalogTTL(t *testing.T) {
 	catalog := newInMemoryCatalog(conf)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		TTL:         2 * DefaultConfig.DefaultTTL,
@@ -152,7 +149,6 @@ func TestRegisterInstanceWithoutTTL(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 	}
@@ -172,7 +168,6 @@ func TestRegisterInstanceWithTooLowTTL(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		TTL:         DefaultConfig.MinimumTTL / 2,
@@ -191,7 +186,6 @@ func TestRegisterInstanceWithTooHighTTL(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		TTL:         DefaultConfig.MaximumTTL * 2,
@@ -210,7 +204,6 @@ func TestRegisterInstanceSameServiceSameEndpointSameData(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint: &Endpoint{
 			Value: "192.168.0.1:9080",
@@ -231,7 +224,7 @@ func TestRegisterInstanceSameServiceSameEndpointSameData(t *testing.T) {
 
 	assertSameInstance(t, inst1, inst2)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 1)
@@ -245,7 +238,6 @@ func TestRegisterInstanceSameServiceSameEndpointDifferentData(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint: &Endpoint{
 			Value: "192.168.0.1:9080",
@@ -269,7 +261,7 @@ func TestRegisterInstanceSameServiceSameEndpointDifferentData(t *testing.T) {
 	assert.NotEqual(t, inst1.Status, inst2.Status)
 	assert.NotEqual(t, inst1.Metadata, inst2.Metadata)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 1)
@@ -292,7 +284,7 @@ func TestRegisterInstanceSameServiceDifferentEndpoint(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, id1, id2)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 2)
@@ -315,72 +307,18 @@ func TestRegisterInstanceDifferentServiceSameEndpoint(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotEqual(t, id1, id2)
 
-	instances1, err := catalog.List("Calc1", protocolPredicate)
+	instances1, err := catalog.List("Calc1", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances1, 1)
 	assertContainsInstance(t, instances1, instance1)
 
-	instances2, err := catalog.List("Calc2", protocolPredicate)
+	instances2, err := catalog.List("Calc2", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances2, 1)
 	assertContainsInstance(t, instances2, instance2)
 
-}
-
-func TestRegisterInstanceWithMultipleProtocols(t *testing.T) {
-
-	catalog := newInMemoryCatalog(nil)
-
-	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
-		ServiceName: "Calc",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.1:9080",
-			Type:  "tcp",
-		},
-		Status:   "UP",
-		Metadata: []byte("metadata"),
-	}
-
-	instance2 := &ServiceInstance{
-		Protocol:    2 * testProtocol,
-		ServiceName: "Calc",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.2:9080",
-			Type:  "eureka",
-		},
-		Status:   "UP",
-		Metadata: []byte("metadata"),
-	}
-
-	inst1, err1 := catalog.Register(instance1)
-	assert.NoError(t, err1)
-	assert.NotNil(t, inst1)
-
-	inst2, err2 := catalog.Register(instance2)
-	assert.NoError(t, err2)
-	assert.NotNil(t, inst2)
-
-	instances1, err := catalog.List("Calc", protocolPredicate)
-
-	assert.NoError(t, err)
-	assert.Len(t, instances1, 1)
-	assertContainsInstance(t, instances1, inst1)
-
-	instances2, err := catalog.List("Calc", func(si *ServiceInstance) bool { return si.Protocol == 2*testProtocol })
-
-	assert.NoError(t, err)
-	assert.Len(t, instances2, 1)
-	assertContainsInstance(t, instances2, inst2)
-
-	instances, err := catalog.List("Calc", nil)
-
-	assert.NoError(t, err)
-	assert.Len(t, instances, 2)
-	assertContainsInstance(t, instances, inst1)
-	assertContainsInstance(t, instances, inst2)
 }
 
 func TestRegisterInstanceWithExtension(t *testing.T) {
@@ -389,7 +327,6 @@ func TestRegisterInstanceWithExtension(t *testing.T) {
 
 	extension := map[string]interface{}{"key_str": "value1", "key_int": 7}
 	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint: &Endpoint{
 			Value: "192.168.0.1:9080",
@@ -404,7 +341,7 @@ func TestRegisterInstanceWithExtension(t *testing.T) {
 	assert.NoError(t, err1)
 	assert.NotNil(t, inst1)
 
-	instances1, err := catalog.List("Calc", protocolPredicate)
+	instances1, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances1, 1)
@@ -427,55 +364,11 @@ func TestListServices(t *testing.T) {
 		doRegister(catalog, instance)
 	}
 
-	services := catalog.ListServices(protocolPredicate)
+	services := catalog.ListServices(nil)
 	for _, srv := range services {
 		assert.NotNil(t, srv)
 		assert.True(t, cases[srv.ServiceName])
 	}
-}
-
-func TestListServicesWithMultipleProtocols(t *testing.T) {
-
-	catalog := newInMemoryCatalog(nil)
-
-	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
-		ServiceName: "Calc1",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.1:9080",
-			Type:  "tcp",
-		},
-		Status:   "UP",
-		Metadata: []byte("metadata"),
-	}
-	doRegister(catalog, instance1)
-
-	instance2 := &ServiceInstance{
-		Protocol:    2 * testProtocol,
-		ServiceName: "Calc2",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.1:9081",
-			Type:  "tcp",
-		},
-		Status:   "UP",
-		Metadata: []byte("metadata"),
-	}
-	doRegister(catalog, instance2)
-
-	services := catalog.ListServices(protocolPredicate)
-	assert.NotNil(t, services)
-	assert.EqualValues(t, 1, len(services))
-	assert.EqualValues(t, instance1.ServiceName, services[0].ServiceName)
-
-	services = catalog.ListServices(func(si *ServiceInstance) bool { return si.Protocol == 2*testProtocol })
-	assert.NotNil(t, services)
-	assert.EqualValues(t, 1, len(services))
-	assert.EqualValues(t, instance2.ServiceName, services[0].ServiceName)
-
-	services = catalog.ListServices(nil)
-	assert.NotNil(t, services)
-	assert.EqualValues(t, 2, len(services))
-
 }
 
 func TestOutOfServiceDoesNotExpire(t *testing.T) {
@@ -483,7 +376,6 @@ func TestOutOfServiceDoesNotExpire(t *testing.T) {
 	catalog := newInMemoryCatalog(conf)
 
 	instance1 := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc1",
 		Endpoint: &Endpoint{
 			Value: "192.168.0.1:9080",
@@ -494,7 +386,6 @@ func TestOutOfServiceDoesNotExpire(t *testing.T) {
 	doRegister(catalog, instance1)
 
 	instance2 := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc1",
 		Endpoint: &Endpoint{
 			Value: "192.168.0.2:9080",
@@ -507,7 +398,7 @@ func TestOutOfServiceDoesNotExpire(t *testing.T) {
 	// Sleep past the ttl
 	time.Sleep(testShortTTL * 2)
 
-	instances, err := catalog.List("Calc1", protocolPredicate)
+	instances, err := catalog.List("Calc1", nil)
 	assert.NoError(t, err)
 
 	// Should only have instance1.  Instance2 should have expired.
@@ -517,7 +408,7 @@ func TestOutOfServiceDoesNotExpire(t *testing.T) {
 	// One more time just to be sure
 	time.Sleep(testShortTTL * 2)
 
-	instances, err = catalog.List("Calc1", protocolPredicate)
+	instances, err = catalog.List("Calc1", nil)
 	assert.NoError(t, err)
 
 	// Should only have instance1.  Instance2 should have expired.
@@ -543,7 +434,7 @@ func TestReRegisterExpiredInstance(t *testing.T) {
 	assert.NotEmpty(t, id2)
 	assert.Equal(t, id1, id2)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 1)
@@ -562,7 +453,7 @@ func TestDeregisterInstance(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
@@ -586,7 +477,7 @@ func TestDeregisterInstanceMultipleServiceInstances(t *testing.T) {
 
 	assert.NoError(t, err)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 
 	assert.NoError(t, err)
 	assert.Len(t, instances, 1)
@@ -643,7 +534,6 @@ func TestRenewInstance(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	instance := &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: "Calc",
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 	}
@@ -1045,7 +935,7 @@ Outer:
 			break Outer
 		default:
 			{
-				instances, err := catalog.List("Calc", protocolPredicate)
+				instances, err := catalog.List("Calc", nil)
 				assert.NoError(t, err)
 				assertContainsInstance(t, instances, instance)
 				time.Sleep(1 * time.Second)
@@ -1056,7 +946,7 @@ Outer:
 	// Grace period
 	time.Sleep(1 * time.Second)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
 	assert.Empty(t, instances)
@@ -1083,7 +973,7 @@ Outer:
 			break Outer
 		default:
 			{
-				instances, err := catalog.List("Calc", protocolPredicate)
+				instances, err := catalog.List("Calc", nil)
 				assert.NoError(t, err)
 				assertContainsInstance(t, instances, instance)
 				time.Sleep(1 * time.Second)
@@ -1094,7 +984,7 @@ Outer:
 	// Grace period
 	time.Sleep(1 * time.Second)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
 	assert.Empty(t, instances)
@@ -1111,7 +1001,6 @@ func TestInstanceExpireInstanceTTL(t *testing.T) {
 
 	instance := &ServiceInstance{
 		ServiceName: "Calc",
-		Protocol:    testProtocol,
 		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
 		TTL:         ttl,
 	}
@@ -1125,7 +1014,7 @@ Outer:
 			break Outer
 		default:
 			{
-				instances, err := catalog.List("Calc", protocolPredicate)
+				instances, err := catalog.List("Calc", nil)
 				assert.NoError(t, err)
 				assertContainsInstance(t, instances, instance)
 				time.Sleep(1 * time.Second)
@@ -1136,7 +1025,7 @@ Outer:
 	// Grace period
 	time.Sleep(1 * time.Second)
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
 	assert.Empty(t, instances)
@@ -1181,7 +1070,7 @@ func TestRegisterInstancesSameServiceConcurrently(t *testing.T) {
 
 	wg.Wait()
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.NoError(t, err)
 	assert.Len(t, instances, numOfInstances)
 
@@ -1231,7 +1120,7 @@ func TestRegisterInstancesConcurrently(t *testing.T) {
 	for i := 0; i < numOfServices; i++ {
 
 		service := "Calc" + strconv.Itoa(i)
-		instances, err := catalog.List(service, protocolPredicate)
+		instances, err := catalog.List(service, nil)
 
 		assert.NoError(t, err, "Error getting instances list of '%v': %v", service, err)
 		assert.Len(t, instances, numOfInstances/numOfServices)
@@ -1281,7 +1170,7 @@ func TestDeregisterInstancesSameServiceConcurrently(t *testing.T) {
 
 	wg.Wait()
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
 	assert.Empty(t, instances)
@@ -1335,7 +1224,7 @@ func TestDeregisterInstancesConcurrently(t *testing.T) {
 	for i := 0; i < numOfServices; i++ {
 
 		service := "Calc" + strconv.Itoa(i)
-		instances, err := catalog.List(service, protocolPredicate)
+		instances, err := catalog.List(service, nil)
 
 		assert.Error(t, err, "Expected error getting instances list of non-existent service '%v'", service)
 		assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err), "Wrong error for service '%v': %v", service, err)
@@ -1375,7 +1264,7 @@ Outer:
 		default:
 			{
 				time.Sleep(testShortTTL / 2)
-				instances, err := catalog.List("Calc", protocolPredicate)
+				instances, err := catalog.List("Calc", nil)
 				assert.NoError(t, err)
 				assert.Len(t, instances, 1)
 				assertContainsInstance(t, instances, instance)
@@ -1440,7 +1329,7 @@ func TestRenewInstancesConcurrently(t *testing.T) {
 	close(done)
 	wg.Wait()
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.NoError(t, err)
 	assert.Len(t, instances, numOfInstances, "Expected %v surviving instances, found %v", numOfInstances, len(instances))
 
@@ -1517,7 +1406,7 @@ func TestRenewAndExpireInstancesConcurrently(t *testing.T) {
 
 	survivingInstances := numOfInstances - expiredInstances
 
-	instances, err := catalog.List("Calc", protocolPredicate)
+	instances, err := catalog.List("Calc", nil)
 	assert.NoError(t, err)
 	assert.Len(t, instances, int(survivingInstances), "Expected %v surviving instances, found %v", survivingInstances, len(instances))
 
@@ -1525,7 +1414,6 @@ func TestRenewAndExpireInstancesConcurrently(t *testing.T) {
 
 func newServiceInstance(name string, host string, port uint32) *ServiceInstance {
 	return &ServiceInstance{
-		Protocol:    testProtocol,
 		ServiceName: name,
 		Endpoint: &Endpoint{
 			Type:  "tcp",
@@ -1575,10 +1463,6 @@ func assertSameInstance(t *testing.T, expected, actual *ServiceInstance) bool {
 	same = same && assert.EqualValues(t, expected.TTL, actual.TTL)
 	same = same && assert.EqualValues(t, expected.Metadata, actual.Metadata)
 	return same
-}
-
-func protocolPredicate(si *ServiceInstance) bool {
-	return si.Protocol == testProtocol
 }
 
 func randPercent(low, high float64) float64 {

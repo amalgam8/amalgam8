@@ -27,7 +27,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/api/protocol/amalgam8"
 	"github.com/amalgam8/registry/store"
 	"github.com/amalgam8/registry/utils/i18n"
@@ -42,9 +41,9 @@ func init() {
 //-----------
 var metadata = []byte("{\"key1\":\"value1\"}")
 var instances = []mockInstance{
-	{data: store.ServiceInstance{ID: "http-1", ServiceName: "http", Protocol: protocol.Amalgam8,
+	{data: store.ServiceInstance{ID: "http-1", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1:80", Type: "http"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata}},
-	{data: store.ServiceInstance{ID: "http-2", ServiceName: "http", Protocol: protocol.Amalgam8,
+	{data: store.ServiceInstance{ID: "http-2", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.2:80", Type: "http"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata}},
 }
 
@@ -274,15 +273,15 @@ func TestServiceInstancesMethods(t *testing.T) {
 func TestServiceInstancesFilteringByFieldValues(t *testing.T) {
 	c := defaultServerConfig()
 	c.CatalogMap.(*mockCatalog).prepopulateServices(services)
-	serviceInstance1 := store.ServiceInstance{ID: "http-1", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance1 := store.ServiceInstance{ID: "http-1", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
-	serviceInstance2 := store.ServiceInstance{ID: "http-2", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance2 := store.ServiceInstance{ID: "http-2", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB"}}
-	serviceInstance3 := store.ServiceInstance{ID: "http-3", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance3 := store.ServiceInstance{ID: "http-3", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "STARTING", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB"}}
-	serviceInstance4 := store.ServiceInstance{ID: "http-4", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance4 := store.ServiceInstance{ID: "http-4", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "OUT_OF_SERVICE", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
-	serviceInstance5 := store.ServiceInstance{ID: "http-5", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance5 := store.ServiceInstance{ID: "http-5", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1", Type: "tcp"}, Status: "user_defined", TTL: 30 * time.Second, Metadata: metadata, Tags: []string{"DB", "NoSQL"}}
 	c.CatalogMap.(*mockCatalog).prepopulateInstances([]mockInstance{
 		mockInstance{serviceInstance1},
@@ -437,7 +436,7 @@ func TestServiceInstancesFiltering(t *testing.T) {
 
 	c := defaultServerConfig()
 	c.CatalogMap.(*mockCatalog).prepopulateServices(services)
-	serviceInstance := store.ServiceInstance{ID: "http-1", ServiceName: "http-1", Protocol: protocol.Amalgam8,
+	serviceInstance := store.ServiceInstance{ID: "http-1", ServiceName: "http-1",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1:80", Type: "tcp"}, Status: "UP", TTL: 30 * time.Second, Metadata: metadata}
 	c.CatalogMap.(*mockCatalog).prepopulateInstances([]mockInstance{{serviceInstance}})
 

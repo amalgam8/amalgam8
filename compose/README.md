@@ -110,7 +110,7 @@ server that is controlled by the control plane.
 To start the API gateway, run the following command:
 
 ```bash
-docker-compose -f compose/gateway.yml up -d
+docker-compose -f compose/gateway.yaml up -d
 ```
 
 Usually, the API gateway is mapped to a DNS route. However, in our local
@@ -134,7 +134,7 @@ An overview of the Bookinfo application can be found under the
 up the bookinfo sample app by running the following command:
 
 ```bash
-docker-compose -f bookinfo.yml up -d
+docker-compose -f bookinfo.yaml up -d
 ```
 
 Confirm that the microservices are running, by running the following command:
@@ -422,11 +422,11 @@ review.
 ### Cleanup to restart demo
 
 ```bash
-docker-compose -f compose/bookinfo.yml kill
-docker-compose -f compose/bookinfo.yml rm -f
+docker-compose -f compose/bookinfo.yaml kill
+docker-compose -f compose/bookinfo.yaml rm -f
 
-docker-compose -f compose/gateway.yml kill
-docker-compose -f compose/gateway.yml rm -f
+docker-compose -f compose/gateway.yaml kill
+docker-compose -f compose/gateway.yaml rm -f
 
 compose/run-controlplane-docker.sh stop
 ```
@@ -436,8 +436,8 @@ compose/run-controlplane-docker.sh stop
 ### TL;DR - Command summary (post control plane deployment)
 
 ```
-docker-compose -f compose/gateway.yml up -d
-docker-compose -f compose/bookinfo.yml up -d
+docker-compose -f compose/gateway.yaml up -d
+docker-compose -f compose/bookinfo.yaml up -d
 a8ctl service-list
 
 a8ctl route-set productpage --default v1

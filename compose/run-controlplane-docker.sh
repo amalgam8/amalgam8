@@ -23,9 +23,9 @@ if [ "$1" == "start" ]; then
     echo "starting Control plane components (kafka, ELK stack, registry, and controller)"
     docker-compose -f controlplane.yml up -d
     echo "waiting for the cluster to initialize.."
-    sleep 60
+    sleep 20
     AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    AC=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' controller ):6379
+    AC=localhost:31200
     KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF

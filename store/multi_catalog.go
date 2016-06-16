@@ -72,7 +72,22 @@ func (mc *multiCatalog) SetStatus(instanceID, status string) error {
 }
 
 func (mc *multiCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {
-	return mc.catalogs[0].List(serviceName, predicate)
+	instanceCollection := make([]*ServiceInstance, 0, 10)
+	for _, catalog := range mc.catalogs {
+		list, err := catalog.List(serviceName, predicate)
+		if err == nil {
+			if len(list) > 0 {
+				instanceCollection = append(instanceCollection, list...)
+			}
+		}
+
+	}
+
+	if len(instanceCollection) == 0 {
+		return nil, NewError(ErrorNoSuchServiceName, "no such service ", serviceName)
+	}
+
+	return instanceCollection, nil
 }
 
 func (mc *multiCatalog) Instance(instanceID string) (*ServiceInstance, error) {
@@ -80,5 +95,20 @@ func (mc *multiCatalog) Instance(instanceID string) (*ServiceInstance, error) {
 }
 
 func (mc *multiCatalog) ListServices(predicate Predicate) []*Service {
-	return mc.catalogs[0].ListServices(predicate)
+	smap := make(map[string]*Service)
+	for _, catalog := range mc.catalogs {
+		lServices := catalog.ListServices(predicate)
+		if len(lServices) > 0 {
+			for _, svc := range lServices {
+				smap[svc.ServiceName] = svc
+			}
+		}
+	}
+
+	services := make([]*Service, 0, len(smap))
+	for _, svc := range smap {
+		services = append(services, svc)
+	}
+
+	return services
 }

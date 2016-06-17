@@ -19,6 +19,7 @@ from flask import Flask, request
 import simplejson as json
 import requests
 import sys, os
+import logging
 from json2html import *
 
 app = Flask(__name__)
@@ -141,6 +142,17 @@ def index():
     """ % (reviews_resp, ratings_enabled, star_color)
     return top
 
+
+class Writer(object):
+
+    def __init__(self, filename):
+        self.file = open(filename,'w')
+
+    def write(self, data):
+        self.file.write(data)
+        self.file.flush()
+
+
 proxyurl=None
 if __name__ == '__main__':
     if len(sys.argv) < 2:
@@ -149,4 +161,7 @@ if __name__ == '__main__':
 
     p = int(sys.argv[1])
     proxyurl = sys.argv[2]
-    app.run(host='0.0.0.0', port=p, debug = True)
+    sys.stderr = Writer('stderr.log')
+    sys.stdout = Writer('stdout.log')
+    logging.basicConfig(filename='microservice.log',filemode='w',level=logging.DEBUG)
+    app.run(host='0.0.0.0', port=p, debug = True, threaded=True)

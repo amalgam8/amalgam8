@@ -23,4 +23,4 @@ def hello():
     return "Hello version: %s, container: %s\n" % (version, os.environ.get('HOSTNAME'))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', threaded=True)

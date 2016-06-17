@@ -131,9 +131,21 @@ Vagrant.configure('2') do |config|
     vb.cpus = 2
   end
 
+  # Port mappings for various services inside the VM
+  ####Controller
+  config.vm.network "forwarded_port", guest: 31200, host: 31200
+  ####Registry
+  config.vm.network "forwarded_port", guest: 31300, host: 31300
+  ####Gateway
+  config.vm.network "forwarded_port", guest: 32000, host: 32000
+  ####Elasticsearch
+  config.vm.network "forwarded_port", guest: 30200, host: 30200
+  ####Kibana
+  config.vm.network "forwarded_port", guest: 30500, host: 30500
+
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
-  config.vm.network "private_network", ip: "192.168.33.33/24"
+  #config.vm.network "private_network", ip: "192.168.33.33/24"
 
   config.vm.provision :shell, inline: $script
 end

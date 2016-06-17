@@ -14,9 +14,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 echo "Removing weave scope.."
-kubectl delete -f weavescope.yaml
+kubectl delete -f $SCRIPTDIR/weavescope.yaml
 sleep 6
 sudo umount `cat /proc/mounts | grep /var/lib/kubelet | awk '{print $2}'` >/dev/null 2>&1
 sudo rm -rf /var/lib/kubelet

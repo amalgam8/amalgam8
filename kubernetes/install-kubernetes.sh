@@ -16,6 +16,9 @@
 
 export K8S_VERSION="v1.2.3"
 export ARCH=amd64
+
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 docker run \
     --volume=/:/rootfs:ro \
     --volume=/sys:/sys:ro \
@@ -48,4 +51,4 @@ sudo chmod +x /usr/local/bin/kubectl
 echo "Waiting for K8S to initialize.."
 sleep 30
 echo "Setting up Weave Scope for visualization"
-kubectl create -f weavescope.yaml --validate=false
+kubectl create -f $SCRIPTDIR/weavescope.yaml --validate=false

@@ -46,6 +46,18 @@ cd $GOPATH/src/github.com/amalgam8/examples/controlplane
 ./run-controlplane-local.sh start
 ```
 
+**Note:** to remove locally compiled amalgam8 images and just use the ones from dockerhub:
+
+```
+docker rmi $(docker images | grep "amalgam8/" | awk "{print \$3}")
+```
+
+and to clean up untagged images:
+
+```
+docker rmi $(docker images | grep "^<none>" | awk "{print \$3}")
+```
+
 3. Run the following commands to confirm whether the registry and controller services are running:
 
 ```

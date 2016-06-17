@@ -95,13 +95,13 @@ You should see the following output:
 +-------------+-----------------+-------------------+
 ```
 
-Open ${GATEWAY_HOST}/productpage/productpage from your browser
+Open http://localhost:32000/productpage/productpage from your browser
 and you should see the bookinfo application `productpage` displayed.
 Notice that the `productpage` is displayed, with no rating stars since `reviews:v1` does not
 access the ratings service.
 
-**Note**: Replace GATEWAY_URL above with the appropriate URL
-for your environment (for example, http://localhost:32000, http://192.168.33.33:32000, etc.).
+**Note**: Replace localhost:32000 above with the appropriate host
+for your environment (for example, "bookinfo.mybluemix.net", etc.).
 
 ### Version-aware routing
 

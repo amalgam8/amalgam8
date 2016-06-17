@@ -69,14 +69,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
    it to the address of the controller and the registry.
 
     * If you are running the docker setup using the Vagrant file in the
-    `examples` folder, then set the following environment variables:
-
-    ```bash
-    export A8_CONTROLLER_URL=http://192.168.33.33:31200
-    export A8_REGISTRY_URL=http://192.168.33.33:31300
-    ```
-
-    * If you are running Docker locally,
+    `examples` folder, or you are running Docker locally.
 
     ```bash
     export A8_CONTROLLER_URL=http://localhost:31200
@@ -95,7 +88,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     export A8_REGISTRY_URL=`docker-machine ip`
     ```
 
-    You get the idea :). Just setup these two environment variables appropriately
+    You get the idea. Just setup these two environment variables appropriately
     and you should be good to go.
 
 1.  Confirm everything is working with the following command:
@@ -105,13 +98,13 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     The command shouldn't return any services, since we haven't started any yet, 
-    but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
+    but if it returns the following empty table, the control plane services (and CLI) are working as expected:
 
     ```
-    +---------+-----------------+-------------------+
-    | Service | Default Version | Version Selectors |
-    +---------+-----------------+-------------------+
-    +---------+-----------------+-------------------+
+    +---------+-----------+
+    | Service | Instances |
+    +---------+-----------+
+    +---------+-----------+
     ```
 
 1. Deploy the API gateway
@@ -132,10 +125,9 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     Usually, the API gateway is mapped to a DNS route. However, in our local
-    standalone environment, you can access it by using the fixed IP address and
-    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-    environment. If you are using docker directly, then the gateway should be
-    accessible at http://localhost:32000 or http://dockermachineip:32000 .
+    standalone environment, you can access it at port 32000 on localhost.
+    If you are using docker directly, then the gateway should be
+    accessible at http://localhost:32000 or http://dockermachineip:32000.
 
 1. Confirm that the API gateway is running by accessing the URL from your
     browser. If all is well, you should see a simple **Welcome to nginx!**
@@ -201,6 +193,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     vagrant ssh
 
     cd $GOPATH/src/github.com/amalgam8/examples
+    export A8_CONTROLLER_URL=http://localhost:31200
     ```
     
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
@@ -214,6 +207,8 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```bash
     sudo kubernetes/install-kubernetes.sh
     ```
+    
+    **Note:** if you do reinstall kubernetes, wait until it has initialized (i.e., kubectl commands are working) before proceeding to the next step.
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
@@ -228,19 +223,19 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     The command shouldn't return any services, since we haven't started any yet, 
-    but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
+    but if it returns the following empty table, the control plane servers (and CLI) are working as expected:
     
     ```
-    +---------+-----------------+-------------------+
-    | Service | Default Version | Version Selectors |
-    +---------+-----------------+-------------------+
-    +---------+-----------------+-------------------+
+    +---------+-----------+
+    | Service | Instances |
+    +---------+-----------+
+    +---------+-----------+
     ```
     
-    You can also access the registry at http://192.168.33.33:31300 from the host machine
-    (outside the vagrant box), and the controller at http://192.168.33.33:31200.
+    You can also access the registry at http://localhost:31300 from the host machine
+    (outside the vagrant box), and the controller at http://localhost:31200.
     To access the control plane details of tenant *local*, access
-    http://192.168.33.33:31200/v1/tenants/local/ from your browser.
+    http://localhost:31200/v1/tenants/local from your browser.
 
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
@@ -249,12 +244,10 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
-    standalone environment, you can access it by using the fixed IP address and
-    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-    environment.
+    standalone environment, you can access it at port 32000 on localhost.
 
 1. Confirm that the API gateway is running by accessing the
-    http://192.168.33.33:32000 from your browser. If all is well, you should
+    http://localhost:32000 from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
     **Note:** You only need one gateway per tenant. A single gateway can front more
@@ -268,7 +261,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the helloworld application:
     
         ```bash
-        kubectl create -f examples/kubernetes/helloworld.yaml
+        kubectl create -f kubernetes/helloworld.yaml
         ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -276,7 +269,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the helloworld instances, run the following command:
     
         ```bash
-        kubectl delete -f examples/kubernetes/helloworld.yaml
+        kubectl delete -f kubernetes/helloworld.yaml
         ```
 
     (b) **bookinfo** sample
@@ -325,21 +318,21 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     marathon/run-controlplane-marathon.sh start
     ```
 
-    This section assumes that the IP address of your mesos slave where all
-    the apps will be running is 192.168.33.33.
+    This section assumes that your mesos slave, where all
+    the apps will be running, is on localhost.
 
-    Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+    Make sure that the Marathon dashboard is accessible at http://localhost:8080 and the Mesos dashboard at http://localhost:5050
 
     Verify that the controller is up and running via the Marathon dashboard.
 
 1. Launch the API Gateway
     
     ```bash
-    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/apps -d@-
     ```
 
 1. Confirm that the API gateway is running by accessing the
-    http://192.168.33.33:32000 from your browser. If all is well, you should
+    http://localhost:32000 from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
     **Note:** You only need one gateway per tenant. A single gateway can front more
@@ -353,7 +346,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the helloworld application:
 
     ```bash
-    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
     ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -361,7 +354,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the helloworld instances, run the following commands:
    
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/helloworld
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/helloworld
     ```
 
     (b) **bookinfo** sample
@@ -369,7 +362,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the bookinfo application:
     
     ```bash
-    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
     ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
@@ -377,15 +370,15 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the bookinfo instances, run the following commands:
     
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/bookinfo
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/bookinfo
     ```
 
     When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/gateway
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-controller
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-registry
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/gateway
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-controller
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-registry
     ```
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
@@ -508,7 +501,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     the be IP at which the sample app will be accessible.
 
 1. You can now deploy the sample apps as described in "Running the sample
-    apps" section above. Remember to replace the IP address `192.168.33.33`
+    apps" section above. Remember to replace the IP address `localhost`
     with the public IP address of the node where the gateway service is
     running on the Google Cloud Platform.
 

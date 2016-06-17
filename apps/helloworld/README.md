@@ -52,7 +52,7 @@ Before you begin, follow the environment set up instructions at https://github.c
 1. Confirm that all traffic is being directed to the v1 instance, by running the following cURL command multiple times:
 
     ```
-    curl ${GATEWAY_URL}/helloworld/hello
+    curl http://localhost:32000/helloworld/hello
     ```
 
     **Note**: Replace GATEWAY_URL above with the appropriate URL of the gateway
@@ -61,13 +61,13 @@ Before you begin, follow the environment set up instructions at https://github.c
     You can see that the traffic is continually routed between the v1 instances only, in a round-robin fashion:
 
     ```
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-qwpex
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-qwpex
     ...
     ```
@@ -83,20 +83,20 @@ Before you begin, follow the environment set up instructions at https://github.c
 1. Run this cURL command several times:
 
     ```
-    curl ${GATEWAY_URL}/helloworld/hello
+    curl http://localhost:32000/helloworld/hello
     ```
 
     You will see alternating responses from all 4 helloworld instances, where approximately 1 out of every 4 (25%) responses
     will be from a "v2" instances, and the other responses from the "v1" instances:
 
     ```
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-qwpex
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v2, container: helloworld-v2-ggkvd
-    $ curl ${GATEWAY_URL}/helloworld/hello
+    $ curl http://localhost:32000/helloworld/hello
     Hello version: v1, container: helloworld-v1-p8909
     ...
     ```
@@ -111,11 +111,11 @@ You can look at registration details for a service in the A8 registry, by runnin
 
 ```
 export TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
-curl -X GET -H "Authorization: Bearer ${TOKEN}" ${REGISTRY_URL}/api/v1/services/helloworld | jq .
+curl -X GET -H "Authorization: Bearer ${TOKEN}" http://localhost:31300/api/v1/services/helloworld | jq .
 ```
 
-**Note**: Replace REGISTRY_URL above with the appropriate URL of the A8 Controller
-for your environment (for example, http://localhost:31300, http://192.168.33.33:31300, etc.).
+**Note**: Replace localhost:31300 above with the appropriate host
+for your environment (for example, "a8-registry.mybluemix.net", etc.).
 
 The output should look something like this:
 
@@ -182,11 +182,11 @@ The output should look something like this:
 To list the routes for a service, run the following cURL command:
 
 ```
-curl ${CONTROLLER_URL}/v1/tenants/local/versions/helloworld | jq .
+curl http://localhost:31200/v1/tenants/local/versions/helloworld | jq .
 ```
 
-**Note**: Replace CONTROLLER_URL above with the appropriate URL of the A8 Controller
-for your environment (for example, http://localhost:31200, http://192.168.33.33:31200, etc.).
+**Note**: Replace localhost:31200 above with the appropriate host
+for your environment (for example, "a8-controller.mybluemix.net", etc.).
 
 After running the demo, the output should be as follows:
 
@@ -201,5 +201,5 @@ After running the demo, the output should be as follows:
 You can also set routes using the REST API. For example, to send all traffic to v2, run the following curl command:
 
 ```
-curl -X PUT ${CONTROLLER_URL}/v1/tenants/local/versions/helloworld -d '{"default": "v2"}' -H "Content-Type: application/json"
+curl -X PUT http://localhost:31200/v1/tenants/local/versions/helloworld -d '{"default": "v2"}' -H "Content-Type: application/json"
 ```

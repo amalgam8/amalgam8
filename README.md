@@ -269,7 +269,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the helloworld application:
     
         ```bash
-        kubectl create -f examples/kubernetes/helloworld.yaml
+        kubectl create -f kubernetes/helloworld.yaml
         ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -277,7 +277,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the helloworld instances, run the following command:
     
         ```bash
-        kubectl delete -f examples/kubernetes/helloworld.yaml
+        kubectl delete -f kubernetes/helloworld.yaml
         ```
 
     (b) **bookinfo** sample

@@ -17,10 +17,9 @@
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 kubectl delete -f $SCRIPTDIR/gateway.yaml
-$SCRIPTDIR/run-controlplane-local-k8s.sh stop
-kubectl delete -f $SCRIPTDIR/skydns.yaml
-kubectl delete namespace kube-system
-
+sleep 2
 kubectl delete -f $SCRIPTDIR/bookinfo.yaml
-
-
+sleep 2
+kubectl delete -f $SCRIPTDIR/helloworld.yaml
+sleep 2
+$SCRIPTDIR/run-controlplane-local-k8s.sh stop

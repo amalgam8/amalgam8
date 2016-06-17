@@ -199,19 +199,19 @@ docker/run-controlplane-docker.sh stop
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
       
     ```
-    sudo examples/uninstall-kubernetes.sh
+    sudo kubernetes/uninstall-kubernetes.sh
     ```
     
     Then re-install Kubernetes, by running the following command:
     
     ```
-    sudo examples/install-kubernetes.sh
+    sudo kubernetes/install-kubernetes.sh
     ```
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
     ```
-    examples/controlplane/run-controlplane-local.sh start
+    kubernetes/run-controlplane-local-k8s.sh start
     ```
 
 1. Run the following command to confirm the control plane is working:
@@ -238,7 +238,7 @@ docker/run-controlplane-docker.sh stop
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
     ```bash
-    kubectl create -f examples/gateway/gateway.yaml
+    kubectl create -f kubernetes/gateway.yaml
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
@@ -277,7 +277,7 @@ docker/run-controlplane-docker.sh stop
     * Start the bookinfo application:
     
         ```
-        kubectl create -f docker/bookinfo.yaml
+        kubectl create -f kubernetes/bookinfo.yaml
         ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
@@ -285,14 +285,14 @@ docker/run-controlplane-docker.sh stop
     * To shutdown the bookinfo instances, run the following commands:
     
         ```
-        kubectl delete -f docker/bookinfo.yaml
+        kubectl delete -f kubernetes/bookinfo.yaml
         ```
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```
-    kubectl delete -f examples/gateway/gateway.yaml
-    examples/controlplane/run-controlplane-local.sh stop
+    kubectl delete -f kubernetes/gateway.yaml
+    kubernetes/run-controlplane-local-k8s.sh stop
     ```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
@@ -300,14 +300,14 @@ docker/run-controlplane-docker.sh stop
 This section assumes that the IP address of your mesos slave where all the
 apps will be running is 192.168.33.33.
 
-1. The `run-controlplane-mesos.sh` script in the `mesos` folder sets up a
+1. The `run-controlplane-marathon.sh` script in the `marathon` folder sets up a
    local marathon/mesos cluster (based on Holiday Check's
    [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
    registry as apps in the marathon framework.
    
     ```bash
-    cd mesos
-    ./run-controlplane-mesos.sh start
+    cd marathon
+    ./run-controlplane-marathon.sh start
     ```
 
     Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
@@ -333,7 +333,7 @@ apps will be running is 192.168.33.33.
 1. You can now use the `a8ctl` command line tool to set the default
     versions for various services in the Bookinfo app, do version-based
     routing, resilience testing etc. For more details, refer to the
-    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+    [Bookinfo sample](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md)
 
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>

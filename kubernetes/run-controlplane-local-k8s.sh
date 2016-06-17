@@ -33,7 +33,9 @@ if [ "$1" == "start" ]; then
     kubectl create -f $SCRIPTDIR/$rfile
     echo "Starting multi-tenant controller"
     kubectl create -f $SCRIPTDIR/$cfile
-    echo "Waiting for controller to initialize..."
+
+    echo "Waiting for control plane to initialize..."
+
     sleep 60
     AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     AC=localhost:31200

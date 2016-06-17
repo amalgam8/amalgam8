@@ -20,7 +20,7 @@ import simplejson as json
 import requests
 import sys
 from json2html import *
-from datetime import datetime
+import logging
 import requests
 
 app = Flask(__name__)
@@ -130,12 +130,26 @@ def getDetails(headers):
     else:
         return """<h3>Sorry, product details are currently unavailable for this book.</h3>"""
 
+
+class Writer(object):
+
+    def __init__(self, filename):
+        self.file = open(filename,'w')
+
+    def write(self, data):
+        self.file.write(data)
+        self.file.flush()
+
+
 if __name__ == '__main__':
-    # To run the server, type-in $ python server.py
     if len(sys.argv) < 2:
         print "usage: %s port proxyurl" % (sys.argv[0])
         sys.exit(-1)
 
     p = int(sys.argv[1])
     proxyurl = sys.argv[2]
-    app.run(host='0.0.0.0', port=p)
+    sys.stderr = Writer('stderr.log')
+    sys.stdout = Writer('stdout.log')
+    logging.basicConfig(filename='microservice.log',filemode='w',level=logging.DEBUG)
+    app.run(host='0.0.0.0', port=p, debug = True, threaded=True)
+

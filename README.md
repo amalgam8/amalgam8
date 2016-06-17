@@ -98,7 +98,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     The command shouldn't return any services, since we haven't started any yet, 
-    but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
+    but if it returns the following empty table, the control plane services (and CLI) are working as expected:
 
     ```
     +---------+-----------+
@@ -223,7 +223,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     The command shouldn't return any services, since we haven't started any yet, 
-    but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
+    but if it returns the following empty table, the control plane servers (and CLI) are working as expected:
     
     ```
     +---------+-----------+
@@ -318,21 +318,21 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     marathon/run-controlplane-marathon.sh start
     ```
 
-    This section assumes that the IP address of your mesos slave where all
-    the apps will be running is 192.168.33.33.
+    This section assumes that your mesos slave, where all
+    the apps will be running, is on localhost.
 
-    Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+    Make sure that the Marathon dashboard is accessible at http://localhost:8080 and the Mesos dashboard at http://localhost:5050
 
     Verify that the controller is up and running via the Marathon dashboard.
 
 1. Launch the API Gateway
     
     ```bash
-    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/apps -d@-
     ```
 
 1. Confirm that the API gateway is running by accessing the
-    http://192.168.33.33:32000 from your browser. If all is well, you should
+    http://localhost:32000 from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
     **Note:** You only need one gateway per tenant. A single gateway can front more
@@ -346,7 +346,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the helloworld application:
 
     ```bash
-    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
     ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -354,7 +354,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the helloworld instances, run the following commands:
    
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/helloworld
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/helloworld
     ```
 
     (b) **bookinfo** sample
@@ -362,7 +362,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the bookinfo application:
     
     ```bash
-    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
     ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
@@ -370,15 +370,15 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the bookinfo instances, run the following commands:
     
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/bookinfo
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/bookinfo
     ```
 
     When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/gateway
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-controller
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-registry
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/gateway
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-controller
+    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-registry
     ```
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
@@ -501,7 +501,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     the be IP at which the sample app will be accessible.
 
 1. You can now deploy the sample apps as described in "Running the sample
-    apps" section above. Remember to replace the IP address `192.168.33.33`
+    apps" section above. Remember to replace the IP address `localhost`
     with the public IP address of the node where the gateway service is
     running on the Google Cloud Platform.
 

@@ -16,8 +16,6 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
 echo "Removing weave scope.."
 kubectl delete -f $SCRIPTDIR/weavescope.yaml
 sleep 6

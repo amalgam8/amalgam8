@@ -19,8 +19,6 @@ metadata:
   labels:
     name: kafka
 spec:
-  type: ClusterIP
-  clusterIP: 10.0.0.200
   ports:
   - port: 9092
     targetPort: 9092
@@ -50,7 +48,7 @@ spec:
         - containerPort: 9092
         env:
         - name: ADVERTISED_HOST
-          value: '10.0.0.200'
+          value: 'kafka'
         - name: AUTO_CREATE_TOPICS
           value: 'true'
         - name: ADVERTISED_PORT

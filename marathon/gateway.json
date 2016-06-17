@@ -1,5 +1,5 @@
 {
-    "id": "a8-gateway-local",
+    "id": "gateway",
     "container": {
 	"type": "DOCKER",
 	"docker": {

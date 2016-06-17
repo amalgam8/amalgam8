@@ -45,3 +45,7 @@ docker run \
 # Install kubernetes CLI
 sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
 sudo chmod +x /usr/local/bin/kubectl
+echo "Waiting for K8S to initialize.."
+sleep 30
+echo "Setting up Weave Scope for visualization"
+kubectl create -f weavescope.yaml --validate=false

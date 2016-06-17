@@ -139,46 +139,47 @@ don't implement any conflicting microservices.
 
 Following instructions for the sample that you want to run.
 
-  (a) **helloworld** sample
+(a) **helloworld** sample
 
-    * Start the helloworld application:
+* Start the helloworld application:
     
-        ```
-        kubectl create -f kubernetes/helloworld.yaml
-        ```
+    ```
+    docker-compose -f docker/helloworld.yaml up -d
+    ```
         
-    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+* Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
  
-    * To shutdown the helloworld instances, run the following commands:
-    
-        ```
-        kubectl delete -f kubernetes/helloworld.yaml
-        ```
+* To shutdown the helloworld instances, run the following commands:
+   
+    ```
+    docker-compose -f docker/helloworld.yaml kill
+    docker-compose -f docker/helloworld.yaml rm -f
+    ```
 
-  (b) **bookinfo** sample
+(b) **bookinfo** sample
   
-    * Start the bookinfo application:
+* Start the bookinfo application:
     
-        ```
-        docker-compose -f docker/bookinfo.yaml up -d
-        ```
+    ```
+    docker-compose -f docker/bookinfo.yaml up -d
+    ```
 
-    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+* Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
     
-    * To shutdown the bookinfo instances, run the following commands:
+* To shutdown the bookinfo instances, run the following commands:
     
-        ```
-        docker-compose -f docker/bookinfo.yaml kill
-        docker-compose -f docker/bookinfo.yaml rm -f
-        ```
+    ```
+    docker-compose -f docker/bookinfo.yaml kill
+    docker-compose -f docker/bookinfo.yaml rm -f
+    ```
 
 When you are finished, shut down the gateway and control plane servers by running the following commands:
 
-    ```
-    docker-compose -f docker/gateway.yaml kill
-    docker-compose -f docker/gateway.yaml rm -f
-    docker/run-controlplane-docker.sh stop
-    ```
+```
+docker-compose -f docker/gateway.yaml kill
+docker-compose -f docker/gateway.yaml rm -f
+docker/run-controlplane-docker.sh stop
+```
 
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
@@ -255,7 +256,7 @@ When you are finished, shut down the gateway and control plane servers by runnin
 
 1. Following instructions for the sample that you want to run.
 
-  (a) **helloworld** sample
+    (a) **helloworld** sample
 
     * Start the helloworld application:
     
@@ -271,7 +272,7 @@ When you are finished, shut down the gateway and control plane servers by runnin
         kubectl delete -f kubernetes/helloworld.yaml
         ```
 
-  (b) **bookinfo** sample
+    (b) **bookinfo** sample
 
     * Start the bookinfo application:
     

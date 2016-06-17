@@ -5,7 +5,7 @@
 The helloworld sample starts two versions of a helloworld microservice, to demonstrate how Amalgam8 can be used to split 
 incoming traffic between the two versions. You can define the proportion of traffic to each microservice as a percentage.
 
-## Running the hellowrold demo
+## Running the helloworld demo
 
 Before you begin, follow the environment set up instructions at https://github.com/amalgam8/examples/blob/master/README.md
 

@@ -142,6 +142,8 @@ Vagrant.configure('2') do |config|
   config.vm.network "forwarded_port", guest: 30200, host: 30200
   ####Kibana
   config.vm.network "forwarded_port", guest: 30500, host: 30500
+  ####Weave Scope
+  config.vm.network "forwarded_port", guest: 30040, host: 30040
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.

@@ -205,20 +205,20 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
       
-    ```
-    sudo examples/kubernetes/uninstall-kubernetes.sh
+    ```bash
+    sudo kubernetes/uninstall-kubernetes.sh
     ```
     
     Then re-install Kubernetes, by running the following command:
     
-    ```
-    sudo examples/kubernetes/install-kubernetes.sh
+    ```bash
+    sudo kubernetes/install-kubernetes.sh
     ```
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
-    ```
-    examples/kubernetes/run-controlplane-local-k8s.sh start
+    ```bash
+    kubernetes/run-controlplane-local-k8s.sh start
     ```
 
 1. Run the following command to confirm the control plane is working:
@@ -245,7 +245,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
     ```bash
-    kubectl create -f examples/kubernetes/gateway.yaml
+    kubectl create -f kubernetes/gateway.yaml
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
@@ -267,15 +267,15 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     * Start the helloworld application:
     
-        ```
+        ```bash
         kubectl create -f examples/kubernetes/helloworld.yaml
         ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
  
-    * To shutdown the helloworld instances, run the following commands:
+    * To shutdown the helloworld instances, run the following command:
     
-        ```
+        ```bash
         kubectl delete -f examples/kubernetes/helloworld.yaml
         ```
 
@@ -283,23 +283,23 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     * Start the bookinfo application:
     
-        ```
-        kubectl create -f examples/kubernetes/bookinfo.yaml
+        ```bash
+        kubectl create -f kubernetes/bookinfo.yaml
         ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
     
-    * To shutdown the bookinfo instances, run the following commands:
+    * To shutdown the bookinfo instances, run the following command:
     
-        ```
-        kubectl delete -f examples/kubernetes/bookinfo.yaml
+        ```bash
+        kubectl delete -f kubernetes/bookinfo.yaml
         ```
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
-    ```
-    kubectl delete -f examples/kubernetes/gateway.yaml
-    examples/kubernetes/run-controlplane-local-k8s.sh stop
+    ```bash
+    kubectl delete -f kubernetes/gateway.yaml
+    kubernetes/run-controlplane-local-k8s.sh stop
     ```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>

@@ -266,7 +266,7 @@ docker/run-controlplane-docker.sh stop
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
  
-    * To shutdown the helloworld instances, run the following commands:
+    * To shutdown the helloworld instances, run the following command:
     
         ```
         kubectl delete -f kubernetes/helloworld.yaml
@@ -282,7 +282,7 @@ docker/run-controlplane-docker.sh stop
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
     
-    * To shutdown the bookinfo instances, run the following commands:
+    * To shutdown the bookinfo instances, run the following command:
     
         ```
         kubectl delete -f kubernetes/bookinfo.yaml

@@ -18,6 +18,9 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 export K8S_VERSION="v1.2.3"
 export ARCH=amd64
+
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 docker run \
     --volume=/:/rootfs:ro \
     --volume=/sys:/sys:ro \

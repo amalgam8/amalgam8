@@ -38,7 +38,7 @@ if [ "$1" == "start" ]; then
 
     sleep 60
     AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    AC=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    AC=localhost:31200
     KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF

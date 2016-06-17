@@ -26,7 +26,7 @@ vagrant ssh
 In this environment, you can run all the same samples and demos described in https://github.com/amalgam8/examples/blob/master/README.md,
 only now you have the ability to also compile the code and build the images locally.
 
-For example, you can compile and build the control plane and sidecare images locally, with the following command:
+For example, you can compile and build the control plane and sidecar images locally, with the following command:
 
 ```
 kubernetes/run-controlplane-local.sh compile

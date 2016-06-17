@@ -138,7 +138,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions for the sample that you want to run.
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -197,6 +197,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     cd $GOPATH/src/github.com/amalgam8/examples
     export A8_CONTROLLER_URL=http://localhost:31200
+    export A8_REGISTRY_URL=http://localhost:31300
     ```
     
     Start Kubernetes, by running the following command:
@@ -258,7 +259,13 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions for the sample that you want to run.
+1. Visualize your deployment using Weave Scope by accessing
+   http://localhost:30040 . Click on `Pods` tab. You should see a graph of
+   pods depicting the connectivity between them. As you create more apps
+   and manipulate routing across microservices, the graph changes in
+   real-time.
+   
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -325,7 +332,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     This section assumes that your mesos slave, where all
     the apps will be running, is on localhost.
 
-    Make sure that the Marathon dashboard is accessible at http://localhost:8080 and the Mesos dashboard at http://localhost:5050
+    Make sure that the Marathon dashboard is accessible at http://localhost:38080 and the Mesos dashboard at http://localhost:35050
 
     Verify that the controller is up and running via the Marathon dashboard.
 
@@ -343,7 +350,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions for the sample that you want to run.
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -411,13 +418,30 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
     Verify that the controller is running by ```cf ic group list``` and checking if the ```amalgam8_controller``` group is running.
 
-1. Deploy the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
-
 1. Configure the Amalgam8 CLI according to the routes defined in [.bluemixrc file](bluemix/.bluemixrc)
 
     ```
     export A8_CONTROLLER_URL=https://amalgam8-controller.mybluemix.net
     ```
+
+1. Run the following command to confirm the control plane is working:
+
+    ```bash
+    a8ctl service-list
+    ```
+
+    The command shouldn't return any services, since we haven't started any yet, 
+    but if it returns the following empty table, the control plane servers (and CLI) are working as expected:
+    
+    ```
+    +---------+-----------+
+    | Service | Instances |
+    +---------+-----------+
+    +---------+-----------+
+    ```
+
+1. Deploy the API Gateway and the Bookinfo app by running [bluemix/deploy-bookinfo.sh](bluemix/deploy-bookinfo.sh)
+
 
 1. Confirm the microservices are running
 
@@ -438,40 +462,15 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+---------------------+
      ```
 
-1. Route all traffic to version v1 of each microservice
+1. Confirm that the app is running by accessing the
+    ${BOOKINFO_URL}/productpage/productpage from your browser (Replace
+    BOOKINFO_URL with the value defined in
+    [.bluemixrc file](bluemix/.bluemixrc)). You should see the bookinfo
+    application with book details and reviews.
 
-    ```bash
-    a8ctl route-set productpage --default v1
-    a8ctl route-set ratings --default v1
-    a8ctl route-set details --default v1
-    a8ctl route-set reviews --default v1
-    ```
-
-1. Confirm the routes are set by running the following command
-
-    ```bash
-    a8ctl route-list
-    ```
-
-    You should see the following output:
-
-    ```
-    +-------------+-----------------+-------------------+
-    | Service     | Default Version | Version Selectors |
-    +-------------+-----------------+-------------------+
-    | ratings     | v1              |                   |
-    | productpage | v1              |                   |
-    | details     | v1              |                   |
-    | reviews     | v1              |                   |
-    +-------------+-----------------+-------------------+
-    ```
-
-    Open the ${BOOKINFO_URL}/productpage/productpage from your browser and you should see the bookinfo application displayed.  
-    (Replace BOOKINFO_URL with the value defined in [.bluemixrc file](bluemix/.bluemixrc))
-  
-1. Now that the application is up and running, you can try out the other a8ctl commands as described in
-    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
-   
+    * Follow the instructions at
+      https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+      for the rest of the tutorial.
 
 ## Amalgam8 on Google Cloud Platform <a id="gcp"></a>
 
@@ -489,10 +488,10 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
    external IP to the node if needed
 
 1. Initialize the first tenant. The `run-controlplane-gcp.sh` script stores
-   the JSON payload to initialize the tenant in the `TENANT_REG` environment variable.
+   the JSON payload to initialize the tenant in `/tmp/tenant_details.json`.
 
     ```bash
-    echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
+    cat /tmp/tenant_details.json|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants
     ```
 
 1. Deploy the API gateway

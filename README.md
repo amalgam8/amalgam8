@@ -43,83 +43,137 @@ or you can simply install [Docker](https://docs.docker.com/engine/installation/)
 and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl)
 on your own machine.
 
-To start the demo, run the following commands:
+### Start the multi-tenant control plane and a tenant
+
+Start the control plane services (registry and controller) by running the
+following command:
 
 ```
-cd compose
-./run-controlplane-docker.sh start
-docker-compose -f gateway.yml up -d
-docker-compose -f bookinfo.yml up -d
+docker/run-controlplane-docker.sh start
+```
+
+The above command also creates a tenant named "local" in the
+control plane. 
+
+Before we start using the `a8ctl` command line utility, we need to point it
+to the address of the controller and the registry.
+* If you are running the docker setup using the Vagrant file in the
+`examples` folder, then set the following environment variables:
+
+```bash
+export A8_CONTROLLER_URL=http://192.168.33.33:31200
+export A8_REGISTRY_URL=http://192.168.33.33:31300
+```
+
+* If you are running Docker locally,
+
+```bash
 export A8_CONTROLLER_URL=http://localhost:31200
 export A8_REGISTRY_URL=http://localhost:31300
 ```
-This will start the Amalgam8 control plane services, an API gateway,
-and the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) microservices.
 
-To confirm that the services have started, run the following command:
+* If you are running Docker on Mac/Windows using the Docker Toolbox (__not
+the Docker for Mac - Beta__), then set the environment variables to the IP
+address of the VM created by Docker Machine.
 
+Assuming you have only one Docker Machine running on your system, the
+following commands will setup the appropriate environment variables:
+
+```bash
+export A8_CONTROLLER_URL=`docker-machine ip`
+export A8_REGISTRY_URL=`docker-machine ip`
 ```
+
+You get the idea. Just setup these two environment variables appropriately
+and you should be good to go.
+
+
+You can confirm everything is working with the following command:
+
+```bash
 a8ctl service-list
 ```
 
-This should produce the following output:
-   
+The command shouldn't return any services, since we haven't started any yet, 
+but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
+
 ```
-+-------------+---------------------+
-| Service     | Instances           |
-+-------------+---------------------+
-| productpage | v1(1)               |
-| ratings     | v1(1)               |
-| details     | v1(1)               |
-| reviews     | v1(1), v2(1), v3(1) |
-+-------------+---------------------+
++---------+-----------------+-------------------+
+| Service | Default Version | Version Selectors |
++---------+-----------------+-------------------+
++---------+-----------------+-------------------+
 ```
 
-Now you can route all traffic to version v1 of each microservice with the following commands:
+### Deploy the tenant application
+
+Every tenant application should have
+an [API Gateway](http://microservices.io/patterns/apigateway.html) that
+provides a single user-facing entry point for a microservices-based
+application.  You can control the Amalgam8 gateway for different purposes,
+such as version routing, red/black deployments, canary testing, resiliency
+testing, and so on. The Amalgam8 gateway is a simple lightweight Nginx
+server that is controlled by the control plane.
+
+
+#### Deploy the API gateway
+
+To start the API gateway, run the following command:
 
 ```bash
-a8ctl route-set productpage --default v1
-a8ctl route-set ratings --default v1
-a8ctl route-set details --default v1
-a8ctl route-set reviews --default v1
+docker-compose -f docker/gateway.yaml up -d
 ```
 
-Confirm the routes are set as follows:
+Usually, the API gateway is mapped to a DNS route. However, in our local
+standalone environment, you can access it by using the fixed IP address and
+port (http://192.168.33.33:32000), which was pre-configured for the sandbox
+environment. If you are using docker directly, then the gateway should be
+accessible at http://localhost:32000 or http://dockermachineip:32000 .
 
-```bash
-a8ctl route-list
-```
+Confirm that the API gateway is running by accessing the URL
+from your browser. If all is well, you should
+see a simple **Welcome to nginx!** page in your browser.
 
-You should see a table like this:
+**Note:** You only need one gateway per tenant. A single gateway can front more
+than one application under the tenant at the same time, so long as they
+don't implement any conflicting microservices.
 
-```
-+-------------+-----------------+-------------------+
-| Service     | Default Version | Version Selectors |
-+-------------+-----------------+-------------------+
-| ratings     | v1              |                   |
-| productpage | v1              |                   |
-| details     | v1              |                   |
-| reviews     | v1              |                   |
-+-------------+-----------------+-------------------+
-```
+Following instructions for the sample that you want to run.
 
-If you open http://localhost:32000/productpage/productpage from your browser, you should see the bookinfo application displayed.  
-  
-Now that the application is up and running, you can try out the other a8ctl commands as described in
-[test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md). 
-Just make sure to replace "192.168.33.33" with "localhost" in the URLs used in the instructions.
+  (a) *helloworld* sample
 
-When you are finished, you can run the following commands to completely shudown the demo:
+    * Start the helloworld application:
+        ```
+        kubectl create -f kubernetes/helloworld.yaml
+        ```
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+ 
+    * To shutdown the helloworld instances, run the following commands:
+        ```
+        kubectl delete -f kubernetes/helloworld.yaml
+        ```
 
-```
-docker-compose -f bookinfo.yml kill
-docker-compose -f bookinfo.yml rm -f
+  (b) *bookinfo* sample
+    * Start the bookinfo application:
+        ```
+        docker-compose -f docker/bookinfo.yaml up -d
+        ```
 
-docker-compose -f gateway.yml kill
-docker-compose -f gateway.yml rm -f
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    
+    * To shutdown the bookinfo instances, run the following commands:
+        ```
+        docker-compose -f docker/bookinfo.yaml kill
+        docker-compose -f docker/bookinfo.yaml rm -f
+        ```
 
-./run-controlplane-docker.sh stop
-```
+When you are finished, shut down the gateway and control plane servers by running the following commands:
+
+    ```
+    docker-compose -f docker/gateway.yaml kill
+    docker-compose -f docker/gateway.yaml rm -f
+    docker/run-controlplane-docker.sh stop
+    ```
+
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 
@@ -193,15 +247,33 @@ docker-compose -f gateway.yml rm -f
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions in the README for the sample that you want to run.
+1. Following instructions for the sample that you want to run.
 
   (a) *helloworld* sample
 
-  See https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+    * Start the helloworld application:
+        ```
+        kubectl create -f kubernetes/helloworld.yaml
+        ```
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+ 
+    * To shutdown the helloworld instances, run the following commands:
+        ```
+        kubectl delete -f kubernetes/helloworld.yaml
+        ```
 
   (b) *bookinfo* sample
+    * Start the bookinfo application:
+        ```
+        kubectl create -f docker/bookinfo.yaml
+        ```
 
-  See https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    
+    * To shutdown the bookinfo instances, run the following commands:
+        ```
+        kubectl delete -f docker/bookinfo.yaml
+        ```
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 

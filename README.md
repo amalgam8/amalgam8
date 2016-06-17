@@ -14,33 +14,45 @@ automatic service registration, and load-balancing
 
 ![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/sidecar.jpg)
 
-### Environment variables needed to run sidecar
-    
-* ENDPOINT_HOST, ENDPOINT_PORT -- IP and port of service instance to register
-* SERVICE -- Name of service to register
-* SD_URL, SD_TOKEN -- URL and auth token for use with service discovery
-* RE_URL -- Service proxy control plane URL
-* SP_TENANT_ID, SP_TENANT_TOKEN - ID and auth token for use with service  proxy
-  
-#### IBM MessageHub integration - environment variables
-* VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_REST_URL
-* VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_API_KEY
-* VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_[0,1,2,3..]
-* VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_USER
-* VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_PASSWORD
+## Usage
+A prebuild Docker iamge is available. Install Docker 1.8 or 1.9 and run the following:
 
-### Running sidecar
+```docker pull amalgam8/a8-controller```
 
-Command line arguments
-* -register - enable automatic service registration
-* -proxy - enable nginx service proxy
-* -log - use filebeat to propagate nginx logs to logstash
-* -supervise - invoke and monitor application process
+### Configuration options
+Configuration options can be set through environment variables or command line flags. 
 
-Usage:
-```bash
-sidecar -register -proxy -log -supervise myapp arg1 arg2 -arg3=3 -arg4=4
-```
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info |
+| SERVICE | --service | service name to register with | |
+| SERVICE_VERSION | --service_version | service version to register with |  |
+| ENDPOINT_HOST | --endpoint_host | service endpoint host name |  |
+| ENDPOINT_PORT | --endpoint_port | service endpoint port | |
+| REGISTER | --register | enable automatic service registration and heartbeat |  |
+| PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  |
+| LOG | --log | enable logging of outgoing requests through proxy using FileBeat |  |
+| SUPERVISE | --supervise | Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation |  |
+| TENANT_ID | --tenant_id | service Proxy instance GUID |  |
+| TENANT_TOKEN | --tenant_token | token for Service Proxy instance |  |
+| TENANT_TTL | --tenant_ttl | tenant TTL for Registry | 1m0s |
+| TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry |  |
+| REGISTRY_URL | --registry_url | registry URL | 45s |
+| REGISTRY_TOKEN | --registry_token | registry API token | |
+| NGINX_PORT | --nginx_port | port for NGINX | 6379 |
+| CONTROLLER_URL | --controller_url | controller URL |  |
+| CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s |
+| LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  |
+| KAFKA_USER | --kafka_user | kafka username |  |
+| KAFKA_PASS | --kafka_pass | kafka password |  |
+| KAFKA_TOKEN | --kafka_token | kafka token |  |
+| KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  |
+| KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  |
+| KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  |
+| KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  |
+|  | --help, -h | show help | |
+|  | --version, -v | print the version | |
+
 ## License
 Copyright 2016 IBM Corporation
 

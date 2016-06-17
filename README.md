@@ -197,6 +197,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     cd $GOPATH/src/github.com/amalgam8/examples
     export A8_CONTROLLER_URL=http://localhost:31200
+    export A8_REGISTRY_URL=http://localhost:31300
     ```
     
     Start Kubernetes, by running the following command:
@@ -258,6 +259,12 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
+1. Visualize your deployment using Weave Scope by accessing
+   http://localhost:30040 . Click on `Pods` tab. You should see a graph of
+   pods depicting the connectivity between them. As you create more apps
+   and manipulate routing across microservices, the graph changes in
+   real-time.
+   
 1. Following instructions for the sample that you want to run.
 
     (a) **helloworld** sample

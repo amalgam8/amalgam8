@@ -201,6 +201,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     vagrant ssh
 
     cd $GOPATH/src/github.com/amalgam8/examples
+    export A8_CONTROLLER_URL=http://localhost:31200
     ```
     
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
@@ -214,6 +215,8 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```bash
     sudo kubernetes/install-kubernetes.sh
     ```
+    
+    **Note:** if you do reinstall kubernetes, wait until it has initialized (i.e., kubectl commands are working) before proceeding to the next step.
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
@@ -231,16 +234,16 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     but if it returns the follwoing empty table, the control plane servers (and CLI) are working as expected:
     
     ```
-    +---------+-----------------+-------------------+
-    | Service | Default Version | Version Selectors |
-    +---------+-----------------+-------------------+
-    +---------+-----------------+-------------------+
+    +---------+-----------+
+    | Service | Instances |
+    +---------+-----------+
+    +---------+-----------+
     ```
     
-    You can also access the registry at http://192.168.33.33:31300 from the host machine
-    (outside the vagrant box), and the controller at http://192.168.33.33:31200.
+    You can also access the registry at http://localhost:31300 from the host machine
+    (outside the vagrant box), and the controller at http://localhost:31200.
     To access the control plane details of tenant *local*, access
-    http://192.168.33.33:31200/v1/tenants/local/ from your browser.
+    http://localhost:31200/v1/tenants/local from your browser.
 
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
@@ -249,12 +252,10 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
-    standalone environment, you can access it by using the fixed IP address and
-    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-    environment.
+    standalone environment, you can access it by at port 32000 on localhost.
 
 1. Confirm that the API gateway is running by accessing the
-    http://192.168.33.33:32000 from your browser. If all is well, you should
+    http://localhost:32000 from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
     **Note:** You only need one gateway per tenant. A single gateway can front more

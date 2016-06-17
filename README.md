@@ -8,7 +8,9 @@
 [Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
 
 A language agnostic sidecar for building microservice applications with
-automatic service registration, and load-balancing
+automatic service registration, and load-balancing.
+
+An overview of the Amalgam8 project is available here: http://amalgam8.io/
 
 ### Architecture
 

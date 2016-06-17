@@ -46,27 +46,27 @@ var Flags = []cli.Flag{
 	cli.StringFlag{
 		Name:  statsdHost,
 		Value: "127.0.0.1:8125",
-		Usage: "Statsd host",
+		Usage: "statsd host",
 	},
 
 	cli.StringFlag{
 		Name:   controlToken,
 		Value:  "ABCDEFGHIJKLMNOP",
 		EnvVar: strings.ToUpper(controlToken),
-		Usage:  "Token for control plane API authentication",
+		Usage:  "controller API authentication token",
 	},
 
 	cli.StringFlag{
 		Name:   secretKey,
 		Value:  "abcdefghijklmnop",
 		EnvVar: strings.ToUpper(secretKey),
-		Usage:  "Secret key",
+		Usage:  "secret key",
 	},
 
 	cli.DurationFlag{
 		Name:   pollInterval,
 		EnvVar: strings.ToUpper(pollInterval),
-		Usage:  "Poll interval (optional)",
+		Usage:  "poll interval",
 	},
 
 	// Database
@@ -74,28 +74,28 @@ var Flags = []cli.Flag{
 		Name:   dbType,
 		EnvVar: strings.ToUpper(dbType),
 		Value:  "memory",
-		Usage:  "Database type: memory or cloudant",
+		Usage:  "database type",
 	},
 	cli.StringFlag{
 		Name:   dbUser,
 		EnvVar: strings.ToUpper(dbUser),
-		Usage:  "Username for Database",
+		Usage:  "database username",
 	},
 	cli.StringFlag{
 		Name:   dbPassword,
 		EnvVar: strings.ToUpper(dbPassword),
-		Usage:  "Password for Database",
+		Usage:  "database password",
 	},
 	cli.StringFlag{
 		Name:   dbHost,
 		EnvVar: strings.ToUpper(dbHost),
-		Usage:  "Host for Database",
+		Usage:  "database host",
 	},
 
 	cli.StringFlag{
 		Name:   logLevel,
 		EnvVar: strings.ToUpper(logLevel),
 		Value:  "info",
-		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
+		Usage:  "logging level (debug, info, warn, error, fatal, panic)",
 	},
 }

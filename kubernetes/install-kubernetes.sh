@@ -14,6 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 export K8S_VERSION="v1.2.3"
 export ARCH=amd64
 docker run \
@@ -48,4 +50,4 @@ sudo chmod +x /usr/local/bin/kubectl
 echo "Waiting for K8S to initialize.."
 sleep 30
 echo "Setting up Weave Scope for visualization"
-kubectl create -f weavescope.yaml --validate=false
+kubectl create -f $SCRIPTDIR/weavescope.yaml --validate=false

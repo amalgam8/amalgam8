@@ -138,7 +138,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions for the sample that you want to run.
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -265,7 +265,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
    and manipulate routing across microservices, the graph changes in
    real-time.
    
-1. Following instructions for the sample that you want to run.
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -350,7 +350,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     than one application under the tenant at the same time, so long as they
     don't implement any conflicting microservices.
 
-1. Following instructions for the sample that you want to run.
+1. Follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 

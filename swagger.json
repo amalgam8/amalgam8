@@ -106,7 +106,7 @@
       "put" : {
         "tags" : [ ],
         "summary" : "Update tenant information",
-        "description" : "Updates the ",
+        "description" : "Updates the credentials and configuration of a tenant",
         "parameters" : [
           {
             "name": "tenant_info",

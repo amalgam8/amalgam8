@@ -139,21 +139,26 @@ don't implement any conflicting microservices.
 
 Following instructions for the sample that you want to run.
 
-  (a) *helloworld* sample
+  (a) **helloworld** sample
 
     * Start the helloworld application:
+    
         ```
         kubectl create -f kubernetes/helloworld.yaml
         ```
+        
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
  
     * To shutdown the helloworld instances, run the following commands:
+    
         ```
         kubectl delete -f kubernetes/helloworld.yaml
         ```
 
-  (b) *bookinfo* sample
+  (b) **bookinfo** sample
+  
     * Start the bookinfo application:
+    
         ```
         docker-compose -f docker/bookinfo.yaml up -d
         ```
@@ -161,6 +166,7 @@ Following instructions for the sample that you want to run.
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
     
     * To shutdown the bookinfo instances, run the following commands:
+    
         ```
         docker-compose -f docker/bookinfo.yaml kill
         docker-compose -f docker/bookinfo.yaml rm -f
@@ -249,21 +255,26 @@ When you are finished, shut down the gateway and control plane servers by runnin
 
 1. Following instructions for the sample that you want to run.
 
-  (a) *helloworld* sample
+  (a) **helloworld** sample
 
     * Start the helloworld application:
+    
         ```
         kubectl create -f kubernetes/helloworld.yaml
         ```
+        
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
  
     * To shutdown the helloworld instances, run the following commands:
+    
         ```
         kubectl delete -f kubernetes/helloworld.yaml
         ```
 
-  (b) *bookinfo* sample
+  (b) **bookinfo** sample
+
     * Start the bookinfo application:
+    
         ```
         kubectl create -f docker/bookinfo.yaml
         ```
@@ -271,6 +282,7 @@ When you are finished, shut down the gateway and control plane servers by runnin
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
     
     * To shutdown the bookinfo instances, run the following commands:
+    
         ```
         kubectl delete -f docker/bookinfo.yaml
         ```

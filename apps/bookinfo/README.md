@@ -23,8 +23,6 @@ There are 3 versions of the reviews microservice:
 
 ## Running the bookinfo demo
 
-## Overview
-
 In this demo, we will use Amalgam8's control plane to accomplish the following tasks:
 
 1. Route traffic to specific versions of microservices using the `a8ctl`

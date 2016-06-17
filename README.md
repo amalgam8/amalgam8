@@ -69,14 +69,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
    it to the address of the controller and the registry.
 
     * If you are running the docker setup using the Vagrant file in the
-    `examples` folder, then set the following environment variables:
-
-    ```bash
-    export A8_CONTROLLER_URL=http://192.168.33.33:31200
-    export A8_REGISTRY_URL=http://192.168.33.33:31300
-    ```
-
-    * If you are running Docker locally,
+    `examples` folder, or you are running Docker locally.
 
     ```bash
     export A8_CONTROLLER_URL=http://localhost:31200
@@ -95,7 +88,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     export A8_REGISTRY_URL=`docker-machine ip`
     ```
 
-    You get the idea :). Just setup these two environment variables appropriately
+    You get the idea. Just setup these two environment variables appropriately
     and you should be good to go.
 
 1.  Confirm everything is working with the following command:
@@ -108,10 +101,10 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
 
     ```
-    +---------+-----------------+-------------------+
-    | Service | Default Version | Version Selectors |
-    +---------+-----------------+-------------------+
-    +---------+-----------------+-------------------+
+    +---------+-----------+
+    | Service | Instances |
+    +---------+-----------+
+    +---------+-----------+
     ```
 
 1. Deploy the API gateway
@@ -132,10 +125,9 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
 
     Usually, the API gateway is mapped to a DNS route. However, in our local
-    standalone environment, you can access it by using the fixed IP address and
-    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-    environment. If you are using docker directly, then the gateway should be
-    accessible at http://localhost:32000 or http://dockermachineip:32000 .
+    standalone environment, you can access it at port 32000 on localhost.
+    If you are using docker directly, then the gateway should be
+    accessible at http://localhost:32000 or http://dockermachineip:32000.
 
 1. Confirm that the API gateway is running by accessing the URL from your
     browser. If all is well, you should see a simple **Welcome to nginx!**
@@ -252,7 +244,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
-    standalone environment, you can access it by at port 32000 on localhost.
+    standalone environment, you can access it at port 32000 on localhost.
 
 1. Confirm that the API gateway is running by accessing the
     http://localhost:32000 from your browser. If all is well, you should

@@ -129,8 +129,9 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     If you are using docker directly, then the gateway should be
     accessible at http://localhost:32000 or http://dockermachineip:32000.
 
-1. Confirm that the API gateway is running by accessing the URL from your
-    browser. If all is well, you should see a simple **Welcome to nginx!**
+1. Confirm that the API gateway is running by accessing
+    http://localhost:32000 from your browser.
+    If all is well, you should see a simple **Welcome to nginx!**
     page in your browser.
 
     **Note:** You only need one gateway per tenant. A single gateway can front more
@@ -145,6 +146,8 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     ```bash
     docker-compose -f docker/helloworld.yaml up -d
+    docker-compose -f docker/helloworld.yaml scale helloworld-v1=2
+    docker-compose -f docker/helloworld.yaml scale helloworld-v2=2
     ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -196,19 +199,20 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     export A8_CONTROLLER_URL=http://localhost:31200
     ```
     
-    *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
+    Start Kubernetes, by running the following command:
+    
+    ```bash
+    sudo kubernetes/install-kubernetes.sh
+    ```
+
+    *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might be started already, but in a bad state.
+    If you have problems, first start by uninstalling Kubernetes with the following command: 
       
     ```bash
     sudo kubernetes/uninstall-kubernetes.sh
     ```
     
-    Then re-install Kubernetes, by running the following command:
-    
-    ```bash
-    sudo kubernetes/install-kubernetes.sh
-    ```
-    
-    **Note:** if you do reinstall kubernetes, wait until it has initialized (i.e., kubectl commands are working) before proceeding to the next step.
+    **Note:** After starting kubernetes, wait until it has initialized (i.e., kubectl commands are working) before proceeding to the next step.
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
@@ -246,7 +250,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     Usually, the API gateway is mapped to a DNS route. However, in our local
     standalone environment, you can access it at port 32000 on localhost.
 
-1. Confirm that the API gateway is running by accessing the
+1. Confirm that the API gateway is running by accessing
     http://localhost:32000 from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 

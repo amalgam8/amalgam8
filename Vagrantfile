@@ -57,38 +57,38 @@ chown vagrant:vagrant /home/vagrant/sandbox /home/vagrant/sandbox/src /home/vagr
 sudo curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Install kubernetes
-export K8S_VERSION="v1.2.3"
-export ARCH=amd64
-docker run \
-    --volume=/:/rootfs:ro \
-    --volume=/sys:/sys:ro \
-    --volume=/var/lib/docker/:/var/lib/docker:rw \
-    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
-    --volume=/var/run:/var/run:rw \
-    --net=host \
-    --pid=host \
-    --privileged=true \
-    --name=kubelet \
-    -d \
-    gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
-    /hyperkube kubelet \
-        --containerized \
-        --hostname-override="127.0.0.1" \
-        --address="0.0.0.0" \
-        --api-servers=http://0.0.0.0:8080 \
-        --config=/etc/kubernetes/manifests \
-        --allow-privileged=true --v=2 \
-  	    --cluster-dns=10.0.0.10 \
-        --cluster-domain=cluster.local
-# ##Make API server accessible on host OS
-sleep 10
-docker exec kubelet perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json
-docker restart kubelet
+## Install kubernetes
+#export K8S_VERSION="v1.2.3"
+#export ARCH=amd64
+#docker run \
+#    --volume=/:/rootfs:ro \
+#    --volume=/sys:/sys:ro \
+#    --volume=/var/lib/docker/:/var/lib/docker:rw \
+#    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
+#    --volume=/var/run:/var/run:rw \
+#    --net=host \
+#    --pid=host \
+#    --privileged=true \
+#    --name=kubelet \
+#    -d \
+#    gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
+#    /hyperkube kubelet \
+#        --containerized \
+#        --hostname-override="127.0.0.1" \
+#        --address="0.0.0.0" \
+#        --api-servers=http://0.0.0.0:8080 \
+#        --config=/etc/kubernetes/manifests \
+#        --allow-privileged=true --v=2 \
+#  	    --cluster-dns=10.0.0.10 \
+#        --cluster-domain=cluster.local
+## ##Make API server accessible on host OS
+#sleep 10
+#docker exec kubelet perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json
+#docker restart kubelet
 
-# Install kubernetes CLI
-sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
-sudo chmod +x /usr/local/bin/kubectl
+## Install kubernetes CLI
+#sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
+#sudo chmod +x /usr/local/bin/kubectl
 
 ##Make API server accessible outside vagrant. Enable if you wish to 
 #sleep 5

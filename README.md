@@ -24,10 +24,22 @@ Provide [configuration options](https://github.com/amalgam8/controller/blob/mast
 ### Configuration options
 Configuration options can be set through environment variables or command line flags. 
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `key` | `-f | --flag` | Sample value for this option | Description. | none |
-| `etc` | `-e` | anything | Something | undefined |
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| API_PORT | --api_port | API port | 6379 |
+| | --statsd_host | Statsd host |127.0.0.1:8125 |
+| CONTROL_TOKEN | --control_token | controller API authentication token | ABCDEFGHIJKLMNOP |
+| ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
+| POLL_INTERVAL | --poll_interval | poll interval | 0 |
+| DATABASE_TYPE |  --database_type |	database type | memory |
+| DATABASE_USERNAME | --database_username | database username | |
+| DATABASE_PASSWORD | --database_password | database password | |
+| DATABASE_HOST | --database_host | database host | |
+| LOG_LEVEL | --log_level | logging level (debug, info, warn, error, fatal, panic) | info |
+| | --help, -h | | show help | |
+| | --version, -v	|	| print the version | |
+
+
 
 ### REST API
 

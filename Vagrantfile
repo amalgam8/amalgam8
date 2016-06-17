@@ -139,7 +139,7 @@ Vagrant.configure('2') do |config|
   ####Gateway
   config.vm.network "forwarded_port", guest: 32000, host: 32000
   ####Elasticsearch
-  config.vm.network "forwarded_port", guest: 30500, host: 30200
+  config.vm.network "forwarded_port", guest: 30200, host: 30200
   ####Kibana
   config.vm.network "forwarded_port", guest: 30500, host: 30500
 

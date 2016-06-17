@@ -21,7 +21,7 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 rfile="registry.yaml"
 cfile="controller.yaml"
-mhfile="messagehub.yaml"
+mhfile="messagehub-gcp.yaml"
 lgfile="logserver.yaml"
 
 if [ "$1" == "start" ]; then
@@ -56,11 +56,9 @@ if [ "$1" == "start" ]; then
     }
 }
 EOF
-    export TENANT_REG=$tenant
+    echo $tenant >/tmp/tenant_details.json
     echo "Please assign a public IP to your controller and then issue the following curl command"
-    echo 'echo $TENANT_REG|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
-
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
+    echo 'cat /tmp/tenant_details.json|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services.."
     kubectl delete -f $SCRIPTDIR/$cfile

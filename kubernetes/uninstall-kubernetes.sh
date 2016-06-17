@@ -15,6 +15,9 @@
 #   limitations under the License.
 
 
+echo "Removing weave scope.."
+kubectl delete -f weavescope.yaml
+sleep 6
 sudo umount `cat /proc/mounts | grep /var/lib/kubelet | awk '{print $2}'` >/dev/null 2>&1
 sudo rm -rf /var/lib/kubelet
 docker rm -f $(docker ps -aq)

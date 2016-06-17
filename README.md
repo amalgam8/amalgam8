@@ -38,149 +38,156 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
 To run in a local docker environemnt, you can either use the vagrant sandbox
-or you can simply install [Docker](https://docs.docker.com/engine/installation/),
-[Docker Compose](https://docs.docker.com/compose/install/),
-and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl)
-on your own machine.
+or you can simply install [Docker Toolbox](https://www.docker.com/products/docker-toolbox),
+and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
-### Start the multi-tenant control plane and a tenant
+1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
 
-Start the control plane services (registry and controller) by running the
-following command:
+    ```bash
+    git clone git@github.com:amalgam8/examples.git
 
-```
-docker/run-controlplane-docker.sh start
-```
+    cd examples
+    vagrant up
+    vagrant ssh
 
-The above command also creates a tenant named "local" in the
-control plane. 
-
-Before we start using the `a8ctl` command line utility, we need to point it
-to the address of the controller and the registry.
-* If you are running the docker setup using the Vagrant file in the
-`examples` folder, then set the following environment variables:
-
-```bash
-export A8_CONTROLLER_URL=http://192.168.33.33:31200
-export A8_REGISTRY_URL=http://192.168.33.33:31300
-```
-
-* If you are running Docker locally,
-
-```bash
-export A8_CONTROLLER_URL=http://localhost:31200
-export A8_REGISTRY_URL=http://localhost:31300
-```
-
-* If you are running Docker on Mac/Windows using the Docker Toolbox (__not
-the Docker for Mac - Beta__), then set the environment variables to the IP
-address of the VM created by Docker Machine.
-
-Assuming you have only one Docker Machine running on your system, the
-following commands will setup the appropriate environment variables:
-
-```bash
-export A8_CONTROLLER_URL=`docker-machine ip`
-export A8_REGISTRY_URL=`docker-machine ip`
-```
-
-You get the idea. Just setup these two environment variables appropriately
-and you should be good to go.
-
-
-You can confirm everything is working with the following command:
-
-```bash
-a8ctl service-list
-```
-
-The command shouldn't return any services, since we haven't started any yet, 
-but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
-
-```
-+---------+-----------------+-------------------+
-| Service | Default Version | Version Selectors |
-+---------+-----------------+-------------------+
-+---------+-----------------+-------------------+
-```
-
-### Deploy the tenant application
-
-Every tenant application should have
-an [API Gateway](http://microservices.io/patterns/apigateway.html) that
-provides a single user-facing entry point for a microservices-based
-application.  You can control the Amalgam8 gateway for different purposes,
-such as version routing, red/black deployments, canary testing, resiliency
-testing, and so on. The Amalgam8 gateway is a simple lightweight Nginx
-server that is controlled by the control plane.
-
-
-#### Deploy the API gateway
-
-To start the API gateway, run the following command:
-
-```bash
-docker-compose -f docker/gateway.yaml up -d
-```
-
-Usually, the API gateway is mapped to a DNS route. However, in our local
-standalone environment, you can access it by using the fixed IP address and
-port (http://192.168.33.33:32000), which was pre-configured for the sandbox
-environment. If you are using docker directly, then the gateway should be
-accessible at http://localhost:32000 or http://dockermachineip:32000 .
-
-Confirm that the API gateway is running by accessing the URL
-from your browser. If all is well, you should
-see a simple **Welcome to nginx!** page in your browser.
-
-**Note:** You only need one gateway per tenant. A single gateway can front more
-than one application under the tenant at the same time, so long as they
-don't implement any conflicting microservices.
-
-Following instructions for the sample that you want to run.
-
-(a) **helloworld** sample
-
-* Start the helloworld application:
-    
+    cd $GOPATH/src/github.com/amalgam8/examples
     ```
+
+1. Start the multi-tenant control plane and a tenant
+
+    Start the control plane services (registry and controller) by running the
+    following command:
+
+    ```bash
+    docker/run-controlplane-docker.sh start
+    ```
+
+    The above command also creates a tenant named "local" in the
+    control plane. 
+
+1. Before we start using the `a8ctl` command line utility, we need to point
+   it to the address of the controller and the registry.
+
+    * If you are running the docker setup using the Vagrant file in the
+    `examples` folder, then set the following environment variables:
+
+    ```bash
+    export A8_CONTROLLER_URL=http://192.168.33.33:31200
+    export A8_REGISTRY_URL=http://192.168.33.33:31300
+    ```
+
+    * If you are running Docker locally,
+
+    ```bash
+    export A8_CONTROLLER_URL=http://localhost:31200
+    export A8_REGISTRY_URL=http://localhost:31300
+    ```
+
+    * If you are running Docker on Mac/Windows using the Docker Toolbox (__not
+    the Docker for Mac - Beta__), then set the environment variables to the IP
+    address of the VM created by Docker Machine.
+
+    Assuming you have only one Docker Machine running on your system, the
+    following commands will setup the appropriate environment variables:
+
+    ```bash
+    export A8_CONTROLLER_URL=`docker-machine ip`
+    export A8_REGISTRY_URL=`docker-machine ip`
+    ```
+
+    You get the idea :). Just setup these two environment variables appropriately
+    and you should be good to go.
+
+1.  Confirm everything is working with the following command:
+
+    ```bash
+    a8ctl service-list
+    ```
+
+    The command shouldn't return any services, since we haven't started any yet, 
+    but if it returns the follwoing empty table, the control plane services (and CLI) are working as expected:
+
+    ```
+    +---------+-----------------+-------------------+
+    | Service | Default Version | Version Selectors |
+    +---------+-----------------+-------------------+
+    +---------+-----------------+-------------------+
+    ```
+
+1. Deploy the API gateway
+
+    Every tenant application should have
+    an [API Gateway](http://microservices.io/patterns/apigateway.html) that
+    provides a single user-facing entry point for a microservices-based
+    application.  You can control the Amalgam8 gateway for different purposes,
+    such as version routing, red/black deployments, canary testing, resiliency
+    testing, and so on. The Amalgam8 gateway is a simple lightweight Nginx
+    server that is controlled by the control plane.
+
+
+    To start the API gateway, run the following command:
+
+    ```bash
+    docker-compose -f docker/gateway.yaml up -d
+    ```
+
+    Usually, the API gateway is mapped to a DNS route. However, in our local
+    standalone environment, you can access it by using the fixed IP address and
+    port (http://192.168.33.33:32000), which was pre-configured for the sandbox
+    environment. If you are using docker directly, then the gateway should be
+    accessible at http://localhost:32000 or http://dockermachineip:32000 .
+
+1. Confirm that the API gateway is running by accessing the URL from your
+    browser. If all is well, you should see a simple **Welcome to nginx!**
+    page in your browser.
+
+    **Note:** You only need one gateway per tenant. A single gateway can front more
+    than one application under the tenant at the same time, so long as they
+    don't implement any conflicting microservices.
+
+1. Following instructions for the sample that you want to run.
+
+    (a) **helloworld** sample
+
+    * Start the helloworld application:
+
+    ```bash
     docker-compose -f docker/helloworld.yaml up -d
     ```
         
-* Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
- 
-* To shutdown the helloworld instances, run the following commands:
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+
+    * To shutdown the helloworld instances, run the following commands:
    
-    ```
+    ```bash
     docker-compose -f docker/helloworld.yaml kill
     docker-compose -f docker/helloworld.yaml rm -f
     ```
 
-(b) **bookinfo** sample
-  
-* Start the bookinfo application:
+    (b) **bookinfo** sample
+
+    * Start the bookinfo application:
     
-    ```
+    ```bash
     docker-compose -f docker/bookinfo.yaml up -d
     ```
 
-* Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
-    
-* To shutdown the bookinfo instances, run the following commands:
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
+
+    * To shutdown the bookinfo instances, run the following commands:
     
     ```
     docker-compose -f docker/bookinfo.yaml kill
     docker-compose -f docker/bookinfo.yaml rm -f
     ```
 
-When you are finished, shut down the gateway and control plane servers by running the following commands:
+    When you are finished, shut down the gateway and control plane servers by running the following commands:
 
-```
-docker-compose -f docker/gateway.yaml kill
-docker-compose -f docker/gateway.yaml rm -f
-docker/run-controlplane-docker.sh stop
-```
-
+    ```
+    docker-compose -f docker/gateway.yaml kill
+    docker-compose -f docker/gateway.yaml rm -f
+    docker/run-controlplane-docker.sh stop
+    ```
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 
@@ -193,25 +200,25 @@ docker/run-controlplane-docker.sh stop
     vagrant up
     vagrant ssh
 
-    cd $GOPATH/src/github.com/amalgam8
+    cd $GOPATH/src/github.com/amalgam8/examples
     ```
     
     *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might not run correctly. If you have problems, try uninstalling Kubernetes by running the following commands: 
       
     ```
-    sudo examples/uninstall-kubernetes.sh
+    sudo examples/kubernetes/uninstall-kubernetes.sh
     ```
     
     Then re-install Kubernetes, by running the following command:
     
     ```
-    sudo examples/install-kubernetes.sh
+    sudo examples/kubernetes/install-kubernetes.sh
     ```
 
 1. Start the local control plane services (registry and controller) by running the following commands:
 
     ```
-    examples/controlplane/run-controlplane-local.sh start
+    examples/kubernetes/run-controlplane-local-k8s.sh start
     ```
 
 1. Run the following command to confirm the control plane is working:
@@ -230,7 +237,7 @@ docker/run-controlplane-docker.sh stop
     +---------+-----------------+-------------------+
     ```
     
-    You can also access the registry at http://192.168.33.33:5080 from the host machine
+    You can also access the registry at http://192.168.33.33:31300 from the host machine
     (outside the vagrant box), and the controller at http://192.168.33.33:31200.
     To access the control plane details of tenant *local*, access
     http://192.168.33.33:31200/v1/tenants/local/ from your browser.
@@ -238,7 +245,7 @@ docker/run-controlplane-docker.sh stop
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 
     ```bash
-    kubectl create -f examples/gateway/gateway.yaml
+    kubectl create -f examples/kubernetes/gateway.yaml
     ```
     
     Usually, the API gateway is mapped to a DNS route. However, in our local
@@ -261,7 +268,7 @@ docker/run-controlplane-docker.sh stop
     * Start the helloworld application:
     
         ```
-        kubectl create -f kubernetes/helloworld.yaml
+        kubectl create -f examples/kubernetes/helloworld.yaml
         ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -269,7 +276,7 @@ docker/run-controlplane-docker.sh stop
     * To shutdown the helloworld instances, run the following commands:
     
         ```
-        kubectl delete -f kubernetes/helloworld.yaml
+        kubectl delete -f examples/kubernetes/helloworld.yaml
         ```
 
     (b) **bookinfo** sample
@@ -277,7 +284,7 @@ docker/run-controlplane-docker.sh stop
     * Start the bookinfo application:
     
         ```
-        kubectl create -f docker/bookinfo.yaml
+        kubectl create -f examples/kubernetes/bookinfo.yaml
         ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
@@ -285,30 +292,41 @@ docker/run-controlplane-docker.sh stop
     * To shutdown the bookinfo instances, run the following commands:
     
         ```
-        kubectl delete -f docker/bookinfo.yaml
+        kubectl delete -f examples/kubernetes/bookinfo.yaml
         ```
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```
-    kubectl delete -f examples/gateway/gateway.yaml
-    examples/controlplane/run-controlplane-local.sh stop
+    kubectl delete -f examples/kubernetes/gateway.yaml
+    examples/kubernetes/run-controlplane-local-k8s.sh stop
     ```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 
-This section assumes that the IP address of your mesos slave where all the
-apps will be running is 192.168.33.33.
+1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
 
-1. The `run-controlplane-mesos.sh` script in the `mesos` folder sets up a
+    ```bash
+    git clone git@github.com:amalgam8/examples.git
+    
+    cd examples
+    vagrant up
+    vagrant ssh
+
+    cd $GOPATH/src/github.com/amalgam8/examples
+    ```
+
+1. The `run-controlplane-marathon.sh` script in the `marathon` folder sets up a
    local marathon/mesos cluster (based on Holiday Check's
    [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
    registry as apps in the marathon framework.
    
     ```bash
-    cd mesos
-    ./run-controlplane-mesos.sh start
+    marathon/run-controlplane-marathon.sh start
     ```
+
+    This section assumes that the IP address of your mesos slave where all
+    the apps will be running is 192.168.33.33.
 
     Make sure that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
 
@@ -317,24 +335,58 @@ apps will be running is 192.168.33.33.
 1. Launch the API Gateway
     
     ```bash
-    cat gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
     ```
 
-    Verify that the gateway is reacheable by accessing http://192.168.33.33:32000
+1. Confirm that the API gateway is running by accessing the
+    http://192.168.33.33:32000 from your browser. If all is well, you should
+    see a simple **Welcome to nginx!** page in your browser.
 
-1. Launch the Bookinfo application
+    **Note:** You only need one gateway per tenant. A single gateway can front more
+    than one application under the tenant at the same time, so long as they
+    don't implement any conflicting microservices.
+
+1. Following instructions for the sample that you want to run.
+
+    (a) **helloworld** sample
+
+    * Start the helloworld application:
 
     ```bash
-    cat bookinfo.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
     ```
+        
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
+
+    * To shutdown the helloworld instances, run the following commands:
+   
+    ```bash
+    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/helloworld
+    ```
+
+    (b) **bookinfo** sample
+
+    * Start the bookinfo application:
     
-    Verify that the application group has been successfully launched via the marathon dashboard.
+    ```bash
+    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups -d@-
+    ```
 
-1. You can now use the `a8ctl` command line tool to set the default
-    versions for various services in the Bookinfo app, do version-based
-    routing, resilience testing etc. For more details, refer to the
-    [test & deploy demo](https://github.com/amalgam8/examples/blob/master/demo-script.md)
+    * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
 
+    * To shutdown the bookinfo instances, run the following commands:
+    
+    ```bash
+    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/groups/bookinfo
+    ```
+
+    When you are finished, shut down the gateway and control plane servers by running the following commands:
+
+    ```bash
+    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/gateway
+    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-controller
+    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-registry
+    ```
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
 
@@ -433,7 +485,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 1. Launch the control plane services
 
     ```bash
-    controlplane/run-controlplane-gcp.sh start
+    kubernetes/run-controlplane-gcp.sh start
     ```
 
 1. Locate the node where the controller is running and assign an
@@ -449,7 +501,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 1. Deploy the API gateway
 
     ```bash
-    kubectl create -f gateway/gateway.yaml
+    kubectl create -f kubernetes/gateway.yaml
     ```
 
     Obtain the public IP of the node where the gateway is running. This will be

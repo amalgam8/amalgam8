@@ -21,12 +21,12 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
     echo "starting Control plane components (kafka, ELK stack, registry, and controller)"
-    docker-compose -f $SCRIPTDIR/controlplane.yaml up -d
+    docker-compose.backup -f $SCRIPTDIR/controlplane.yaml up -d
     echo "waiting for the cluster to initialize.."
     sleep 60
-    AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    AC=localhost:31200
-    KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
+    AR=$(docker.backup inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
+    AC=$(docker-machine ip):31200
+    KA=$(docker.backup inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
@@ -48,8 +48,8 @@ EOF
     echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    docker-compose -f $SCRIPTDIR/controlplane.yaml kill
-    docker-compose -f $SCRIPTDIR/controlplane.yaml rm -f
+    docker-compose.backup -f $SCRIPTDIR/controlplane.yaml kill
+    docker-compose.backup -f $SCRIPTDIR/controlplane.yaml rm -f
 else
     echo "usage: $0 start|stop"
     exit 1

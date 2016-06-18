@@ -204,15 +204,13 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     sudo kubernetes/install-kubernetes.sh
     ```
 
-    *Note:* If you stopped a previous Vagrant VM and restarted it, Kubernetes might be started already, but in a bad state.
+    **Note:** If you stopped a previous Vagrant VM and restarted it, Kubernetes might be started already, but in a bad state.
     If you have problems, first start by uninstalling Kubernetes with the following command: 
       
     ```bash
     sudo kubernetes/uninstall-kubernetes.sh
     ```
     
-    **Note:** After starting kubernetes, wait until it has initialized (i.e., kubectl commands are working) before proceeding to the next step.
-
 1. Start the local control plane services (registry and controller) by running the following commands:
 
     ```bash

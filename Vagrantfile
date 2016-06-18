@@ -98,6 +98,12 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Install Amalgam8 CLI
 pip install a8ctl
 
+## Installing Weave Scope
+#sudo wget -O /usr/local/bin/scope https://git.io/scope
+#sudo chmod a+x /usr/local/bin/scope
+###Don't launch it yet.
+##sudo scope launch
+
 #echo 'export A8_CONTROLLER_URL=http://192.168.33.33:31200' >> /home/vagrant/.profile
 
 SCRIPT
@@ -144,6 +150,7 @@ Vagrant.configure('2') do |config|
   config.vm.network "forwarded_port", guest: 30500, host: 30500
   ####Weave Scope
   config.vm.network "forwarded_port", guest: 30040, host: 30040
+  config.vm.network "forwarded_port", guest: 4040, host: 30040
   ####Marathon Dashboard/Kubernetes dashboard
   config.vm.network "forwarded_port", guest: 8080, host: 38080
   ####Mesos dashboard

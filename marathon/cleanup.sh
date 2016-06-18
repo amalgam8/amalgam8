@@ -18,8 +18,8 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 #MYIP=`ip addr show eth0 | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}'`
 MYIP=192.168.33.33
 
-curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/groups/a8-bookinfo
-curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/groups/a8-helloworld
+curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/groups/bookinfo
+curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/groups/helloworld
 curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/gateway
 sleep 10
 

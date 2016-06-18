@@ -18,21 +18,25 @@
 set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+#MYIP=`ip addr show eth0 | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}'`
+MYIP=192.168.33.33
+cp $SCRIPTDIR/marathon.yaml /tmp/marathon.yaml
+sed -i "s/__REPLACEME__/${MYIP}/" /tmp/marathon.yaml
 
 if [ "$1" == "start" ]; then
     echo "starting Marathon/Mesos cluster with Kafka + ELK stack"
-    docker-compose up -d
+    docker-compose -f /tmp/marathon.yaml up -d
     echo "waiting for the cluster to initialize.."
     sleep 60
     echo "Starting multi-tenant service registry"
-    cat registry.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    cat $SCRIPTDIR/registry.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Starting multi-tenant controller"
-    cat controller.json|curl -X POST -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps -d@-
+    cat $SCRIPTDIR/controller.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Waiting for controller to initialize..."
     sleep 20
-    AR="192.168.33.33:31300"
-    AC="192.168.33.33:31200"
-    KA="192.168.33.33:9092"
+    AR="${MYIP}:31300"
+    AC="${MYIP}:31200"
+    KA="${MYIP}:9092"
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
@@ -54,11 +58,11 @@ EOF
     echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-controller
-    curl -X DELETE -H "Content-Type: application/json" http://192.168.33.33:8080/v2/apps/a8-registry
+    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller
+    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-registry
     sleep 10
-    docker-compose kill
-    docker-compose rm -f
+    docker-compose -f /tmp/marathon.yaml kill
+    docker-compose -f /tmp/marathon.yaml rm -f
 else
     echo "usage: $0 start|stop"
     exit 1

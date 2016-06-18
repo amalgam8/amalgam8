@@ -98,7 +98,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 # Install Amalgam8 CLI
 pip install a8ctl
 
-echo 'export A8_CONTROLLER_URL=http://192.168.33.33:31200' >> /home/vagrant/.profile
+#echo 'export A8_CONTROLLER_URL=http://192.168.33.33:31200' >> /home/vagrant/.profile
 
 SCRIPT
 
@@ -150,7 +150,7 @@ Vagrant.configure('2') do |config|
   config.vm.network "forwarded_port", guest: 35050, host: 35050
 
   # Create a private network, which allows host-only access to the machine
-  # using a specific IP.
+  # using a specific IP. For Marathon only.
   #config.vm.network "private_network", ip: "192.168.33.33/24"
 
   config.vm.provision :shell, inline: $script

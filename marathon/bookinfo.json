@@ -1,8 +1,8 @@
 {
-    "id": "a8-bookinfo",
+    "id": "bookinfo",
     "groups" : [
 	    {
-	        "id" : "bookinfoapp",
+	        "id" : "bookinfo",
 	        "apps" : [
 		        {
 		            "id" : "details-v1",
@@ -22,10 +22,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python details.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://192.168.33.33:31300",
+                        "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "details",
-                        "SERVICE_VERSION" : "v1",
+                        "SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -49,10 +49,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python ratings.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://192.168.33.33:31300",
+                        "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "ratings",
-                        "SERVICE_VERSION" : "v1",
+                        "SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -76,10 +76,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://192.168.33.33:31300",
+                        "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "reviews",
-                        "SERVICE_VERSION" : "v1",
+                        "SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -103,16 +103,16 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://192.168.33.33:31300",
+                        "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v2",
 			            "TENANT_TOKEN":"12345",
 			            "TENANT_ID": "local",
-                        "LOGSTASH_SERVER" : "'192.168.33.33:8092'",
-		                "CONTROLLER_URL":"http://192.168.33.33:31200",
+                        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",
-                        "KAFKA_BROKER" : "192.168.33.33:9092"
+                        "KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -136,16 +136,16 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://192.168.33.33:31300",
+                        "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v3",
 			            "TENANT_TOKEN":"12345",
 			            "TENANT_ID": "local",
-                        "LOGSTASH_SERVER" : "'192.168.33.33:8092'",
-		                "CONTROLLER_URL":"http://192.168.33.33:31200",
+                        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",
-                        "KAFKA_BROKER" : "192.168.33.33:9092"
+                        "KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -169,16 +169,16 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python productpage.py 9080 http://localhost:6379",
 		            "env": {
-			            "REGISTRY_URL": "http://192.168.33.33:31300",
+			            "REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			            "SERVICE" : "productpage",
-                        "SERVICE_VERSION" : "v1",
+				        "SERVICE_VERSION" : "v1",
 			            "TENANT_TOKEN":"12345",
 			            "TENANT_ID": "local",
-                        "LOGSTASH_SERVER" : "'192.168.33.33:8092'",
-		                "CONTROLLER_URL":"http://192.168.33.33:31200",
+				        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",
-                        "KAFKA_BROKER" : "192.168.33.33:9092"
+				        "KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,

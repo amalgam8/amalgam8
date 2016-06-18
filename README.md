@@ -179,9 +179,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```
-    docker-compose -f docker/gateway.yaml kill
-    docker-compose -f docker/gateway.yaml rm -f
-    docker/run-controlplane-docker.sh stop
+    docker/cleanup.sh
     ```
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
@@ -302,26 +300,34 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```bash
-    kubectl delete -f kubernetes/gateway.yaml
-    kubernetes/run-controlplane-local-k8s.sh stop
+    kubernetes/cleanup.sh
     ```
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 
-1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
-
+1. Clone the Amalgam8 examples repo 
     ```bash
     git clone git@github.com:amalgam8/examples.git
     
     cd examples
+    ```
+
+1. **Edit the Vagrant file** in the examples folder. Uncomment the line
+starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
+
+1. Start the vagrant environment
+
+    ```bash
     vagrant up
     vagrant ssh
 
     cd $GOPATH/src/github.com/amalgam8/examples
+    export A8_CONTROLLER_URL=http://192.168.33.33:31200
+    export A8_REGISTRY_URL=http://192.168.33.33:31300
     ```
 
 1. The `run-controlplane-marathon.sh` script in the `marathon` folder sets up a
-   local marathon/mesos cluster (based on Holiday Check's
+   single host (local) marathon/mesos cluster (based on Holiday Check's
    [mesos-in-the-box](https://github.com/holidaycheck/mesos-in-the-box))  and launches the controller and the
    registry as apps in the marathon framework.
    
@@ -329,17 +335,14 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     marathon/run-controlplane-marathon.sh start
     ```
 
-    This section assumes that your mesos slave, where all
-    the apps will be running, is on localhost.
+    From your browser, confirm that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
 
-    Make sure that the Marathon dashboard is accessible at http://localhost:38080 and the Mesos dashboard at http://localhost:35050
-
-    Verify that the controller is up and running via the Marathon dashboard.
+    Verify that the controller and registry are running via the Marathon dashboard.
 
 1. Launch the API Gateway
     
     ```bash
-    cat marathon/gateway.json|curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/apps -d@-
+    marathon/run-component.sh gateway start
     ```
 
 1. Confirm that the API gateway is running by accessing the
@@ -357,7 +360,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the helloworld application:
 
     ```bash
-    cat marathon/helloworld.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
+    marathon/run-component.sh helloworld start
     ```
         
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/helloworld/README.md
@@ -365,7 +368,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the helloworld instances, run the following commands:
    
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/helloworld
+    marathon/run-component.sh helloworld stop
     ```
 
     (b) **bookinfo** sample
@@ -373,7 +376,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * Start the bookinfo application:
     
     ```bash
-    cat marathon/bookinfo.json| curl -X POST -H "Content-Type: application/json" http://localhost:8080/v2/groups -d@-
+    marathon/run-component.sh bookinfo start
     ```
 
     * Follow the instructions at https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
@@ -381,15 +384,13 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     * To shutdown the bookinfo instances, run the following commands:
     
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/groups/bookinfo
+    marathon/run-component.sh bookinfo stop
     ```
 
     When you are finished, shut down the gateway and control plane servers by running the following commands:
 
     ```bash
-    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/gateway
-    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-controller
-    curl -X DELETE -H "Content-Type: application/json" http://localhost:8080/v2/apps/a8-registry
+    marathon/cleanup.sh
     ```
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>

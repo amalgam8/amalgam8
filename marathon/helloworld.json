@@ -1,5 +1,5 @@
 {
-    "id": "a8-helloworld",
+    "id": "helloworld",
     "groups" : [
 	{
 	    "id" : "helloworld",
@@ -22,12 +22,12 @@
 		    },
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
-                "REGISTRY_URL": "http://192.168.33.33:31300",
+                "REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			    "SERVICE" : "helloworld",
-                "SERVICE_VERSION" : "v1",
+                "SERVICE_VERSION" : "v1"
 		    },
-		    "instances": 1,
+		    "instances": 2,
 		    "cpus": 0.1,
 		    "mem": 128
 		},
@@ -49,12 +49,12 @@
 		    },
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
-                "REGISTRY_URL": "http://192.168.33.33:31300",
+                "REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
 			    "SERVICE" : "helloworld",
-                "SERVICE_VERSION" : "v2",
+                "SERVICE_VERSION" : "v2"
 		    },
-		    "instances": 1,
+		    "instances": 2,
 		    "cpus": 0.1,
 		    "mem": 128
 		}

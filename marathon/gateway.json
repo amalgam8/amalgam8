@@ -14,17 +14,16 @@
 	    ]
 	}
     },
+    "cmd" : "a8sidecar --register=false --supervise=false",
     "env": {
-	"CONTROLLER_URL":"http://192.168.33.33:31200",
-	"TENANT_TOKEN":"12345",
-	"TENANT_ID": "local",
-	"VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0": "192.168.33.33:9092",
-	"REGISTRY_URL": "http://192.168.33.33:31300",
-	"REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
-	"SERVICE" : "gateway",
-	"LOGSTASH_SERVER" : "'192.168.33.33:8092'",
-	"CONTROLLER_POLL" : "15s",
-	"REGISTER" : "false"
+		"SERVICE" : "gateway",
+        "SERVICE_VERSION" : "v1",
+		"TENANT_TOKEN":"12345",
+		"TENANT_ID": "local",
+        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		"CONTROLLER_URL":"http://__REPLACEME__:31200",
+		"CONTROLLER_POLL" : "15s",
+        "KAFKA_BROKER" : "__REPLACEME__:9092"
     },
     "instances": 1,
     "cpus": 0.1,

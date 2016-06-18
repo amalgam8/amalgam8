@@ -24,8 +24,8 @@ master:
   image: mesosphere/mesos-master:0.26.0-0.2.145.ubuntu1404
   net: host
   environment:
-    - MESOS_HOSTNAME=192.168.33.33
-    - MESOS_IP=192.168.33.33
+    - MESOS_HOSTNAME=__REPLACEME__
+    - MESOS_IP=__REPLACEME__
     - MESOS_QUORUM=1
     - MESOS_ZK=zk://localhost:2181/mesos
 
@@ -34,8 +34,8 @@ slave:
   net: host
   privileged: true
   environment:
-    - MESOS_HOSTNAME=192.168.33.33
-    - MESOS_IP=192.168.33.33
+    - MESOS_HOSTNAME=__REPLACEME__
+    - MESOS_IP=__REPLACEME__
     - MESOS_PORT=5051
     - MESOS_MASTER=zk://localhost:2181/mesos
     - MESOS_CONTAINERIZERS=docker,mesos
@@ -47,9 +47,9 @@ marathon:
   image: mesosphere/marathon:v0.15.2
   net: host
   environment:
-    - MARATHON_HOSTNAME=192.168.33.33
-    - MARATHON_HTTPS_ADDRESS=192.168.33.33
-    - MARATHON_HTTP_ADDRESS=192.168.33.33
+    - MARATHON_HOSTNAME=__REPLACEME__
+    - MARATHON_HTTPS_ADDRESS=__REPLACEME__
+    - MARATHON_HTTP_ADDRESS=__REPLACEME__
     - MARATHON_MASTER=zk://localhost:2181/mesos
     - MARATHON_ZK=zk://localhost:2181/marathon
 
@@ -67,7 +67,7 @@ kafka:
   image: rshriram/kafka-nozk-0.9
   net: host
   environment:
-    - ADVERTISED_HOST=192.168.33.33
+    - ADVERTISED_HOST=__REPLACEME__
     - ADVERTISED_PORT=9092
     - AUTO_CREATE_TOPICS=true
     - ZOOKEEPER_HOST=localhost:2181

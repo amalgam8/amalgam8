@@ -4,8 +4,8 @@
 #################################################################################
 
 BLUEMIX_HOST=api.ng.bluemix.net
-BLUEMIX_ORG=zvic@il.ibm.com
-BLUEMIX_SPACE=dev
+BLUEMIX_ORG=__your_org_name__
+BLUEMIX_SPACE=__your_space_name__
 
 #################################################################################
 # Bluemix services enablement
@@ -32,7 +32,7 @@ REGISTRY_IMAGE=a8-registry:0.1
 #################################################################################
 
 BLUEMIX_REGISTRY_HOST=registry.ng.bluemix.net
-BLUEMIX_REGISTRY_NAMESPACE=zvic
+BLUEMIX_REGISTRY_NAMESPACE=__your_namespace__
 DOCKERHUB_NAMESPACE=amalgam8
 
 #################################################################################
@@ -41,8 +41,9 @@ DOCKERHUB_NAMESPACE=amalgam8
 
 ROUTES_DOMAIN=mybluemix.net
 
-CONTROLLER_HOSTNAME=amalgam8-controller
-BOOKINFO_HOSTNAME=amalgam8-bookinfo
+## Change accordingly.
+CONTROLLER_HOSTNAME=myamalgam8-controller
+BOOKINFO_HOSTNAME=myamalgam8-bookinfo
 
 CONTROLLER_URL=https://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
 BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
@@ -51,5 +52,6 @@ BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
 # Misc
 #################################################################################
 
+### Please change these to sensible values as your app and controller will be public.
 CONTROLLER_TENANT_ID=local
 CONTROLLER_TENANT_TOKEN=12345

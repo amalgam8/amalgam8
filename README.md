@@ -419,10 +419,11 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
     Verify that the controller is running by ```cf ic group list``` and checking if the ```amalgam8_controller``` group is running.
 
-1. Configure the Amalgam8 CLI according to the routes defined in [.bluemixrc file](bluemix/.bluemixrc)
+1. Configure the Amalgam8 CLI according to the routes defined in
+   [.bluemixrc file](bluemix/.bluemixrc). For example
 
     ```
-    export A8_CONTROLLER_URL=https://amalgam8-controller.mybluemix.net
+    export A8_CONTROLLER_URL=https://mya8controller.mybluemix.net
     ```
 
 1. Run the following command to confirm the control plane is working:

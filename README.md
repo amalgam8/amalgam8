@@ -481,10 +481,13 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+---------------------+
      ```
 
-1. Follow the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) instructions for the rest of the tutorial.
-    * Once the default routes are set, the app is accessible at `${BOOKINFO_URL}/productpage/productpage`
-    (replace `${BOOKINFO_URL}` with the value defined in [.bluemixrc file](bluemix/.bluemixrc)).
-    * Note: The Bluemix version of the bookinfo sample app doesn't yet support running the Gremlin recipe. We are working on integrating the app with Bluemix Logmet services, to enable support for running Gremlin recipes.
+1. Follow the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md) instructions for the rest of the demo.
+    When you reach the part where it instructs you to open, in your browser, the bookinfo application at
+    http://localhost:32000/productpage/productpage, make sure to change "localhost:32000" to the value of the `BOOKINFO_URL`
+    environment variable that you defined in your `.bluemixrc` file.
+
+    *Note:* The Bluemix version of the bookinfo sample app does not yet support running the Gremlin recipe.
+    We are working on integrating the app with the Bluemix Logmet services, to enable support for running Gremlin recipes.
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:
     ```bash

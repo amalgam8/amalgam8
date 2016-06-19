@@ -157,6 +157,8 @@ cf ic group create --name bookinfo_gateway \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_TOKEN=12345 \
   --env TENANT_ID=local \
+  --env SERVICE=gateway \
+  --env SERVICE_VERSION=v1 \
   --env LOG=false \
   --env REGISTER=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE

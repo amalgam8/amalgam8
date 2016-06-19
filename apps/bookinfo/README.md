@@ -223,9 +223,10 @@ When done, press Enter key to continue to validation phase
 Normally, we would have automated tools to inject load into the
 application. In this case, for the purpose of this demo walkthrough, we
 will manually inject load into the application. When logged in as user
-jason, reload the `productpage` web page to once again run the
-scenario, and then press Enter on the console where the above command was
-run.
+`jason`, reload the `productpage` web page to once again. Wait a few seconds
+seconds to let the logs propagate from the app/sidecar containers to the
+logstash server and finally to elasticsearch. Then, press Enter on the console
+where the above command was run.
 
 Expected output:
 
@@ -240,6 +241,13 @@ Expected output:
 +-----------------------+-------------+-------------+--------+-----------------------+
 Cleared fault injection rules from all microservices
 ```
+
+*Note:* When logs from logstash do not appear in elasticsearch by the
+time you hit the Enter key, one or more tests above might fail with the
+error message `No log entries found`. When you encounter this situation,
+re-run the above command (`a8ctl recipe-run ...`) and wait for a longer
+time before hitting the Enter key. We are working on a cleaner fix to
+address the log propagation delay problem.
 
 **Understanding the output:** The above output indicates that the
 productpage microservice timed out on its API call to the reviews

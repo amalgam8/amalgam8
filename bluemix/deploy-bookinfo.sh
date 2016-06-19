@@ -53,8 +53,6 @@ cf ic group create --name bookinfo_productpage \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
-  --env REGISTRY_URL=$REGISTRY_URL \
-  --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env SERVICE=productpage \
   --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
@@ -105,8 +103,6 @@ cf ic group create --name bookinfo_reviews1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
-  --env REGISTRY_URL=$REGISTRY_URL \
-  --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env SERVICE=reviews \
   --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
@@ -121,8 +117,6 @@ cf ic group create --name bookinfo_reviews2 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
-  --env REGISTRY_URL=$REGISTRY_URL \
-  --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env SERVICE=reviews \
   --env SERVICE_VERSION=v2 \
   --env ENDPOINT_PORT=9080 \
@@ -137,8 +131,6 @@ cf ic group create --name bookinfo_reviews3 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
-  --env REGISTRY_URL=$REGISTRY_URL \
-  --env REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env SERVICE=reviews \
   --env SERVICE_VERSION=v3 \
   --env ENDPOINT_PORT=9080 \

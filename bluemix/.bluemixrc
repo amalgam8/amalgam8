@@ -15,7 +15,7 @@ REVIEWS_IMAGE=a8-examples-bookinfo-reviews-sidecar
 RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar
 
 GATEWAY_IMAGE=a8-sidecar:0.1
-CONTROLLER_IMAGE=a8-controller:0.1
+CONTROLLER_IMAGE=a8-controller:0.1-bluemix
 REGISTRY_IMAGE=a8-registry:0.1
 
 #################################################################################

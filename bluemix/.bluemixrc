@@ -9,14 +9,16 @@ ENABLE_MESSAGEHUB=true
 # Image names
 #################################################################################
 
-PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar
-DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar
-REVIEWS_IMAGE=a8-examples-bookinfo-reviews-sidecar
-RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar
+PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar:v1-bluemix
+DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar:v1-bluemix
+RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar:v1-bluemix
+REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-bluemix
+REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-bluemix
+REVIEWS_V3_IMAGE=a8-examples-bookinfo-reviews-sidecar:v3-bluemix
 
-GATEWAY_IMAGE=a8-sidecar:0.1
+GATEWAY_IMAGE=a8-sidecar:0.1-bluemix
 CONTROLLER_IMAGE=a8-controller:0.1-bluemix
-REGISTRY_IMAGE=a8-registry:0.1
+REGISTRY_IMAGE=a8-registry:0.1-bluemix
 
 #################################################################################
 # Image registries

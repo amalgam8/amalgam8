@@ -10,12 +10,12 @@ echo "Looking up Bluemix registry images"
 BLUEMIX_IMAGES=$(cf ic images | tail -n +2 | sed -r 's/([^ ]+) +([^ ]+).*/\1:\2/')
 
 REQUIRED_IMAGES=(
-    ${PRODUCTPAGE_IMAGE}:v1
-    ${DETAILS_IMAGE}:v1
-    ${RATINGS_IMAGE}:v1
-    ${REVIEWS_IMAGE}:v1
-    ${REVIEWS_IMAGE}:v2
-    ${REVIEWS_IMAGE}:v3
+    ${PRODUCTPAGE_IMAGE}
+    ${DETAILS_IMAGE}
+    ${RATINGS_IMAGE}
+    ${REVIEWS_V1_IMAGE}
+    ${REVIEWS_V2_IMAGE}
+    ${REVIEWS_V3_IMAGE}
     ${GATEWAY_IMAGE}
 )
 
@@ -73,7 +73,7 @@ cf ic group create --name bookinfo_details \
   --env SERVICE=details \
   --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${DETAILS_IMAGE}:v1
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${DETAILS_IMAGE}
 
 #################################################################################
 # Start the ratings microservice instances
@@ -89,7 +89,7 @@ cf ic group create --name bookinfo_ratings \
   --env SERVICE=ratings \
   --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${RATINGS_IMAGE}:v1
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${RATINGS_IMAGE}
     
 #################################################################################
 # Start the reviews microservice instances
@@ -107,7 +107,7 @@ cf ic group create --name bookinfo_reviews1 \
   --env SERVICE_VERSION=v1 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v1
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V1_IMAGE}
 
 echo "Starting bookinfo reviews microservice (v2)"
 
@@ -121,7 +121,7 @@ cf ic group create --name bookinfo_reviews2 \
   --env SERVICE_VERSION=v2 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v2
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V2_IMAGE}
 
 echo "Starting bookinfo reviews microservice (v3)"
 
@@ -135,7 +135,7 @@ cf ic group create --name bookinfo_reviews3 \
   --env SERVICE_VERSION=v3 \
   --env ENDPOINT_PORT=9080 \
   --env LOG=false \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_IMAGE}:v3
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V3_IMAGE}
     
 #################################################################################
 # Start the gateway

@@ -37,11 +37,21 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
-To run in a local docker environemnt, you can either use the vagrant sandbox
-or you can simply install [Docker Toolbox](https://www.docker.com/products/docker-toolbox),
-and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
+To run in a local docker environemnt, you can either use the Vagrant sandbox or install the
+[Amalgam8 python CLI](https://pypi.python.org/pypi/a8ctl),
+[Docker 1.10 or later](https://docs.docker.com/engine/installation/) and
+[Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/).
 
-1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
+The installation steps below have been tested with the Vagrant sandbox
+environment (based on Ubuntu 14.04) as well as with Docker for Mac Beta
+(v1.11.2-beta15 or later). These steps have not been tested on Docker for
+Windows Beta.
+
+The following instructions assume that you are using the Vagrant
+environment. Where appropriate, environment specific instructions are
+provided.
+
+1. Clone the Amalgam8 examples repo and then start the Vagrant environment (or install and setup the equivalent dependencies manually)
 
     ```bash
     git clone git@github.com:amalgam8/examples.git
@@ -65,31 +75,29 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     The above command also creates a tenant named "local" in the
     control plane. 
 
-1. Before we start using the `a8ctl` command line utility, we need to point
-   it to the address of the controller and the registry.
+1. Before we start using the `a8ctl` command line utility, we need to set
+   the `A8_CONTROLLER_URL` and the `A8_REGISTRY_URL` environment variables
+   to point to the addresses of the controller and the registry respectively.
 
-    * If you are running the docker setup using the Vagrant file in the
-    `examples` folder, or you are running Docker locally.
+    * If you are running the Docker setup using the Vagrant file in the
+    `examples` folder or if you are running Docker locally (on Linux or
+    Docker for Mac Beta)
 
     ```bash
     export A8_CONTROLLER_URL=http://localhost:31200
     export A8_REGISTRY_URL=http://localhost:31300
     ```
 
-    * If you are running Docker on Mac/Windows using the Docker Toolbox (__not
-    the Docker for Mac - Beta__), then set the environment variables to the IP
-    address of the VM created by Docker Machine.
-
-    Assuming you have only one Docker Machine running on your system, the
-    following commands will setup the appropriate environment variables:
+    * If you are running Docker using the Docker Toolbox with Docker Machine,
+    then set the environment variables to the IP address of the VM created
+    by Docker Machine. For example, assuming you have only one Docker
+    Machine running on your system, the following commands will setup the
+    appropriate environment variables:
 
     ```bash
     export A8_CONTROLLER_URL=`docker-machine ip`
     export A8_REGISTRY_URL=`docker-machine ip`
     ```
-
-    You get the idea. Just setup these two environment variables appropriately
-    and you should be good to go.
 
 1.  Confirm everything is working with the following command:
 
@@ -126,7 +134,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
     Usually, the API gateway is mapped to a DNS route. However, in our local
     standalone environment, you can access it at port 32000 on localhost.
-    If you are using docker directly, then the gateway should be
+    If you are using Docker directly, then the gateway should be
     accessible at http://localhost:32000 or http://dockermachineip:32000.
 
 1. Confirm that the API gateway is running by accessing
@@ -184,7 +192,9 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
 ## Amalgam8 with Kubernetes - local environment <a id="local-k8s"></a>
 
-1. Clone the Amalgam8 examples repo and then start the vagrant environment (or install and setup the equivalent dependencies manually)
+The following setup has been tested with Kubernetes v1.2.3.
+
+1. Clone the Amalgam8 examples repo and then start the Vagrant environment (or install and setup the equivalent dependencies manually)
 
     ```bash
     git clone git@github.com:amalgam8/examples.git
@@ -234,7 +244,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
     ```
     
     You can also access the registry at http://localhost:31300 from the host machine
-    (outside the vagrant box), and the controller at http://localhost:31200.
+    (outside the Vagrant box), and the controller at http://localhost:31200 .
     To access the control plane details of tenant *local*, access
     http://localhost:31200/v1/tenants/local from your browser.
 
@@ -303,6 +313,8 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 
 ## Amalgam8 with Marathon/Mesos - local environment <a id="local-marathon"></a>
 
+The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
+
 1. Clone the Amalgam8 examples repo 
     ```bash
     git clone git@github.com:amalgam8/examples.git
@@ -313,7 +325,7 @@ and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl) on your machine.
 1. **Edit the Vagrant file** in the examples folder. Uncomment the line
 starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
 
-1. Start the vagrant environment
+1. Start the Vagrant environment
 
     ```bash
     vagrant up
@@ -400,8 +412,9 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
     [CF CLI IBM Containers plugin](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html),
+    [jq 1.5 or later](https://stedolan.github.io/jq/),
     and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl)
-  
+
 1. Login to Bluemix and initialize the containers environment using ```cf login``` and ```cf ic init```
 
 1. Configure the [.bluemixrc file](bluemix/.bluemixrc) to your environment variable values

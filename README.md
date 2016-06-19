@@ -417,15 +417,21 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
 
 1. Login to Bluemix and initialize the containers environment using ```cf login``` and ```cf ic init```
 
+1. Create Bluemix routes to be mapped to the controller/bookinfo gateway, e.g.:  
+    ```cf create-route myspace mybluemix.net -n myamalgam8-controller```  
+    ```cf create-route myspace mybluemix.net -n myamalgam8-bookinfo```
+    
 1. Configure the [.bluemixrc file](bluemix/.bluemixrc) to your environment variable values
     * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```cf ic namespace get```
-    * CONTROLLER_HOSTNAME should be the (globally unique) cf route to be attached to the controller
+    * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
+    * CONTROLLER_HOSTNAME should be the (globally unique) Bluemix route to be mapped to the controller
+    * BOOKINFO_ROUTE should be the (globally unique) Bluemix route to be mapped to the bookinfo gateway
+    * ROUTES_DOMAIN should be the domain used for the Bluemix routes (e.g., mybluemix.net)
     * ENABLE_SERVICEDISCOVERY determines whether to use the Bluemix-provided [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html)
       instead of the A8 registry. When set to false, you can deploy your own customized A8 registry (not yet implemented).
     * ENABLE_MESSAGEHUB determines whether to use the Bluemix-provided [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub).
       When set to false, the A8 proxies will use a slower polling algorithm to get changes from the A8 Controller.  
       Note that the Message Hub Bluemix service is not a free service, and using it might incur costs.
-    * ...
 
 1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
     Verify that the controller is running by ```cf ic group list``` and checking if the ```amalgam8_controller``` group is running.
@@ -484,6 +490,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     * Follow the instructions at
       https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md
       for the rest of the tutorial.
+      Note: The Bluemix version of the bookinfo sample app doesn't yet support running the Gremlin recipe. We are working on integrating the app with Bluemix Logmet services, to enable support for running Gremlin recipes.
 
 ## Amalgam8 on Google Cloud Platform <a id="gcp"></a>
 

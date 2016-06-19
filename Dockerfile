@@ -14,6 +14,9 @@
 
 FROM ubuntu:14.04
 
+# Install root CA certificates
+RUN apt-get -y update && apt-get -y install ca-certificates
+
 # Vulnerability Advisor stuff
 RUN sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs
 RUN sed -i 's/sha512/sha512 minlen=8/' /etc/pam.d/common-password

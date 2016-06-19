@@ -486,7 +486,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
     http://localhost:32000/productpage/productpage, make sure to change "localhost:32000" to the value of the `BOOKINFO_URL`
     environment variable that you defined in your `.bluemixrc` file.
 
-    *Note:* The Bluemix version of the bookinfo sample app does not yet support running the Gremlin recipe.
+    **Note:** The Bluemix version of the bookinfo sample app does not yet support running the Gremlin recipe.
     We are working on integrating the app with the Bluemix Logmet services, to enable support for running Gremlin recipes.
 
 1. When you are finished, shut down the gateway and control plane servers by running the following commands:

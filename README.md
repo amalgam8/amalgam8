@@ -243,6 +243,10 @@ The following setup has been tested with Kubernetes v1.2.3.
     +---------+-----------+
     ```
     
+    **Note:** If this did not work, it's probabaly because the image download and/or service initialization took too long.
+    This is usually fixed by waiting a minute or two, and then running `kubernetes/run-controlplane-local-k8s.sh stop` and then
+    repeating the previous step.
+    
     You can also access the registry at http://localhost:31300 from the host machine
     (outside the Vagrant box), and the controller at http://localhost:31200 .
     To access the control plane details of tenant *local*, access

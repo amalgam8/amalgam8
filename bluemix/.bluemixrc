@@ -46,5 +46,7 @@ BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
 #################################################################################
 
 ### Please change these to sensible values as your app and controller will be public.
+### Note: when overiding these values, set the A8_TENANT_ID/A8_TOKEN environment variables,
+### or set the --a8-tenant-id/--a8-token flags for the a8ctl utility.
 CONTROLLER_TENANT_ID=local
 CONTROLLER_TENANT_TOKEN=12345

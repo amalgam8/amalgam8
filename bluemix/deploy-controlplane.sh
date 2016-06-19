@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source .bluemixrc
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+source $SCRIPTDIR/.bluemixrc
 
 #################################################################################
 # Pull Dockerhub images

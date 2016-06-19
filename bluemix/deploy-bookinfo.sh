@@ -147,8 +147,8 @@ cf ic group create --name bookinfo_gateway \
   --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
-  --env TENANT_TOKEN=12345 \
-  --env TENANT_ID=local \
+  --env TENANT_ID=$CONTROLLER_TENANT_ID \
+  --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
   --env SERVICE=gateway \
   --env SERVICE_VERSION=v1 \
   --env LOG=false \

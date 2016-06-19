@@ -8,7 +8,7 @@ source $SCRIPTDIR/.bluemixrc
 #################################################################################
 
 echo "Looking up Bluemix registry images"
-BLUEMIX_IMAGES=$(cf ic images | tail -n +2 | sed -r 's/([^ ]+) +([^ ]+).*/\1:\2/')
+BLUEMIX_IMAGES=$(cf ic images --format "{{.Repository}}:{{.Tag}}")
 
 REQUIRED_IMAGES=(
     ${PRODUCTPAGE_IMAGE}

@@ -16,7 +16,6 @@ http {
     {{range .Proxies}}{{range .Versions}}
     upstream {{.UpstreamName}} { {{range .Upstreams}}
         server {{.}};{{end}}
-        keepalive 1;
     }
     {{end}}{{end}}
 
@@ -67,8 +66,6 @@ http {
                 ngx.var.target = splib.get_target("{{.ServiceName}}", "{{.VersionDefault}}", {{.VersionSelectors}})
             ';
             proxy_pass $target;
-            proxy_http_version 1.1;
-            proxy_set_header Connection "";
         }
         {{end}}
     }

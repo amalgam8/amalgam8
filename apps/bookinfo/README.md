@@ -19,7 +19,7 @@ There are 3 versions of the reviews microservice:
 * Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
 * Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
 
-![Microservice dependencies](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/dependencies.png)
+![Microservice dependencies](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/dependencies.jpg)
 
 ## Running the bookinfo demo
 

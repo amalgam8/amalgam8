@@ -31,15 +31,11 @@ echo "Starting controller"
 bluemix ic group-create --name amalgam8_controller \
   --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
+  --hostname $CONTROLLER_HOSTNAME \
+  --domain $ROUTES_DOMAIN \
   --env POLL_INTERVAL=5s \
   --env LOG_LEVEL=debug \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${CONTROLLER_IMAGE}
-  
-echo "Waiting for controller to start..."​
-sleep 15s
-
-echo "Mapping route to controller: $CONTROLLER_URL"
-bluemix ic route-map --hostname $CONTROLLER_HOSTNAME --domain $ROUTES_DOMAIN amalgam8_controller
 
 #################################################################################
 # Provision Service Discovery, or start a local registry
@@ -109,7 +105,7 @@ attempt=0
 while true; do
     code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
-        echo "Controller route is ready"
+        echo "Controller route is set to '$CONTROLLER_URL'"
         break
     fi
     

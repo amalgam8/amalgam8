@@ -147,6 +147,8 @@ echo "Starting bookinfo gateway"
 bluemix ic group-create --name bookinfo_gateway \
   --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
+  --hostname $BOOKINFO_HOSTNAME \
+  --domain $ROUTES_DOMAIN \
   --env CONTROLLER_URL=$CONTROLLER_URL \
   --env TENANT_ID=$CONTROLLER_TENANT_ID \
   --env TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
@@ -155,10 +157,3 @@ bluemix ic group-create --name bookinfo_gateway \
   --env LOG=false \
   --env REGISTER=false \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
-
-echo "Waiting for gateway to start..."​
-sleep 15s
-
-echo "Mapping route to gateway: $BOOKINFO_URL"
-bluemix ic route-map --hostname $BOOKINFO_HOSTNAME --domain $ROUTES_DOMAIN bookinfo_gateway
-

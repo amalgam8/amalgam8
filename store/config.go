@@ -41,12 +41,12 @@ type Config struct {
 
 	SyncWaitTime time.Duration
 
-	AddsOn      []CatalogFactory
+	Extensions  []CatalogFactory
 	Replication replication.Replication
 }
 
 // NewConfig creates a new registry configuration according to the specified TTL values
-func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapacity int, addsOn []CatalogFactory, rep replication.Replication) *Config {
+func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapacity int, extensions []CatalogFactory, rep replication.Replication) *Config {
 	validate(defaultTTL, minimumTTL, maximumTTL, namespaceCapacity)
 	return &Config{
 		DefaultTTL:        defaultTTL,
@@ -54,7 +54,7 @@ func NewConfig(defaultTTL, minimumTTL, maximumTTL time.Duration, namespaceCapaci
 		MaximumTTL:        maximumTTL,
 		SyncWaitTime:      defaultSyncTimeout,
 		NamespaceCapacity: namespaceCapacity,
-		AddsOn:            addsOn,
+		Extensions:        extensions,
 		Replication:       rep,
 	}
 }

@@ -45,6 +45,8 @@ const (
 	DefaultTTLFlag        = "default_ttl"
 	MaxTTLFlag            = "max_ttl"
 	MinTTLFlag            = "min_ttl"
+
+	K8sURLFlag = "k8s_url"
 )
 
 // Flags represents the set of supported flags
@@ -149,6 +151,12 @@ var Flags = []cli.Flag{
 		EnvVar: envVarFromFlag(NamespaceCapacityFlag),
 		Value:  -1,
 		Usage:  "Registry namespace capacity, value of -1 indicates no capacity limit",
+	},
+
+	cli.StringFlag{
+		Name:   K8sURLFlag,
+		EnvVar: envVarFromFlag(K8sURLFlag),
+		Usage:  "Enable kubernetes catalog and specify the kubernetes API server URL",
 	},
 }
 

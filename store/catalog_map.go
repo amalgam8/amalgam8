@@ -76,10 +76,10 @@ func New(conf *Config) CatalogMap {
 		factory = newReplicatedFactory(repConfig)
 	}
 
-	if len(conf.AddsOn) > 0 {
-		factories := make([]CatalogFactory, len(conf.AddsOn)+1)
+	if len(conf.Extensions) > 0 {
+		factories := make([]CatalogFactory, len(conf.Extensions)+1)
 		factories[0] = factory
-		for i, f := range conf.AddsOn {
+		for i, f := range conf.Extensions {
 			factories[i+1] = f
 		}
 		factory = newMultiFactory(&multiConfig{factories: factories})

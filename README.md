@@ -19,7 +19,7 @@ An overview of the Amalgam8 project is available here: http://amalgam8.io/
 Refer to the [amalgam8 overview](https://github.com/amalgam8/amalgam8.github.io/blob/master/overview.md#tenant-process) for details.
 
 ## Usage
-A prebuild Docker iamge is available at Docker Hub. Install Docker 1.8 or 1.9 and run the following:
+A prebuild Docker image is available at Docker Hub. Install Docker 1.8 or 1.9 and run the following:
 
 ```docker pull amalgam8/a8-sidecar:0.1```
 
@@ -58,7 +58,7 @@ Configuration options can be set through environment variables or command line f
 |  | --version, -v | print the version | |
 
 ## Build from source
-The follow section describes options for building the sidecar from source. Instructions on using a prebuilt Docker image are available [here](https://github.com/amalgam8/sidecar#usage).
+The following sections describe options for building the sidecar from source. Instructions on using a prebuilt Docker image are available [above](https://github.com/amalgam8/sidecar#usage).
 
 ### Preprequisites
 * Docker 1.8 or 1.9

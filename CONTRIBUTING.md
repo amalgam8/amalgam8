@@ -1,3 +1,11 @@
+Amalgam8 service discovery registry is actively developed by [IBM](http://www.ibm.com) as an open source project - 
+we encourage anyone to contribute through pull requests, issue reporting, feature requests, etc.
+
+If you have a change or new feature in mind, please [suggest it by creating an issue](https://github.com/amalgam8/registry/issues) 
+and tag it with "feature proposal"
+
+Please ensure that you are able to certify pull requests based on the below statement:
+
 Developer's Certificate of Origin 1.1
 
        By making a contribution to this project, I certify that:

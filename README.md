@@ -1,4 +1,4 @@
-# sidecar
+# Sidecar
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
@@ -12,14 +12,16 @@ automatic service registration, and load-balancing.
 
 An overview of the Amalgam8 project is available here: http://amalgam8.io/
 
-### Architecture
+## Architecture
 
 ![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/sidecar.jpg)
 
-## Usage
-A prebuild Docker iamge is available. Install Docker 1.8 or 1.9 and run the following:
+Refer to the [amalgam8 overview](https://github.com/amalgam8/amalgam8.github.io/blob/master/overview.md#tenant-process) for details.
 
-```docker pull amalgam8/a8-controller```
+## Usage
+A prebuild Docker iamge is available at Docker Hub. Install Docker 1.8 or 1.9 and run the following:
+
+```docker pull amalgam8/a8-sidecar:0.1```
 
 ### Configuration options
 Configuration options can be set through environment variables or command line flags. 
@@ -28,8 +30,8 @@ Configuration options can be set through environment variables or command line f
 |:----------------|:----------------------------|:------------|:--------------|
 | LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info |
 | SERVICE | --service | service name to register with | |
-| SERVICE_VERSION | --service_version | service version to register with |  |
-| ENDPOINT_HOST | --endpoint_host | service endpoint host name |  |
+| SERVICE_VERSION | --service_version | service version to register with (optional). Service is UNVERSIONED by default |  |
+| ENDPOINT_HOST | --endpoint_host | service endpoint host name (optional). Defaults to the IP (e.g., container) where the sidecar is running |  |
 | ENDPOINT_PORT | --endpoint_port | service endpoint port | |
 | REGISTER | --register | enable automatic service registration and heartbeat |  |
 | PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  |
@@ -73,7 +75,7 @@ The following targets are available. Each may be run with `make <target>`.
 
 | Make Target      | Description |
 |:-----------------|:------------|
-| `release`        | *(Default)* `release` builds the sidecar within a docker container and packages it into a image |
+| `release`        | *(Default)* `release` builds the sidecar within a docker container and packages it into an image |
 | `test`           | `test` runs all tests using `go test` |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
 

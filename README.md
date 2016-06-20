@@ -1,4 +1,4 @@
-# Amalgam8 Service Discovery Registry
+# Amalgam8 Service Registry
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
@@ -7,7 +7,7 @@
 [Travis]: https://travis-ci.org/amalgam8/registry
 [Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
 
-The Amalgam8 Service Discovery Registry is software developed for registering and locating instances in applications 
+The Amalgam8 Service Registry is software developed for registering and locating instances in applications 
 built using a microservice based architecture. The registry can be used to provide multi-tenant registration and 
 discovery namespaces (i.e., isolation between different tenant scopes), a unified discovery for service
 instances registered using different backends (e.g., Kubernetes, Eureka), and different authentication and authorization
@@ -23,13 +23,13 @@ A recent prebuilt Amalgam8 registry image can be found in docker.io/amalgam8/a8-
 $ docker pull amalgam8/a8-registry:0.1
 ```
 
-If you wish to build the registry from source, clone this repository and follow 
+If you wish to build the registry from source, clone this repository and follow the instructions below.
 
 ### Preprequisites
 A developer tested development environment requires the following:
-* Linux host (tested with Ubuntu 16.04 LTS)
-* Docker (tested with 1.10)
-* Go toolchain (tested with 1.6.x). See [Golang downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
+* Linux host (tested with Ubuntu 16.04 LTS).
+* Docker (tested with 1.10).
+* Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
 
 
 ### Building a Docker Image
@@ -72,7 +72,7 @@ Continuous builds are run on Travis CI. These builds use the `.travis.yml` confi
 
 The registry supports a number of configuration options, most of which should be set through environment variables.
 
-The environment variables can be set via command line flags as well 
+The environment variables can be set via command line flags as well. 
 
 ### Command Line Flags and Environment Variables
 
@@ -99,7 +99,7 @@ namespace authorization methods are supported and controlled via the `AUTH_MODE`
 flag):
 * None: if no authorization mode is defined, all instances are registered into a default shared namespace. 
 * Trusted: namespace is retrieved directly from the Authorization header. This provides namespace separation in a trusted
-environment (e.g., single tenant with multiple applications or environments)
+environment (e.g., single tenant with multiple applications or environments).
 * JWT: encodes the namespace value in a signed JWT token claim. 
 
 | Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
@@ -116,7 +116,7 @@ Authorization: Bearer jwt.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...wifQ.Gbz4G_
 ```
 
 #### Clustering
-Amalgam8 Service Discovery uses a memory only storage solution, without persistency (although different storage 
+Amalgam8 Service Registry uses a memory only storage solution, without persistency (although different storage 
 backends can be implemented). To provide HA and scale, the registry can be run in a cluster and supports replication
 between cluster members.
 
@@ -134,7 +134,7 @@ Alternative discovery mechanisms are being explored.
 
 ## API
 
-Service Discovery [API documentation](https://amalgam8.io/registry) is available in Swagger format.
+The Service Registry [API documentation](https://amalgam8.io/registry) is available in Swagger format.
 
 ## Contributing
 
@@ -145,7 +145,7 @@ file for more information.
 
 ### Contributing Changes
 
-Go code contributed to Amalgam8 Service Discovery Registry must use default Golang formatting and pass: 
+Go code contributed to Amalgam8 Service Registry must use default Go formatting and pass: 
 
 * [golint](https://github.com/golang/lint)
 * Go vet
@@ -168,4 +168,3 @@ http://www.apache.org/licenses/LICENSE-2.0
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed 
 on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
 See the License for the specific language governing permissions and limitations under the License.
-

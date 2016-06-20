@@ -4,7 +4,7 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 source $SCRIPTDIR/.bluemixrc
 
 echo "Listing existing container groups"
-EXISTING_GROUPS=$(cf ic group list)
+EXISTING_GROUPS=$(bluemix ic groups)
 
 BOOKINFO_GROUPS=(
     bookinfo_productpage
@@ -20,7 +20,7 @@ for group in ${BOOKINFO_GROUPS[@]}; do
     echo $EXISTING_GROUPS | grep $group > /dev/null
     if [ $? -eq 0 ]; then
         echo "Removing $group container group"
-        cf ic group rm -f $group
+        bluemix ic group-remove $group
     fi
 done
 

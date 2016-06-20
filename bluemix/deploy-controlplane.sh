@@ -8,7 +8,7 @@ source $SCRIPTDIR/.bluemixrc
 #################################################################################
 
 echo "Looking up Bluemix registry images"
-BLUEMIX_IMAGES=$(cf ic images --format "{{.Repository}}:{{.Tag}}")
+BLUEMIX_IMAGES=$(bluemix ic images --format "{{.Repository}}:{{.Tag}}")
 
 REQUIRED_IMAGES=(
     ${CONTROLLER_IMAGE}
@@ -19,7 +19,7 @@ for image in ${REQUIRED_IMAGES[@]}; do
     echo $BLUEMIX_IMAGES | grep $image > /dev/null
     if [ $? -ne 0 ]; then
         echo "Pulling ${DOCKERHUB_NAMESPACE}/$image from Dockerhub"
-        cf ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
+        bluemix ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
     fi
 done
 
@@ -28,7 +28,7 @@ done
 #################################################################################
 
 echo "Starting controller"
-cf ic group create --name amalgam8_controller \
+bluemix ic group-create --name amalgam8_controller \
   --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env POLL_INTERVAL=5s \
@@ -39,7 +39,7 @@ echo "Waiting for controller to start..."​
 sleep 15s
 
 echo "Mapping route to controller: $CONTROLLER_URL"
-cf ic route map --hostname $CONTROLLER_HOSTNAME --domain $ROUTES_DOMAIN amalgam8_controller
+bluemix ic route-map --hostname $CONTROLLER_HOSTNAME --domain $ROUTES_DOMAIN amalgam8_controller
 
 #################################################################################
 # Provision Service Discovery, or start a local registry

@@ -411,22 +411,22 @@ starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
 
 To run the [Bookinfo sample app](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/README.md)
 on Bluemix, follow the instructions below.
-If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.net/).
+If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.net/).
 
 1. Download [Docker 1.10 or later](https://docs.docker.com/engine/installation/),
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-    [CF CLI IBM Containers plugin](https://console.ng.bluemix.net/docs/containers/container_cli_ov.html),
+    [Bluemix CLI 0.3.3 or later](https://clis.ng.bluemix.net/),
     [jq 1.5 or later](https://stedolan.github.io/jq/),
     and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl)
 
-1. Login to Bluemix and initialize the containers environment using ```cf login``` and ```cf ic init```
+1. Login to Bluemix and initialize the containers environment using ```bluemix login``` and ```bluemix ic init```
 
 1. Create Bluemix routes to be mapped to the controller/bookinfo gateway, e.g.:  
     ```cf create-route myspace mybluemix.net -n myamalgam8-controller```  
     ```cf create-route myspace mybluemix.net -n myamalgam8-bookinfo```
     
 1. Configure the [.bluemixrc file](bluemix/.bluemixrc) to your environment variable values
-    * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```cf ic namespace get```
+    * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```bluemix ic namespace-get```
     * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
     * CONTROLLER_HOSTNAME should be the (globally unique) Bluemix route to be mapped to the controller
     * BOOKINFO_ROUTE should be the (globally unique) Bluemix route to be mapped to the bookinfo gateway
@@ -438,7 +438,7 @@ If you are not a bluemix user, you can register at [bluemix.net](http://bluemix.
       Note that the Message Hub Bluemix service is not a free service, and using it might incur costs.
 
 1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
-    Verify that the controller is running by ```cf ic group list``` and checking if the ```amalgam8_controller``` group is running.
+    Verify that the controller is running by ```bluemix ic groups``` and checking if the ```amalgam8_controller``` group is running.
 
 1. Configure the Amalgam8 CLI according to the routes defined in
    [.bluemixrc file](bluemix/.bluemixrc). For example

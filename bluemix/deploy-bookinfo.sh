@@ -8,7 +8,7 @@ source $SCRIPTDIR/.bluemixrc
 #################################################################################
 
 echo "Looking up Bluemix registry images"
-BLUEMIX_IMAGES=$(cf ic images --format "{{.Repository}}:{{.Tag}}")
+BLUEMIX_IMAGES=$(bluemix ic images --format "{{.Repository}}:{{.Tag}}")
 
 REQUIRED_IMAGES=(
     ${PRODUCTPAGE_IMAGE}
@@ -24,7 +24,7 @@ for image in ${REQUIRED_IMAGES[@]}; do
     echo $BLUEMIX_IMAGES | grep $image > /dev/null
     if [ $? -ne 0 ]; then
         echo "Pulling ${DOCKERHUB_NAMESPACE}/$image from Dockerhub"
-        cf ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
+        bluemix ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
     fi
 done
 
@@ -48,7 +48,7 @@ fi
 
 echo "Starting bookinfo productpage microservice (v1)"
 
-cf ic group create --name bookinfo_productpage \
+bluemix ic group-create --name bookinfo_productpage \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
@@ -66,7 +66,7 @@ cf ic group create --name bookinfo_productpage \
 
 echo "Starting bookinfo details microservice (v1)"
 
-cf ic group create --name bookinfo_details \
+bluemix ic group-create --name bookinfo_details \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env REGISTRY_URL=$REGISTRY_URL \
@@ -82,7 +82,7 @@ cf ic group create --name bookinfo_details \
 
 echo "Starting bookinfo ratings microservice (v1)"
 
-cf ic group create --name bookinfo_ratings \
+bluemix ic group-create --name bookinfo_ratings \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env REGISTRY_URL=$REGISTRY_URL \
@@ -98,7 +98,7 @@ cf ic group create --name bookinfo_ratings \
 
 echo "Starting bookinfo reviews microservice (v1)"
 
-cf ic group create --name bookinfo_reviews1 \
+bluemix ic group-create --name bookinfo_reviews1 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
@@ -112,7 +112,7 @@ cf ic group create --name bookinfo_reviews1 \
 
 echo "Starting bookinfo reviews microservice (v2)"
 
-cf ic group create --name bookinfo_reviews2 \
+bluemix ic group-create --name bookinfo_reviews2 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
@@ -126,7 +126,7 @@ cf ic group create --name bookinfo_reviews2 \
 
 echo "Starting bookinfo reviews microservice (v3)"
 
-cf ic group create --name bookinfo_reviews3 \
+bluemix ic group-create --name bookinfo_reviews3 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
@@ -144,7 +144,7 @@ cf ic group create --name bookinfo_reviews3 \
 
 echo "Starting bookinfo gateway"
 
-cf ic group create --name bookinfo_gateway \
+bluemix ic group-create --name bookinfo_gateway \
   --publish 6379 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env CONTROLLER_URL=$CONTROLLER_URL \
@@ -160,5 +160,5 @@ echo "Waiting for gateway to start..."​
 sleep 15s
 
 echo "Mapping route to gateway: $BOOKINFO_URL"
-cf ic route map --hostname $BOOKINFO_HOSTNAME --domain $ROUTES_DOMAIN bookinfo_gateway
+bluemix ic route-map --hostname $BOOKINFO_HOSTNAME --domain $ROUTES_DOMAIN bookinfo_gateway
 

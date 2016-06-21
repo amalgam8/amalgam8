@@ -62,6 +62,11 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 	}
 }
 
+type Error struct {
+	Error   string `json:"error"`
+	Description string `json:"description"`
+}
+
 // RestError writes a basic error response with a translated error message and an untranslated error ID
 // TODO: request ID?
 func RestError(w rest.ResponseWriter, r *rest.Request, code int, id string, args ...interface{}) {
@@ -75,12 +80,9 @@ func RestError(w rest.ResponseWriter, r *rest.Request, code int, id string, args
 
 	translated := T(id, args...)
 
-	errorResp := struct {
-		Error   string `json:"error"`
-		Message string `json:"message"`
-	}{
-		Error:   id,
-		Message: translated,
+	errorResp := Error{
+		Error:       id,
+		Description: translated,
 	}
 
 	w.WriteHeader(code)

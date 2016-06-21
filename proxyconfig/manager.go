@@ -20,6 +20,7 @@ import (
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
+	"github.com/pborman/uuid"
 )
 
 // Manager client
@@ -27,11 +28,15 @@ type Manager interface {
 	Set(rules resources.ProxyConfig) error
 	Get(id string) (resources.ProxyConfig, error)
 	Delete(id string) error
+
+
+	Add(id string, filters []resources.Rule) error
 }
 
 type manager struct {
 	db            database.Rules
 	producerCache notification.TenantProducerCache
+	conflictRetries int
 }
 
 // Config options
@@ -46,6 +51,43 @@ func NewManager(conf Config) Manager {
 		db:            conf.Database,
 		producerCache: conf.ProducerCache,
 	}
+}
+
+// Add TODO
+func (m *manager) Add(id string, filters []resources.Rule) error {
+	conf, err := m.db.Read(id)
+	if err != nil {
+		return err
+	}
+
+	// Generate IDs
+	for i := 0; i < len(filters); i++ {
+		filters[i].ID = uuid.New()
+	}
+
+	// Add to existing filters
+	combined, err := m.combine(conf.Filters.Rules, filters)
+	if err != nil {
+		return err
+	}
+
+	// Write the results
+	conf.Filters.Rules = combined
+	if err = m.db.Update(conf); err != nil {
+		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
+		return err
+	}
+
+	// Notify of changes
+	if err = m.producerCache.SendEvent(id, conf.Credentials.Kafka); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *manager) combine(a, b []resources.Rule) ([]resources.Rule, error) {
+	return nil, nil
 }
 
 // Set database entry

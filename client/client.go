@@ -40,26 +40,37 @@ type Client interface {
 	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
 }
 
-type ClientConfig struct {
-	URL        string
-	AuthToken  string
+// Config stores the configurable attributes of the client.
+type Config struct {
+
+	// URL of the registry server.
+	URL string
+
+	// AuthToken is the bearer token to be used for authentication with the registry.
+	// If left empty, no authentication is used.
+	AuthToken string
+
+	// HTTPClient can be used to customize the underlying HTTP client behavior,
+	// such as enabling TLS, setting timeouts, etc.
+	// If left nil, a default HTTP client will be used.
 	HTTPClient *http.Client
 }
 
-// RESTClient implements the Client interface using Amalgam8 Service Registry REST API.
-type RESTClient struct {
-	config     ClientConfig
+// client implements the Client interface using Amalgam8 Service Registry REST API.
+type restClient struct {
+	config     Config
 	httpClient *http.Client
 }
 
-func NewRESTClient(config ClientConfig) (*RESTClient, error) {
+// NewClient constructs a new Client using the given configuration.
+func NewClient(config Config) (Client, error) {
 	// Validate and normalize configuration
 	err := normalizeConfig(&config)
 	if err != nil {
 		return nil, err
 	}
 
-	client := &RESTClient{
+	client := &restClient{
 		config: config,
 	}
 
@@ -74,7 +85,7 @@ func NewRESTClient(config ClientConfig) (*RESTClient, error) {
 	return client, nil
 }
 
-func (client *RESTClient) Register(instance *ServiceInstance) (*ServiceInstance, error) {
+func (client *restClient) Register(instance *ServiceInstance) (*ServiceInstance, error) {
 	// Record a pessimistic last heartbeat time - Better safe than sorry!
 	lastHeartbeat := time.Now()
 
@@ -97,17 +108,17 @@ func (client *RESTClient) Register(instance *ServiceInstance) (*ServiceInstance,
 	return registeredInstance, nil
 }
 
-func (client *RESTClient) Deregister(id string) error {
+func (client *restClient) Deregister(id string) error {
 	_, err := client.doRequest("DELETE", amalgam8.InstanceURL(id), nil, http.StatusOK)
 	return err
 }
 
-func (client *RESTClient) Renew(id string) error {
+func (client *restClient) Renew(id string) error {
 	_, err := client.doRequest("PUT", amalgam8.InstanceHeartbeatURL(id), nil, http.StatusOK)
 	return err
 }
 
-func (client *RESTClient) ListServices() ([]string, error) {
+func (client *restClient) ListServices() ([]string, error) {
 	body, err := client.doRequest("GET", amalgam8.ServiceNamesURL(), nil, http.StatusOK)
 	if err != nil {
 		return nil, err
@@ -123,13 +134,13 @@ func (client *RESTClient) ListServices() ([]string, error) {
 	return s.Services, nil
 }
 
-func (client *RESTClient) ListServiceInstances(serviceName string) ([]*ServiceInstance, error) {
+func (client *restClient) ListServiceInstances(serviceName string) ([]*ServiceInstance, error) {
 	return client.ListInstances(&InstanceFilter{
 		ServiceName: serviceName,
 	})
 }
 
-func (client *RESTClient) ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error) {
+func (client *restClient) ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error) {
 	path := amalgam8.InstancesURL()
 	if instanceFilter != nil {
 		queryParams := instanceFilter.asQueryParams()
@@ -154,7 +165,7 @@ func (client *RESTClient) ListInstances(instanceFilter *InstanceFilter) ([]*Serv
 	return s.Instances, nil
 }
 
-func (client *RESTClient) doRequest(method string, path string, body interface{}, status int) ([]byte, error) {
+func (client *restClient) doRequest(method string, path string, body interface{}, status int) ([]byte, error) {
 	var reader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -215,9 +226,8 @@ func (client *RESTClient) doRequest(method string, path string, body interface{}
 	case http.StatusNotFound:
 		if requestID != "" {
 			return nil, newError(ErrorCodeInternalClientError, message, nil, requestID)
-		} else {
-			return nil, newError(ErrorCodeServiceUnavailable, message, nil, requestID)
 		}
+		return nil, newError(ErrorCodeServiceUnavailable, message, nil, requestID)
 	case http.StatusBadGateway:
 		return nil, newError(ErrorCodeServiceUnavailable, message, nil, requestID)
 	case http.StatusUnauthorized:
@@ -229,7 +239,7 @@ func (client *RESTClient) doRequest(method string, path string, body interface{}
 	}
 }
 
-func normalizeConfig(config *ClientConfig) error {
+func normalizeConfig(config *Config) error {
 	if config == nil {
 		return newError(ErrorCodeInvalidConfiguration, "client configuration cannot be nil", nil, "")
 	}

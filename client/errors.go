@@ -16,8 +16,10 @@ package client
 
 import "bytes"
 
+// ErrorCode represents an error condition which might occur when using the client.
 type ErrorCode int
 
+// Enumerate valid ErrorCode values.
 const (
 	ErrorCodeUndefined ErrorCode = iota
 
@@ -56,6 +58,7 @@ func (code ErrorCode) String() string {
 	}
 }
 
+// Error represents an actual error occurred which using the client.
 type Error struct {
 	Code      ErrorCode
 	Message   string

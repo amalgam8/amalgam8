@@ -26,6 +26,8 @@ import (
 	"time"
 )
 
+const defaultTimeout = time.Second * 30
+
 // Client defines the interface used by clients of the Amalgam8 Service Registry.
 type Client interface {
 	Register(instance *ServiceInstance) (*ServiceInstance, error)
@@ -36,12 +38,12 @@ type Client interface {
 	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
 }
 
-// TODO: Allow custom transport/HTTP client/TLS config
 // TODO: revamp URLs construction (resolve, URL-encode)
 
 type ClientConfig struct {
-	URL       string `json:"url"`
-	AuthToken string `json:"auth_token"`
+	URL       string
+	AuthToken string
+	HTTPClient *http.Client
 }
 
 // RESTClient implements the Client interface using Amalgam8 Service Registry REST API.
@@ -59,8 +61,16 @@ func NewRESTClient(config ClientConfig) (*RESTClient, error) {
 
 	client := &RESTClient{
 		config:     config,
-		httpClient: &http.Client{},
 	}
+
+	if config.HTTPClient != nil {
+		client.httpClient = config.HTTPClient
+	} else {
+		client.httpClient = &http.Client{
+			Timeout: defaultTimeout,
+		}
+	}
+	
 	return client, nil
 }
 

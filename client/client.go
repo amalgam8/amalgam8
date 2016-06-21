@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"github.com/amalgam8/registry/api/protocol/amalgam8"
 )
 
 const defaultTimeout = time.Second * 30
@@ -37,8 +38,6 @@ type Client interface {
 	ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error)
 	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
 }
-
-// TODO: revamp URLs construction (resolve, URL-encode)
 
 type ClientConfig struct {
 	URL       string
@@ -70,7 +69,7 @@ func NewRESTClient(config ClientConfig) (*RESTClient, error) {
 			Timeout: defaultTimeout,
 		}
 	}
-	
+
 	return client, nil
 }
 
@@ -78,8 +77,7 @@ func (client *RESTClient) Register(instance *ServiceInstance) (*ServiceInstance,
 	// Record a pessimistic last heartbeat time - Better safe than sorry!
 	lastHeartbeat := time.Now()
 
-	url := fmt.Sprintf("%s/api/v1/instances", client.config.URL)
-	body, err := client.doRequest("POST", url, instance, http.StatusCreated)
+	body, err := client.doRequest("POST", amalgam8.InstanceCreateURL(), instance, http.StatusCreated)
 	if err != nil {
 		return nil, err
 	}
@@ -99,20 +97,17 @@ func (client *RESTClient) Register(instance *ServiceInstance) (*ServiceInstance,
 }
 
 func (client *RESTClient) Deregister(id string) error {
-	uri := fmt.Sprintf("%s/api/v1/instances/%s", client.config.URL, id)
-	_, err := client.doRequest("DELETE", uri, nil, http.StatusOK)
+	_, err := client.doRequest("DELETE", amalgam8.InstanceURL(id), nil, http.StatusOK)
 	return err
 }
 
 func (client *RESTClient) Renew(id string) error {
-	uri := fmt.Sprintf("%s/api/v1/instances/%s/heartbeat", client.config.URL, id)
-	_, err := client.doRequest("PUT", uri, nil, http.StatusOK)
+	_, err := client.doRequest("PUT", amalgam8.InstanceHeartbeatURL(id), nil, http.StatusOK)
 	return err
 }
 
 func (client *RESTClient) ListServices() ([]string, error) {
-	uri := fmt.Sprintf("%s/api/v1/services", client.config.URL)
-	body, err := client.doRequest("GET", uri, nil, http.StatusOK)
+	body, err := client.doRequest("GET", amalgam8.ServiceNamesURL(), nil, http.StatusOK)
 	if err != nil {
 		return nil, err
 	}
@@ -134,17 +129,16 @@ func (client *RESTClient) ListServiceInstances(serviceName string) ([]*ServiceIn
 }
 
 func (client *RESTClient) ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error) {
-	uri := fmt.Sprintf("%s/api/v1/instances", client.config.URL)
-
+	path := amalgam8.InstancesURL()
 	if instanceFilter != nil {
 		queryParams := instanceFilter.asQueryParams()
 		if len(queryParams) > 0 {
-			uri = fmt.Sprintf("%s?%s", uri, queryParams.Encode())
+			path = fmt.Sprintf("%s?%s", path, queryParams.Encode())
 		}
 		instanceFilter.asQueryParams()
 	}
 
-	body, err := client.doRequest("GET", uri, nil, http.StatusOK)
+	body, err := client.doRequest("GET", path, nil, http.StatusOK)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +153,7 @@ func (client *RESTClient) ListInstances(instanceFilter *InstanceFilter) ([]*Serv
 	return s.Instances, nil
 }
 
-func (client *RESTClient) doRequest(method string, uri string, body interface{}, status int) ([]byte, error) {
+func (client *RESTClient) doRequest(method string, path string, body interface{}, status int) ([]byte, error) {
 	var reader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -169,6 +163,7 @@ func (client *RESTClient) doRequest(method string, uri string, body interface{},
 		reader = bytes.NewBuffer(b)
 	}
 
+	uri := client.config.URL + path
 	req, err := http.NewRequest(method, uri, reader)
 	if err != nil {
 		return nil, newError(ErrorCodeInternalClientError, "error creating HTTP request", err, "")
@@ -228,6 +223,7 @@ func (client *RESTClient) doRequest(method string, uri string, body interface{},
 		return nil, newError(ErrorCodeInternalClientError, message, nil, requestID)
 	}
 }
+
 
 func normalizeConfig(config *ClientConfig) error {
 	if config == nil {

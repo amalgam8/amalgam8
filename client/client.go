@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
 	"github.com/amalgam8/registry/api/protocol/amalgam8"
 )
 
@@ -40,8 +41,8 @@ type Client interface {
 }
 
 type ClientConfig struct {
-	URL       string
-	AuthToken string
+	URL        string
+	AuthToken  string
 	HTTPClient *http.Client
 }
 
@@ -59,7 +60,7 @@ func NewRESTClient(config ClientConfig) (*RESTClient, error) {
 	}
 
 	client := &RESTClient{
-		config:     config,
+		config: config,
 	}
 
 	if config.HTTPClient != nil {

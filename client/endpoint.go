@@ -23,7 +23,7 @@ import (
 type ServiceEndpoint struct {
 
 	// Type is the endpoint's type. Valid values are "http", "tcp", or "user".
-	Type  string `json:"type"`
+	Type string `json:"type"`
 
 	// Value is the endpoint's value according to its type,
 	// e.g. "172.135.10.1:8080" or "http://myapp.ng.bluemix.net/api/v1".

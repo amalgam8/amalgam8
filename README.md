@@ -7,26 +7,26 @@
 [Travis]: https://travis-ci.org/amalgam8/registry
 [Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
 
-The Amalgam8 Service Registry is software developed for registering and locating instances in applications 
-built using a microservice based architecture. The registry can be used to provide multi-tenant registration and 
+The Amalgam8 Service Registry is software that was developed to register and locate instances in applications 
+that are built using a microservice-based architecture. The registry can be used to provide multi-tenant registration and 
 discovery namespaces (i.e., isolation between different tenant scopes), a unified discovery for service
 instances registered using different backends (e.g., Kubernetes, Eureka), and different authentication and authorization
 backends. 
 
-Note: Amalgam8 service registry is currently in alpha. This means the API will change, features will be added/removed 
-and there will be bugs. 
+**Note**: The Amalgam8 Service Registry is currently in alpha. This means that the API will change, features will be added/removed, 
+and that there will be bugs. 
 
 ## Building and Running
 
-A recent prebuilt Amalgam8 registry image can be found in docker.io/amalgam8/a8-registry:0.1.
+A recent prebuilt Amalgam8 Service Registry image can be found in docker.io/amalgam8/a8-registry:0.1.
 ```sh
 $ docker pull amalgam8/a8-registry:0.1
 ```
 
-If you wish to build the registry from source, clone this repository and follow the instructions below.
+If you wish to build the Amalgam8 Service Registry from source, clone this repository, and follow the instructions below.
 
 ### Preprequisites
-A developer tested development environment requires the following:
+A developer-tested development environment requires the following technologies:
 * Linux host (tested with Ubuntu 16.04 LTS).
 * Docker (tested with 1.10).
 * Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
@@ -34,14 +34,14 @@ A developer tested development environment requires the following:
 
 ### Building a Docker Image
 
-The Amalgam8 registry may be built by simply typing `make build docker` with the [Docker
+The Amalgam8 Service Registry can be built by simply typing `make build docker` with the [Docker
 daemon](https://docs.docker.com/installation/) (v1.10.x) running.
 
-This will produce an image tagged `registry:0.1` which you may run as described below.
+This produces an image tagged `registry:0.1` that you can run.
 
 ### Standalone
 
-The Amalgam8 registry may also be run outside of a docker container as a Go binary. 
+The Amalgam8 Service Registry can also be run outside of a docker container as a Go binary. 
 This is not recommended for production, but it can be useful for development or easier integration with 
 your local Go tools.
 
@@ -70,7 +70,7 @@ Continuous builds are run on Travis CI. These builds use the `.travis.yml` confi
 
 ## Usage
 
-The registry supports a number of configuration options, most of which should be set through environment variables.
+The Amalgam8 Service Registry supports a number of configuration options, most of which are set through environment variables.
 
 The environment variables can be set via command line flags as well. 
 
@@ -93,7 +93,7 @@ The following environment variables are available. All of them are optional.
 
 #### Authentication and Authorization
 
-The Amalgam8 Service Registry optionally supports multi-tenancy, by isolating each tenant into a separate namespace.
+The Amalgam8 Service Registry optionally supports multi-tenancy by isolating each tenant into a separate namespace.
 A namespace is defined by an opaque string carried in the HTTP `Authorization` header of API requests. The following
 namespace authorization methods are supported and controlled via the `AUTH_MODE` environment variable (or `--auth_mode`
 flag):
@@ -134,7 +134,7 @@ Alternative discovery mechanisms are being explored.
 
 ## API
 
-The Service Registry [API documentation](https://amalgam8.io/registry) is available in Swagger format.
+The Amalgam8 Service Registry [API documentation](https://amalgam8.io/registry) is available in Swagger format.
 
 ## Contributing
 

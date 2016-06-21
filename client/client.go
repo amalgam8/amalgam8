@@ -169,7 +169,11 @@ func (client *RESTClient) doRequest(method string, path string, body interface{}
 		return nil, newError(ErrorCodeInternalClientError, "error creating HTTP request", err, "")
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.config.AuthToken))
+	// Add authorization header
+	if client.config.AuthToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.config.AuthToken))
+	}
+
 	if body != nil {
 		// Body exists, and encoded as JSON
 		req.Header.Set("Content-Type", "application/json")
@@ -223,7 +227,6 @@ func (client *RESTClient) doRequest(method string, path string, body interface{}
 		return nil, newError(ErrorCodeInternalClientError, message, nil, requestID)
 	}
 }
-
 
 func normalizeConfig(config *ClientConfig) error {
 	if config == nil {

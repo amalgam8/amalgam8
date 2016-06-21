@@ -37,7 +37,8 @@ type ServiceInstance struct {
 	// This field is mandatory both for registration and discovery.
 	Endpoint      ServiceEndpoint `json:"endpoint"`
 
-	// Status is an arbitrary string representing the status of the service instance, e.g. "UP" or "DOWN".
+	// Status is a string representing the status of the service instance.
+	// Valid values are "STARTING", "UP", or "OUT_OF_SERVICE".
 	// This field is optional both for registration and discovery.
 	Status        string          `json:"status,omitempty"`
 

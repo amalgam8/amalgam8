@@ -30,6 +30,8 @@ type InstanceFilter struct {
 	// Status is used to filter service instances based on their status.
 	// When set to a non-empty string, registered service instances will be returned
 	// only if their status matches the specified status.
+	// When left empty, only instances with status "UP" will be returned.
+	// When set to "ALL", all instances will be returned, regardless of their status.
 	Status string
 
 	// Tags is used to filter service instances based on their tags.

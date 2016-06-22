@@ -36,7 +36,7 @@ type Client interface {
 	Deregister(id string) error
 	Renew(id string) error
 	ListServices() ([]string, error)
-	ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error)
+	ListInstances(filter InstanceFilter) ([]*ServiceInstance, error)
 	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
 }
 
@@ -135,19 +135,16 @@ func (client *restClient) ListServices() ([]string, error) {
 }
 
 func (client *restClient) ListServiceInstances(serviceName string) ([]*ServiceInstance, error) {
-	return client.ListInstances(&InstanceFilter{
+	return client.ListInstances(InstanceFilter{
 		ServiceName: serviceName,
 	})
 }
 
-func (client *restClient) ListInstances(instanceFilter *InstanceFilter) ([]*ServiceInstance, error) {
+func (client *restClient) ListInstances(filter InstanceFilter) ([]*ServiceInstance, error) {
 	path := amalgam8.InstancesURL()
-	if instanceFilter != nil {
-		queryParams := instanceFilter.asQueryParams()
-		if len(queryParams) > 0 {
-			path = fmt.Sprintf("%s?%s", path, queryParams.Encode())
-		}
-		instanceFilter.asQueryParams()
+	queryParams := filter.asQueryParams()
+	if len(queryParams) > 0 {
+		path = fmt.Sprintf("%s?%s", path, queryParams.Encode())
 	}
 
 	body, err := client.doRequest("GET", path, nil, http.StatusOK)

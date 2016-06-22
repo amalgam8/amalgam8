@@ -20,6 +20,9 @@ import (
 )
 
 // InstanceFilter is used to filter service instances returned from lookup calls.
+//
+// The zero-value indicates to use the registry's default filtering, which includes all service instances
+// with status 'UP', and include all fields in the response.
 type InstanceFilter struct {
 
 	// ServiceName is used to filter service instances based on their service name.
@@ -42,7 +45,7 @@ type InstanceFilter struct {
 	// Fields is used to filter the fields returned for each service instance.
 	// When set to a non-empty array, returned service instances will have their corresponding fields set,
 	// while other fields will remain at their zero-value.
-	// When set to an empty or nil array, returned service intances will have all of their fields set.
+	// When set to an empty or nil array, returned service instances will have all of their fields set.
 	Fields []string
 }
 
@@ -59,7 +62,7 @@ const (
 )
 
 // asQueryParams convert the filter into a set of query parameters that can be added to a lookup request.
-func (filter *InstanceFilter) asQueryParams() url.Values {
+func (filter InstanceFilter) asQueryParams() url.Values {
 	queryParams := make(url.Values)
 
 	if filter.ServiceName != "" {

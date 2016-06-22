@@ -10,8 +10,8 @@ The sample application is broken into four separate microservices:
 
 * *productpage*. The productpage microservice calls the *details* and *reviews* microservices to populate the page. It provides a good example to experiment with both mid-tier and edge service routing.
 * *details*. The details microservice contains book information.
-* *reviews*. The reviews microservice contains book reviews. It also calls the *ratings* microservice, to provide two levels on downstream mid-tier routing.
-* *ratings*. The ratings microservice contains booking ranking information that accompanies a book review. 
+* *reviews*. The reviews microservice contains book reviews. It also calls the *ratings* microservice, to provide two levels of downstream mid-tier routing.
+* *ratings*. The ratings microservice contains book ranking information that accompanies a book review. 
 
 There are 3 versions of the reviews microservice:
 

@@ -24,15 +24,24 @@ vagrant up
 vagrant ssh
 ```
 
-In this environment, you can run all the same samples and demos that are described in https://github.com/amalgam8/examples/blob/master/README.md, and you have the ability to also compile the code and build the images locally.
+In this environment, you can run all the same samples and demos that are described in https://github.com/amalgam8/examples/blob/master/README.md,
+and you have the ability to also compile the code and build the images locally.
 
-For example, you can compile and build the control plane and sidecar images locally, by running the following command:
+You can compile and build the control plane or sidecar images locally, by running one of the following commands:
 
 ```
-kubernetes/run-controlplane-local.sh compile
+build-scripts/build-controller.sh
+build-scripts/build-registry.sh
+build-scripts/build-sidecar.sh
 ```
 
-If you change the base sidecar image and rebuild it, ensure that you locally build the sample images before trying to run them:
+If want to build all three projects, you can run the following command instead:
+
+```
+build-scripts/build-amalgam8.sh
+```
+
+If you change the base sidecar image and rebuild it, ensure that you also locally build the sample images before trying to run them:
 
 ```
 apps/helloworld/build.sh

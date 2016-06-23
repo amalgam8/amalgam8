@@ -36,10 +36,6 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-const (
-	statsdPrefix = "sp-XXXXXXX"
-)
-
 func main() {
 	app := cli.NewApp()
 
@@ -67,6 +63,7 @@ func controllerCommand(context *cli.Context) {
 func controllerMain(conf config.Config) error {
 	var err error
 
+	logrus.ErrorKey = "error"
 	logrus.Info(conf.LogLevel)
 	logrus.SetLevel(conf.LogLevel)
 
@@ -100,8 +97,9 @@ func controllerMain(conf config.Config) error {
 		db = database.NewMemoryCloudantDB()
 		rulesDB = database.NewRules(db)
 	} else {
+		err = errors.New("unsupported database type")
 		setupHandler.SetError(err)
-		return errors.New("")
+		return err
 	}
 
 	registry := clients.NewRegistry()

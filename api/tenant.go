@@ -27,7 +27,6 @@ import (
 	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/pborman/uuid"
 )
 
 // Tenant handles tenant API calls
@@ -54,7 +53,7 @@ type TenantInfo struct {
 	Filters           resources.Filters     `json:"filters"`
 }
 
-// NewTenant creates struct
+// NewTenant instantiates instance of the API
 func NewTenant(conf TenantConfig) *Tenant {
 	return &Tenant{
 		reporter: conf.Reporter,
@@ -82,42 +81,35 @@ func (t *Tenant) Routes() []*rest.Route {
 	}
 }
 
+func HandleFilterError(w rest.ResponseWriter, req *rest.Request, err error) {
+	if invalidFiltersErr, ok := err.(*proxyconfig.InvalidFiltersError); ok {
+		// TODO: in the case of a PUT, we may want to indicate the invalid filters by ID instead of index
+		restErrors := make([]RestError2, 0, len(*invalidFiltersErr))
+		for _, filterErr := range *invalidFiltersErr {
+			restErrors = append(restErrors, RestError2{
+				Index: filterErr.Index,
+				Error: "bad_filter",
+			})
+		}
 
-func validateFilter(filter resources.Rule) error {
-	if filter.Destination == "" {
-		return errors.New("invalid destination")
+		WriteRestErrors(w, req, restErrors, http.StatusBadRequest)
+		return
+	} else if filtersNotFoundErr, ok := err.(*proxyconfig.FiltersNotFoundError); ok {
+		restErrors := make([]RestError2, 0, len(filtersNotFoundErr.IDs))
+		for _, ID := range filtersNotFoundErr.IDs {
+			restErrors = append(restErrors, RestError2{
+				ID:    ID,
+				Error: "not_found",
+			})
+		}
+
+		WriteRestErrors(w, req, restErrors, http.StatusNotFound)
+		return
 	}
 
-	if filter.AbortProbability < 0.0 || filter.AbortProbability > 1.0 {
-		return errors.New("invalid abort probability")
-	}
+	// TODO: handle 409s, 500s, 502s, 503s
 
-	if filter.ReturnCode < 0 || filter.ReturnCode >= 600 {
-		return errors.New("invalid return code")
-	}
-
-	if filter.DelayProbability < 0.0 || filter.DelayProbability > 1.0 {
-		return errors.New("invalid probability")
-	}
-
-	if filter.Delay < 0 || filter.Delay > 600 {
-		return errors.New("invalid duration")
-	}
-
-	if (filter.DelayProbability != 0.0 && filter.Delay == 0.0) || (filter.DelayProbability == 0.0 && filter.Delay != 0.0) {
-		return errors.New("invalid delay")
-	}
-
-	return nil
-}
-
-type PostFilterError struct {
-	Index int `json:"index"`
-	Error
-}
-
-type PostFilterErrors struct {
-	Errors []PostFilterError `json:"errors"`
+	RestError(w, req, http.StatusInternalServerError, err.Error()) //"unknown_error")
 }
 
 // PostFilters creates filters in bulk
@@ -134,46 +126,8 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	// Validate filters
-	invalidFilters := []PostFilterError{}
-	for i, filter := range filtersJSON.Filters {
-		if err = validateFilter(filter); err != nil {
-			invalidFilters = append(invalidFilters, PostFilterError{
-				Index: i,
-				Error: Error{
-					Error: "bad_filter",
-					Description: "bad_filter",
-				},
-			})
-		}
-	}
-
-	if len(invalidFilters) > 0 {
-		errJSON := PostFilterErrors{
-			Errors: invalidFilters,
-		}
-
-		w.WriteHeader(http.StatusBadRequest)
-		w.WriteJson(&errJSON)
-		return nil // FIXME: don't return nil?
-	}
-
-	proxyConfig, err := t.rules.Get(id)
-	if err != nil {
-		// TODO: handle errors more specifically
-		handleDBError(w, req, err)
-		return err
-	}
-
-	for i := 0; i < len(filtersJSON.Filters); i++ {
-		filtersJSON.Filters[i].ID = uuid.New()
-	}
-
-	proxyConfig.Filters.Rules = append(proxyConfig.Filters.Rules, filtersJSON.Filters...)
-
-	if err = t.rules.Set(proxyConfig); err != nil {
-		// TODO: handle 409s intelligently
-		handleDBError(w, req, err)
+	if err = t.rules.AddFilters(id, filtersJSON.Filters); err != nil {
+		HandleFilterError(w, req, err)
 		return err
 	}
 
@@ -189,74 +143,20 @@ func (t *Tenant) PutFilters(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// FilterError is an error specific to a filter
-type FilterError struct {
-	ID string `json:"id"`
-	Error
-}
-
 // GetFilters reads filters in bulk
-// No ID query param provided => all filters
-// ID query param of valid filters provided => return filters
-// ID query param for some non-existent filters => return 404? return 404 and valid filters? return 404 and list of not found ids?
 func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 	filterIDs := getQueryIDs("id", req)
 
-	proxyConfig, err := t.rules.Get(id)
+	filters, err := t.rules.ListFilters(id, filterIDs)
 	if err != nil {
-		handleDBError(w, req, err)
+		HandleFilterError(w, req, err)
 		return err
-	}
-
-	errors := []FilterError{}
-
-	var filters []resources.Rule
-	if len(filterIDs) == 0 {
-		filters = proxyConfig.Filters.Rules
-	} else {
-		filters = make([]resources.Rule, 0, len(filterIDs))
-
-		filterMap := make(map[string]resources.Rule)
-		for _, rule := range proxyConfig.Filters.Rules {
-			filterMap[rule.ID] = rule
-		}
-
-		for _, filterID := range filterIDs {
-			filter, exists := filterMap[filterID]
-			if exists {
-				filters = append(filters, filter)
-			} else {
-				errors = append(
-					errors,
-					FilterError{
-						ID: filterID,
-						Error: Error{
-							Error: "filter_not_found",
-							Description: "filter_not_found",
-						},
-					},
-				)
-			}
-		}
-	}
-
-	if len(errors) > 0 {
-		errJSON := struct {
-			Errors []FilterError `json:"errors"`
-		} {
-			Errors: errors,
-		}
-
-		w.WriteHeader(http.StatusNotFound)
-		w.WriteJson(&errJSON)
-
-		return nil
 	}
 
 	respJSON := struct {
 		Filters []resources.Rule `json:"filters"`
-	} {
+	}{
 		Filters: filters,
 	}
 
@@ -271,56 +171,12 @@ func (t *Tenant) DeleteFilters(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 	filterIDs := getQueryIDs("id", req)
 
-	proxyConfig, err := t.rules.Get(id)
-	if err != nil {
-		handleDBError(w, req, err)
-		return err
-	}
-
-	if len(filterIDs) == 0 {
-		proxyConfig.Filters.Rules = []resources.Rule{}
-	} else {
-		filterRemoved := make(map[string]bool)
-		for i, rule := range proxyConfig.Filters.Rules {
-			for _, filterID := range filterIDs {
-				if filterID == rule.ID {
-					proxyConfig.Filters.Rules = append(proxyConfig.Filters.Rules[:i], proxyConfig.Filters.Rules[i+1:]...)
-					filterRemoved[filterID] = true
-				}
-			}
-		}
-
-		errJSON := struct {
-			Errors []FilterError `json:"errors"`
-		} {
-			Errors: make([]FilterError, 0, len(filterIDs)),
-		}
-		for _, filterID := range filterIDs {
-			if !filterRemoved[filterID] {
-				errJSON.Errors = append(errJSON.Errors, FilterError{
-					ID: filterID,
-					Error: Error{
-						Error: "not_found",
-						Description: "not_found",
-					},
-				})
-			}
-		}
-
-		if len(errJSON.Errors) > 0 {
-			w.WriteHeader(http.StatusNotFound)
-			w.WriteJson(&errJSON)
-			return nil // TODO: return something other than nil
-		}
-	}
-
-	if err = t.rules.Set(proxyConfig); err != nil {
-		handleDBError(w, req, err)
+	if err := t.rules.DeleteFilters(id, filterIDs); err != nil {
+		HandleFilterError(w, req, err)
 		return err
 	}
 
 	w.WriteHeader(http.StatusOK)
-
 	return nil
 }
 

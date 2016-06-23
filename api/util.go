@@ -62,9 +62,58 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 	}
 }
 
+type RestError2 struct {
+	ID    string
+	Index int
+	Error string
+	Args  []interface{}
+}
+
+func WriteRestErrors(w rest.ResponseWriter, r *rest.Request, restErrors []RestError2, code int) {
+	locale := r.Header.Get("Accept-language")
+	T, err := i18n.Tfunc(locale, "en-US")
+	if err != nil {
+		logrus.WithError(err).WithField(
+			"accept_language_header", locale,
+		).Error("Could not get translation function")
+	}
+
+	if len(restErrors) == 0 {
+		w.WriteHeader(code)
+	} else {
+		errorResp := ErrorList{
+			Errors: make([]Error, 0, len(restErrors)),
+		}
+		for _, restError := range restErrors {
+			translated := T(restError.Error, restError.Args...)
+
+			errorResp.Errors = append(
+				errorResp.Errors,
+				Error{
+					Index:       restError.Index,
+					ID:          restError.ID,
+					Error:       restError.Error,
+					Description: translated,
+				},
+			)
+		}
+
+		w.WriteHeader(code)
+		w.WriteJson(&errorResp)
+	}
+
+	return
+}
+
 type Error struct {
-	Error   string `json:"error"`
+	ID          string `json:"id,omitempty"`
+	Index       int    `json:"index,omitempty"`
+	Error       string `json:"error"`
 	Description string `json:"description"`
+}
+
+type ErrorList struct {
+	Errors []Error `json:"errors"`
 }
 
 // RestError writes a basic error response with a translated error message and an untranslated error ID

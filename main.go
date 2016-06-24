@@ -134,25 +134,16 @@ func controllerMain(conf config.Config) error {
 		Generator: g,
 		Checker:   c,
 	})
-
 	t := api.NewTenant(api.TenantConfig{
 		Reporter:    reporter,
 		Checker:     c,
 		ProxyConfig: r,
 	})
-
 	p := api.NewPoll(reporter, c)
-
 	h := api.NewHealth(reporter)
 
-	routes := n.Routes()
-	routes = append(routes, t.Routes()...)
-	routes = append(routes, h.Routes()...)
-	routes = append(routes, p.Routes()...)
-
-	api := rest.NewApi()
-
-	api.Use(
+	a := rest.NewApi()
+	a.Use(
 		&rest.TimerMiddleware{},
 		&rest.RecorderMiddleware{},
 		&rest.RecoverMiddleware{
@@ -163,6 +154,11 @@ func controllerMain(conf config.Config) error {
 		&middleware.LoggingMiddleware{},
 	)
 
+	routes := n.Routes()
+	routes = append(routes, t.Routes()...)
+	routes = append(routes, h.Routes()...)
+	routes = append(routes, p.Routes()...)
+
 	router, err := rest.MakeRouter(
 		routes...,
 	)
@@ -170,9 +166,9 @@ func controllerMain(conf config.Config) error {
 		setupHandler.SetError(err)
 		return err
 	}
-	api.SetApp(router)
+	a.SetApp(router)
 
-	setupHandler.SetHandler(api.MakeHandler())
+	setupHandler.SetHandler(a.MakeHandler())
 
 	//start garbage collection on kafka producer cache
 	tpc.StartGC()

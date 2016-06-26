@@ -56,7 +56,7 @@ registry:
   image: amalgam8/a8-registry:0.1
   ports:
     - "31300:8080"
-  command: -auth_mode=jwt -jwt_secret=12345
+  command: -auth_mode=trusted
   container_name: registry
 
 controller:

@@ -32,7 +32,7 @@ read -d '' tenant << EOF
         },
         "registry": {
             "url": "http://${AR}",
-            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY"
+            "token": "local"
         }
     }
 }

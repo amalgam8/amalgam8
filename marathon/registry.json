@@ -15,8 +15,7 @@
 	}
     },
     "args" : [
-	"-auth_mode", "jwt",
-	"-jwt_secret", "12345"
+	"-auth_mode", "trusted"
     ],
     "instances": 1,
     "cpus": 0.1,

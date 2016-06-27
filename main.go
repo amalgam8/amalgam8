@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/register"
 	"github.com/amalgam8/sidecar/router/checker"
@@ -102,7 +103,23 @@ func sidecarMain(conf config.Config) error {
 			return err
 		}
 		logrus.Info("Registering")
-		register.DoServiceRegistrationAndHeartbeat(&conf, true)
+
+		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
+			Client: client.New(client.Config{
+				URL: conf.Registry.URL,
+				AuthToken: conf.Registry.Token,
+			}),
+			ServiceInstance: client.ServiceInstance{
+				ServiceName: conf.ServiceName,
+				TTL: 60 * time.Second,
+			},
+		})
+		if err != nil {
+			logrus.WithError(err).Error("Could not create registry heartbeat agent")
+			return err
+		}
+
+		agent.Start()
 	}
 
 	if conf.Supervise {

@@ -23,7 +23,7 @@
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
                 "REGISTRY_URL": "http://__REPLACEME__:31300",
-			    "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			    "REGISTRY_TOKEN" : "local",
 			    "SERVICE" : "helloworld",
                 "SERVICE_VERSION" : "v1"
 		    },
@@ -50,7 +50,7 @@
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
                 "REGISTRY_URL": "http://__REPLACEME__:31300",
-			    "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			    "REGISTRY_TOKEN" : "local",
 			    "SERVICE" : "helloworld",
                 "SERVICE_VERSION" : "v2"
 		    },

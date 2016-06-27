@@ -23,7 +23,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python details.py 9080 http://localhost:6379",
 		            "env": {
                         "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "details",
                         "SERVICE_VERSION" : "v1"
 		            },
@@ -50,7 +50,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python ratings.py 9080 http://localhost:6379",
 		            "env": {
                         "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "ratings",
                         "SERVICE_VERSION" : "v1"
 		            },
@@ -77,7 +77,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v1"
 		            },
@@ -104,7 +104,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v2",
 			            "TENANT_TOKEN":"12345",
@@ -137,7 +137,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v3",
 			            "TENANT_TOKEN":"12345",
@@ -170,7 +170,7 @@
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python productpage.py 9080 http://localhost:6379",
 		            "env": {
 			            "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY",
+			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "productpage",
 				        "SERVICE_VERSION" : "v1",
 			            "TENANT_TOKEN":"12345",

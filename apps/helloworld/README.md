@@ -110,8 +110,7 @@ Before you begin, follow the environment set up instructions at https://github.c
 You can look at registration details for a service in the A8 registry, by running the following cURL command:
 
 ```
-export TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE0NjY3NzU5NjMsIm5hbWVzcGFjZSI6Imdsb2JhbC5nbG9iYWwifQ.Gbz4G_O0OfJZiTuX6Ce4heU83gSWQLr5yyiA7eZNqdY
-curl -X GET -H "Authorization: Bearer ${TOKEN}" http://localhost:31300/api/v1/services/helloworld | jq .
+curl -X GET -H "Authorization: Bearer local" http://localhost:31300/api/v1/services/helloworld | jq .
 ```
 
 **Note**: Replace localhost:31300 above with the appropriate host

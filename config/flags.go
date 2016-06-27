@@ -26,7 +26,6 @@ const (
 	proxy           = "proxy"
 	log             = "log"
 	supervise       = "supervise"
-	tenantID        = "tenant_id"
 	tenantToken     = "tenant_token"
 	kafkaToken      = "kafka_token"
 	kafkaUsername   = "kafka_user"
@@ -48,6 +47,7 @@ const (
 	serviceVersion  = "service_version"
 	logLevel        = "log_level"
 	logstashServer  = "logstash_server"
+	forceUpdate     = "force_update"
 )
 
 // TenantFlags defines all expected args for Tenant
@@ -57,6 +57,12 @@ var TenantFlags = []cli.Flag{
 		EnvVar: strings.ToUpper(logLevel),
 		Value:  "info",
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
+	},
+
+	cli.BoolFlag{
+		Name: forceUpdate,
+		EnvVar: strings.ToUpper(forceUpdate),
+		Usage: "Update Registry and Kafka credentials on startup",
 	},
 
 	cli.StringFlag{
@@ -105,11 +111,6 @@ var TenantFlags = []cli.Flag{
 	},
 
 	// Tenant
-	cli.StringFlag{
-		Name:   tenantID,
-		EnvVar: strings.ToUpper(tenantID),
-		Usage:  "Service Proxy instance GUID",
-	},
 	cli.StringFlag{
 		Name:   tenantToken,
 		EnvVar: strings.ToUpper(tenantToken),

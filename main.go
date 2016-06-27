@@ -238,6 +238,10 @@ func checkIn(controller clients.Controller, conf *config.Config) error {
 		return err
 	}
 
+	if conf.ForceUpdate {
+		// TODO
+	}
+
 	// if sidecar already has valid config do not need to set anything
 	if confNotValidErr != nil {
 		logrus.Info("Updating credentials with those from controller")

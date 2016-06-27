@@ -25,7 +25,6 @@ import (
 
 // Tenant stores tenant configuration
 type Tenant struct {
-	ID        string
 	Token     string
 	TTL       time.Duration
 	Heartbeat time.Duration
@@ -77,6 +76,7 @@ type Config struct {
 	Nginx          Nginx
 	LogLevel       logrus.Level
 	AppArgs        []string
+	ForceUpdate    bool
 }
 
 // New TODO
@@ -106,7 +106,6 @@ func New(context *cli.Context) *Config {
 			Poll: context.Duration(controllerPoll),
 		},
 		Tenant: Tenant{
-			ID:        context.String(tenantID),
 			Token:     context.String(tenantToken),
 			TTL:       context.Duration(tenantTTL),
 			Heartbeat: context.Duration(tenantHeartbeat),
@@ -128,6 +127,7 @@ func New(context *cli.Context) *Config {
 		},
 		LogLevel: loggingLevel,
 		AppArgs:  context.Args(),
+		ForceUpdate: context.Bool(forceUpdate),
 	}
 }
 
@@ -183,7 +183,6 @@ func (c *Config) Validate(validateCreds bool) error {
 
 	if c.Proxy {
 		validators = append(validators,
-			IsNotEmpty("Tenant ID", c.Tenant.ID),
 			IsNotEmpty("Tenant token", c.Tenant.Token),
 			IsValidURL("Controller URL", c.Controller.URL),
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),

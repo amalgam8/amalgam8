@@ -15,6 +15,8 @@
 package: github.com/amalgam8/sidecar
 
 import:
+
+- package: github.com/amalgam8/registry
     
 - package: github.com/Shopify/sarama
   version: 89bd629b50e1a69c40d40ded1c82a767b4859442

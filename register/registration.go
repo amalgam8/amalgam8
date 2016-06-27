@@ -15,9 +15,10 @@
 package register
 
 import (
-	"github.com/amalgam8/registry/client"
 	"sync"
 	"time"
+
+	"github.com/amalgam8/registry/client"
 )
 
 // DefaultHeartbeatsPerTTL default number of heartbeats per TTL

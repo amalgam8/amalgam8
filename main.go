@@ -104,18 +104,24 @@ func sidecarMain(conf config.Config) error {
 		}
 		logrus.Info("Registering")
 
+		registryClient, err := client.New(client.Config{
+			URL:       conf.Registry.URL,
+			AuthToken: conf.Registry.Token,
+		})
+		if err != nil {
+			logrus.WithError(err).Error("Could not create registry client")
+			return err
+		}
+
 		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Client: client.New(client.Config{
-				URL: conf.Registry.URL,
-				AuthToken: conf.Registry.Token,
-			}),
-			ServiceInstance: client.ServiceInstance{
+			Client: registryClient,
+			ServiceInstance: &client.ServiceInstance{
 				ServiceName: conf.ServiceName,
-				TTL: 60 * time.Second,
+				TTL:         60,
 			},
 		})
 		if err != nil {
-			logrus.WithError(err).Error("Could not create registry heartbeat agent")
+			logrus.WithError(err).Error("Could not create registry agent")
 			return err
 		}
 

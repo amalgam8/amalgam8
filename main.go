@@ -162,6 +162,10 @@ func controllerMain(conf config.Config) error {
 		},
 		&rest.ContentTypeCheckerMiddleware{},
 		&middleware.RequestIDMiddleware{},
+		&middleware.AuthMiddleware{
+			Auth: &middleware.LocalAuth{},
+			Key: conf.ControlToken,
+		},
 		&middleware.LoggingMiddleware{},
 	)
 

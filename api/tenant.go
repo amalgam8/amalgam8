@@ -45,7 +45,6 @@ type TenantConfig struct {
 
 // TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
-	ID                string                `json:"id"`
 	Credentials       resources.Credentials `json:"credentials"`
 	LoadBalance       string                `json:"load_balance"`
 	Port              int                   `json:"port"`
@@ -66,12 +65,12 @@ func NewTenant(conf TenantConfig) *Tenant {
 func (t *Tenant) Routes() []*rest.Route {
 	return []*rest.Route{
 		rest.Post("/v1/tenants", reportMetric(t.reporter, t.PostTenant, "tenants_create")),
-		rest.Put("/v1/tenants/#id", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
-		rest.Get("/v1/tenants/#id", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
-		rest.Delete("/v1/tenants/#id", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
-		rest.Put("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
-		rest.Get("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
-		rest.Delete("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
+		rest.Put("/v1/tenants", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
+		rest.Get("/v1/tenants", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
+		rest.Delete("/v1/tenants", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
+		rest.Put("/v1/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
+		rest.Get("/v1/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
+		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
 	}
 }
 
@@ -86,8 +85,10 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
+	tenantID := GetTenantID(req)
+
 	// Validate input
-	if tenantConf.ID == "" {
+	if tenantID == "" {
 		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
 		return errors.New("special error")
 	}
@@ -95,7 +96,7 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// Copy each element
 	proxyConf := resources.ProxyConfig{
 		BasicEntry: resources.BasicEntry{
-			ID: tenantConf.ID,
+			ID: tenantID,
 		},
 		LoadBalance:       tenantConf.LoadBalance,
 		Port:              tenantConf.Port,
@@ -196,7 +197,7 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	// Register with catalog
-	if err = t.catalog.Register(tenantConf.ID); err != nil {
+	if err = t.catalog.Register(tenantID); err != nil {
 		logrus.WithError(err).Error("Failed registering with catalog")
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusConflict {
@@ -266,7 +267,11 @@ func validateRules(w rest.ResponseWriter, req *rest.Request, filters []resources
 func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
 	tenantConf := TenantInfo{}
 
@@ -276,7 +281,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	// Only allow changes to registered tenants
-	_, err = t.catalog.Get(id)
+	_, err = t.catalog.Get(tenantID)
 	if err != nil {
 		handleDBError(w, req, err)
 		return err
@@ -318,7 +323,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	// TODO: only read and set proxyconfig if necessary
-	proxyConf, err := t.rules.Get(id)
+	proxyConf, err := t.rules.Get(tenantID)
 	if err != nil {
 		handleDBError(w, req, err)
 		return err
@@ -382,22 +387,25 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// validate auth header
 	// if this tenant has orphans, CSB will know that the token is invalid
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
-	_, err := t.catalog.Get(id)
+	_, err := t.catalog.Get(tenantID)
 	if err != nil {
 		handleDBError(w, req, err)
 		return err
 	}
 
-	proxyConfig, err := t.rules.Get(id)
+	proxyConfig, err := t.rules.Get(tenantID)
 	if err != nil {
 		handleDBError(w, req, err)
 		return err
 	}
 
 	tenantConf := TenantInfo{
-		ID:                id,
 		Credentials:       proxyConfig.Credentials,
 		LoadBalance:       proxyConfig.LoadBalance,
 		Port:              proxyConfig.Port,
@@ -414,7 +422,12 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	service := req.PathParam("service")
 
 	proxyConfig, err := t.rules.Get(tenantID)
@@ -453,7 +466,12 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	service := req.PathParam("service")
 
 	proxyConfig, err := t.rules.Get(tenantID)
@@ -520,7 +538,12 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	service := req.PathParam("service")
 
 	proxyConfig, err := t.rules.Get(tenantID)
@@ -574,17 +597,21 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
 	// Deregister from catalog
-	if err = t.catalog.Deregister(id); err != nil {
+	if err = t.catalog.Deregister(tenantID); err != nil {
 		logrus.WithError(err).Error("Could not deregister tenant")
 		handleDBError(w, req, err)
 		return err
 	}
 
 	// Delete from rules
-	if err = t.rules.Delete(id); err != nil {
+	if err = t.rules.Delete(tenantID); err != nil {
 		logrus.WithError(err).Warn("Rule deletion failed, document orphaned")
 		// TODO do anything else here
 	}

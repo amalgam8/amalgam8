@@ -24,6 +24,7 @@ import (
 	"github.com/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"github.com/amalgam8/controller/middleware"
 )
 
 func handleDBError(w rest.ResponseWriter, req *rest.Request, err error) {
@@ -51,6 +52,16 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 		// Report success
 		reporter.Success(name, endTime)
 	}
+}
+
+func GetTenantID(req *rest.Request) string {
+	tenantID := req.Env[middleware.AuthEnv]
+
+	if id, ok := tenantID.(string); ok {
+		return id
+	}
+
+	return ""
 }
 
 // RestError writes a basic error response with a translated error message and an untranslated error ID

@@ -52,7 +52,7 @@ func NewNGINX(nc NGINXConfig) *NGINX {
 // Routes for NGINX API calls
 func (n *NGINX) Routes() []*rest.Route {
 	return []*rest.Route{
-		rest.Get("/v1/tenants/#id/nginx", reportMetric(n.reporter, n.GetNGINX, "tenants_nginx")),
+		rest.Get("/v1/nginx", reportMetric(n.reporter, n.GetNGINX, "tenants_nginx")),
 	}
 }
 
@@ -60,7 +60,12 @@ func (n *NGINX) Routes() []*rest.Route {
 func (n *NGINX) GetNGINX(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	queries := req.URL.Query()
 	var lastUpdate *time.Time
 	if queries.Get("version") != "" {
@@ -70,7 +75,7 @@ func (n *NGINX) GetNGINX(w rest.ResponseWriter, req *rest.Request) error {
 		}
 	}
 
-	catalog, err := n.checker.Get(id)
+	catalog, err := n.checker.Get(tenantID)
 	if err != nil {
 		handleDBError(w, req, err)
 		return err
@@ -84,7 +89,7 @@ func (n *NGINX) GetNGINX(w rest.ResponseWriter, req *rest.Request) error {
 
 	// Generate config
 	buf := bytes.NewBuffer([]byte{})
-	if err = n.generator.Generate(buf, id); err != nil {
+	if err = n.generator.Generate(buf, tenantID); err != nil {
 		RestError(w, req, http.StatusInternalServerError, "error_nginx_generator_failed")
 		return err
 	}

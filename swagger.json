@@ -3,11 +3,11 @@
   "info" : {
     "title" : "Controller API for Amalgam8",
     "description": "The controller monitors the registry and updates the sidecar configuration accordingly. It provides APIs to the developer for configuring rules for request routing, fault injection, etc. These rules are then translated and sent to the sidecars belonging to the application.",
-    "version" : "0.1"
+    "version" : "0.2"
   },
   "schemes" : [ "https" ],
   "consumes" : [ "application/json" ],
-  "produces" : [ "application/json", "text/plain" ],
+  "produces" : [ "application/json" ],
   "paths" : {
     "/health" : {
       "parameters" : [ ],
@@ -151,7 +151,6 @@
         }
       }
     },
-
     "/v1/tenants/{id}/nginx" : {
       "parameters" : [
         {
@@ -183,6 +182,105 @@
           },
           "503" : {
             "description" : "Error communicating with external service"
+          }
+        }
+      }
+    },
+    "/v1/tenants/{tenant_id}/filters" : {
+      "parameters" : [
+        {
+          "name": "tenant_id",
+          "in": "path",
+          "description": "Tenant ID",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get" : {
+        "tags" : [ ],
+        "summary" : "Gets filters for a tenant",
+        "description" : "Gets filters for a given tenant. If query parameters are provided, the results are filtered based on the query parameters. Otherwise all filters for a given tenant are returned. Query parameters can be repeated to query for multiple filters.",
+        "parameters" : [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Filter ID",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully retrieved filters",
+            "schema" : {
+              "$ref" : "#/definitions/rules"
+            }
+          },
+          "404" : {
+            "description" : "One or more filter was not found"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+
+      "post" : {
+        "summary" : "Adds filters to a tenant",
+        "description" :"Adds filters to a tenant. Filters are added transactionally; on a failure, no filters are added.",
+        "parameters" : [
+          {
+            "name": "filters",
+            "in": "body",
+            "description": "Filters",
+            "schema": {
+              "$ref": "#/definitions/rules"
+            },
+            "required": true
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully created filters",
+            "schema" : {
+              "$ref" : "#/definitions/rules"
+            }
+          },
+          "503" : {
+            "description" : "Error communicating with database"
+          }
+        }
+      },
+
+      "delete" : {
+        "summary" : "Removes filters from a tenant",
+        "description" : "Removes filter from a tenant. Filters are removed transactionally; on a failure, no filters are removed. If query parameters are provided, only filters matching the parameters will be removed. If no query parameters are provided, all filters are removed",
+        "parameters" : [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Filter ID",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses" : {
+          "200" : {
+            "description" : "Successfully removed filters"
+          },
+          "404" : {
+            "description" : "One or more filter was not found"
+          },
+          "503" : {
+            "description" : "Error communicating with database"
           }
         }
       }
@@ -376,6 +474,17 @@
         }
       }
     },
+    "rules" : {
+      "properties": {
+        "filters" : {
+          "type" : "array",
+          "description" : "filters",
+          "items" : {
+            "$ref" : "#/definitions/rule"
+          }
+        }
+      }
+    },
     "rule" : {
       "properties" : {
         "source" : {
@@ -419,8 +528,8 @@
           "description" : "Default Service version to use"
         },
         "selector" : {
-          "type" : "string",
-          "description" : "TODO FIXME - struct will be changing soon"
+          "type" : "object",
+          "description" : "Version selector"
         }
       }
     }

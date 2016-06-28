@@ -12,13 +12,21 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM amalgam8/a8-sidecar:0.1
+FROM amalgam8/alpine-sidecar:0.1
 
-ENV DEBIAN_FRONTEND=noninteractive
-RUN apt-get update && apt-get install -y -q --no-install-recommends \
-   python2.7 python-pip python-dev
-   
-RUN pip install Flask
+RUN apk add --no-cache \
+              bash \
+              python \
+              python-dev \
+              py-pip \
+  && pip install --upgrade pip \
+  && pip install Flask
+
+RUN cd /usr/bin \
+  && ln -sf easy_install-2.7 easy_install \
+  && ln -sf python2.7 python \
+  && ln -sf python2.7-config python-config \
+  && ln -sf pip2.7 pip
 
 RUN mkdir -p /opt/microservices
 ADD app.py /opt/microservices/

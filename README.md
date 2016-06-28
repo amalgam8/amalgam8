@@ -215,9 +215,11 @@ The following setup has been tested with Kubernetes v1.2.3.
     ```
 
     **Note:** If you stopped a previous Vagrant VM and restarted it, Kubernetes might be started already, but in a bad state.
-    If you have problems, first start by uninstalling Kubernetes with the following command: 
+    If you have problems, first start by removing previously deployed
+    services and uninstalling Kubernetes with the following commands: 
       
     ```bash
+    kubernetes/cleanup.sh
     sudo kubernetes/uninstall-kubernetes.sh
     ```
     

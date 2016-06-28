@@ -163,7 +163,8 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 					case ProtocolUDP:
 						endpointType = "udp"
 					case ProtocolTCP:
-						endpointType = "tcp"
+						//endpointType = "tcp"
+						endpointType = "http" // TODO: why not tcp? What are the implications?
 					}
 					endpointValue := fmt.Sprintf("%s:%d", address.IP, port.Port)
 					var uid string
@@ -174,11 +175,8 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 						rcName := podName[:strings.LastIndex(podName, "-")]
 						versionIndex := strings.LastIndex(rcName, "-")
 						if versionIndex != -1 {
-							version = rcName[versionIndex+1:]
-						} else {
-							version = rcName
+							version = fmt.Sprintf(", \"version\":\"%s\"", rcName[versionIndex+1:])
 						}
-
 					} else {
 						uid = address.IP
 					}
@@ -187,7 +185,7 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 						ServiceName: sname,
 						Endpoint:    &store.Endpoint{Type: endpointType, Value: endpointValue},
 						Status:      "UP",
-						Metadata:    []byte(fmt.Sprintf("{\"kubernetes_url\":\"%s/%s\", \"version\":\"%s\"}", kc.client.getEndpointsURL(kc.namespace), sname, version)),
+						Metadata:    []byte(fmt.Sprintf("{\"kubernetes_url\":\"%s/%s\"%s}", kc.client.getEndpointsURL(kc.namespace), sname, version)),
 						Tags:        []string{"kubernetes"},
 						TTL:         0}
 					insts = append(insts, inst)

@@ -247,7 +247,7 @@
           "200" : {
             "description" : "Successfully created filters",
             "schema" : {
-              "$ref" : "#/definitions/rules"
+              "$ref" : "#/definitions/in_rules"
             }
           },
           "503" : {
@@ -474,6 +474,49 @@
         }
       }
     },
+    "in_rules" : {
+      "properties": {
+        "filters" : {
+          "type" : "array",
+          "description" : "filters",
+          "items" : {
+            "$ref" : "#/definitions/in_rule"
+          }
+        }
+      }
+    },
+    "in_rule" : {
+      "properties" : {
+        "source" : {
+          "type" : "string",
+          "description" : "Service name of request source"
+        },
+        "destination" : {
+          "type" : "string",
+          "description" : "Service name of request destination"
+        },
+        "pattern" : {
+          "type" : "string",
+          "description" : "Header pattern"
+        },
+        "delay" : {
+          "type" : "number",
+          "description" : "Delay in seconds"
+        },
+        "delay_probability" : {
+          "type" : "number",
+          "description" : "Delay probability in range [0.0, 1.0]"
+        },
+        "abort_probability" : {
+          "type" : "number",
+          "description" : "Abort probability in range [0.0, 1.0]"
+        },
+        "return_code" : {
+          "type" : "integer",
+          "description" : "Failure code returned by abort"
+        }
+      }
+    },
     "rules" : {
       "properties": {
         "filters" : {
@@ -487,6 +530,10 @@
     },
     "rule" : {
       "properties" : {
+        "id" : {
+          "type" : "string",
+          "description" : "Filter ID"
+        },
         "source" : {
           "type" : "string",
           "description" : "Service name of request source"

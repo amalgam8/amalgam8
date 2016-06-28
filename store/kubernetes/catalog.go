@@ -16,6 +16,7 @@ package kubernetes
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -166,8 +167,18 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 					}
 					endpointValue := fmt.Sprintf("%s:%d", address.IP, port.Port)
 					var uid string
+					var version string
 					if address.TargetRef != nil {
 						uid = address.TargetRef.UID
+						podName := address.TargetRef.Name
+						rcName := podName[:strings.LastIndex(podName, "-")]
+						versionIndex := strings.LastIndex(rcName, "-")
+						if versionIndex != -1 {
+							version = rcName[versionIndex+1:]
+						} else {
+							version = rcName
+						}
+
 					} else {
 						uid = address.IP
 					}
@@ -176,7 +187,7 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 						ServiceName: sname,
 						Endpoint:    &store.Endpoint{Type: endpointType, Value: endpointValue},
 						Status:      "UP",
-						Metadata:    []byte(fmt.Sprintf("{\"kubernetes_url\":\"%s/%s\"}", kc.client.getEndpointsURL(kc.namespace), sname)),
+						Metadata:    []byte(fmt.Sprintf("{\"kubernetes_url\":\"%s/%s\", \"version\":\"%s\"}", kc.client.getEndpointsURL(kc.namespace), sname, version)),
 						Tags:        []string{"kubernetes"},
 						TTL:         0}
 					insts = append(insts, inst)

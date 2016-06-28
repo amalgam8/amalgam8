@@ -34,6 +34,7 @@ import (
 type k8sClient struct {
 	httpClient *http.Client
 	k8sURL     string
+	k8sAuth    string
 
 	logger *log.Entry
 }
@@ -46,6 +47,11 @@ func newK8sClient(k8sURL string) (*k8sClient, error) {
 	}
 
 	u, err := url.Parse(k8sURL)
+	if err != nil {
+		return nil, err
+	}
+
+	t, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +69,7 @@ func newK8sClient(k8sURL string) (*k8sClient, error) {
 	return &k8sClient{
 		httpClient: hc,
 		k8sURL:     k8sURL,
+		k8sAuth:    "Bearer " + string(t),
 		logger:     logging.GetLogger(module),
 	}, nil
 }
@@ -74,7 +81,10 @@ func (client *k8sClient) getEndpointsURL(namespace auth.Namespace) string {
 func (client *k8sClient) getEndpointsList(namespace auth.Namespace) (*EndpointsList, error) {
 	endpointsList := EndpointsList{}
 
-	resp, err := client.httpClient.Get(client.getEndpointsURL(namespace))
+	req, _ := http.NewRequest("GET", client.getEndpointsURL(namespace), nil)
+	req.Header.Set("Authorization", client.k8sAuth)
+	resp, err := client.httpClient.Do(req)
+	//resp, err := client.httpClient.Get(client.getEndpointsURL(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get endpointsURL [%s]", err)
 	}

@@ -18,6 +18,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/registry/client"
 )
 
@@ -82,14 +83,15 @@ func (agent *RegistrationAgent) Stop() {
 func (agent *RegistrationAgent) register() {
 	for {
 		registeredInstance, err := agent.config.Client.Register(agent.config.ServiceInstance)
-		if err != nil {
+		if err == nil {
 			go agent.renew(registeredInstance)
 			return
 		}
+		logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).Warn("Registration failed")
 
 		select {
 		case <-time.After(DefaultReregistrationDelay):
-			return
+			continue
 		case <-agent.stop:
 			return
 		}
@@ -103,6 +105,7 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 		case <-time.After(interval):
 			err := agent.config.Client.Renew(instance.ID)
 			if cErr, ok := err.(client.Error); ok && cErr.Code == client.ErrorCodeUnknownInstance {
+				logrus.WithError(cErr).WithField("service_name", instance.ServiceName).Warn("Heartbeat failed")
 				go agent.register()
 				return
 			}
@@ -114,5 +117,6 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 }
 
 func (agent *RegistrationAgent) deregister(instance *client.ServiceInstance) {
+	logrus.WithField("service_name", instance.ServiceName).Info("Deregistered")
 	agent.config.Client.Deregister(instance.ID)
 }

@@ -1,0 +1,26 @@
+{
+    "upstreams": {
+        "reviews_v1": {
+            "servers": [
+		{
+		    "host" : "127.0.0.1",
+		    "port" : 9081
+		}
+            ]
+        },
+        "reviews_v2": {
+            "servers": [
+		{
+		    "host" : "127.0.0.1",
+		    "port" : 9082
+		}
+            ]
+        }
+    },
+    "services" : {
+	"reviews" : {
+	    "default" : "v1",
+	    "selectors" : "{v2={weight=0.1}}"
+ 	}
+    }
+}

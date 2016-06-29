@@ -1,0 +1,14 @@
+language: go
+
+go:
+    - 1.6
+    - 1.5
+
+env:
+    global:
+        - GO15VENDOREXPERIMENT=1
+        
+script:
+    - make verify
+
+sudo: false

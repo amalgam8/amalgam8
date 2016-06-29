@@ -532,11 +532,6 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     Obtain the public IP of the node where the gateway is running. This will be
     the be IP at which the sample app will be accessible.
 
-1. You can now deploy the sample apps as described in [Deploying sample apps](#local-k8s-samples) 
-    section under the [local Kubernetes installation](#local-k8s) instructions. Remember to replace the IP address `localhost`
-    with the public IP address of the node where the gateway service is
-    running on the Google Cloud Platform.
-
 1. Visualizing your deployment with Weave Scope
 
     ```bash
@@ -550,4 +545,11 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath={.items..metadata.name}) 4040
     ```
   
-    You can open http://localhost:4040 on your browser to access the Scope UI.
+    Open http://localhost:4040 on your browser to access the Scope UI. Click on `Pods` tab. 
+    You should see a graph of pods depicting the connectivity between them. As you create 
+    more apps and manipulate routing across microservices, the graph changes in real-time.
+
+1. You can now deploy the sample apps as described in [Deploying sample apps](#local-k8s-samples) 
+    section under the [local Kubernetes installation](#local-k8s) instructions. Remember to replace the IP address `localhost`
+    with the public IP address of the node where the gateway service is
+    running on the Google Cloud Platform.

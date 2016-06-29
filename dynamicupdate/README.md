@@ -2,96 +2,134 @@ This is work in progress to provide a dynamic update framework for
 Amalgam8's nginx proxy, where nginx reload can be avoided. These updates 
 are yet to be integrated with the rest of Amalgam8 code base.
 
-To try the setup,
-- start nginx
+To try the setup, first start nginx
 
 ```bash
-nginx -c ~/amalgam8/sidecar/dynamicupdate/nginx.conf
+cd $GOPATH/src/github.com/amalgam8/sidecar/dynamicupdate
+nginx -c $GOPATH/src/github.com/sidecar/dynamicupdate/nginx.conf
 ```
 
-- start three versions of reviews service and one version of ratings service
+This version of nginx also starts two versions of `helloworld` service
+(each with 2 instances each) and one version of `endworld` service with
+one instance. 
+
+Lets see how we can update nginx dynamically to pick up new instances of
+a service, new versions of a service and completely new services, without
+having to reload nginx config.
+
+**Note**: The following commands should be run in the
+`$GOPATH/src/github.com/amalgam8/sidecar/dynamicupdate` folder.
+
+- Add new service `helloworld` (version 1)
 
 ```bash
-nohup python reviews1.py 9081 dummy &
-nohup python reviews2.py 9082 dummy &
-nohup python reviews3.py 9083 dummy &
-nohup python ratings1.py 9084 dummy &
+curl -X POST http://localhost:8080/a8-admin -d @1_oneservice.json
 ```
 
-- Populate the nginx proxy with reviews service, upstream and version selection info using the exposed API
+Test if service is up:
 
 ```bash
-curl -v -X POST http://localhost:8080/a8-admin -d @config-3versions.json
+curl http://localhost:8888/helloworld/
 ```
 
-- Now access reviews service. You should see that the output will alternative between three versions of reviews service.
+You should get `Helloworld v1 - instance 1` as the output.
+
+- Add upstream servers for `helloworld_v1`
 
 ```bash
-curl http://localhost:8888/reviews/reviews
+curl -X POST http://localhost:8080/a8-admin -d @2_oneservice_scaleout.json
 ```
 
-Your output would alternate between
-
-```
-{
-  "Baz": "zoo",
-  "Foo": "bar"
-}
-```
-
-and 
-
-```
-{
-  "Reviewer1": 5,
-  "Reviewer2": 4
-}
-```
-
-and 
-
-```
-{
-  "Reviewer4": 0,
-  "Reviewer5": 0
-}
-```
-
-depending on the version selector specified in the config-3versions.json file.
-
-- Now, remove one of the reviews versions.
+Test the service:
 
 ```bash
-curl -v -X POST http://localhost:8080/a8-admin -d @config-2versions.json
+$ curl http://localhost:8888/helloworld/
+Helloworld v1 - instance 1
+$ curl http://localhost:8888/helloworld/
+Helloworld v1 - instance 2
+$ curl http://localhost:8888/helloworld/
+Helloworld v1 - instance 1
 ```
 
-and access the reviews service as before. You will see the output
-alternating between 2 versions of reviews service.
-
-- Add a completely new service (ratings):
+- Add a new version of service (`helloworld_v2`)
 
 ```bash
-curl -v -X POST http://localhost:8080/a8-admin -d @config-2services.json
+curl -X POST http://localhost:8080/a8-admin -d @3_oneservice_addversion.json
 ```
 
-and access the ratings service via
+Test the service. The output should alternate accross service instances and
+versions.
 
 ```bash
-curl http://localhost:8888/ratings/ratings
+$ curl http://localhost:8888/helloworld/
+Helloworld v1 - instance 1
+$ curl http://localhost:8888/helloworld/
+Helloworld v2 - instance 2
+$ curl http://localhost:8888/helloworld/
+Helloworld v2 - instance 1
+$ curl http://localhost:8888/helloworld/
+Helloworld v1 - instance 2
 ```
 
-- Remove ratings service completely
+- Remove a version of a service (`helloworld_v1`) and scale down
+  `helloworld_v2` to one instance.
+  
+```bash
+curl -X POST http://localhost:8080/a8-admin -d @4_remove_version_instance.json
+```
+
+Test the service. You should only see output from one instance of
+`helloworld_v2`.
 
 ```bash
-curl -v -X POST http://localhost:8080/a8-admin -d @config-2versions.json
+$ curl http://localhost:8888/helloworld/
+Helloworld v2 - instance 1
+$ curl http://localhost:8888/helloworld/
+Helloworld v2 - instance 1
 ```
 
-and try to access ratings service. You should see an error.
+- Add a new service called `endworld` (version 1) to the proxy. 
 
+```bash
+curl -v -X POST http://localhost:8080/a8-admin -d @5_add_new_service.json
+```
+
+Test the services.
+
+```bash
+$ curl http://localhost:8888/endworld/
+End of world v1 - instance 1
+$ curl http://localhost:8888/helloworld/
+Helloworld v2 - instance 1
+```
+
+- Lets get rid of `helloworld` service completely.
+
+```bash
+curl -v -X POST http://localhost:8080/a8-admin -d @6_delete_service.json
+```
+
+Lets see if `helloworld` is still accessible.
+
+```bash
+$ curl http://localhost:8888/helloworld/
+<html>
+<head><title>404 Not Found</title></head>
+<body bgcolor="white">
+<center><h1>404 Not Found</h1></center>
+<hr><center>openresty/1.9.15.1</center>
+</body>
+</html>
+```
+
+We get a HTTP 404, indicating that `helloworld` service has been deleted
+from the proxy's routing tables.
+
+---
 
 * TODO:
-  - Add support for Gremlin rules in config.json
-  - Add support for returning 404s when an upstream/service does not exist
-  - Measure overhead and optimize
-  - Modify sidecar receive config updates from controller and update nginx via API
-  - Modify controller to generate config.json instead of Go template gen for nginx config
+  - Add support for dynamically injecting and removing fault injection (Gremlin) rules
+  - Cleanup Lua code
+  - **Measure overhead at high load and optimize lua code**
+  - Modify sidecar to receive config updates from controller and update nginx via API
+  - Modify controller to generate json payload instead of nginx config

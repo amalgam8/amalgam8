@@ -2,12 +2,16 @@
 Amalgam8 version routing library
 ]]
 
+function get_upstream(service, default_version, version_selectors)
+    local version = get_version(service, default_version, version_selectors)
+    -- ngx.log(ngx.DEBUG, "version is " .. version)
+    return service.. "_" .. version, path
+end
+
 function get_target(service, default_version, version_selectors)
     local version = get_version(service, default_version, version_selectors)
     local path = string.sub(ngx.var.request_uri, string.len(service)+2)
-    ngx.log(ngx.DEBUG, "version is " .. version .. " and path is " .. path)
-    return service.. "_" .. version, path
-    -- service .. "_" .. version .. path
+    return service .. "_" .. version .. path
 end
 
 function get_version(service, default_version, version_selectors)

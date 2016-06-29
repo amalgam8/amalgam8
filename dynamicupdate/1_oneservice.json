@@ -1,16 +1,16 @@
 {
     "upstreams": {
-        "reviews_v1": {
+        "helloworld_v1": {
             "servers": [
 		{
 		    "host" : "127.0.0.1",
-		    "port" : 9081
+		    "port" : 9091
 		}
             ]
         }
     },
     "services" : {
-	"reviews" : {
+	"helloworld" : {
 	    "default" : "v1"
  	}
     }

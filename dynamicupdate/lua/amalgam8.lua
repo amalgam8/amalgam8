@@ -285,24 +285,24 @@ function _M.versioninfo(upstreams_dict, services_dict, locks_dict)
   local name = ngx.var.service_name
   if not name then
     ngx.log(ngx.ERR, "$service_name is not specified")
-    return
+    return nil, nil
   end
 
   local a8proxy, err = _M:new(upstreams_dict, services_dict, locks_dict)
   if err then
      ngx.log(ngx.ERR, "error creating a8proxy instance: " .. err)
-     return
+     return nil, nil
   end
 
   local service, err = a8proxy:getService(name)
   if err then
      ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
-     return
+     return nil, nil
   end
 
   if not service or not service.version_selector then
      ngx.log(ngx.ERR, "service " .. name .. " or version_selector is not known")
-     return
+     return nil, nil
   end
   return service.version_selector.default, service.version_selector.selectors
 end

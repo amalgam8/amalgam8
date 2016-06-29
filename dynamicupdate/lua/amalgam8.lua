@@ -4,7 +4,7 @@ local balancer = require("ngx.balancer")
 local lock     = require("resty.lock")
 local string   = require("resty.string")
 
-local _M = { _VERSION = '0.5.0' }
+local _M = { _VERSION = '0.1.0' }
 local mt = { __index = _M }
 
 local function decodeJson(input)
@@ -139,13 +139,15 @@ function _M.updateService(self, name, version_selector)
      return unlocked(l, "null entry for default version")
   end
 
-  -- convert the selectors field from string to lua table
-  local selectors_fn, err = loadstring( "return " .. version_selector.selectors)
-  if err then
-     ngx.log(ngx.ERR, "failed to compile selector", err)
-     return err
+  if version_selector.selectors then
+     -- convert the selectors field from string to lua table
+     local selectors_fn, err = loadstring( "return " .. version_selector.selectors)
+     if err then
+	ngx.log(ngx.ERR, "failed to compile selector", err)
+	return err
+     end
+     current.version_selector.selectors = selectors_fn()
   end
-  current.version_selector.selectors = selectors_fn()
 
   local current_serialized, err = json.encode(current)
   if err then
@@ -208,6 +210,15 @@ function _M.init(upstreams_dict, services_dict, locks_dict)
   end
 end
 
+function _M.resetState(self)
+  ngx.shared[self.upstreams_dict]:flush_all()
+  ngx.shared[self.upstreams_dict]:flush_expired()
+  ngx.shared[self.services_dict]:flush_all()
+  ngx.shared[self.services_dict]:flush_expired()
+  ngx.shared[self.locks_dict]:flush_all()
+  ngx.shared[self.locks_dict]:flush_expired()
+end
+
 function _M.handle(upstreams_dict, services_dict, locks_dict)
   local a8proxy, err = _M:new(upstreams_dict, services_dict, locks_dict)
   if err then
@@ -224,6 +235,7 @@ function _M.handle(upstreams_dict, services_dict, locks_dict)
       ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
     end
 
+    a8proxy:resetState()
     local err = a8proxy:updateProxy(input)
     if err then
       ngx.log(ngx.ERR, "error updating proxy: " .. err)
@@ -258,6 +270,7 @@ function _M.balance(upstreams_dict, services_dict, locks_dict)
      return
   end
 
+  --TODO: refactor. Need different LB functions
   local index    = math.random(1, table.getn(upstream.upstream.servers)) % table.getn(upstream.upstream.servers) + 1
   local upstream = upstream.upstream.servers[index]
 

@@ -20,7 +20,7 @@
     "services" : {
 	"reviews" : {
 	    "default" : "v1",
-	    "selectors" : "{v2={weight=0.1}}"
+	    "selectors" : "{v2={weight=0.5}}"
  	}
     }
 }

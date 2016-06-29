@@ -277,7 +277,7 @@ The following setup has been tested with Kubernetes v1.2.3.
    and manipulate routing across microservices, the graph changes in
    real-time.
    
-1. Follow the instructions for the sample that you want to run.
+1. <a id="local-k8s-samples">Deploying sample apps:</a> follow the instructions for the sample that you want to run.
 
     (a) **helloworld** sample
 
@@ -532,8 +532,8 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     Obtain the public IP of the node where the gateway is running. This will be
     the be IP at which the sample app will be accessible.
 
-1. You can now deploy the sample apps as described in "Running the sample
-    apps" section above. Remember to replace the IP address `localhost`
+1. You can now deploy the sample apps as described in [Deploying sample apps](#local-k8s-samples) 
+    section under the [local Kubernetes installation](#local-k8s) instructions. Remember to replace the IP address `localhost`
     with the public IP address of the node where the gateway service is
     running on the Google Cloud Platform.
 

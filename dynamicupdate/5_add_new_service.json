@@ -1,26 +1,28 @@
 {
     "upstreams": {
-        "reviews_v1": {
+        "helloworld_v2": {
             "servers": [
 		{
 		    "host" : "127.0.0.1",
-		    "port" : 9081
+		    "port" : 9093
 		}
             ]
         },
-        "reviews_v2": {
+        "endworld_v1": {
             "servers": [
 		{
 		    "host" : "127.0.0.1",
-		    "port" : 9082
+		    "port" : 9095
 		}
             ]
         }
     },
     "services" : {
-	"reviews" : {
-	    "default" : "v1",
-	    "selectors" : "{v2={weight=0.5}}"
+	"helloworld" : {
+	    "default" : "v2"
+ 	},
+	"endworld" : {
+	    "default" : "v1"
  	}
     }
 }

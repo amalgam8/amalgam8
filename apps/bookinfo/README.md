@@ -32,7 +32,7 @@ In this demo, we will use Amalgam8's control plane to accomplish the following t
 
    * *Ad-hoc*: Inject failures manually to the call path between two
    microservices while restricting the failure impact to a user. The user would notice in using the application that the application is failing in an unexpected way.
-   * *Systematic* Use the Gremlin framework to automate injecting the same failure, and verify whether the microservices recover as expected.
+   * *Systematic*: Use the Gremlin framework to automate injecting the same failure, and verify whether the microservices recover as expected.
 
 3. Demonstrate the version routing capabilities in Amalgam8 by gradually
    increasing traffic from an old to a new version of an internal

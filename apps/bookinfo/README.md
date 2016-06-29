@@ -25,20 +25,16 @@ There are 3 versions of the reviews microservice:
 
 In this demo, we will use Amalgam8's control plane to accomplish the following tasks:
 
-1. Route traffic to specific versions of microservices using the `a8ctl`
-   command line client that interacts with the A8 Control Plane.
-2. Exercise the resiliency testing capabilities in Amalgam8 using the
-   Gremlin framework to conduct systematic resilience testing, i.e., inject
-   reproducible failure scenarios and run automated assertions on recovery
-   behavior of the microservices. Specifically,
-   * (Ad-hoc approach) Inject failures in the call path between two
-   microservices while restricting the failure impact to a test user. You
-   (the test user) would notice (manual) that the application is failing in
-   an unexpected way.
-   * (Systematic approach) Using the Gremlin framework (automated) to
-     inject the same failure and verify whether the microservices recover
-     in the expected manner.
-3. Exercise the version routing capabilities in Amalgam8 by gradually
+1. Route traffic to specific versions of a microservice by using the `a8ctl`
+   CLI that interacts with the Amalgam8 control plane.
+
+2. Demonstrate the resiliency testing capability of Amalgam8 by using the Gremlin framework to introduce failure scenarios. These scenarios can be reproduced, and automated test conditions applied in the following methods:
+
+   * *Ad-hoc*: Inject failures manually to the call path between two
+   microservices while restricting the failure impact to a user. The user would notice in using the application that the application is failing in an unexpected way.
+   * *Systematic*: Use the Gremlin framework to automate injecting the same failure, and verify whether the microservices recover as expected.
+
+3. Demonstrate the version routing capabilities in Amalgam8 by gradually
    increasing traffic from an old to a new version of an internal
    microservice.
 

@@ -20,6 +20,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
@@ -113,12 +115,19 @@ func sidecarMain(conf config.Config) error {
 			return err
 		}
 
-		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Client: registryClient,
-			ServiceInstance: &client.ServiceInstance{
-				ServiceName: conf.ServiceName,
-				TTL:         60,
+		address := fmt.Sprintf("%v:%v", conf.EndpointHost, conf.EndpointPort)
+		serviceInstance := &client.ServiceInstance{
+			ServiceName: conf.ServiceName,
+			Endpoint: client.ServiceEndpoint{
+				Type:  "http",
+				Value: address,
 			},
+			TTL: 60,
+		}
+
+		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
+			Client:          registryClient,
+			ServiceInstance: serviceInstance,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Could not create registry agent")

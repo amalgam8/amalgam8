@@ -1,14 +1,43 @@
 language: go
 
+# Enable Travis container-based infrastructure
+sudo: false
+
+# Go versions to build with
 go:
     - 1.6
     - 1.5
 
 env:
     global:
+        # Required for Go 1.5 build
         - GO15VENDOREXPERIMENT=1
-        
-script:
-    - make verify
+    matrix:
+        # Platforms to build for
+        - PLATFORM=linux/amd64
 
-sudo: false
+script:
+    # Need to set explicitly, as these are unset by 'gimme'
+    - export GOOS=${PLATFORM%/*}
+    - export GOARCH=${PLATFORM#*/}
+    
+    # Analyze, test and build the code, and then package the binary
+    - make verify release
+
+deploy:
+    
+    # Upload files to GitHub as release attachments
+    provider: releases
+    api_key: $GITHUB_TOKEN
+      
+    # Keep artifacts produced during the build
+    skip_cleanup: true
+    
+    # Upload anything under the release directory
+    file_glob: true
+    file: release/*
+
+    # Trigger only when building a tagged commit, on Go 1.6
+    on:
+        tags: true
+        go: 1.6

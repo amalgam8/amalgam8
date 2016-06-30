@@ -14,10 +14,10 @@
 
 FROM scratch
 
-WORKDIR /opt/registry
-COPY bin/registry       /opt/registry/
-COPY messages        /opt/registry/locales
+WORKDIR /opt/a8registry
+COPY bin/a8registry       /opt/a8registry/
+COPY messages        /opt/a8registry/locales
 
 EXPOSE 8080
 
-ENTRYPOINT [ "/opt/registry/registry" ]
+ENTRYPOINT [ "/opt/a8registry/a8registry" ]

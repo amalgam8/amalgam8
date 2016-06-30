@@ -19,7 +19,7 @@
 #------------------------------------------------------------------------------
 
 SHELL 		:= /bin/bash
-APP_NAME	:= controller
+APP_NAME	:= a8controller
 APP_VER		:= 0.1
 BINDIR		:= bin
 RELEASEDIR  := release

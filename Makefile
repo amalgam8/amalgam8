@@ -19,7 +19,7 @@
 #------------------------------------------------------------------------------
 
 SHELL 		:= /bin/bash
-APP_NAME	:= registry
+APP_NAME	:= a8registry
 APP_VER		:= 0.1
 BINDIR		:= bin
 RELEASEDIR  := release

@@ -69,17 +69,12 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build compile clean release
+.PHONY: build compile clean
 
 build:
 	@echo "--> building executable"
 	@$(GO) build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(APP_NAME)
 
-release: build
-	@echo "--> package release"
-	@mkdir -p $(RELEASEDIR) 
-	@tar -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(APP_NAME) README.md LICENSE
-	
 compile:
 	@echo "--> compiling packages"
 	@$(GO) build $(GOPKGS)
@@ -140,15 +135,19 @@ depend.install:	tools.glide
 	@glide install --strip-vcs --update-vendored
 	
 #----------
-#-- docker
+#-- artifacts
 #----------
-.PHONY: docker
+.PHONY: docker release
 
 docker:
 	@echo "--> building docker image"
 	@docker build -t $(IMAGE_NAME) .
-
-
+	
+release:
+	@echo "--> packaging release"
+	@mkdir -p $(RELEASEDIR) 
+	@tar -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(APP_NAME) README.md LICENSE
+		
 #---------------
 #-- tools
 #---------------

@@ -66,7 +66,7 @@ RUN \
 ADD docker/splib.lua /lua/splib.lua
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
 
-ADD /bin/sidecar /usr/bin/a8sidecar
+ADD /bin/a8sidecar /usr/bin/a8sidecar
 #COPY /locale /locale
 
 ENTRYPOINT ["/usr/bin/a8sidecar", "--supervise=false"]

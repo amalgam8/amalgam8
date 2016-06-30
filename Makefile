@@ -19,7 +19,7 @@
 #------------------------------------------------------------------------------
 
 SHELL 		:= /bin/bash
-APP_NAME	:= sidecar
+APP_NAME	:= a8sidecar
 APP_VER		:= 0.1
 DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin

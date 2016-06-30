@@ -20,7 +20,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -30,14 +29,12 @@ import (
 type NGINXConfig struct {
 	Reporter  metrics.Reporter
 	Generator nginx.Generator
-	Checker   checker.Checker
 }
 
 // NGINX handles NGINX API calls
 type NGINX struct {
 	reporter  metrics.Reporter
 	generator nginx.Generator
-	checker   checker.Checker
 }
 
 // NewNGINX creates struct
@@ -45,7 +42,6 @@ func NewNGINX(nc NGINXConfig) *NGINX {
 	return &NGINX{
 		reporter:  nc.Reporter,
 		generator: nc.Generator,
-		checker:   nc.Checker,
 	}
 }
 
@@ -70,23 +66,17 @@ func (n *NGINX) GetNGINX(w rest.ResponseWriter, req *rest.Request) error {
 		}
 	}
 
-	catalog, err := n.checker.Get(id)
-	if err != nil {
-		handleDBError(w, req, err)
-		return err
-	}
-
-	// if version query is newer than latest rules change, return 204
-	if lastUpdate != nil && catalog.LastUpdate.Before(*lastUpdate) {
-		w.WriteHeader(http.StatusNoContent)
-		return nil
-	}
-
 	// Generate config
 	buf := bytes.NewBuffer([]byte{})
-	if err = n.generator.Generate(buf, id); err != nil {
+	if err = n.generator.Generate(buf, id, lastUpdate); err != nil {
 		RestError(w, req, http.StatusInternalServerError, "error_nginx_generator_failed")
 		return err
+	}
+
+	if buf.Len() == 0 {
+		// No new config was generated
+		w.WriteHeader(http.StatusNoContent)
+		return nil
 	}
 
 	// Write response as text

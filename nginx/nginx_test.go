@@ -17,8 +17,9 @@ package nginx
 import (
 	"bytes"
 
-	"github.com/amalgam8/controller/checker"
-	"github.com/amalgam8/controller/proxyconfig"
+	"time"
+
+	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -27,44 +28,51 @@ import (
 var _ = Describe("NGINX", func() {
 
 	var (
-		gen     Generator
-		manager *proxyconfig.MockManager
-		chker   *checker.MockChecker
-		writer  *bytes.Buffer
+		gen        Generator
+		writer     *bytes.Buffer
+		db         database.Tenant
+		lastUpdate time.Time
+		entry      resources.TenantEntry
+		id         string
 	)
 
 	Context("NGINX", func() {
 
 		BeforeEach(func() {
+			id = "abcdef"
 			writer = bytes.NewBuffer([]byte{})
-
-			manager = new(proxyconfig.MockManager)
-			manager.GetVal = resources.ProxyConfig{
-				Filters: resources.Filters{
-					Rules:    []resources.Rule{},
-					Versions: []resources.Version{},
+			db = database.NewTenant(database.NewMemoryCloudantDB())
+			entry = resources.TenantEntry{
+				ProxyConfig: resources.ProxyConfig{
+					Filters: resources.Filters{
+						Rules:    []resources.Rule{},
+						Versions: []resources.Version{},
+					},
+					Port:        6379,
+					LoadBalance: "round_robin",
 				},
-				Port:        6379,
-				LoadBalance: "round_robin",
-			}
-
-			chker = new(checker.MockChecker)
-			chker.GetVal = resources.ServiceCatalog{
-				Services: []resources.Service{},
+				BasicEntry: resources.BasicEntry{
+					ID: id,
+				},
+				ServiceCatalog: resources.ServiceCatalog{
+					Services:   []resources.Service{},
+					LastUpdate: time.Now(),
+				},
 			}
 
 			var err error
 			gen, err = NewGenerator(Config{
-				Catalog:      chker,
-				ProxyManager: manager,
-				Path:         "nginx.conf.tmpl",
+				Database: db,
+				Path:     "nginx.conf.tmpl",
 			})
 			Expect(err).ToNot(HaveOccurred())
 		})
 
 		It("generates base config", func() {
 
-			Expect(gen.Generate(writer, "abcdef")).ToNot(HaveOccurred())
+			Expect(db.Create(entry)).ToNot(HaveOccurred())
+
+			Expect(gen.Generate(writer, id, lastUpdate)).ToNot(HaveOccurred())
 
 			Expect(len(writer.String())).ToNot(BeZero())
 		})
@@ -118,9 +126,9 @@ var _ = Describe("NGINX", func() {
 					},
 				},
 			}
-			chker.GetVal.Services = services
+			entry.ServiceCatalog.Services = services
 
-			manager.GetVal.Filters.Rules = []resources.Rule{
+			entry.ProxyConfig.Filters.Rules = []resources.Rule{
 				resources.Rule{
 					Source:           "source",
 					Destination:      "ServiceA",
@@ -132,7 +140,7 @@ var _ = Describe("NGINX", func() {
 					Header:           "header_name",
 				},
 			}
-			manager.GetVal.Filters.Versions = []resources.Version{
+			entry.ProxyConfig.Filters.Versions = []resources.Version{
 				resources.Version{
 					Selectors: "{v2={weight=0.25}}",
 					Service:   "ServiceA",
@@ -143,9 +151,11 @@ var _ = Describe("NGINX", func() {
 			// FIXME need to set aborts/delay to something and test it!
 			//manager.GetVal.Filters
 
+			Expect(db.Create(entry)).ToNot(HaveOccurred())
+
 			// Generate the NGINX conf
 			buf := new(bytes.Buffer)
-			gen.Generate(buf, "abcdef")
+			gen.Generate(buf, id, lastUpdate)
 			conf := buf.String()
 
 			// Verify the result...

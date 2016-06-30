@@ -21,15 +21,26 @@
 SHELL 		:= /bin/bash
 APP_NAME	:= sidecar
 APP_VER		:= 0.1
-IMAGE_NAME  := $(APP_NAME):$(APP_VER)
 DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin
+RELEASEDIR  := release
 
 GO			:= GO15VENDOREXPERIMENT=1 go
 
+ifndef GOOS
+    GOOS := $(shell $(GO) env GOHOSTOS)
+endif
+
+ifndef GOARCH
+	GOARCH := $(shell $(GO) env GOHOSTARCH)
+endif
+ 
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GODIRS		= $(shell $(GO) list -f '{{.Dir}}' ./... | grep -vxFf <($(GO) list -f '{{.Dir}}' ./vendor/...))
 GOPKGS		= $(shell $(GO) list ./... | grep -vxFf <($(GO) list ./vendor/...))
+
+IMAGE_NAME   := $(APP_NAME):$(APP_VER)
+RELEASE_NAME := $(APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 
 # build flags to create a statically linked binary (required for scratch-based image)
 BUILDFLAGS	:= -a -installsuffix nocgo -tags netgo
@@ -73,6 +84,7 @@ clean:
 	@echo "--> cleaning compiled objects and binaries"
 	@$(GO) clean -tags netgo -i $(GOPKGS)
 	@rm -rf $(BINDIR)/*
+	@rm -rf $(RELEASEDIR)/*
 
 #--------
 #-- test
@@ -126,11 +138,16 @@ depend.install:	tools.glide
 #----------
 #-- docker
 #----------
-.PHONY: docker
+.PHONY: docker release
 
 docker:
 	@echo "--> building docker image"
 	@docker build -t $(IMAGE_NAME) -f $(DOCKERFILE) .
+	
+release:
+	@echo "--> packaging release"
+	@mkdir -p $(RELEASEDIR) 
+	@tar -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(APP_NAME) README.md LICENSE
 
 #---------------
 #-- tools

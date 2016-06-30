@@ -22,7 +22,7 @@ script:
     - export GOARCH=${PLATFORM#*/}
     
     # Analyze, test and build the code, and then package the binary
-    - make verify release
+    - make verify release APP_VER=$TRAVIS_TAG
 
 deploy:
     

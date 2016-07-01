@@ -261,28 +261,13 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 		entry.ProxyConfig.Filters.Versions = tenantInfo.Filters.Versions
 	}
 
-	err = m.db.Update(entry)
-
-	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusConflict {
-				newerEntry, err := m.db.Read(entry.ID)
-				if err != nil {
-					return err
-				}
-
-				newerEntry.ProxyConfig = entry.ProxyConfig
-
-				if err = m.db.Update(entry); err != nil {
-					return err
-				}
-			} else {
-				return err
-			}
-
-		} else {
-			return err
-		}
+	if err = m.updateProxyConfig(entry); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err":       err,
+			"tenant_id": id,
+			//"request_id": reqID,
+		}).Error("Error updating info for tenant ID")
+		return &ServiceUnavailableError{Reason: "database update failed", ErrorMessage: "database_fail", Err: err}
 	}
 
 	// Send Kafka event
@@ -324,10 +309,7 @@ func (m *manager) SetVersion(id string, newVersion resources.Version) error {
 	}
 
 	// Update the entry in the database
-	err = m.db.Update(entry)
-	if err != nil {
-
-		//TODO handle 409's
+	if err = m.updateProxyConfig(entry); err != nil {
 
 		logrus.WithFields(logrus.Fields{
 			"err":       err,
@@ -368,11 +350,7 @@ func (m *manager) DeleteVersion(id, service string) error {
 	entry.ProxyConfig.Filters.Versions = append(entry.ProxyConfig.Filters.Versions[:updateIndex], entry.ProxyConfig.Filters.Versions[updateIndex+1:]...)
 
 	// Update the entry in the database
-	err = m.db.Update(entry)
-	if err != nil {
-
-		//TODO handle 409's
-
+	if err = m.updateProxyConfig(entry); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"err":       err,
 			"tenant_id": id,
@@ -442,6 +420,51 @@ func validateRules(filters []resources.Rule) error {
 			filter.Pattern = "*"
 		}
 
+	}
+
+	return nil
+}
+
+func (m *manager) updateProxyConfig(entry resources.TenantEntry) error {
+
+	if err := m.db.Update(entry); err != nil {
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusConflict {
+				newerEntry, err := m.db.Read(entry.ID)
+				if err != nil {
+					logrus.WithFields(logrus.Fields{
+						"err": err,
+						"id":  entry.ID,
+					}).Error("Failed to retrieve latest document during conflict resolution")
+					return err
+				}
+
+				newerEntry.ProxyConfig = entry.ProxyConfig
+
+				if err = m.db.Update(entry); err != nil {
+					logrus.WithFields(logrus.Fields{
+						"err": err,
+						"id":  entry.ID,
+					}).Error("Failed to resolve document update conflict")
+					return err
+				}
+				logrus.WithFields(logrus.Fields{
+					"id": entry.ID,
+				}).Debug("Succesfully resolved document update conflict")
+				return nil
+			}
+			logrus.WithFields(logrus.Fields{
+				"err": err,
+				"id":  entry.ID,
+			}).Error("Database error attempting to update proxy config")
+			return err
+
+		}
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"id":  entry.ID,
+		}).Error("Failed attempting to update proxy config")
+		return err
 	}
 
 	return nil

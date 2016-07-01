@@ -25,11 +25,11 @@ RUN sed -i 's/sha512/sha512 minlen=8/' /etc/pam.d/common-password
 ENV NGINX_PORT 6379
 EXPOSE 6379
 
-WORKDIR /opt/controller
-COPY /bin/controller /opt/controller/controller
-COPY /nginx/nginx.conf.tmpl /opt/controller/nginx/nginx.conf.tmpl
+WORKDIR /opt/a8controller
+COPY /bin/a8controller /opt/a8controller/a8controller
+COPY /nginx/nginx.conf.tmpl /opt/a8controller/nginx/nginx.conf.tmpl
 
-ENTRYPOINT ["/opt/controller/controller"]
+ENTRYPOINT ["/opt/a8controller/a8controller"]
 
 ENV GIT_COMMIT={GIT_COMMIT} \
     IMAGE_NAME={IMAGE_NAME}

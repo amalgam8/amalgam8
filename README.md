@@ -13,7 +13,7 @@ An overview of the Amalgam8 project is available here: http://amalgam8.io/
 
 ## Usage
 
-A prebuilt Docker image is available. Install Docker 1.8 or 1.9 and run the following:
+A prebuilt Docker image is available. Install Docker 1.8 or 1.9 and run the following command:
 
 ```docker pull amalgam8/a8-controller```
 
@@ -48,7 +48,7 @@ Documentation is available [here](http://amalgam8.io/controller/#/default).
 ## Build from source
 The follow section describes options for building the controller from source. Instructions on using a prebuilt Docker image are available [here](https://github.com/amalgam8/controller#usage).
 
-### Preprequisites
+### Prerequisites
 * Docker 1.8 or 1.9
 * Go 1.6
 

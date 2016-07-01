@@ -117,14 +117,14 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("no entries are in database", func() {
-					list, err := db.List()
+					list, err := db.List(nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(list).To(HaveLen(0))
 				})
 			})
 
 			It("updates config", func() {
-				Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
+				Expect(manager.Set(id, tenantInfo)).ToNot(HaveOccurred())
 			})
 
 			Context("config has been updated", func() {

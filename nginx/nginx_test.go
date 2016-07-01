@@ -31,7 +31,7 @@ var _ = Describe("NGINX", func() {
 		gen        Generator
 		writer     *bytes.Buffer
 		db         database.Tenant
-		lastUpdate time.Time
+		lastUpdate *time.Time
 		entry      resources.TenantEntry
 		id         string
 	)

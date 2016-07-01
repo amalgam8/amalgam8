@@ -86,7 +86,6 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 // PutTenant updates credentials and/or metadata for a tenant
-// TODO: if an update succeeds for one, but not the other we end up partially updating the state
 func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
@@ -117,7 +116,7 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 	entry, err := t.manager.Get(id)
 	if err != nil {
-		handleDBReadError(w, req, err)
+		processError(w, req, err)
 		return err
 	}
 
@@ -216,8 +215,8 @@ func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 	// Delete from rules
 	if err = t.manager.Delete(id); err != nil {
-		logrus.WithError(err).Warn("Rule deletion failed, document orphaned")
-		// TODO do anything else here
+		processError(w, req, err)
+		return err
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -280,12 +280,19 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 
 // Get database entry
 func (m *manager) Get(id string) (resources.TenantEntry, error) {
-	return m.db.Read(id)
+	entry, err := m.db.Read(id)
+	if err != nil {
+		return entry, &DBError{Err: err}
+	}
+	return entry, nil
 }
 
 // Delete database entry
 func (m *manager) Delete(id string) error {
-	return m.db.Delete(id)
+	if err := m.db.Delete(id); err != nil {
+		return &DBError{Err: err}
+	}
+	return nil
 }
 
 func (m *manager) SetVersion(id string, newVersion resources.Version) error {

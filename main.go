@@ -27,11 +27,11 @@ import (
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/manager"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
-	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -91,14 +91,11 @@ func controllerMain(conf config.Config) error {
 
 	reporter := metrics.NewReporter()
 
-	var catalogDB database.Catalog
-	var rulesDB database.Rules
+	var tenantDB database.Tenant
 	if conf.Database.Type == "memory" {
-		db := database.NewMemoryCloudantDB()
-		catalogDB = database.NewCatalog(db)
 
-		db = database.NewMemoryCloudantDB()
-		rulesDB = database.NewRules(db)
+		db := database.NewMemoryCloudantDB()
+		tenantDB = database.NewTenant(db)
 	} else {
 		setupHandler.SetError(err)
 		return errors.New("")
@@ -108,22 +105,20 @@ func controllerMain(conf config.Config) error {
 
 	tpc := notification.NewTenantProducerCache()
 
-	r := proxyconfig.NewManager(proxyconfig.Config{
-		Database:      rulesDB,
+	r := manager.NewManager(manager.Config{
+		Database:      tenantDB,
 		ProducerCache: tpc,
 	})
 
 	c := checker.New(checker.Config{
-		Database:      catalogDB,
-		ProxyConfig:   r,
+		Database:      tenantDB,
 		Registry:      registry,
 		ProducerCache: tpc,
 	})
 
 	g, err := nginx.NewGenerator(nginx.Config{
-		Path:         "./nginx/nginx.conf.tmpl",
-		Catalog:      c,
-		ProxyManager: r,
+		Path:     "./nginx/nginx.conf.tmpl",
+		Database: tenantDB,
 	})
 	if err != nil {
 		logrus.Error(err)
@@ -134,13 +129,11 @@ func controllerMain(conf config.Config) error {
 	n := api.NewNGINX(api.NGINXConfig{
 		Reporter:  reporter,
 		Generator: g,
-		Checker:   c,
 	})
 
 	t := api.NewTenant(api.TenantConfig{
-		Reporter:    reporter,
-		Checker:     c,
-		ProxyConfig: r,
+		Reporter: reporter,
+		Manager:  r,
 	})
 
 	p := api.NewPoll(reporter, c)
@@ -164,7 +157,7 @@ func controllerMain(conf config.Config) error {
 		&middleware.RequestIDMiddleware{},
 		&middleware.AuthMiddleware{
 			Auth: &middleware.LocalAuth{},
-			Key: conf.ControlToken,
+			Key:  conf.ControlToken,
 		},
 		&middleware.LoggingMiddleware{},
 	)

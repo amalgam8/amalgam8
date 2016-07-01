@@ -19,27 +19,26 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/amalgam8/controller/checker"
-	"github.com/amalgam8/controller/proxyconfig"
+	"time"
+
+	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/resources"
 )
 
 // Generator produces NGINX configurations for tenants
 type Generator interface {
-	Generate(w io.Writer, id string) error
+	Generate(w io.Writer, id string, lastUpdate *time.Time) error
 }
 
 type generator struct {
-	template     *template.Template
-	checker      checker.Checker
-	proxyManager proxyconfig.Manager
+	template *template.Template
+	db       database.Tenant
 }
 
 // Config options for the NGINX generator
 type Config struct {
-	Path         string
-	Catalog      checker.Checker
-	ProxyManager proxyconfig.Manager
+	Path     string
+	Database database.Tenant
 }
 
 // NewGenerator creates a new NGINX generator using the given Golang template file
@@ -50,29 +49,27 @@ func NewGenerator(conf Config) (Generator, error) {
 	}
 
 	g := &generator{
-		template:     t,
-		checker:      conf.Catalog,
-		proxyManager: conf.ProxyManager,
+		template: t,
+		db:       conf.Database,
 	}
 
 	return g, nil
 }
 
 // Generate a NGINX config for a tenant using its catalog and proxy configuration.
-func (g *generator) Generate(w io.Writer, id string) error {
+func (g *generator) Generate(w io.Writer, id string, lastUpdate *time.Time) error {
 	// Get inputs
-	catalog, err := g.serviceCatalog(id)
+	entry, err := g.db.Read(id)
 	if err != nil {
 		return err
 	}
 
-	conf, err := g.proxyConfig(id)
-	if err != nil {
-		return err
+	if lastUpdate != nil && entry.ServiceCatalog.LastUpdate.After(*lastUpdate) {
+		return nil
 	}
 
 	// Generate the struct for the template
-	templateConf := g.templateConfig(catalog, conf)
+	templateConf := g.templateConfig(entry.ServiceCatalog, entry.ProxyConfig)
 
 	// Generate the NGINX configuration
 	if err := g.template.Execute(w, &templateConf); err != nil {
@@ -192,16 +189,6 @@ func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resour
 	}
 
 	return templateConf
-}
-
-// serviceCatalog
-func (g *generator) serviceCatalog(id string) (resources.ServiceCatalog, error) {
-	return g.checker.Get(id)
-}
-
-// proxyConfig
-func (g *generator) proxyConfig(id string) (resources.ProxyConfig, error) {
-	return g.proxyManager.Get(id)
 }
 
 // configTemplate is used by the template file to generate the NGINX config

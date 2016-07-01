@@ -16,6 +16,7 @@ package nginx
 
 import (
 	"io"
+	"time"
 )
 
 // MockGenerator implements interface
@@ -25,7 +26,7 @@ type MockGenerator struct {
 }
 
 // Generate mocks method
-func (m *MockGenerator) Generate(w io.Writer, id string) error {
+func (m *MockGenerator) Generate(w io.Writer, id string, lastUpdate *time.Time) error {
 	w.Write([]byte(m.GenerateString))
 	return m.GenerateError
 }

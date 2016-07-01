@@ -22,12 +22,12 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
+	"github.com/amalgam8/controller/middleware"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"github.com/amalgam8/controller/middleware"
 )
 
-func handleDBError(w rest.ResponseWriter, req *rest.Request, err error) {
+func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusNotFound {

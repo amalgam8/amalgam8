@@ -1,15 +1,16 @@
 package middleware
 
 import (
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
-	"net/http"
 )
 
 // AuthHeader control plane authorization header
 const (
-	AuthHeader = "Authorization"
- 	AuthEnv = "TENANT_ID"
+	AuthHeader   = "Authorization"
+	AuthEnv      = "TENANT_ID"
 	TenantHeader = "SP-Tenant-ID"
 )
 
@@ -19,7 +20,7 @@ type Authenticator interface {
 
 // AuthMiddleware authenticates incoming requests
 type AuthMiddleware struct {
-	Key        string
+	Key  string
 	Auth Authenticator
 }
 
@@ -53,7 +54,7 @@ func (mw *AuthMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 				id, err := mw.Auth.Authenticate(authToken)
 				if err != nil {
 					logrus.WithFields(logrus.Fields{
-						"err": err,
+						"err":            err,
 						"remote_address": r.RemoteAddr,
 						"request_id":     reqID,
 						"method":         r.Method,

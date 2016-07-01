@@ -18,57 +18,57 @@ import (
 	"github.com/amalgam8/controller/resources"
 )
 
-// Catalog client
-type Catalog interface {
-	Create(catalog resources.ServiceCatalog) error
-	Read(id string) (resources.ServiceCatalog, error)
-	Update(catalog resources.ServiceCatalog) error
+// Tenant client
+type Tenant interface {
+	Create(entry resources.TenantEntry) error
+	Read(id string) (resources.TenantEntry, error)
+	Update(entry resources.TenantEntry) error
 	Delete(id string) error
-	List(ids []string) ([]resources.ServiceCatalog, error)
+	List(ids []string) ([]resources.TenantEntry, error)
 }
 
-type catalog struct {
+type tenant struct {
 	db CloudantDB
 }
 
-// NewCatalog creates catalog instance
-func NewCatalog(db CloudantDB) Catalog {
-	return &catalog{
+// NewTenant creates tenant instance
+func NewTenant(db CloudantDB) Tenant {
+	return &tenant{
 		db: db,
 	}
 }
 
 // Create database entry
-func (c *catalog) Create(catalog resources.ServiceCatalog) error {
+func (c *tenant) Create(catalog resources.TenantEntry) error {
 	return c.db.InsertEntry(&catalog)
 }
 
-// Read databse entry
-func (c *catalog) Read(id string) (resources.ServiceCatalog, error) {
-	serviceCatalog := resources.ServiceCatalog{}
+// Read database entry
+func (c *tenant) Read(id string) (resources.TenantEntry, error) {
+	serviceCatalog := resources.TenantEntry{}
 	err := c.db.ReadEntry(id, &serviceCatalog)
 	return serviceCatalog, err
 }
 
 // Update database entry
-func (c *catalog) Update(catalog resources.ServiceCatalog) error {
+func (c *tenant) Update(catalog resources.TenantEntry) error {
 	return c.db.InsertEntry(&catalog)
 }
 
 // Delete database entry
-func (c *catalog) Delete(id string) error {
+func (c *tenant) Delete(id string) error {
 	return c.db.DeleteEntry(id)
 }
 
 // List all database IDs
-func (c *catalog) List(ids []string) ([]resources.ServiceCatalog, error) {
-	all := AllServiceCatalogs{}
+func (c *tenant) List(ids []string) ([]resources.TenantEntry, error) {
+	all := AllTenants{}
 	err := c.db.ReadAllDocsContent(&all)
 	if err != nil {
-		return []resources.ServiceCatalog{}, err
+		return []resources.TenantEntry{}, err
 	}
 
-	catalogs := []resources.ServiceCatalog{}
+	catalogs := []resources.TenantEntry{}
 	for _, row := range all.Rows {
 		catalogs = append(catalogs, row.Doc)
 	}
@@ -76,16 +76,16 @@ func (c *catalog) List(ids []string) ([]resources.ServiceCatalog, error) {
 	return catalogs, nil
 }
 
-// AllServiceCatalogs struct
-type AllServiceCatalogs struct {
+// AllTenants struct
+type AllTenants struct {
 	Rows []struct {
-		Doc resources.ServiceCatalog `json:"doc"`
+		Doc resources.TenantEntry `json:"doc"`
 	} `json:"rows"`
 	TotalRows int `json:"total_rows"`
 }
 
 // GetEntries returns all database entries
-func (at *AllServiceCatalogs) GetEntries() []Entry {
+func (at *AllTenants) GetEntries() []Entry {
 	entries := make([]Entry, len(at.Rows))
 	for i := 0; i < len(at.Rows); i++ {
 		entries[i] = &at.Rows[i].Doc

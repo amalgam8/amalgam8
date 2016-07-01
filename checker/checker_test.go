@@ -15,10 +15,11 @@
 package checker
 
 import (
+	"time"
+
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/notification"
-	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -27,56 +28,26 @@ import (
 var _ = Describe("Checker", func() {
 
 	var (
-		checker     Checker
-		catalog     resources.ServiceCatalog
-		id          string
-		proxyConfig *proxyconfig.MockManager
-		sdClient    *clients.MockRegistry
-		db          database.Catalog
-		cache       *notification.MockTenantProducerCache
+		checker  Checker
+		id       string
+		sdClient *clients.MockRegistry
+		db       database.Tenant
+		cache    *notification.MockTenantProducerCache
 	)
 
 	Context("Checker", func() {
 
 		BeforeEach(func() {
-			db = database.NewCatalog(database.NewMemoryCloudantDB())
-			proxyConfig = new(proxyconfig.MockManager)
+			db = database.NewTenant(database.NewMemoryCloudantDB())
 			sdClient = new(clients.MockRegistry)
 			cache = new(notification.MockTenantProducerCache)
 			checker = New(Config{
 				Database:      db,
-				ProxyConfig:   proxyConfig,
 				Registry:      sdClient,
 				ProducerCache: cache,
 			})
 
 			id = "abcdef"
-			catalog = resources.ServiceCatalog{
-				BasicEntry: resources.BasicEntry{
-					ID:  id,
-					Rev: "rev",
-					IV:  "iv",
-				},
-			}
-		})
-
-		It("nothing has been registered in database", func() {
-			list, err := db.List(nil)
-			Expect(err).ToNot(HaveOccurred())
-			Expect(list).To(HaveLen(0))
-		})
-
-		It("registers an ID", func() {
-			Expect(checker.Register(id)).ToNot(HaveOccurred())
-		})
-
-		It("delete invalid id returns error", func() {
-			Expect(checker.Deregister("not_valid_id")).To(HaveOccurred())
-		})
-
-		It("cannot get non-exisitant id", func() {
-			_, err := checker.Get(id)
-			Expect(err).To(HaveOccurred())
 		})
 
 		It("can check works even if nothing is registered", func() {
@@ -85,41 +56,14 @@ var _ = Describe("Checker", func() {
 
 		Context("ID has been registered", func() {
 			BeforeEach(func() {
-				Expect(checker.Register(id)).ToNot(HaveOccurred())
-			})
-
-			It("ID in database", func() {
-				list, err := db.List(nil)
-				Expect(err).ToNot(HaveOccurred())
-				Expect(list).To(HaveLen(1))
-			})
-
-			It("database entry has default fields", func() {
-				catalogFromDB, err := checker.Get(id)
-				Expect(err).ToNot(HaveOccurred())
-
-				Expect(catalogFromDB.Services).ToNot(BeNil())
-				Expect(catalogFromDB.Services).To(HaveLen(0))
-			})
-
-			It("can deregister a valid ID", func() {
-				Expect(checker.Deregister(id)).ToNot(HaveOccurred())
-			})
-
-			Context("ID has been registered", func() {
-				BeforeEach(func() {
-					Expect(checker.Deregister(id)).ToNot(HaveOccurred())
-				})
-
-				It("cannot get non-exisitant ID", func() {
-					_, err := checker.Get(id)
-					Expect(err).To(HaveOccurred())
-				})
-
-				It("no entries are in database", func() {
-					list, err := db.List(nil)
-					Expect(err).ToNot(HaveOccurred())
-					Expect(list).To(HaveLen(0))
+				db.Create(resources.TenantEntry{
+					BasicEntry: resources.BasicEntry{
+						ID: id,
+					},
+					ServiceCatalog: resources.ServiceCatalog{
+						Services:   []resources.Service{},
+						LastUpdate: time.Now(),
+					},
 				})
 			})
 
@@ -136,19 +80,19 @@ var _ = Describe("Checker", func() {
 				})
 
 				It("database entry has correct values", func() {
-					catalogFromDB, err := checker.Get(id)
+					entry, err := db.Read(id)
 					Expect(err).ToNot(HaveOccurred())
 
-					Expect(catalogFromDB.Services).ToNot(BeNil())
-					Expect(catalogFromDB.Services).To(HaveLen(2))
-					for i := range catalogFromDB.Services {
-						Expect(catalogFromDB.Services[i].Name).To(Or(Equal("A"), Equal("B")))
-						Expect(catalogFromDB.Services[i].Endpoints).ToNot(BeNil())
+					Expect(entry.ServiceCatalog.Services).ToNot(BeNil())
+					Expect(entry.ServiceCatalog.Services).To(HaveLen(2))
+					for i := range entry.ServiceCatalog.Services {
+						Expect(entry.ServiceCatalog.Services[i].Name).To(Or(Equal("A"), Equal("B")))
+						Expect(entry.ServiceCatalog.Services[i].Endpoints).ToNot(BeNil())
 
-						Expect(catalogFromDB.Services[i].Endpoints).To(Or(HaveLen(1), HaveLen(2)))
+						Expect(entry.ServiceCatalog.Services[i].Endpoints).To(Or(HaveLen(1), HaveLen(2)))
 					}
 
-					Expect(catalogFromDB.ID).To(Equal(id))
+					Expect(entry.ID).To(Equal(id))
 					//					Expect(catalogFromDB.Rev).To(Equal(catalog.Rev))
 					//					Expect(catalogFromDB.IV).To(Equal(catalog.IV))
 

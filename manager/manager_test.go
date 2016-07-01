@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package proxyconfig
+package manager
 
 import (
 	"net/http"
@@ -24,20 +24,20 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("ProxyConfigManager", func() {
+var _ = Describe("Manager", func() {
 
 	var (
-		manager Manager
-		config  resources.ProxyConfig
-		id      string
-		db      database.Rules
-		cache   *notification.MockTenantProducerCache
+		manager    Manager
+		tenantInfo resources.TenantInfo
+		id         string
+		db         database.Tenant
+		cache      *notification.MockTenantProducerCache
 	)
 
-	Context("ProxyConfigManager", func() {
+	Context("Manager", func() {
 
 		BeforeEach(func() {
-			db = database.NewRules(database.NewMemoryCloudantDB())
+			db = database.NewTenant(database.NewMemoryCloudantDB())
 			cache = new(notification.MockTenantProducerCache)
 			manager = NewManager(Config{
 				Database:      db,
@@ -45,29 +45,31 @@ var _ = Describe("ProxyConfigManager", func() {
 			})
 
 			id = "abcdef"
-			config = resources.ProxyConfig{
-				BasicEntry: resources.BasicEntry{
-					ID:  id,
-					Rev: "rev",
-					IV:  "iv",
-				},
+			tenantInfo = resources.TenantInfo{
+				ID:          id,
 				Port:        6379,
 				LoadBalance: "round_robin",
 				Filters: resources.Filters{
 					Rules:    []resources.Rule{},
 					Versions: []resources.Version{},
 				},
+				Credentials: resources.Credentials{
+					Registry: resources.Registry{
+						URL:   "http://localhost",
+						Token: "12345",
+					},
+				},
 			}
 		})
 
 		It("nothing has been registered in database", func() {
-			list, err := db.List()
+			list, err := db.List(nil)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(list).To(HaveLen(0))
 		})
 
 		It("registers an ID", func() {
-			Expect(manager.Set(config)).ToNot(HaveOccurred())
+			Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 		})
 
 		It("delete invalid id returns error", func() {
@@ -79,24 +81,24 @@ var _ = Describe("ProxyConfigManager", func() {
 			Expect(err).To(HaveOccurred())
 		})
 
-		Context("config has been added", func() {
+		Context("entry has been added", func() {
 			BeforeEach(func() {
-				Expect(manager.Set(config)).ToNot(HaveOccurred())
+				Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 			})
 
 			It("ID in database", func() {
-				list, err := db.List()
+				list, err := db.List(nil)
 				Expect(err).ToNot(HaveOccurred())
 				Expect(list).To(HaveLen(1))
 			})
 
 			It("database entry has default fields", func() {
-				configFromDB, err := manager.Get(id)
+				entryFromDB, err := manager.Get(id)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(configFromDB.Port).To(Equal(config.Port))
-				Expect(configFromDB.Filters.Rules).ToNot(BeNil())
-				Expect(configFromDB.Filters.Rules).To(HaveLen(0))
+				Expect(entryFromDB.ProxyConfig.Port).To(Equal(tenantInfo.Port))
+				Expect(entryFromDB.ProxyConfig.Filters.Rules).ToNot(BeNil())
+				Expect(entryFromDB.ProxyConfig.Filters.Rules).To(HaveLen(0))
 
 			})
 
@@ -115,19 +117,19 @@ var _ = Describe("ProxyConfigManager", func() {
 				})
 
 				It("no entries are in database", func() {
-					list, err := db.List()
+					list, err := db.List(nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(list).To(HaveLen(0))
 				})
 			})
 
 			It("updates config", func() {
-				Expect(manager.Set(config)).ToNot(HaveOccurred())
+				Expect(manager.Set(id, tenantInfo)).ToNot(HaveOccurred())
 			})
 
 			Context("config has been updated", func() {
 				BeforeEach(func() {
-					config.Filters.Rules = []resources.Rule{
+					tenantInfo.Filters.Rules = []resources.Rule{
 						resources.Rule{
 							Destination:      "A",
 							Source:           "B",
@@ -143,38 +145,36 @@ var _ = Describe("ProxyConfigManager", func() {
 							Delay:            0.2,
 						},
 					}
-					Expect(manager.Set(config)).ToNot(HaveOccurred())
+					Expect(manager.Set(id, tenantInfo)).ToNot(HaveOccurred())
 				})
 
 				It("database entry has correct values", func() {
 					configFromDB, err := manager.Get(id)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(configFromDB.ID).To(Equal(id))
-					Expect(configFromDB.Rev).ToNot(Equal(config.Rev))
-					Expect(configFromDB.IV).To(Equal(config.IV))
-					Expect(configFromDB.Port).To(Equal(config.Port))
-					Expect(configFromDB.Filters.Rules).ToNot(BeNil())
-					Expect(configFromDB.Filters.Rules).To(HaveLen(len(config.Filters.Rules)))
-					for i := range configFromDB.Filters.Rules {
+					Expect(configFromDB.ProxyConfig.Port).To(Equal(tenantInfo.Port))
+					Expect(configFromDB.ProxyConfig.Filters.Rules).ToNot(BeNil())
+					Expect(configFromDB.ProxyConfig.Filters.Rules).To(HaveLen(len(tenantInfo.Filters.Rules)))
+					for i := range configFromDB.ProxyConfig.Filters.Rules {
 
 						// TODO order may not be guaranteed?
 
-						Expect(configFromDB.Filters.Rules[i].Source).To(Equal(config.Filters.Rules[i].Source))
-						Expect(configFromDB.Filters.Rules[i].Destination).To(Equal(config.Filters.Rules[i].Destination))
-						Expect(configFromDB.Filters.Rules[i].ReturnCode).To(Equal(config.Filters.Rules[i].ReturnCode))
-						Expect(configFromDB.Filters.Rules[i].Pattern).To(Equal(config.Filters.Rules[i].Pattern))
-						Expect(configFromDB.Filters.Rules[i].AbortProbability).To(Equal(config.Filters.Rules[i].AbortProbability))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Source).To(Equal(tenantInfo.Filters.Rules[i].Source))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Destination).To(Equal(tenantInfo.Filters.Rules[i].Destination))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].ReturnCode).To(Equal(tenantInfo.Filters.Rules[i].ReturnCode))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Pattern).To(Equal(tenantInfo.Filters.Rules[i].Pattern))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].AbortProbability).To(Equal(tenantInfo.Filters.Rules[i].AbortProbability))
 
-						Expect(configFromDB.Filters.Rules[i].Source).To(Equal(config.Filters.Rules[i].Source))
-						Expect(configFromDB.Filters.Rules[i].Destination).To(Equal(config.Filters.Rules[i].Destination))
-						Expect(configFromDB.Filters.Rules[i].DelayProbability).To(Equal(config.Filters.Rules[i].DelayProbability))
-						Expect(configFromDB.Filters.Rules[i].Pattern).To(Equal(config.Filters.Rules[i].Pattern))
-						Expect(configFromDB.Filters.Rules[i].Delay).To(Equal(config.Filters.Rules[i].Delay))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Source).To(Equal(tenantInfo.Filters.Rules[i].Source))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Destination).To(Equal(tenantInfo.Filters.Rules[i].Destination))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].DelayProbability).To(Equal(tenantInfo.Filters.Rules[i].DelayProbability))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Pattern).To(Equal(tenantInfo.Filters.Rules[i].Pattern))
+						Expect(configFromDB.ProxyConfig.Filters.Rules[i].Delay).To(Equal(tenantInfo.Filters.Rules[i].Delay))
 					}
 				})
 
 				It("database entry updated, not re-created", func() {
-					list, err := db.List()
+					list, err := db.List(nil)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(list).To(HaveLen(1))
 				})

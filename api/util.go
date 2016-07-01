@@ -26,7 +26,7 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-func handleDBError(w rest.ResponseWriter, req *rest.Request, err error) {
+func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusNotFound {

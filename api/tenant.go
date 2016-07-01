@@ -76,8 +76,7 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 		return errors.New("special error")
 	}
 
-	err = t.manager.Create(tenantInfo.ID, tenantInfo)
-	if err != nil {
+	if err = t.manager.Create(tenantInfo.ID, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -100,8 +99,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	err = t.manager.Set(id, tenantInfo)
-	if err != nil {
+	if err = t.manager.Set(id, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -171,8 +169,7 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 	service := req.PathParam("service")
 
 	newVersion := resources.Version{}
-	err := req.DecodeJsonPayload(&newVersion)
-	if err != nil {
+	if err := req.DecodeJsonPayload(&newVersion); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"tenant_id":  tenantID,
 			"request_id": reqID,
@@ -184,8 +181,7 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 	}
 	newVersion.Service = service
 
-	err = t.manager.SetVersion(tenantID, newVersion)
-	if err != nil {
+	if err := t.manager.SetVersion(tenantID, newVersion); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -201,8 +197,7 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 	tenantID := req.PathParam("id")
 	service := req.PathParam("service")
 
-	err := t.manager.DeleteVersion(tenantID, service)
-	if err != nil {
+	if err := t.manager.DeleteVersion(tenantID, service); err != nil {
 		if err != nil {
 			processError(w, req, err)
 			return err

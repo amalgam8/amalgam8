@@ -94,23 +94,9 @@ func (c *checker) Check(ids []string) error {
 			entry.ServiceCatalog.Services = latestCatalog.Services
 			entry.ServiceCatalog.LastUpdate = time.Now()
 
-			if err = c.db.Update(entry); err != nil {
-				if ce, ok := err.(*database.DBError); ok {
-					if ce.StatusCode == http.StatusConflict {
-						newerEntry, err := c.db.Read(entry.ID)
-						if err == nil {
-							newerEntry.ServiceCatalog.Services = entry.ServiceCatalog.Services
-							if err = c.db.Update(newerEntry); err != nil {
-								// TODO log error
-							}
-						} else {
-							// TODO log error
-						}
-					}
-				}
-
-				// log failure
-				continue // no point in notifying tenant
+			if err = c.updateCatalog(entry); err != nil {
+				// error during update, do not send event
+				continue
 			}
 
 			// Notify tenant
@@ -179,4 +165,50 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 	}
 
 	return catalog, nil
+}
+
+func (c *checker) updateCatalog(entry resources.TenantEntry) error {
+	var err error
+	if err = c.db.Update(entry); err != nil {
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusConflict {
+				newerEntry, err := c.db.Read(entry.ID)
+				if err == nil {
+					newerEntry.ServiceCatalog.Services = entry.ServiceCatalog.Services
+					newerEntry.ServiceCatalog.LastUpdate = entry.ServiceCatalog.LastUpdate
+					if err = c.db.Update(newerEntry); err != nil {
+						logrus.WithFields(logrus.Fields{
+							"err": err,
+							"id":  entry.ID,
+						}).Error("Failed to resolve document update conflict")
+						return err
+					}
+					logrus.WithFields(logrus.Fields{
+						"id": entry.ID,
+					}).Debug("Succesfully resolved document update conflict")
+					return nil
+
+				}
+				logrus.WithFields(logrus.Fields{
+					"err": err,
+					"id":  entry.ID,
+				}).Error("Failed to retrieve latest document during conflict resolution")
+				return err
+
+			}
+			logrus.WithFields(logrus.Fields{
+				"err": err,
+				"id":  entry.ID,
+			}).Error("Database error attempting to update service catalog")
+			return err
+		}
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"id":  entry.ID,
+		}).Error("Failed attempting to update service catalog")
+		return err
+	}
+
+	return nil
+
 }

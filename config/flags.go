@@ -46,7 +46,8 @@ const (
 	MaxTTLFlag            = "max_ttl"
 	MinTTLFlag            = "min_ttl"
 
-	K8sURLFlag = "k8s_url"
+	K8sURLFlag   = "k8s_url"
+	K8sTokenFlag = "k8s_token"
 )
 
 // Flags represents the set of supported flags
@@ -157,6 +158,12 @@ var Flags = []cli.Flag{
 		Name:   K8sURLFlag,
 		EnvVar: envVarFromFlag(K8sURLFlag),
 		Usage:  "Enable kubernetes catalog and specify the kubernetes API server URL",
+	},
+
+	cli.StringFlag{
+		Name:   K8sTokenFlag,
+		EnvVar: envVarFromFlag(K8sTokenFlag),
+		Usage:  "Kubernetes token API",
 	},
 }
 

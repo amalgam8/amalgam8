@@ -43,7 +43,8 @@ type Values struct {
 	MaxTTL            time.Duration
 	MinTTL            time.Duration
 
-	K8sURL string
+	K8sURL   string
+	K8sToken string
 }
 
 // NewValuesFromContext creates a Config instance from the given CLI context
@@ -70,6 +71,7 @@ func NewValuesFromContext(context *cli.Context) *Values {
 		MaxTTL:            context.Duration(MaxTTLFlag),
 		MinTTL:            context.Duration(MinTTLFlag),
 
-		K8sURL: context.String(K8sURLFlag),
+		K8sURL:   context.String(K8sURLFlag),
+		K8sToken: context.String(K8sTokenFlag),
 	}
 }

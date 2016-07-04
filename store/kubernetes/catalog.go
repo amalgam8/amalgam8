@@ -15,6 +15,7 @@
 package kubernetes
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -28,7 +29,7 @@ import (
 )
 
 const (
-	module string = "K8SCATALOG"
+	module = "K8SCATALOG"
 )
 
 type serviceMap map[string][]*store.ServiceInstance // service name -> instance list
@@ -41,6 +42,9 @@ type k8sCatalog struct {
 	services  serviceMap
 	instances instanceMap
 
+	loadMutex sync.Mutex
+	loaded    bool
+
 	logger *log.Entry
 	sync.RWMutex
 }
@@ -49,12 +53,13 @@ func newK8sCatalog(namespace auth.Namespace, client *k8sClient) (*k8sCatalog, er
 	catalog := &k8sCatalog{
 		services:  serviceMap{},
 		instances: instanceMap{},
+		loaded:    false,
 		namespace: namespace,
 		client:    client,
 		logger:    logging.GetLogger(module),
 	}
 
-	catalog.refresh()
+	go catalog.load()
 
 	// TODO: more efficient implementation using Kubernetes API watch interface
 	ticker := time.NewTicker(10 * time.Second)
@@ -68,6 +73,11 @@ func newK8sCatalog(namespace auth.Namespace, client *k8sClient) (*k8sCatalog, er
 }
 
 func (kc *k8sCatalog) ListServices(predicate store.Predicate) []*store.Service {
+	// Make sure that the catalog is loaded
+	if !kc.loaded {
+		kc.load()
+	}
+
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -85,6 +95,11 @@ func (kc *k8sCatalog) ListServices(predicate store.Predicate) []*store.Service {
 }
 
 func (kc *k8sCatalog) List(serviceName string, predicate store.Predicate) ([]*store.ServiceInstance, error) {
+	// Make sure that the catalog is loaded
+	if !kc.loaded {
+		kc.load()
+	}
+
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -103,6 +118,11 @@ func (kc *k8sCatalog) List(serviceName string, predicate store.Predicate) ([]*st
 }
 
 func (kc *k8sCatalog) Instance(instanceID string) (*store.ServiceInstance, error) {
+	// Make sure that the catalog is loaded
+	if !kc.loaded {
+		kc.load()
+	}
+
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -131,6 +151,16 @@ func (kc *k8sCatalog) Renew(instanceID string) error {
 func (kc *k8sCatalog) SetStatus(instanceID, status string) error {
 	kc.logger.Infof("Unsupported API (SetStatus) called")
 	return store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "SetStatus")
+}
+
+func (kc *k8sCatalog) load() {
+	kc.loadMutex.Lock()
+	defer kc.loadMutex.Unlock()
+
+	if !kc.loaded {
+		kc.refresh()
+		kc.loaded = true
+	}
 }
 
 func (kc *k8sCatalog) refresh() {
@@ -175,19 +205,30 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 						rcName := podName[:strings.LastIndex(podName, "-")]
 						versionIndex := strings.LastIndex(rcName, "-")
 						if versionIndex != -1 {
-							version = fmt.Sprintf(", \"version\":\"%s\"", rcName[versionIndex+1:])
+							version = rcName[versionIndex+1:]
 						}
 					} else {
 						uid = address.IP
 					}
+
+					// Build the metadata object
+					metadata := map[string]interface{}{
+						"kubernetes_url": fmt.Sprintf("%s/%s", kc.client.getEndpointsURL(kc.namespace), sname),
+					}
+					if version != "" {
+						metadata["version"] = version
+					}
+					mdBytes, _ := json.Marshal(metadata)
+
 					inst := &store.ServiceInstance{
 						ID:          fmt.Sprintf("%s-%d", uid, port.Port),
 						ServiceName: sname,
 						Endpoint:    &store.Endpoint{Type: endpointType, Value: endpointValue},
 						Status:      "UP",
-						Metadata:    []byte(fmt.Sprintf("{\"kubernetes_url\":\"%s/%s\"%s}", kc.client.getEndpointsURL(kc.namespace), sname, version)),
+						Metadata:    mdBytes,
 						Tags:        []string{"kubernetes"},
-						TTL:         0}
+						TTL:         0,
+					}
 					insts = append(insts, inst)
 					instances[inst.ID] = inst
 				}

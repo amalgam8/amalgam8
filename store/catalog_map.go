@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	module string = "STORE"
+	module = "STORE"
 )
 
 // CatalogMap represents the interface of the Service store
@@ -57,7 +57,8 @@ func New(conf *Config) CatalogMap {
 		logger:   lentry,
 	}
 
-	inmemConfig := &inmemConfig{
+	// The InMemory catalog is the Read-Write catalog.
+	inmemConfig := &inMemoryConfig{
 		defaultTTL:        conf.DefaultTTL,
 		minimumTTL:        conf.MinimumTTL,
 		maximumTTL:        conf.MaximumTTL,
@@ -100,11 +101,14 @@ func (cm *catalogMap) GetCatalog(namespace auth.Namespace) (Catalog, error) {
 
 	catalog, err := cm.catalogFactory.CreateCatalog(namespace)
 	if err != nil {
+		cm.logger.WithFields(log.Fields{
+			"error": err,
+		}).Errorf("Failed to create a new catalog [%s]", namespace)
 		return nil, err
 	}
 
 	cm.catalogs[namespace] = catalog
-	cm.logger.Infof("Add a new catalog [%s]", namespace)
+	cm.logger.Infof("A new catalog [%s] has beed created", namespace)
 
 	return catalog, nil
 }

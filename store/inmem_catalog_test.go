@@ -605,7 +605,7 @@ func TestFindInstanceByID(t *testing.T) {
 func TestSingleServiceQuota(t *testing.T) {
 	var instanceID string
 	namespaceCapacity := 10
-	conf := &inmemConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
+	conf := &inMemoryConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
 	catalog := newInMemoryCatalog(conf)
 
 	for i := 0; i < namespaceCapacity; i++ {
@@ -638,7 +638,7 @@ func TestSingleServiceQuota(t *testing.T) {
 func TestMultipleServicesQuota(t *testing.T) {
 	var instanceID string
 	namespaceCapacity := 10
-	conf := &inmemConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
+	conf := &inMemoryConfig{defaultDefaultTTL, testMinTTL, testMaxTTL, namespaceCapacity}
 	catalog := newInMemoryCatalog(conf)
 
 	for i := 0; i < namespaceCapacity; i++ {
@@ -1431,8 +1431,8 @@ func doRegister(catalog Catalog, si *ServiceInstance) (string, error) {
 	return si.ID, err
 }
 
-func createNewConfig(defaultTTL time.Duration) *inmemConfig {
-	return &inmemConfig{defaultTTL, testMinTTL, testMaxTTL, -1}
+func createNewConfig(defaultTTL time.Duration) *inMemoryConfig {
+	return &inMemoryConfig{defaultTTL, testMinTTL, testMaxTTL, -1}
 }
 
 // This function is used instead of the assert.Contains because the instance

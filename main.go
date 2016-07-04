@@ -141,7 +141,7 @@ func registryMain(conf *config.Values) error {
 	catalogsExt := []store.CatalogFactory{}
 	// See whether kubernetes catalog is enabled
 	if conf.K8sURL != "" {
-		k8sFactory, err := kubernetes.New(&kubernetes.K8sConfig{K8sURL: conf.K8sURL})
+		k8sFactory, err := kubernetes.New(&kubernetes.K8sConfig{K8sURL: conf.K8sURL, K8sToken: conf.K8sToken})
 		if err != nil {
 			return err
 		}

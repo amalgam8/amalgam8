@@ -18,6 +18,10 @@ import (
 	"github.com/amalgam8/registry/auth"
 )
 
+const (
+	rwCalogIndex int = 0
+)
+
 type multiConfig struct {
 	factories []CatalogFactory
 }
@@ -34,13 +38,15 @@ func (f *multiFactory) CreateCatalog(namespace auth.Namespace) (Catalog, error) 
 	return newMultiCatalog(namespace, f.conf)
 }
 
+// MultiCatalog is a collection of catalogs.
+// The catalog at index 0 (rwCalogIndex) is the Read-Write catalog. The other catalogs are Read-Only.
 type multiCatalog struct {
 	catalogs []Catalog
 }
 
 func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (Catalog, error) {
 	if len(conf.factories) == 1 {
-		return conf.factories[0].CreateCatalog(namespace)
+		return conf.factories[rwCalogIndex].CreateCatalog(namespace)
 	}
 
 	catalogs := make([]Catalog, len(conf.factories))
@@ -56,42 +62,50 @@ func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (Catalog, erro
 }
 
 func (mc *multiCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
-	return mc.catalogs[0].Register(si)
+	return mc.catalogs[rwCalogIndex].Register(si)
 }
 
 func (mc *multiCatalog) Deregister(instanceID string) error {
-	return mc.catalogs[0].Deregister(instanceID)
+	return mc.catalogs[rwCalogIndex].Deregister(instanceID)
 }
 
 func (mc *multiCatalog) Renew(instanceID string) error {
-	return mc.catalogs[0].Renew(instanceID)
+	return mc.catalogs[rwCalogIndex].Renew(instanceID)
 }
 
 func (mc *multiCatalog) SetStatus(instanceID, status string) error {
-	return mc.catalogs[0].SetStatus(instanceID, status)
+	return mc.catalogs[rwCalogIndex].SetStatus(instanceID, status)
 }
 
 func (mc *multiCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {
 	instanceCollection := make([]*ServiceInstance, 0, 10)
 	for _, catalog := range mc.catalogs {
 		list, err := catalog.List(serviceName, predicate)
+		// We don't log the error here, because an error ("no such service") is acceptable.
+		// We will return an error at the end if and only if the list is empty
 		if err == nil {
 			if len(list) > 0 {
 				instanceCollection = append(instanceCollection, list...)
 			}
 		}
-
 	}
 
 	if len(instanceCollection) == 0 {
-		return nil, NewError(ErrorNoSuchServiceName, "no such service ", serviceName)
+		return nil, NewError(ErrorNoSuchServiceName, "no such service", serviceName)
 	}
 
 	return instanceCollection, nil
 }
 
 func (mc *multiCatalog) Instance(instanceID string) (*ServiceInstance, error) {
-	return mc.catalogs[0].Instance(instanceID)
+	for _, catalog := range mc.catalogs {
+		si, err := catalog.Instance(instanceID)
+		if err == nil {
+			return si, nil
+		}
+	}
+
+	return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 }
 
 func (mc *multiCatalog) ListServices(predicate Predicate) []*Service {

@@ -44,9 +44,9 @@ const (
 	tagsInstancesMetricName     = "store.tags.instances"
 )
 
-var defaultInmemConfig = &inmemConfig{DefaultConfig.DefaultTTL, DefaultConfig.MinimumTTL, DefaultConfig.MaximumTTL, DefaultConfig.NamespaceCapacity}
+var defaultInMemoryConfig = &inMemoryConfig{DefaultConfig.DefaultTTL, DefaultConfig.MinimumTTL, DefaultConfig.MaximumTTL, DefaultConfig.NamespaceCapacity}
 
-type inmemConfig struct {
+type inMemoryConfig struct {
 	defaultTTL time.Duration
 	minimumTTL time.Duration
 	maximumTTL time.Duration
@@ -54,15 +54,15 @@ type inmemConfig struct {
 	namespaceCapacity int
 }
 
-type inmemFactory struct {
-	conf *inmemConfig
+type inMemoryFactory struct {
+	conf *inMemoryConfig
 }
 
-func newInmemFactory(conf *inmemConfig) CatalogFactory {
-	return &inmemFactory{conf: conf}
+func newInmemFactory(conf *inMemoryConfig) CatalogFactory {
+	return &inMemoryFactory{conf: conf}
 }
 
-func (f *inmemFactory) CreateCatalog(namespace auth.Namespace) (Catalog, error) {
+func (f *inMemoryFactory) CreateCatalog(namespace auth.Namespace) (Catalog, error) {
 	return newInMemoryCatalog(f.conf), nil
 }
 
@@ -71,7 +71,7 @@ type inMemoryService map[string]*ServiceInstance
 type inMemoryCatalog struct {
 	services  map[string]inMemoryService
 	instances map[string]*ServiceInstance
-	conf      *inmemConfig
+	conf      *inMemoryConfig
 	logger    *log.Entry
 
 	// Metrics
@@ -86,9 +86,9 @@ type inMemoryCatalog struct {
 	sync.RWMutex
 }
 
-func newInMemoryCatalog(conf *inmemConfig) Catalog {
+func newInMemoryCatalog(conf *inMemoryConfig) Catalog {
 	if conf == nil {
-		conf = defaultInmemConfig
+		conf = defaultInMemoryConfig
 	}
 
 	counterFactory := func() metrics.Counter { return metrics.NewCounter() }
@@ -287,7 +287,7 @@ func (imc *inMemoryCatalog) List(serviceName string, predicate Predicate) ([]*Se
 	service := imc.services[serviceName]
 
 	if nil == service {
-		return nil, NewError(ErrorNoSuchServiceName, "no such service ", serviceName)
+		return nil, NewError(ErrorNoSuchServiceName, "no such service", serviceName)
 	}
 
 	instanceCollection := make([]*ServiceInstance, 0, len(service))

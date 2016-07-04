@@ -116,6 +116,7 @@ Authorization: Bearer jwt.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...wifQ.Gbz4G_
 ```
 
 #### Clustering
+
 Amalgam8 Service Registry uses a memory only storage solution, without persistency (although different storage 
 backends can be implemented). To provide HA and scale, the registry can be run in a cluster and supports replication
 between cluster members.
@@ -130,6 +131,17 @@ Alternative discovery mechanisms are being explored.
 | `REPLICATION` | `--replication` | `true` | Enable replication between cluster members | `false` |
 | `REPLICATION_PORT` | `--replication_port` | 8081 | Replication port number | 6100 |
 | `SYNC_TIMEOUT` | `--sync_timeout` | 60s | Timeout for establishing connections to peers for replication | 30s |
+
+#### Catalog Extensions
+
+The Amalgam8 Service Registry optionally supports read-only catalogs extensions.
+The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, etc) is read by the Amalgam8 Service Registry and
+returned to the user along with the content of the registry itself.
+
+| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
+|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
+| `K8S_URL` | `--k8s_url` | http://localhost:8080 | Kubernetes API server | |
+| `K8S_TOKEN` | `--k8s_token` | wAB90tY... | Kubernetes API token | |
 
 
 ## API

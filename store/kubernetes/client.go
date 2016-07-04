@@ -31,15 +31,21 @@ import (
 	"github.com/amalgam8/registry/utils/logging"
 )
 
+const (
+	k8sTokenFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+)
+
 type k8sClient struct {
 	httpClient *http.Client
 	k8sURL     string
-	k8sAuth    string
+	k8sToken   string
 
 	logger *log.Entry
 }
 
-func newK8sClient(k8sURL string) (*k8sClient, error) {
+func newK8sClient(k8sURL, k8sToken string) (*k8sClient, error) {
+
+	logger := logging.GetLogger(module)
 
 	// Normalize k8sURL to not end with a slash
 	for strings.HasSuffix(k8sURL, "/") {
@@ -51,9 +57,12 @@ func newK8sClient(k8sURL string) (*k8sClient, error) {
 		return nil, err
 	}
 
-	t, err := ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/token")
-	if err != nil {
-		return nil, err
+	if k8sToken == "" {
+		t, err := ioutil.ReadFile(k8sTokenFile)
+		if err != nil {
+			logger.Warnf("Failed to read kubernetes token. %s", err)
+		}
+		k8sToken = string(t)
 	}
 
 	hc := &http.Client{
@@ -69,8 +78,8 @@ func newK8sClient(k8sURL string) (*k8sClient, error) {
 	return &k8sClient{
 		httpClient: hc,
 		k8sURL:     k8sURL,
-		k8sAuth:    "Bearer " + string(t),
-		logger:     logging.GetLogger(module),
+		k8sToken:   k8sToken,
+		logger:     logger,
 	}, nil
 }
 
@@ -82,9 +91,10 @@ func (client *k8sClient) getEndpointsList(namespace auth.Namespace) (*EndpointsL
 	endpointsList := EndpointsList{}
 
 	req, _ := http.NewRequest("GET", client.getEndpointsURL(namespace), nil)
-	req.Header.Set("Authorization", client.k8sAuth)
+	if client.k8sToken != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", client.k8sToken))
+	}
 	resp, err := client.httpClient.Do(req)
-	//resp, err := client.httpClient.Get(client.getEndpointsURL(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get endpointsURL [%s]", err)
 	}

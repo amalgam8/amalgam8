@@ -21,7 +21,8 @@ import (
 
 // K8sConfig encapsulates K8s configuration parameters
 type K8sConfig struct {
-	K8sURL string
+	K8sURL   string
+	K8sToken string
 }
 
 type k8sFactory struct {
@@ -30,7 +31,7 @@ type k8sFactory struct {
 
 // New creates and initializes a K8s catalog factory
 func New(conf *K8sConfig) (store.CatalogFactory, error) {
-	client, err := newK8sClient(conf.K8sURL)
+	client, err := newK8sClient(conf.K8sURL, conf.K8sToken)
 	if err != nil {
 		return nil, err
 	}

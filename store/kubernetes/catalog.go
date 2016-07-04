@@ -42,9 +42,6 @@ type k8sCatalog struct {
 	services  serviceMap
 	instances instanceMap
 
-	loadMutex sync.Mutex
-	loaded    bool
-
 	logger *log.Entry
 	sync.RWMutex
 }
@@ -53,13 +50,12 @@ func newK8sCatalog(namespace auth.Namespace, client *k8sClient) (*k8sCatalog, er
 	catalog := &k8sCatalog{
 		services:  serviceMap{},
 		instances: instanceMap{},
-		loaded:    false,
 		namespace: namespace,
 		client:    client,
 		logger:    logging.GetLogger(module),
 	}
 
-	go catalog.load()
+	catalog.refresh()
 
 	// TODO: more efficient implementation using Kubernetes API watch interface
 	ticker := time.NewTicker(10 * time.Second)
@@ -73,11 +69,6 @@ func newK8sCatalog(namespace auth.Namespace, client *k8sClient) (*k8sCatalog, er
 }
 
 func (kc *k8sCatalog) ListServices(predicate store.Predicate) []*store.Service {
-	// Make sure that the catalog is loaded
-	if !kc.loaded {
-		kc.load()
-	}
-
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -95,11 +86,6 @@ func (kc *k8sCatalog) ListServices(predicate store.Predicate) []*store.Service {
 }
 
 func (kc *k8sCatalog) List(serviceName string, predicate store.Predicate) ([]*store.ServiceInstance, error) {
-	// Make sure that the catalog is loaded
-	if !kc.loaded {
-		kc.load()
-	}
-
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -118,11 +104,6 @@ func (kc *k8sCatalog) List(serviceName string, predicate store.Predicate) ([]*st
 }
 
 func (kc *k8sCatalog) Instance(instanceID string) (*store.ServiceInstance, error) {
-	// Make sure that the catalog is loaded
-	if !kc.loaded {
-		kc.load()
-	}
-
 	kc.RLock()
 	defer kc.RUnlock()
 
@@ -151,16 +132,6 @@ func (kc *k8sCatalog) Renew(instanceID string) error {
 func (kc *k8sCatalog) SetStatus(instanceID, status string) error {
 	kc.logger.Infof("Unsupported API (SetStatus) called")
 	return store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "SetStatus")
-}
-
-func (kc *k8sCatalog) load() {
-	kc.loadMutex.Lock()
-	defer kc.loadMutex.Unlock()
-
-	if !kc.loaded {
-		kc.refresh()
-		kc.loaded = true
-	}
 }
 
 func (kc *k8sCatalog) refresh() {

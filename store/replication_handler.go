@@ -147,11 +147,8 @@ func (rh *replicationHandler) handleSyncRequestJob(reqChannel chan<- []byte) {
 }
 
 func (rh *replicationHandler) getCatalog(namespace auth.Namespace) (*replicatedCatalog, error) {
-	rh.Lock()
-	defer rh.Unlock()
-
-	catalog, exists := rh.catalogs[namespace]
-	if exists {
+	catalog := rh.lookupCatalog(namespace)
+	if catalog != nil {
 		return catalog, nil
 	}
 
@@ -164,10 +161,18 @@ func (rh *replicationHandler) getCatalog(namespace auth.Namespace) (*replicatedC
 		return nil, err
 	}
 
-	catalog, exists = rh.catalogs[namespace]
-	if !exists {
+	catalog = rh.lookupCatalog(namespace)
+	if catalog == nil {
 		return nil, fmt.Errorf("Catalog %s does not exist", namespace)
 	}
 
 	return catalog, nil
+}
+
+func (rh *replicationHandler) lookupCatalog(namespace auth.Namespace) *replicatedCatalog {
+	rh.Lock()
+	defer rh.Unlock()
+
+	catalog, _ := rh.catalogs[namespace]
+	return catalog
 }

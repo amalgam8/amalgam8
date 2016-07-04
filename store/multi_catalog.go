@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	rwCalogIndex int = 0
+	rwCatalogIndex int = 0
 )
 
 type multiConfig struct {
@@ -46,7 +46,7 @@ type multiCatalog struct {
 
 func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (Catalog, error) {
 	if len(conf.factories) == 1 {
-		return conf.factories[rwCalogIndex].CreateCatalog(namespace)
+		return conf.factories[rwCatalogIndex].CreateCatalog(namespace)
 	}
 
 	catalogs := make([]Catalog, len(conf.factories))
@@ -62,19 +62,19 @@ func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (Catalog, erro
 }
 
 func (mc *multiCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
-	return mc.catalogs[rwCalogIndex].Register(si)
+	return mc.catalogs[rwCatalogIndex].Register(si)
 }
 
 func (mc *multiCatalog) Deregister(instanceID string) error {
-	return mc.catalogs[rwCalogIndex].Deregister(instanceID)
+	return mc.catalogs[rwCatalogIndex].Deregister(instanceID)
 }
 
 func (mc *multiCatalog) Renew(instanceID string) error {
-	return mc.catalogs[rwCalogIndex].Renew(instanceID)
+	return mc.catalogs[rwCatalogIndex].Renew(instanceID)
 }
 
 func (mc *multiCatalog) SetStatus(instanceID, status string) error {
-	return mc.catalogs[rwCalogIndex].SetStatus(instanceID, status)
+	return mc.catalogs[rwCatalogIndex].SetStatus(instanceID, status)
 }
 
 func (mc *multiCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {

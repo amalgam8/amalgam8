@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"time"
 
+	"net"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 )
@@ -89,6 +91,11 @@ func New(context *cli.Context) *Config {
 	loggingLevel, err = logrus.ParseLevel(logLevelArg)
 	if err != nil {
 		loggingLevel = logrus.DebugLevel
+	}
+
+	endpointHost := context.String(endpointHost)
+	if endpointHost == "" {
+		endpointHost = LocalIP()
 	}
 
 	return &Config{
@@ -236,4 +243,23 @@ func (c *Config) Validate(validateCreds bool) error {
 	}
 
 	return Validate(validators)
+}
+
+// LocalIP retrieves the IP address of the sidecar
+func LocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, address := range addrs {
+		// check the address type and if it is not a loopback return it
+		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String()
+			}
+		}
+	}
+
+	return ""
 }

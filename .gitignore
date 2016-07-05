@@ -33,6 +33,7 @@ _testmain.go
 
 # Build
 bin/
+release/
 
 # Logs
 *.log

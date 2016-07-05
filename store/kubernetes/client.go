@@ -92,7 +92,7 @@ func (client *k8sClient) getEndpointsList(namespace auth.Namespace) (*EndpointsL
 
 	req, _ := http.NewRequest("GET", client.getEndpointsURL(namespace), nil)
 	if client.k8sToken != "" {
-		req.Header.Set("Authorization", fmt.Sprintf("bearer %s", client.k8sToken))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", client.k8sToken))
 	}
 	resp, err := client.httpClient.Do(req)
 	if err != nil {

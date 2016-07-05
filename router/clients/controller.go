@@ -101,13 +101,13 @@ func (c *controller) Register() error {
 		logrus.WithFields(logrus.Fields{
 			"err":    err,
 			"url":    c.config.Controller.URL + "/v1/tenants",
-			"method": "PUT",
+			"method": "POST",
 		}).Warn("Error marshalling JSON body")
 		return err
 	}
 	reader := bytes.NewReader(bodyBytes)
 
-	req, err := http.NewRequest("PUT", c.config.Controller.URL+"/v1/tenants", reader)
+	req, err := http.NewRequest("POST", c.config.Controller.URL+"/v1/tenants", reader)
 	req.Header.Set("Content-type", "application/json")
 	// TODO set Authorization header
 	req.Header.Set("Authorization", c.config.Tenant.Token)

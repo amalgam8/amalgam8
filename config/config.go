@@ -95,13 +95,20 @@ func New(context *cli.Context) *Config {
 
 	endpointHost := context.String(endpointHost)
 	if endpointHost == "" {
-		endpointHost = LocalIP()
+		for {
+			endpointHost = LocalIP()
+			if endpointHost != "" {
+				break
+			}
+			logrus.Warn("Could not obtain local IP")
+			time.Sleep(time.Second * 10)
+		}
 	}
 
 	return &Config{
 		ServiceName:    context.String(serviceName),
 		ServiceVerion:  context.String(serviceVersion),
-		EndpointHost:   context.String(endpointHost),
+		EndpointHost:   endpointHost,
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),
 		Register:       context.BoolT(register),

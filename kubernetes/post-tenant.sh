@@ -23,7 +23,6 @@ echo "Setting up a new tenant named 'local'"
 read -d '' tenant << EOF
 {
     "id": "local",
-    "token": "local",
     "req_tracking_header" : "X-Request-ID",
     "credentials": {
         "kafka": {
@@ -37,4 +36,4 @@ read -d '' tenant << EOF
     }
 }
 EOF
-echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${AC}/v1/tenants"
+echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: local" -d @- "http://${AC}/v1/tenants"

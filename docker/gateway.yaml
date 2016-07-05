@@ -17,8 +17,7 @@ gateway:
   image: amalgam8/a8-sidecar:0.1-alpine
   environment:
     - CONTROLLER_URL=http://controller:6379
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - KAFKA_BROKER=kafka:9092
     - REGISTER=false
     - SERVICE=gateway

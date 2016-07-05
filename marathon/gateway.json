@@ -18,8 +18,7 @@
     "env": {
 		"SERVICE" : "gateway",
         "SERVICE_VERSION" : "v1",
-		"TENANT_TOKEN":"12345",
-		"TENANT_ID": "local",
+		"TENANT_TOKEN":"local",
         "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		"CONTROLLER_URL":"http://__REPLACEME__:31200",
 		"CONTROLLER_POLL" : "15s",

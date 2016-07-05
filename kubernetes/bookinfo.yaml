@@ -134,8 +134,6 @@ spec:
         - name: CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: TENANT_TOKEN
-          value: "12345"
-        - name: TENANT_ID
           value: local
         - name: SERVICE
           value: reviews
@@ -180,8 +178,6 @@ spec:
         - name: CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: TENANT_TOKEN
-          value: "12345"
-        - name: TENANT_ID
           value: local
         - name: SERVICE
           value: reviews
@@ -226,8 +222,6 @@ spec:
         - name: CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: TENANT_TOKEN
-          value: "12345"
-        - name: TENANT_ID
           value: local
         - name: SERVICE
           value: reviews
@@ -272,8 +266,6 @@ spec:
         - name: CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: TENANT_TOKEN
-          value: "12345"
-        - name: TENANT_ID
           value: local
         - name: SERVICE
           value: productpage

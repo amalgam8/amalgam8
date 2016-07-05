@@ -59,8 +59,7 @@ reviews-v2:
     - SERVICE=reviews
     - SERVICE_VERSION=v2
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s
@@ -79,8 +78,7 @@ reviews-v3:
     - SERVICE=reviews
     - SERVICE_VERSION=v3
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s
@@ -99,8 +97,7 @@ productpage-v1:
     - SERVICE=productpage
     - SERVICE_VERSION=v1
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s

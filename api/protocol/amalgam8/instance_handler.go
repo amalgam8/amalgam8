@@ -26,7 +26,6 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 
 	"github.com/amalgam8/registry/api/middleware"
-	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/store"
 	"github.com/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/registry/utils/reflection"
@@ -59,7 +58,6 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	si := &store.ServiceInstance{
 		ServiceName: req.ServiceName,
-		Protocol:    protocol.Amalgam8,
 		Endpoint:    &store.Endpoint{Type: req.Endpoint.Type, Value: req.Endpoint.Value},
 		Status:      strings.ToUpper(req.Status),
 		TTL:         time.Duration(req.TTL) * time.Second,

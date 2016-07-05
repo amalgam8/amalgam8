@@ -12,28 +12,33 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-// Package store defines and implements a backend store for the registry
-package store
+package kubernetes
 
 import (
 	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/replication"
+	"github.com/amalgam8/registry/store"
 )
 
-const (
-	module string = "STORE"
-)
-
-// Registry represents the interface of the Service Registry
-type Registry interface {
-
-	// Actor: Service Discovery Provider
-	GetCatalog(auth.Namespace) (Catalog, error)
+// K8sConfig encapsulates K8s configuration parameters
+type K8sConfig struct {
+	K8sURL   string
+	K8sToken string
 }
 
-// New creates a new Registry instance, bounded with the specified configuration and replication
-func New(conf *Config, rep replication.Replication) Registry {
-	// This is the default implementation for now
-	// TODO: Allow customization
-	return newInMemoryRegistry(conf, rep)
+type k8sFactory struct {
+	client *k8sClient
+}
+
+// New creates and initializes a K8s catalog factory
+func New(conf *K8sConfig) (store.CatalogFactory, error) {
+	client, err := newK8sClient(conf.K8sURL, conf.K8sToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &k8sFactory{client: client}, nil
+}
+
+func (f *k8sFactory) CreateCatalog(namespace auth.Namespace) (store.Catalog, error) {
+	return newK8sCatalog(namespace, f.client)
 }

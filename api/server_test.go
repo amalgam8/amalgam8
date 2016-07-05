@@ -61,7 +61,7 @@ type mockCatalog struct {
 	services  []*store.Service
 }
 
-func createCatalog() store.Registry {
+func createCatalogMap() store.CatalogMap {
 	mc := mockCatalog{
 		instances: make(map[string]*store.ServiceInstance),
 		services:  []*store.Service{},
@@ -172,7 +172,7 @@ func (mc *mockCatalog) ListServices(predicate store.Predicate) []*store.Service 
 func defaultServerConfig() *Config {
 	return &Config{
 		HTTPAddressSpec: ":" + port,
-		Registry:        createCatalog(),
+		CatalogMap:      createCatalogMap(),
 	}
 }
 

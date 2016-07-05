@@ -15,17 +15,10 @@
 package store
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/amalgam8/registry/auth"
 )
 
-func extractErrorCode(err error) ErrorCode {
-	return err.(*Error).Code
-}
-
-func TestNewRegistry(t *testing.T) {
-
-	r := New(nil, nil)
-	assert.NotNil(t, r)
+// CatalogFactory represents the interface of the Catalog Factory
+type CatalogFactory interface {
+	CreateCatalog(auth.Namespace) (Catalog, error)
 }

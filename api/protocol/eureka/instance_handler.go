@@ -25,7 +25,6 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/store"
 	"github.com/amalgam8/registry/utils/i18n"
 )
@@ -110,7 +109,6 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	si := &store.ServiceInstance{
 		ID:          buildUniqueInstanceID(appid, iid),
-		Protocol:    protocol.Eureka,
 		ServiceName: inst.Application,
 		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
 		Status:      inst.Status,

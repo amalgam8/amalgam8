@@ -17,8 +17,6 @@ package store
 import (
 	"fmt"
 	"time"
-
-	"github.com/amalgam8/registry/api/protocol"
 )
 
 // Registered instance status related constants
@@ -31,8 +29,8 @@ const (
 
 // ServiceInstance represents a runtime instance of a service.
 type ServiceInstance struct {
-	ID               string
-	Protocol         protocol.Type
+	ID string
+	//Protocol         protocol.Type
 	ServiceName      string
 	Endpoint         *Endpoint
 	Status           string
@@ -46,8 +44,8 @@ type ServiceInstance struct {
 
 // String output the structure
 func (si *ServiceInstance) String() string {
-	return fmt.Sprintf("id: %s, protocol: %d, service_name: %s, endpoint: %s, status: %s, registrationTime: %v, lastRenewal: %v, ttl: %d, tags: %v",
-		si.ID, si.Protocol, si.ServiceName, si.Endpoint, si.Status, si.RegistrationTime, si.LastRenewal, si.TTL, si.Tags)
+	return fmt.Sprintf("id: %s, service_name: %s, endpoint: %s, status: %s, registrationTime: %v, lastRenewal: %v, ttl: %d, tags: %v",
+		si.ID, si.ServiceName, si.Endpoint, si.Status, si.RegistrationTime, si.LastRenewal, si.TTL, si.Tags)
 }
 
 // DeepClone creates a deep copy of the receiver

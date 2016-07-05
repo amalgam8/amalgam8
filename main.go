@@ -27,6 +27,7 @@ import (
 	"github.com/amalgam8/registry/config"
 	"github.com/amalgam8/registry/replication"
 	"github.com/amalgam8/registry/store"
+	"github.com/amalgam8/registry/store/kubernetes"
 	"github.com/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/registry/utils/logging"
 	"github.com/amalgam8/registry/utils/metrics"
@@ -137,18 +138,30 @@ func registryMain(conf *config.Values) error {
 		authenticator = auth.DefaultAuthenticator()
 	}
 
-	regConfig := &store.Config{
+	catalogsExt := []store.CatalogFactory{}
+	// See whether kubernetes catalog is enabled
+	if conf.K8sURL != "" {
+		k8sFactory, err := kubernetes.New(&kubernetes.K8sConfig{K8sURL: conf.K8sURL, K8sToken: conf.K8sToken})
+		if err != nil {
+			return err
+		}
+		catalogsExt = append(catalogsExt, k8sFactory)
+	}
+
+	cmConfig := &store.Config{
 		DefaultTTL:        conf.DefaultTTL,
 		MinimumTTL:        conf.MinTTL,
 		MaximumTTL:        conf.MaxTTL,
 		SyncWaitTime:      conf.SyncTimeout,
 		NamespaceCapacity: conf.NamespaceCapacity,
+		Replication:       rep,
+		Extensions:        catalogsExt,
 	}
-	reg := store.New(regConfig, rep)
+	cm := store.New(cmConfig)
 
 	serverConfig := &api.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.APIPort),
-		Registry:        reg,
+		CatalogMap:      cm,
 		Authenticator:   authenticator,
 		RequireHTTPS:    conf.RequireHTTPS,
 	}

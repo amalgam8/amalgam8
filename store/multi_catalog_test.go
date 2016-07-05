@@ -54,7 +54,7 @@ func (mc *mockCatalog) Instance(instanceID string) (*ServiceInstance, error) {
 
 func (mc *mockCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {
 	if mc.nInstances == 0 {
-		return nil, nil
+		return nil, NewError(ErrorNoSuchServiceName, "no such service ", serviceName)
 	}
 
 	list := make([]*ServiceInstance, mc.nInstances)

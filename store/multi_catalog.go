@@ -78,19 +78,24 @@ func (mc *multiCatalog) SetStatus(instanceID, status string) error {
 }
 
 func (mc *multiCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {
+	isErr := true
 	instanceCollection := make([]*ServiceInstance, 0, 10)
+
 	for _, catalog := range mc.catalogs {
 		list, err := catalog.List(serviceName, predicate)
 		// We don't log the error here, because an error ("no such service") is acceptable.
 		// We will return an error at the end if and only if the list is empty
 		if err == nil {
+			isErr = false
 			if len(list) > 0 {
 				instanceCollection = append(instanceCollection, list...)
 			}
 		}
 	}
 
-	if len(instanceCollection) == 0 {
+	// If and only if all the sub-catalogs returned an error then we have to
+	// return an  error
+	if isErr {
 		return nil, NewError(ErrorNoSuchServiceName, "no such service", serviceName)
 	}
 

@@ -38,7 +38,7 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
 To run in a local docker environemnt, you can either use the Vagrant sandbox or install the
-[Amalgam8 python CLI](https://pypi.python.org/pypi/a8ctl),
+[Amalgam8 python CLI 0.1.7](https://pypi.python.org/pypi/a8ctl),
 [Docker 1.10 or later](https://docs.docker.com/engine/installation/) and
 [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/).
 
@@ -419,7 +419,7 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
     [Bluemix CLI 0.3.3 or later](https://clis.ng.bluemix.net/),
     [jq 1.5 or later](https://stedolan.github.io/jq/),
-    and the [Amalgam8 CLI](https://pypi.python.org/pypi/a8ctl)
+    and the [Amalgam8 CLI 0.1.7](https://pypi.python.org/pypi/a8ctl)
 
 1. Login to Bluemix and initialize the containers environment using ```bluemix login``` and ```bluemix ic init```
 

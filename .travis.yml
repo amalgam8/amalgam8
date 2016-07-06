@@ -58,3 +58,15 @@ deploy:
             repo: amalgam8/registry
             go: 1.6
             condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
+
+# Configure notifications
+notifications:
+    email:
+        on_success: never
+        on_failure: always
+    slack:
+        rooms:
+            - amalgam8:$TRAVIS_TOKEN
+        on_success: always
+        on_failure: always
+        on_pull_requests: true

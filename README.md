@@ -38,7 +38,7 @@ refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/mas
 ## Amalgam8 with Docker - local environment <a id="local-docker"></a>
 
 To run in a local docker environemnt, you can either use the Vagrant sandbox or install the
-[Amalgam8 python CLI 0.1.7](https://pypi.python.org/pypi/a8ctl),
+[Amalgam8 python CLI 0.1.8](https://pypi.python.org/pypi/a8ctl),
 [Docker 1.10 or later](https://docs.docker.com/engine/installation/) and
 [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/).
 

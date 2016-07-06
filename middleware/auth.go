@@ -11,7 +11,7 @@ import (
 const (
 	AuthHeader   = "Authorization"
 	AuthEnv      = "TENANT_ID"
-	TenantHeader = "SP-Tenant-ID"
+	TenantHeader = "A8-Tenant-ID"
 )
 
 type Authenticator interface {

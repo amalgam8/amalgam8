@@ -62,7 +62,6 @@ func (t *Tenant) Routes() []*rest.Route {
 // PostTenant initializes a tenant in the Controller
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
-
 	tenantInfo := resources.TenantInfo{}
 
 	if err = req.DecodeJsonPayload(&tenantInfo); err != nil {
@@ -249,15 +248,28 @@ func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 func processError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
+		tenantID := GetTenantID(req)
+		requestID := req.Header.Get(middleware.RequestIDHeader)
+
+		log := logrus.WithFields(logrus.Fields{
+			"err":        err,
+			"tenant_id":  tenantID,
+			"request_id": requestID,
+		})
 		if e, ok := err.(*manager.InvalidRuleError); ok {
+			log.Error("Bad request")
 			RestError(w, req, http.StatusBadRequest, e.ErrorMessage)
 		} else if e, ok := err.(*manager.DBError); ok {
+			log.Error("Database error occured")
 			handleDBReadError(w, req, e.Err)
 		} else if e, ok := err.(*manager.ServiceUnavailableError); ok {
+			log.Error("Service unavailable")
 			RestError(w, req, http.StatusServiceUnavailable, e.ErrorMessage)
 		} else if e, ok := err.(*manager.RuleNotFoundError); ok {
+			log.Error("Filter ID not fount")
 			RestError(w, req, http.StatusNotFound, e.ErrorMessage)
 		} else {
+			log.Error("Unknow availability error occured")
 			RestError(w, req, http.StatusServiceUnavailable, "unknown_availability_error")
 		}
 	}

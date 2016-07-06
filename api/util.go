@@ -32,10 +32,13 @@ func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusNotFound {
 				RestError(w, req, http.StatusNotFound, "no matching id")
+				return
 			}
 			RestError(w, req, http.StatusServiceUnavailable, "database_error")
+			return
 		}
 		RestError(w, req, http.StatusServiceUnavailable, "failed_to_read_info")
+		return
 	}
 }
 

@@ -96,7 +96,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 #docker restart tmp_master_1
 
 # Install Amalgam8 CLI
-pip install a8ctl==0.1.7
+pip install a8ctl==0.1.8
 
 ## Installing Weave Scope
 #sudo wget -O /usr/local/bin/scope https://git.io/scope

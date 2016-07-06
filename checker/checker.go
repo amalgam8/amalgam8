@@ -100,7 +100,7 @@ func (c *checker) Check(ids []string) error {
 			}
 
 			// Notify tenant
-			if err = c.producerCache.SendEvent(entry.ID, creds.Kafka); err != nil {
+			if err = c.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, creds.Kafka); err != nil {
 				logrus.WithFields(logrus.Fields{
 					"err":       err,
 					"tenant_id": entry.ID,

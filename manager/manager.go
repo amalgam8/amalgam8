@@ -166,7 +166,7 @@ func (m *manager) Create(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ID, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -271,7 +271,7 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ID, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -327,7 +327,7 @@ func (m *manager) SetVersion(id string, newVersion resources.Version) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ID, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -367,7 +367,7 @@ func (m *manager) DeleteVersion(id, service string) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ID, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 

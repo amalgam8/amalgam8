@@ -43,8 +43,6 @@ if [ "$1" == "start" ]; then
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
-    "id": "local",
-    "token": "local",
     "req_tracking_header" : "X-Request-ID",
     "credentials": {
         "kafka": {

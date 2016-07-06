@@ -22,7 +22,6 @@ KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports
 echo "Setting up a new tenant named 'local'"
 read -d '' tenant << EOF
 {
-    "id": "local",
     "req_tracking_header" : "X-Request-ID",
     "credentials": {
         "kafka": {

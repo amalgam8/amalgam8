@@ -139,8 +139,8 @@ func New(context *cli.Context) *Config {
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),
 		},
-		LogLevel: loggingLevel,
-		AppArgs:  context.Args(),
+		LogLevel:    loggingLevel,
+		AppArgs:     context.Args(),
 		ForceUpdate: context.Bool(forceUpdate),
 	}
 }

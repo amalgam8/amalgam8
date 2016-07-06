@@ -127,7 +127,7 @@ func (c *controller) Register() error {
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 
 		if resp.Header.Get("request-id") == "" {
@@ -193,7 +193,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 		return "", errors.New("Controller returned bad response code") // FIXME: custom error?
 	}
@@ -247,7 +247,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 
 		if resp.Header.Get("request-id") == "" {

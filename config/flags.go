@@ -60,9 +60,9 @@ var TenantFlags = []cli.Flag{
 	},
 
 	cli.BoolFlag{
-		Name: forceUpdate,
+		Name:   forceUpdate,
 		EnvVar: strings.ToUpper(forceUpdate),
-		Usage: "Update Registry and Kafka credentials on startup",
+		Usage:  "Update Registry and Kafka credentials on startup",
 	},
 
 	cli.StringFlag{

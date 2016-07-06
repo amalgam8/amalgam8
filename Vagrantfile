@@ -131,6 +131,10 @@ Vagrant.configure('2') do |config|
     config.vm.synced_folder "../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/a8ctl"
   end
 
+  if FileTest::directory?("../console")
+    config.vm.synced_folder "../console", "/home/vagrant/sandbox/src/github.com/amalgam8/console"
+  end
+
   config.vm.provider :virtualbox do |vb|
     #vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ['modifyvm', :id, '--memory', '4096']

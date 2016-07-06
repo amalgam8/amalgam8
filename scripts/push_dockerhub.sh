@@ -12,7 +12,7 @@
 ### - DOCKERHUB_PASSWORD - Docker Hub login password
 ###############################################################
 
-DOCKER_IMAGE="amalgam8/a8registry"
+DOCKER_IMAGE="amalgam8/a8-registry"
 
 tag=$(git describe --exact-match)
 if [ $? -ne 0 ]; then

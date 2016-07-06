@@ -69,7 +69,7 @@ func (l *listener) listenForUpdate() error {
 			return err
 		}
 
-		if key == l.config.Registry.Token {
+		if key == l.config.Tenant.Token {
 			logrus.WithFields(logrus.Fields{
 				"key":   key,
 				"value": value,

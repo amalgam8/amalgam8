@@ -33,17 +33,17 @@ var _ = Describe("Tenant listener", func() {
 		n           *mockNginx
 		c           *config.Config
 		l           *listener
-		regToken    string
+		tenantToken string
 		updateCount int
 	)
 
 	BeforeEach(func() {
 		updateCount = 0
 
-		regToken = "sd_token"
+		tenantToken = "tenant_token"
 
 		consumer = &MockConsumer{
-			ReceiveEventKey: regToken,
+			ReceiveEventKey: tenantToken,
 		}
 		rc = &clients.MockController{}
 		n = &mockNginx{
@@ -54,13 +54,13 @@ var _ = Describe("Tenant listener", func() {
 		}
 		c = &config.Config{
 			Tenant: config.Tenant{
-				Token:     "token",
+				Token:     tenantToken,
 				TTL:       60 * time.Second,
 				Heartbeat: 30 * time.Second,
 			},
 			Registry: config.Registry{
 				URL:   "http://registry",
-				Token: regToken,
+				Token: "sd_token",
 			},
 			Kafka: config.Kafka{
 				Brokers: []string{

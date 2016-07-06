@@ -62,7 +62,16 @@ func (t *Tenant) Routes() []*rest.Route {
 // PostTenant initializes a tenant in the Controller
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
+
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	tenantInfo := resources.TenantInfo{}
+
+	tenantToken := req.Header.Get(middleware.AuthHeader)
 
 	if err = req.DecodeJsonPayload(&tenantInfo); err != nil {
 		RestError(w, req, http.StatusBadRequest, "json_error")
@@ -70,12 +79,12 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	// Validate input
-	if tenantInfo.ID == "" {
+	if tenantID == "" {
 		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
 		return errors.New("special error")
 	}
 
-	if err = t.manager.Create(tenantInfo.ID, tenantInfo); err != nil {
+	if err = t.manager.Create(tenantID, tenantToken, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -128,7 +137,6 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	tenantInfo := resources.TenantInfo{
-		ID:                tenantID,
 		Credentials:       entry.ProxyConfig.Credentials,
 		LoadBalance:       entry.ProxyConfig.LoadBalance,
 		Port:              entry.ProxyConfig.Port,

@@ -29,7 +29,7 @@ import (
 
 // Manager client
 type Manager interface {
-	Create(id string, rules resources.TenantInfo) error
+	Create(id, token string, rules resources.TenantInfo) error
 	Set(id string, rules resources.TenantInfo) error
 	Get(id string) (resources.TenantEntry, error)
 	Delete(id string) error
@@ -57,13 +57,14 @@ func NewManager(conf Config) Manager {
 	}
 }
 
-func (m *manager) Create(id string, tenantInfo resources.TenantInfo) error {
+func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) error {
 	var err error
 
 	entry := resources.TenantEntry{
 		BasicEntry: resources.BasicEntry{
 			ID: id,
 		},
+		TenantToken: token,
 		ProxyConfig: resources.ProxyConfig{
 			LoadBalance:       tenantInfo.LoadBalance,
 			Port:              tenantInfo.Port,
@@ -166,7 +167,7 @@ func (m *manager) Create(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -271,7 +272,7 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -327,7 +328,7 @@ func (m *manager) SetVersion(id string, newVersion resources.Version) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 
@@ -367,7 +368,7 @@ func (m *manager) DeleteVersion(id, service string) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.ProxyConfig.Credentials.Registry.Token, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
 		return err
 	}
 

@@ -30,7 +30,7 @@ func (m *MockManager) Delete(id string) error {
 }
 
 // Create mocks method
-func (m *MockManager) Create(id string, rules resources.TenantInfo) error {
+func (m *MockManager) Create(id, token string, rules resources.TenantInfo) error {
 	return nil
 }
 

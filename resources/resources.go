@@ -144,6 +144,7 @@ type Credentials struct {
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry
+	TenantToken    string
 	ProxyConfig    ProxyConfig
 	ServiceCatalog ServiceCatalog
 }
@@ -184,7 +185,6 @@ type Version struct {
 
 // TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
-	ID                string      `json:"id"`
 	Credentials       Credentials `json:"credentials"`
 	LoadBalance       string      `json:"load_balance"`
 	Port              int         `json:"port"`

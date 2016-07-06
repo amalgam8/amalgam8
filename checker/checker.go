@@ -19,33 +19,29 @@ import (
 	"sort"
 	"time"
 
+	"net/http"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/notification"
-	"github.com/amalgam8/controller/proxyconfig"
 	"github.com/amalgam8/controller/resources"
 )
 
 // Checker client
 type Checker interface {
-	Register(id string) error
-	Deregister(id string) error
 	Check(ids []string) error
-	Get(id string) (resources.ServiceCatalog, error)
 }
 
 type checker struct {
-	db            database.Catalog
-	proxyConfig   proxyconfig.Manager
+	db            database.Tenant
 	registry      clients.Registry
 	producerCache notification.TenantProducerCache
 }
 
 // Config options
 type Config struct {
-	Database      database.Catalog
-	ProxyConfig   proxyconfig.Manager
+	Database      database.Tenant
 	Registry      clients.Registry
 	ProducerCache notification.TenantProducerCache
 }
@@ -54,35 +50,9 @@ type Config struct {
 func New(conf Config) Checker {
 	return &checker{
 		db:            conf.Database,
-		proxyConfig:   conf.ProxyConfig,
 		registry:      conf.Registry,
 		producerCache: conf.ProducerCache,
 	}
-}
-
-// Register tenant ID
-func (c *checker) Register(id string) error {
-	// TODO: either call Registry or set to valid default
-	defaultCatalog := resources.ServiceCatalog{
-		BasicEntry: resources.BasicEntry{
-			ID: id,
-		},
-		Services:   []resources.Service{},
-		LastUpdate: time.Now(),
-	}
-
-	if err := c.db.Create(defaultCatalog); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Deregister tenant ID
-func (c *checker) Deregister(id string) error {
-	// TODO: Cleanup caches?
-
-	return c.db.Delete(id)
 }
 
 // TODO: make this asynch
@@ -95,20 +65,17 @@ func (c *checker) Deregister(id string) error {
 // ids must be a subset of registered tenant IDs or nil or empty. If ids is nil or empty all registered IDs are checked.
 func (c *checker) Check(ids []string) error {
 	// Get registered tenant catalogs
-	catalogs, err := c.getStoredCatalogs(ids)
+	//catalogs, err := c.getStoredCatalogs(ids)
+	entries, err := c.db.List(ids)
 	if err != nil {
 		// log failure
 		return err
 	}
 
-	for _, catalog := range catalogs {
+	for _, entry := range entries {
 
 		// Get Registry credentials from auth
-		creds, err := c.credentials(catalog.ID)
-		if err != nil {
-			logrus.WithError(err).Warn("Could not get credentials")
-			continue
-		}
+		creds := entry.ProxyConfig.Credentials
 
 		// Get newest catalog from Registry
 		latestCatalog, err := c.getLatestCatalog(creds.Registry)
@@ -122,21 +89,21 @@ func (c *checker) Check(ids []string) error {
 		}
 
 		// Check for differences
-		if !c.catalogsEqual(catalog, latestCatalog) {
+		if !c.catalogsEqual(entry.ServiceCatalog, latestCatalog) {
 			// Update database
-			catalog.Services = latestCatalog.Services
-			catalog.LastUpdate = time.Now()
+			entry.ServiceCatalog.Services = latestCatalog.Services
+			entry.ServiceCatalog.LastUpdate = time.Now()
 
-			if err = c.db.Update(catalog); err != nil {
-				// log failure
-				continue // no point in notifying tenant
+			if err = c.updateCatalog(entry); err != nil {
+				// error during update, do not send event
+				continue
 			}
 
 			// Notify tenant
-			if err = c.producerCache.SendEvent(catalog.ID, creds.Kafka); err != nil {
+			if err = c.producerCache.SendEvent(entry.TenantToken, creds.Kafka); err != nil {
 				logrus.WithFields(logrus.Fields{
 					"err":       err,
-					"tenant_id": catalog.ID,
+					"tenant_id": entry.ID,
 					// TODO request ID logging??
 				}).Error("Failed to notify tenant of rules change")
 			}
@@ -145,11 +112,6 @@ func (c *checker) Check(ids []string) error {
 	}
 
 	return nil
-}
-
-func (c *checker) credentials(id string) (resources.Credentials, error) {
-	proxyConfig, err := c.proxyConfig.Get(id)
-	return proxyConfig.Credentials, err
 }
 
 // catalogsEqual
@@ -205,16 +167,48 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 	return catalog, nil
 }
 
-func (c *checker) getStoredCatalogs(ids []string) ([]resources.ServiceCatalog, error) {
-	catalogs, err := c.db.List(ids)
-	if err != nil {
-		return catalogs, err
+func (c *checker) updateCatalog(entry resources.TenantEntry) error {
+	var err error
+	if err = c.db.Update(entry); err != nil {
+		if ce, ok := err.(*database.DBError); ok {
+			if ce.StatusCode == http.StatusConflict {
+				newerEntry, err := c.db.Read(entry.ID)
+				if err == nil {
+					newerEntry.ServiceCatalog.Services = entry.ServiceCatalog.Services
+					newerEntry.ServiceCatalog.LastUpdate = entry.ServiceCatalog.LastUpdate
+					if err = c.db.Update(newerEntry); err != nil {
+						logrus.WithFields(logrus.Fields{
+							"err": err,
+							"id":  entry.ID,
+						}).Error("Failed to resolve document update conflict")
+						return err
+					}
+					logrus.WithFields(logrus.Fields{
+						"id": entry.ID,
+					}).Debug("Succesfully resolved document update conflict")
+					return nil
+
+				}
+				logrus.WithFields(logrus.Fields{
+					"err": err,
+					"id":  entry.ID,
+				}).Error("Failed to retrieve latest document during conflict resolution")
+				return err
+
+			}
+			logrus.WithFields(logrus.Fields{
+				"err": err,
+				"id":  entry.ID,
+			}).Error("Database error attempting to update service catalog")
+			return err
+		}
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			"id":  entry.ID,
+		}).Error("Failed attempting to update service catalog")
+		return err
 	}
 
-	return catalogs, nil
-}
+	return nil
 
-// Get the tenant's catalog from the database
-func (c *checker) Get(id string) (resources.ServiceCatalog, error) {
-	return c.db.Read(id)
 }

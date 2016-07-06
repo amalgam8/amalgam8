@@ -12,29 +12,49 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package proxyconfig
+package manager
 
 import "github.com/amalgam8/controller/resources"
 
 // MockManager mocks interface
 type MockManager struct {
 	SetError    error
-	GetVal      resources.ProxyConfig
+	GetVal      resources.TenantEntry
 	GetError    error
 	DeleteError error
-}
-
-// Set mocks method
-func (m *MockManager) Set(rules resources.ProxyConfig) error {
-	return m.SetError
-}
-
-// Get mocks method
-func (m *MockManager) Get(id string) (resources.ProxyConfig, error) {
-	return m.GetVal, m.GetError
 }
 
 // Delete mocks method
 func (m *MockManager) Delete(id string) error {
 	return m.DeleteError
+}
+
+// Create mocks method
+func (m *MockManager) Create(id, token string, rules resources.TenantInfo) error {
+	return nil
+}
+
+// Set mocks method
+func (m *MockManager) Set(id string, rules resources.TenantInfo) error {
+	return m.SetError
+}
+
+// Get mocks method
+func (m *MockManager) Get(id string) (resources.TenantEntry, error) {
+	return m.GetVal, m.GetError
+}
+
+// SetVersion mocks method
+func (m *MockManager) SetVersion(id string, version resources.Version) error {
+	return nil
+}
+
+// DeleteVersion mocks method
+func (m *MockManager) DeleteVersion(id, service string) error {
+	return nil
+}
+
+// GetVersion mocks method
+func (m *MockManager) GetVersion(id, service string) (resources.Version, error) {
+	return resources.Version{}, nil
 }

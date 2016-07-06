@@ -59,7 +59,6 @@ type MetaData struct {
 
 // ServiceCatalog TODO
 type ServiceCatalog struct {
-	BasicEntry
 	Services   []Service
 	LastUpdate time.Time
 }
@@ -142,9 +141,16 @@ type Credentials struct {
 	Registry Registry `json:"registry"`
 }
 
+// TenantEntry TODO
+type TenantEntry struct {
+	BasicEntry
+	TenantToken    string
+	ProxyConfig    ProxyConfig
+	ServiceCatalog ServiceCatalog
+}
+
 // ProxyConfig TODO
 type ProxyConfig struct {
-	BasicEntry
 	LoadBalance       string      `json:"load_balance"`
 	Port              int         `json:"port"`
 	ReqTrackingHeader string      `json:"req_tracking_header"` // TODO: name?
@@ -176,4 +182,13 @@ type Version struct {
 	Service   string `json:"service"`
 	Default   string `json:"default"`
 	Selectors string `json:"selectors"`
+}
+
+// TenantInfo JSON object for credentials and metadata of a tenant
+type TenantInfo struct {
+	Credentials       Credentials `json:"credentials"`
+	LoadBalance       string      `json:"load_balance"`
+	Port              int         `json:"port"`
+	ReqTrackingHeader string      `json:"req_tracking_header"`
+	Filters           Filters     `json:"filters"`
 }

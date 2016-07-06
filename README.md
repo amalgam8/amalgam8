@@ -80,15 +80,15 @@ The following environment variables are available. All of them are optional.
 
 #### Registry Configuration
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `API_PORT` | `--api_port` | 80 | API port number | 8080 |
-| `LOG_LEVEL` | `--log_level` | `info` | Logging level. Supported values are: `debug`, `info`, `warn`, `error`, `fatal`, `panic` | `debug` |
-| `LOG_FORMAT` | `--log_format` | `json` | Logging format. Supported values are: `text`, `json`, `logstash` | `text` |
-| `NAMESPACE_CAPACITY` | `--namespace_capacity` | 100 | maximum number of instances that may be registered in a namespace | -1 (no capacity limit) |  
-| `DEFAULT_TTL` | `--default_ttl` | 1m | Registry default instance time-to-live (TTL) | 30s |
-| `MIN_TTL` | `--min_ttl` | 10s | Minimum TTL that may be specified during registration | 10s | 
-| `MAX_TTL` | `--max_ttl` | 20m | Maximum TTL that may be specified during registration | 10m |
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| `API_PORT` | `--api_port` | API port number | 8080 |
+| `LOG_LEVEL` | `--log_level` | Logging level. Supported values are: `debug`, `info`, `warn`, `error`, `fatal`, `panic` | `debug` |
+| `LOG_FORMAT` | `--log_format` | Logging format. Supported values are: `text`, `json`, `logstash` | `text` |
+| `NAMESPACE_CAPACITY` | `--namespace_capacity` | maximum number of instances that may be registered in a namespace | -1 (no capacity limit) |  
+| `DEFAULT_TTL` | `--default_ttl` | Registry default instance time-to-live (TTL) | 30s |
+| `MIN_TTL` | `--min_ttl` | Minimum TTL that may be specified during registration | 10s | 
+| `MAX_TTL` | `--max_ttl` | Maximum TTL that may be specified during registration | 10m |
 
 
 #### Authentication and Authorization
@@ -102,11 +102,11 @@ flag):
 environment (e.g., single tenant with multiple applications or environments).
 * JWT: encodes the namespace value in a signed JWT token claim. 
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `AUTH_MODE` | `--auth_mode` | `jwt` | Authentication modes. Supported values are: `trusted`, `jwt` | none (no isolation) |
-| `JWT_SECRET` | `--jwt_secret` | `53cr3t` | Secret key for JWT authentication | none (must be set if `AUTH_MODE` is `jwt`) |
-| `REQUIRE_HTTPS` | `--require_https` | `true` | Require clients to use HTTPS for API calls | `false` |
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| `AUTH_MODE` | `--auth_mode` | Authentication modes. Supported values are: `trusted`, `jwt` | none (no isolation) |
+| `JWT_SECRET` | `--jwt_secret` | Secret key for JWT authentication | none (must be set if `AUTH_MODE` is `jwt`) |
+| `REQUIRE_HTTPS` | `--require_https` | Require clients to use HTTPS for API calls | `false` |
 
 If `jwt` is specified, `JWT_SECRET` (or `--jwt_secret`) must be set as well to allow encryption and decryption.
 Namespace value encoding must be present in every API call using HTTP Bearer Authorization:
@@ -124,13 +124,13 @@ between cluster members.
 Peer discovery currently uses a shared volume between all members. The volume must be mounted RW into each container.
 Alternative discovery mechanisms are being explored.
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `CLUSTER_SIZE` | `--cluster_size` | 3 | Cluster minimal healthy size, peers detecting a lower value will log errors | 1 (standalone) |
-| `CLUSTER_DIR` | `--cluster_dir` | /tmp/sd | Filesystem directory for cluster membership | |
-| `REPLICATION` | `--replication` | `true` | Enable replication between cluster members | `false` |
-| `REPLICATION_PORT` | `--replication_port` | 8081 | Replication port number | 6100 |
-| `SYNC_TIMEOUT` | `--sync_timeout` | 60s | Timeout for establishing connections to peers for replication | 30s |
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| `CLUSTER_SIZE` | `--cluster_size` | Cluster minimal healthy size, peers detecting a lower value will log errors | 1 (standalone) |
+| `CLUSTER_DIR` | `--cluster_dir` | Filesystem directory for cluster membership | none, must be specified for clustering to work |
+| `REPLICATION` | `--replication` | Enable replication between cluster members | `false` |
+| `REPLICATION_PORT` | `--replication_port` | Replication port number | 6100 |
+| `SYNC_TIMEOUT` | `--sync_timeout` | Timeout for establishing connections to peers for replication | 30s |
 
 #### Catalog Extensions
 
@@ -138,10 +138,10 @@ The Amalgam8 Service Registry optionally supports read-only catalogs extensions.
 The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, etc) is read by the Amalgam8 Service Registry and
 returned to the user along with the content of the registry itself.
 
-| Environment Key | Flag Name                   | Example Value(s)            | Description | Default Value |
-|:----------------|:----------------------------|:----------------------------|:------------|:--------------|
-| `K8S_URL` | `--k8s_url` | http://localhost:8080 | Kubernetes API server | |
-| `K8S_TOKEN` | `--k8s_token` | wAB90tY... | Kubernetes API token | |
+| Environment Key | Flag Name                   | Description | Default Value |
+|:----------------|:----------------------------|:------------|:--------------|
+| `K8S_URL` | `--k8s_url` | Kubernetes API server | (none) |
+| `K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
 
 
 ## API

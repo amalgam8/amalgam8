@@ -91,7 +91,7 @@ You should see the following output:
 +-------------+-----------------+-------------------+
 ```
 
-Open http://localhost:32000/productpage/productpage from your browser
+Open [http://localhost:32000/productpage/productpage](http://localhost:32000/productpage/productpage) from your browser
 and you should see the bookinfo application `productpage` displayed.
 Notice that the `productpage` is displayed, with no rating stars since `reviews:v1` does not
 access the ratings service.

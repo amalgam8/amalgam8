@@ -96,7 +96,7 @@ sudo chmod +x /usr/local/bin/docker-compose
 #docker restart tmp_master_1
 
 # Install Amalgam8 CLI
-pip install a8ctl
+pip install a8ctl==0.1.8
 
 ## Installing Weave Scope
 #sudo wget -O /usr/local/bin/scope https://git.io/scope
@@ -129,6 +129,10 @@ Vagrant.configure('2') do |config|
 
   if FileTest::directory?("../a8ctl")
     config.vm.synced_folder "../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/a8ctl"
+  end
+
+  if FileTest::directory?("../console")
+    config.vm.synced_folder "../console", "/home/vagrant/sandbox/src/github.com/amalgam8/console"
   end
 
   config.vm.provider :virtualbox do |vb|

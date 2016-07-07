@@ -145,24 +145,21 @@ func (g *generator) TemplateConfig(catalog resources.ServiceCatalog, conf resour
 
 		upstreams := map[string][]string{}
 		for _, endpoint := range service.Endpoints {
-			if endpoint.Type == "http" { // We only support HTTP, not HTTPS or other protocols
-
-				version := endpoint.Metadata.Version
-				upstreamName := service.Name
-				if version != "" {
-					upstreamName += "_" + version
-				} else {
-					upstreamName += "_" + unversionedVersionFilter.Default
-				}
-
-				versionUpstreams := upstreams[upstreamName]
-				if versionUpstreams == nil {
-					versionUpstreams = []string{endpoint.Value}
-				} else {
-					versionUpstreams = append(versionUpstreams, endpoint.Value)
-				}
-				upstreams[upstreamName] = versionUpstreams
+			version := endpoint.Metadata.Version
+			upstreamName := service.Name
+			if version != "" {
+				upstreamName += "_" + version
+			} else {
+				upstreamName += "_" + unversionedVersionFilter.Default
 			}
+
+			versionUpstreams := upstreams[upstreamName]
+			if versionUpstreams == nil {
+				versionUpstreams = []string{endpoint.Value}
+			} else {
+				versionUpstreams = append(versionUpstreams, endpoint.Value)
+			}
+			upstreams[upstreamName] = versionUpstreams
 		}
 
 		// Only generate a proxy configuration if we have endpoints

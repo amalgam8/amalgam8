@@ -192,3 +192,26 @@ type TenantInfo struct {
 	ReqTrackingHeader string      `json:"req_tracking_header"`
 	Filters           Filters     `json:"filters"`
 }
+
+// ConfigTemplate is used by the template file to generate the NGINX config
+type ConfigTemplate struct {
+	Port                 int               `json:"port"`
+	ReqTrackingHeader    string            `json:"req_tracking_header"`
+	LogReqTrackingHeader string            `json:"log_req_tracking_header"`
+	Proxies              []ServiceTemplate `json:"proxies"`
+}
+
+// VersionedUpstreams
+type VersionedUpstreams struct {
+	UpstreamName string   `json:"name"`
+	Upstreams    []string `json:"upstreams"`
+}
+
+// ServiceTemplate is used by the template file to generate service configurations in the NGINX config
+type ServiceTemplate struct {
+	ServiceName      string               `json:"service_name"`
+	Versions         []VersionedUpstreams `json:"versions"`
+	VersionDefault   string               `json:"version_default"`
+	VersionSelectors string               `json:"selectors"`
+	Rules            []Rule               `json:"rules"`
+}

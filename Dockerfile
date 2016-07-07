@@ -12,14 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM ubuntu:14.04
-
-# Install root CA certificates
-RUN apt-get -y update && apt-get -y install ca-certificates
-
-# Vulnerability Advisor stuff
-RUN sed -i 's/^PASS_MAX_DAYS.*/PASS_MAX_DAYS   90/' /etc/login.defs
-RUN sed -i 's/sha512/sha512 minlen=8/' /etc/pam.d/common-password
+FROM alpine:latest
 
 # Environment variables
 ENV NGINX_PORT 6379
@@ -30,6 +23,3 @@ COPY /bin/a8controller /opt/a8controller/a8controller
 COPY /nginx/nginx.conf.tmpl /opt/a8controller/nginx/nginx.conf.tmpl
 
 ENTRYPOINT ["/opt/a8controller/a8controller"]
-
-ENV GIT_COMMIT={GIT_COMMIT} \
-    IMAGE_NAME={IMAGE_NAME}

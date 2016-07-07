@@ -28,6 +28,7 @@ import (
 // Generator produces NGINX configurations for tenants
 type Generator interface {
 	Generate(w io.Writer, id string, lastUpdate *time.Time) error
+	TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate
 }
 
 type generator struct {
@@ -69,7 +70,7 @@ func (g *generator) Generate(w io.Writer, id string, lastUpdate *time.Time) erro
 	}
 
 	// Generate the struct for the template
-	templateConf := g.templateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	templateConf := g.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
 
 	// Generate the NGINX configuration
 	if err := g.template.Execute(w, &templateConf); err != nil {
@@ -114,7 +115,7 @@ Rules are independent of Services except (maybe) when they are initially created
 
 // templateConfig generates the structure expected by the template file which is used to generate NGINX. It also filters
 // out non-HTTP endpoints.
-func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) configTemplate {
+func (g *generator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
 	rules := map[string][]resources.Rule{}
 	for _, rule := range conf.Filters.Rules {
 		rules[rule.Destination] = append(rules[rule.Destination], rule)
@@ -135,7 +136,7 @@ func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resour
 		versionFilters[version.Service] = version
 	}
 
-	proxies := make([]serviceTemplate, 0, len(catalog.Services))
+	proxies := make([]resources.ServiceTemplate, 0, len(catalog.Services))
 	for _, service := range catalog.Services {
 
 		if _, ok := versionFilters[service.Name]; !ok {
@@ -166,11 +167,14 @@ func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resour
 
 		// Only generate a proxy configuration if we have endpoints
 		if len(upstreams) > 0 {
-			versions := []versionedUpstreams{}
+			versions := []resources.VersionedUpstreams{}
 			for k, v := range upstreams {
-				versions = append(versions, versionedUpstreams{k, v})
+				versions = append(versions, resources.VersionedUpstreams{
+					UpstreamName: k,
+					Upstreams:    v,
+				})
 			}
-			proxies = append(proxies, serviceTemplate{
+			proxies = append(proxies, resources.ServiceTemplate{
 				ServiceName:      service.Name,
 				Versions:         versions,
 				VersionDefault:   versionFilters[service.Name].Default,
@@ -181,7 +185,7 @@ func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resour
 	}
 
 	// Create the struct expected by the template
-	templateConf := configTemplate{
+	templateConf := resources.ConfigTemplate{
 		Port:                 conf.Port,
 		ReqTrackingHeader:    conf.ReqTrackingHeader,
 		LogReqTrackingHeader: strings.Replace(strings.ToLower(conf.ReqTrackingHeader), "-", "_", -1),
@@ -189,26 +193,4 @@ func (g *generator) templateConfig(catalog resources.ServiceCatalog, conf resour
 	}
 
 	return templateConf
-}
-
-// configTemplate is used by the template file to generate the NGINX config
-type configTemplate struct {
-	Port                 int
-	ReqTrackingHeader    string
-	LogReqTrackingHeader string
-	Proxies              []serviceTemplate
-}
-
-type versionedUpstreams struct {
-	UpstreamName string
-	Upstreams    []string
-}
-
-// serviceTemplate is used by the template file to generate service configurations in the NGINX config
-type serviceTemplate struct {
-	ServiceName      string
-	Versions         []versionedUpstreams
-	VersionDefault   string
-	VersionSelectors string
-	Rules            []resources.Rule
 }

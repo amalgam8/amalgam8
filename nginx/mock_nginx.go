@@ -17,16 +17,23 @@ package nginx
 import (
 	"io"
 	"time"
+
+	"github.com/amalgam8/controller/resources"
 )
 
 // MockGenerator implements interface
 type MockGenerator struct {
-	GenerateString string
-	GenerateError  error
+	GenerateString      string
+	GenerateError       error
+	ConfigTemplateValue resources.ConfigTemplate
 }
 
 // Generate mocks method
 func (m *MockGenerator) Generate(w io.Writer, id string, lastUpdate *time.Time) error {
 	w.Write([]byte(m.GenerateString))
 	return m.GenerateError
+}
+
+func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
+	return m.ConfigTemplateValue
 }

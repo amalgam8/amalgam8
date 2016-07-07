@@ -27,7 +27,7 @@ const TopicName = "NewRules"
 // TenantProducerCache maintains a lazy-initialized list of producers for tenant spaces.
 type TenantProducerCache interface {
 	StartGC()
-	SendEvent(tenantID string, kafka resources.Kafka) error
+	SendEvent(tenantID string, kafka resources.Kafka, templ resources.ConfigTemplate) error
 	Delete(tenantID string)
 }
 
@@ -93,7 +93,7 @@ func (c *tenantProducerCache) garbageCollection() {
 }
 
 // SendEvent TODO
-func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka) error {
+func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka, templ resources.ConfigTemplate) error {
 	var err error
 	var expiredEntry *producerCacheEntry
 
@@ -102,7 +102,7 @@ func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka) 
 	if entry != nil {
 		expired := time.Now().After(entry.Expiration)
 		if !expired {
-			err := entry.Producer.SendEvent(TopicName, tenantID, "")
+			err := entry.Producer.SendEvent(TopicName, tenantID, templ)
 			entry.Expiration = time.Now().Add(c.ttl)
 			c.mutex.Unlock()
 			return err
@@ -173,7 +173,7 @@ func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka) 
 		c.cache[tenantID] = entry
 	}
 
-	err = entry.Producer.SendEvent(TopicName, tenantID, "")
+	err = entry.Producer.SendEvent(TopicName, tenantID, templ)
 	c.mutex.Unlock()
 
 	return err

@@ -17,13 +17,16 @@ package notification
 import (
 	"time"
 
+	"encoding/json"
+
 	"github.com/Shopify/sarama"
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/resources"
 )
 
 // Producer interface
 type Producer interface {
-	SendEvent(topic, key, value string) error
+	SendEvent(topic, key string, value resources.ConfigTemplate) error
 	Close() error
 }
 
@@ -71,11 +74,18 @@ func NewProducer(conf ProducerConfig) (Producer, error) {
 }
 
 // SendEvent produces an event on the topic.
-func (p *producer) SendEvent(topic, key, value string) error {
+func (p *producer) SendEvent(topic, key string, value resources.ConfigTemplate) error {
+
+	data, err := json.Marshal(&value)
+	if err != nil {
+		logrus.WithError(err).Error("Error marshalling object")
+		return err
+	}
+
 	msg := &sarama.ProducerMessage{
 		Topic:     topic,
 		Key:       sarama.StringEncoder(key),
-		Value:     sarama.StringEncoder(value),
+		Value:     sarama.ByteEncoder(data),
 		Partition: 0,
 	}
 

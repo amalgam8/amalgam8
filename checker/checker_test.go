@@ -19,6 +19,7 @@ import (
 
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
@@ -33,6 +34,7 @@ var _ = Describe("Checker", func() {
 		sdClient *clients.MockRegistry
 		db       database.Tenant
 		cache    *notification.MockTenantProducerCache
+		n        *nginx.MockGenerator
 	)
 
 	Context("Checker", func() {
@@ -41,10 +43,12 @@ var _ = Describe("Checker", func() {
 			db = database.NewTenant(database.NewMemoryCloudantDB())
 			sdClient = new(clients.MockRegistry)
 			cache = new(notification.MockTenantProducerCache)
+			n = &nginx.MockGenerator{}
 			checker = New(Config{
 				Database:      db,
 				Registry:      sdClient,
 				ProducerCache: cache,
+				Generator:     n,
 			})
 
 			id = "abcdef"

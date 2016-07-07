@@ -144,6 +144,7 @@ type Credentials struct {
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry
+	TenantToken    string
 	ProxyConfig    ProxyConfig
 	ServiceCatalog ServiceCatalog
 }
@@ -184,10 +185,32 @@ type Version struct {
 
 // TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
-	ID                string      `json:"id"`
 	Credentials       Credentials `json:"credentials"`
 	LoadBalance       string      `json:"load_balance"`
 	Port              int         `json:"port"`
 	ReqTrackingHeader string      `json:"req_tracking_header"`
 	Filters           Filters     `json:"filters"`
+}
+
+// ConfigTemplate is used by the template file to generate the NGINX config
+type ConfigTemplate struct {
+	Port                 int               `json:"port"`
+	ReqTrackingHeader    string            `json:"req_tracking_header"`
+	LogReqTrackingHeader string            `json:"log_req_tracking_header"`
+	Proxies              []ServiceTemplate `json:"proxies"`
+}
+
+// VersionedUpstreams
+type VersionedUpstreams struct {
+	UpstreamName string   `json:"name"`
+	Upstreams    []string `json:"upstreams"`
+}
+
+// ServiceTemplate is used by the template file to generate service configurations in the NGINX config
+type ServiceTemplate struct {
+	ServiceName      string               `json:"service_name"`
+	Versions         []VersionedUpstreams `json:"versions"`
+	VersionDefault   string               `json:"version_default"`
+	VersionSelectors string               `json:"selectors"`
+	Rules            []Rule               `json:"rules"`
 }

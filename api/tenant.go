@@ -50,12 +50,12 @@ func NewTenant(conf TenantConfig) *Tenant {
 func (t *Tenant) Routes() []*rest.Route {
 	return []*rest.Route{
 		rest.Post("/v1/tenants", reportMetric(t.reporter, t.PostTenant, "tenants_create")),
-		rest.Put("/v1/tenants/#id", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
-		rest.Get("/v1/tenants/#id", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
-		rest.Delete("/v1/tenants/#id", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
-		rest.Put("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
-		rest.Get("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
-		rest.Delete("/v1/tenants/#id/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
+		rest.Put("/v1/tenants", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
+		rest.Get("/v1/tenants", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
+		rest.Delete("/v1/tenants", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
+		rest.Put("/v1/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
+		rest.Get("/v1/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
+		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
 	}
 }
 
@@ -63,7 +63,15 @@ func (t *Tenant) Routes() []*rest.Route {
 func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
+
 	tenantInfo := resources.TenantInfo{}
+
+	tenantToken := req.Header.Get(middleware.AuthHeader)
 
 	if err = req.DecodeJsonPayload(&tenantInfo); err != nil {
 		RestError(w, req, http.StatusBadRequest, "json_error")
@@ -71,12 +79,12 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	// Validate input
-	if tenantInfo.ID == "" {
+	if tenantID == "" {
 		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
 		return errors.New("special error")
 	}
 
-	if err = t.manager.Create(tenantInfo.ID, tenantInfo); err != nil {
+	if err = t.manager.Create(tenantID, tenantToken, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -89,7 +97,11 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
 	tenantInfo := resources.TenantInfo{}
 
@@ -98,7 +110,7 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	if err = t.manager.Set(id, tenantInfo); err != nil {
+	if err = t.manager.Set(tenantID, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -112,16 +124,19 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	// validate auth header
 	// if this tenant has orphans, CSB will know that the token is invalid
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
-	entry, err := t.manager.Get(id)
+	entry, err := t.manager.Get(tenantID)
 	if err != nil {
 		processError(w, req, err)
 		return err
 	}
 
 	tenantInfo := resources.TenantInfo{
-		ID:                id,
 		Credentials:       entry.ProxyConfig.Credentials,
 		LoadBalance:       entry.ProxyConfig.LoadBalance,
 		Port:              entry.ProxyConfig.Port,
@@ -138,7 +153,11 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 	service := req.PathParam("service")
 
 	respJSON, err := t.manager.GetVersion(tenantID, service)
@@ -164,7 +183,11 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 	service := req.PathParam("service")
 
 	newVersion := resources.Version{}
@@ -193,7 +216,11 @@ func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
 	//reqID := req.Header.Get(middleware.RequestIDHeader)
 
-	tenantID := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 	service := req.PathParam("service")
 
 	if err := t.manager.DeleteVersion(tenantID, service); err != nil {
@@ -211,10 +238,14 @@ func (t *Tenant) DeleteServiceVersions(w rest.ResponseWriter, req *rest.Request)
 func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 	var err error
 
-	id := req.PathParam("id")
+	tenantID := GetTenantID(req)
+	if tenantID == "" {
+		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
+		return errors.New("special error")
+	}
 
 	// Delete from rules
-	if err = t.manager.Delete(id); err != nil {
+	if err = t.manager.Delete(tenantID); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -225,15 +256,28 @@ func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 func processError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
+		tenantID := GetTenantID(req)
+		requestID := req.Header.Get(middleware.RequestIDHeader)
+
+		log := logrus.WithFields(logrus.Fields{
+			"err":        err,
+			"tenant_id":  tenantID,
+			"request_id": requestID,
+		})
 		if e, ok := err.(*manager.InvalidRuleError); ok {
+			log.Error("Bad request")
 			RestError(w, req, http.StatusBadRequest, e.ErrorMessage)
 		} else if e, ok := err.(*manager.DBError); ok {
+			log.Error("Database error occured")
 			handleDBReadError(w, req, e.Err)
 		} else if e, ok := err.(*manager.ServiceUnavailableError); ok {
+			log.Error("Service unavailable")
 			RestError(w, req, http.StatusServiceUnavailable, e.ErrorMessage)
 		} else if e, ok := err.(*manager.RuleNotFoundError); ok {
+			log.Error("Filter ID not fount")
 			RestError(w, req, http.StatusNotFound, e.ErrorMessage)
 		} else {
+			log.Error("Unknow availability error occured")
 			RestError(w, req, http.StatusServiceUnavailable, "unknown_availability_error")
 		}
 	}

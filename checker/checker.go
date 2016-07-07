@@ -24,6 +24,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 )
@@ -37,6 +38,7 @@ type checker struct {
 	db            database.Tenant
 	registry      clients.Registry
 	producerCache notification.TenantProducerCache
+	generator     nginx.Generator
 }
 
 // Config options
@@ -44,6 +46,7 @@ type Config struct {
 	Database      database.Tenant
 	Registry      clients.Registry
 	ProducerCache notification.TenantProducerCache
+	Generator     nginx.Generator
 }
 
 // New instantiates new instance
@@ -52,6 +55,7 @@ func New(conf Config) Checker {
 		db:            conf.Database,
 		registry:      conf.Registry,
 		producerCache: conf.ProducerCache,
+		generator:     conf.Generator,
 	}
 }
 
@@ -100,7 +104,8 @@ func (c *checker) Check(ids []string) error {
 			}
 
 			// Notify tenant
-			if err = c.producerCache.SendEvent(entry.ID, creds.Kafka); err != nil {
+			templ := c.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+			if err = c.producerCache.SendEvent(entry.TenantToken, creds.Kafka, templ); err != nil {
 				logrus.WithFields(logrus.Fields{
 					"err":       err,
 					"tenant_id": entry.ID,

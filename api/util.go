@@ -22,6 +22,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
+	"github.com/amalgam8/controller/middleware"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nicksnyder/go-i18n/i18n"
 )
@@ -31,10 +32,13 @@ func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusNotFound {
 				RestError(w, req, http.StatusNotFound, "no matching id")
+				return
 			}
 			RestError(w, req, http.StatusServiceUnavailable, "database_error")
+			return
 		}
 		RestError(w, req, http.StatusServiceUnavailable, "failed_to_read_info")
+		return
 	}
 }
 
@@ -51,6 +55,16 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 		// Report success
 		reporter.Success(name, endTime)
 	}
+}
+
+func GetTenantID(req *rest.Request) string {
+	tenantID := req.Env[middleware.AuthEnv]
+
+	if id, ok := tenantID.(string); ok {
+		return id
+	}
+
+	return ""
 }
 
 // RestError writes a basic error response with a translated error message and an untranslated error ID

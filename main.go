@@ -105,17 +105,6 @@ func controllerMain(conf config.Config) error {
 
 	tpc := notification.NewTenantProducerCache()
 
-	r := manager.NewManager(manager.Config{
-		Database:      tenantDB,
-		ProducerCache: tpc,
-	})
-
-	c := checker.New(checker.Config{
-		Database:      tenantDB,
-		Registry:      registry,
-		ProducerCache: tpc,
-	})
-
 	g, err := nginx.NewGenerator(nginx.Config{
 		Path:     "./nginx/nginx.conf.tmpl",
 		Database: tenantDB,
@@ -125,6 +114,19 @@ func controllerMain(conf config.Config) error {
 		setupHandler.SetError(err)
 		return err
 	}
+
+	r := manager.NewManager(manager.Config{
+		Database:      tenantDB,
+		ProducerCache: tpc,
+		Generator:     g,
+	})
+
+	c := checker.New(checker.Config{
+		Database:      tenantDB,
+		Registry:      registry,
+		ProducerCache: tpc,
+		Generator:     g,
+	})
 
 	n := api.NewNGINX(api.NGINXConfig{
 		Reporter:  reporter,
@@ -155,6 +157,10 @@ func controllerMain(conf config.Config) error {
 		},
 		&rest.ContentTypeCheckerMiddleware{},
 		&middleware.RequestIDMiddleware{},
+		&middleware.AuthMiddleware{
+			Auth: &middleware.LocalAuth{},
+			Key:  conf.ControlToken,
+		},
 		&middleware.LoggingMiddleware{},
 	)
 

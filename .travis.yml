@@ -58,3 +58,15 @@ deploy:
             repo: amalgam8/sidecar
             go: 1.6
             condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
+
+# Configure notifications
+notifications:
+    email:
+        on_success: never
+        on_failure: always
+    slack:
+        rooms:
+            - secure: "e7h0UYdA4dGgktZWxBTzw7zSio0RfNDSPOdgqszliYm8GaKTReTeiXpmwqY9X0Xk/X/FEdjRNZNIt1ZV7E323iHejJEx+1ocKvyJZrd3SFGaslpzIcWnj6nEod8v1gFidq1mvbuaiWil2QtmCzAo4rWpfjpthgJQZRiFCKvtCJOZTl326VOLGObWH2TiVFnwdRTZ598HtyL9TIv1DkTmKaQQR+h5+6AEsd+/f1MvQKXqbfrW4Jpu87N3pXU6aOm/37xn3RRMEvzDrO0VhBr1tmvo6KtFPp8z9jl4rA6mxM2URsSNTGgO7e/hMOMKwTBItaUGwFGTEwNvcYvT52FcMASt2uYFK0EpU8a4cbHIOhBR/yob7IebsVfR2dgXbMwrLsHf5iX9joeGTWmI5bT+E+XuI4N6yEXH8Cp9EWO++4X0P1GQ+ONY5NDrARNXCD+TLafAAWIILeBWu58gR3zdGi70FoqPPa//carsBUtk9/1wyTgpkammloTz316YvKWkop8fokT0oA7Pp54EKM6ECEFqgxwpTH/IKdycQGRHEGfYx21TjcgWezWJrGIRkggS/MPdsMmwN57tjP8y+hHq7zxsHyOUdfYYLoPLjEof/Oy+PnGk5Fcqm3+jgQ7KwetfmAfcpi6fjIgfvIekAcezK5l0ddGAwEJr7/+ZBEQQ2Pw="
+        on_success: always
+        on_failure: always
+        on_pull_requests: true

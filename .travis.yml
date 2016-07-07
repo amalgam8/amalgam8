@@ -1,7 +1,9 @@
 language: go
 
-# Enable Travis container-based infrastructure
-sudo: false
+# Require Travis to use a docker-enabled virtualization environment for the build
+sudo: required
+services:
+  - docker
 
 # Go versions to build with
 go:
@@ -27,17 +29,44 @@ script:
 deploy:
     
     # Upload files to GitHub as release attachments
-    provider: releases
-    api_key: $GITHUB_TOKEN
+    -   provider: releases
+        api_key: $GITHUB_TOKEN
       
-    # Keep artifacts produced during the build
-    skip_cleanup: true
+        # Keep artifacts produced during the build
+        skip_cleanup: true
     
-    # Upload anything under the release directory
-    file_glob: true
-    file: release/*
+        # Upload anything under the release directory
+        file_glob: true
+        file: release/*
 
-    # Trigger only when building a tagged commit, on Go 1.6
-    on:
-        tags: true
-        go: 1.6
+        # Trigger only when building a tagged commit, on the origin repo, and with Go 1.6
+        on:
+            tags: true
+            repo: amalgam8/controller
+            go: 1.6
+
+    # Push images to Docker Hub
+    -   provider: script
+        script: ./scripts/push_dockerhub.sh
+    
+        # Keep artifacts produced during the build
+        skip_cleanup: true
+            
+        # Trigger only when building a version-tagged commit, on Go 1.6
+        on:
+            tags: true
+            repo: amalgam8/controller
+            go: 1.6
+            condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
+
+# Configure notifications
+notifications:
+    email:
+        on_success: never
+        on_failure: always
+    slack:
+        rooms:
+            - secure: "vU5avbsKbWvPh5uAiIP5OcWywvCLY4d4iBQ5d101OAH98lLQRzCymoUY8A2W7GkKbVhcKDlX8+sx9/gJpTnB8haBAzyU3NLE+87QpnE/bXBPJRTyaL0lQGCi45z9NjXykJpERH84YUGTOw/cOWOgF//cVY6OQ9c6kkCmHvRtugrkN32ygOAN8dC5tPCJSH5kuLYG/JASDfmG+KM7SUUw9omucBS24I62FQk9GFotVO+0SBEGTPSPuPOYMIOaGpXIETvlXi1Qi85qGgBlCl6gIXOKqlSuZv60nQrJunOa1a6LmIdE5UGPH0ooR07+jfBpfpgNzfkfzYxcR56RN+FQE+D4XqWX09GXWOikN1S7vnhml/SzYL/sBoSk27Rrg6TtiVkaxTKBNikIlhzZC//Z6oCVZlA0dArsJhNxTPGtPTsgqbKiJUR5Qgex36aMb1wA8NuvKcftqiBtkgIRiGD8w/1C5tNvq3GSnLLs6l9xmpMt6AgBi4e6fJk4DN5S0zHxxYpe0vAyxrZFpB5GhdSVj8FWK6SltTwcVLgNirOv4qZ5jisCRSQj5ushdwd6klIhbfPEccHnlwvMS2DIbfSD3yo38OTk7k498CTcwQH6UUaIbQa00cSucLnIcXyV3UndUljmdIm4GoNbI0Vt+0SgykIOTI+qXW6PxZyhRxcg4qE="
+        on_success: always
+        on_failure: always
+        on_pull_requests: true

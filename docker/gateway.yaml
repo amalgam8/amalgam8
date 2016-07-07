@@ -14,7 +14,7 @@
 
 ##API Gateway##
 gateway:
-  image: amalgam8/a8-sidecar:0.1
+  image: amalgam8/a8-sidecar:0.1-alpine
   environment:
     - CONTROLLER_URL=http://controller:6379
     - TENANT_TOKEN=local

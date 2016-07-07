@@ -9,7 +9,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -36,7 +36,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-ratings-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -63,7 +63,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -90,7 +90,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -122,7 +122,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -154,7 +154,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {

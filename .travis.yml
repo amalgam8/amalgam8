@@ -58,3 +58,15 @@ deploy:
             repo: amalgam8/controller
             go: 1.6
             condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
+
+# Configure notifications
+notifications:
+    email:
+        on_success: never
+        on_failure: always
+    slack:
+        rooms:
+            - secure: "vU5avbsKbWvPh5uAiIP5OcWywvCLY4d4iBQ5d101OAH98lLQRzCymoUY8A2W7GkKbVhcKDlX8+sx9/gJpTnB8haBAzyU3NLE+87QpnE/bXBPJRTyaL0lQGCi45z9NjXykJpERH84YUGTOw/cOWOgF//cVY6OQ9c6kkCmHvRtugrkN32ygOAN8dC5tPCJSH5kuLYG/JASDfmG+KM7SUUw9omucBS24I62FQk9GFotVO+0SBEGTPSPuPOYMIOaGpXIETvlXi1Qi85qGgBlCl6gIXOKqlSuZv60nQrJunOa1a6LmIdE5UGPH0ooR07+jfBpfpgNzfkfzYxcR56RN+FQE+D4XqWX09GXWOikN1S7vnhml/SzYL/sBoSk27Rrg6TtiVkaxTKBNikIlhzZC//Z6oCVZlA0dArsJhNxTPGtPTsgqbKiJUR5Qgex36aMb1wA8NuvKcftqiBtkgIRiGD8w/1C5tNvq3GSnLLs6l9xmpMt6AgBi4e6fJk4DN5S0zHxxYpe0vAyxrZFpB5GhdSVj8FWK6SltTwcVLgNirOv4qZ5jisCRSQj5ushdwd6klIhbfPEccHnlwvMS2DIbfSD3yo38OTk7k498CTcwQH6UUaIbQa00cSucLnIcXyV3UndUljmdIm4GoNbI0Vt+0SgykIOTI+qXW6PxZyhRxcg4qE="
+        on_success: always
+        on_failure: always
+        on_pull_requests: true

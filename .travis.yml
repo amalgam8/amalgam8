@@ -1,7 +1,9 @@
 language: go
 
-# Enable Travis container-based infrastructure
-sudo: false
+# Require Travis to use a docker-enabled virtualization environment for the build
+sudo: required
+services:
+  - docker
 
 # Go versions to build with
 go:
@@ -27,17 +29,32 @@ script:
 deploy:
     
     # Upload files to GitHub as release attachments
-    provider: releases
-    api_key: $GITHUB_TOKEN
+    -   provider: releases
+        api_key: $GITHUB_TOKEN
       
-    # Keep artifacts produced during the build
-    skip_cleanup: true
+        # Keep artifacts produced during the build
+        skip_cleanup: true
     
-    # Upload anything under the release directory
-    file_glob: true
-    file: release/*
+        # Upload anything under the release directory
+        file_glob: true
+        file: release/*
 
-    # Trigger only when building a tagged commit, on Go 1.6
-    on:
-        tags: true
-        go: 1.6
+        # Trigger only when building a tagged commit, on the origin repo, and with Go 1.6
+        on:
+            tags: true
+            repo: amalgam8/controller
+            go: 1.6
+
+    # Push images to Docker Hub
+    -   provider: script
+        script: ./scripts/push_dockerhub.sh
+    
+        # Keep artifacts produced during the build
+        skip_cleanup: true
+            
+        # Trigger only when building a version-tagged commit, on Go 1.6
+        on:
+            tags: true
+            repo: amalgam8/controller
+            go: 1.6
+            condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+

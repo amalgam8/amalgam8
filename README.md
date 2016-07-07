@@ -1,7 +1,10 @@
 # Amalgam8 Examples
 
 Sample microservice-based applications and local sandbox environment for Amalgam8.
+
 An overview of Amalgam8 can be found at www.amalgam8.io.
+
+**Note:** This is an unstable branch. If you are experimenting with Amalgam8 for the first time, please use the stable branch (`git checkout -b 0.1.0 origin/0.1.0`) and use this [README](https://github.com/amalgam8/examples/blob/0.1.0/README.md) from the stable branch.
 
 ## Overview <a id="overview"></a>
 

@@ -97,23 +97,6 @@ var _ = Describe("NGINX", func() {
 								Version: "v1",
 							},
 						},
-						resources.Endpoint{
-							Type:  "https",
-							Value: "127.0.0.2:1234",
-						},
-						resources.Endpoint{
-							Type:  "tcp",
-							Value: "127.0.0.3:1234",
-						},
-					},
-				},
-				resources.Service{
-					Name: "ServiceB",
-					Endpoints: []resources.Endpoint{
-						resources.Endpoint{
-							Type:  "https",
-							Value: "127.0.0.4:1234",
-						},
 					},
 				},
 				resources.Service{
@@ -159,12 +142,7 @@ var _ = Describe("NGINX", func() {
 			conf := buf.String()
 
 			// Verify the result...
-
-			// Make sure endpoints are present and properly filtered (only HTTP)
-			Expect(conf).To(ContainSubstring("127.0.0.1:1234"))    // HTTP
-			Expect(conf).NotTo(ContainSubstring("127.0.0.2:1234")) // HTTPS
-			Expect(conf).NotTo(ContainSubstring("127.0.0.3:1234")) // TCP
-			Expect(conf).NotTo(ContainSubstring("127.0.0.4:1234")) // HTTPS
+			Expect(conf).To(ContainSubstring("127.0.0.1:1234")) // HTTP
 
 			// Ensure proxy was generated for ServiceA and ServiceC
 			Expect(conf).To(ContainSubstring("location /ServiceA/"))
@@ -177,10 +155,6 @@ var _ = Describe("NGINX", func() {
 			Expect(conf).To(ContainSubstring("location /ServiceC/"))
 			Expect(conf).To(ContainSubstring("upstream ServiceC_UNVERSIONED"))
 			Expect(conf).To(ContainSubstring("ngx.var.target = splib.get_target(\"ServiceC\", \"UNVERSIONED\", nil)"))
-
-			// Ensure that no proxy configuration was generated for service with only HTTPS endpoint
-			Expect(conf).NotTo(ContainSubstring("proxy_pass http://ServiceB/"))
-			Expect(conf).NotTo(ContainSubstring("location /ServiceB/"))
 		})
 	})
 })

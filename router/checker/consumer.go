@@ -24,7 +24,7 @@ import (
 
 //Consumer interface
 type Consumer interface {
-	ReceiveEvent() (string, string, error)
+	ReceiveEvent() (string, []byte, error)
 	Close() error
 }
 
@@ -73,7 +73,7 @@ func NewConsumer(conf ConsumerConfig) (Consumer, error) {
 }
 
 // ReceiveEvent blocks until an event is received
-func (c *consumer) ReceiveEvent() (string, string, error) {
+func (c *consumer) ReceiveEvent() (string, []byte, error) {
 	// Wait for event
 	select {
 	case msg := <-c.partConsumer.Messages():
@@ -83,12 +83,12 @@ func (c *consumer) ReceiveEvent() (string, string, error) {
 				"key":   string(msg.Key),
 				"value": string(msg.Value),
 			}).Debug("Received message")
-			return string(msg.Key), string(msg.Value), nil
+			return string(msg.Key), msg.Value, nil
 		}
-		return "", "", errors.New("Kafka provided a nil message")
+		return "", []byte{}, errors.New("Kafka provided a nil message")
 
 	case err := <-c.partConsumer.Errors():
-		return "", "", err
+		return "", []byte{}, err
 	}
 
 }

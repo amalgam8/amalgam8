@@ -19,6 +19,9 @@ import (
 	"io"
 	"time"
 
+	"encoding/json"
+
+	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
@@ -41,9 +44,14 @@ var _ = Describe("Tenant listener", func() {
 		updateCount = 0
 
 		tenantToken = "tenant_token"
+		configTemplate := resources.ConfigTemplate{}
+
+		data, err := json.Marshal(&configTemplate)
+		Expect(err).ToNot(HaveOccurred())
 
 		consumer = &MockConsumer{
-			ReceiveEventKey: tenantToken,
+			ReceiveEventKey:   tenantToken,
+			ReceiveEventValue: data,
 		}
 		rc = &clients.MockController{}
 		n = &mockNginx{

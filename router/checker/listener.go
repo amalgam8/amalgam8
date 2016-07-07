@@ -17,10 +17,7 @@ package checker
 import (
 	"bytes"
 
-	"encoding/json"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
 	"github.com/amalgam8/sidecar/router/nginx"
@@ -64,8 +61,6 @@ func (l *listener) Start() error {
 // changed. Once the event occurs we attempt to update our configuration.
 func (l *listener) listenForUpdate() error {
 
-	confTemplate := resources.ConfigTemplate{}
-
 	// Sleep until we receive an event indicating that the our rules have changed
 	for {
 		key, value, err := l.consumer.ReceiveEvent()
@@ -75,21 +70,11 @@ func (l *listener) listenForUpdate() error {
 		}
 
 		if key == l.config.Tenant.Token {
-			err = json.Unmarshal(value, &confTemplate)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":   err,
-					"key":   key,
-					"value": string(value),
-				}).Error("Received message was not in expected format")
-			} else {
-
-				logrus.WithFields(logrus.Fields{
-					"key":   key,
-					"value": confTemplate,
-				}).Info("Tenant event received")
-				break
-			}
+			logrus.WithFields(logrus.Fields{
+				"key":   key,
+				"value": string(value),
+			}).Info("Tenant event received")
+			break
 		}
 	}
 

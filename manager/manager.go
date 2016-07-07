@@ -23,6 +23,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
+	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 )
@@ -41,12 +42,14 @@ type Manager interface {
 type manager struct {
 	db            database.Tenant
 	producerCache notification.TenantProducerCache
+	generator     nginx.Generator
 }
 
 // Config options
 type Config struct {
 	Database      database.Tenant
 	ProducerCache notification.TenantProducerCache
+	Generator     nginx.Generator
 }
 
 // NewManager creates Manager instance
@@ -54,6 +57,7 @@ func NewManager(conf Config) Manager {
 	return &manager{
 		db:            conf.Database,
 		producerCache: conf.ProducerCache,
+		generator:     conf.Generator,
 	}
 }
 
@@ -167,7 +171,8 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 
@@ -272,7 +277,8 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 
@@ -328,7 +334,8 @@ func (m *manager) SetVersion(id string, newVersion resources.Version) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 
@@ -368,7 +375,8 @@ func (m *manager) DeleteVersion(id, service string) error {
 	}
 
 	// Send Kafka event
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka); err != nil {
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 

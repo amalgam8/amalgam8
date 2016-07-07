@@ -58,10 +58,10 @@ func (t *Tenant) Routes() []*rest.Route {
 		rest.Get("/v1/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
 		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_delete")),
 
-		rest.Get("/v1/tenants/filters", reportMetric(t.reporter, t.GetFilters, "filters_read")),
-		rest.Delete("/v1/tenants/filters", reportMetric(t.reporter, t.DeleteFilters, "filters_delete")),
-		rest.Post("/v1/tenants/filters", reportMetric(t.reporter, t.PostFilters, "filters_create")),
-		rest.Put("/v1/tenants/filters", reportMetric(t.reporter, t.PutFilters, "filters_update")),
+		rest.Get("/v1/rules", reportMetric(t.reporter, t.GetRules, "rules_read")),
+		rest.Delete("/v1/rules", reportMetric(t.reporter, t.DeleteRules, "rules_delete")),
+		rest.Post("/v1/rules", reportMetric(t.reporter, t.PostRules, "rules_create")),
+		rest.Put("/v1/rules", reportMetric(t.reporter, t.PutRules, "rules_update")),
 	}
 }
 
@@ -97,7 +97,7 @@ func HandleFilterError(w rest.ResponseWriter, req *rest.Request, err error) {
 }
 
 // PostFilters creates filters in bulk
-func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
+func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 
 	filtersJSON := struct {
@@ -110,7 +110,7 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	if err = t.manager.AddFilters(id, filtersJSON.Filters); err != nil {
+	if err = t.manager.AddRules(id, filtersJSON.Filters); err != nil {
 		HandleFilterError(w, req, err)
 		return err
 	}
@@ -122,26 +122,26 @@ func (t *Tenant) PostFilters(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 // PutFilters updates filters in bulk
-func (t *Tenant) PutFilters(w rest.ResponseWriter, req *rest.Request) error {
+func (t *Tenant) PutRules(w rest.ResponseWriter, req *rest.Request) error {
 	w.WriteHeader(http.StatusNotImplemented)
 	return nil
 }
 
 // GetFilters reads filters in bulk
-func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
+func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
-	filterIDs := getQueryIDs("id", req)
+	ruleIDs := getQueryIDs("id", req)
 
-	filters, err := t.manager.ListFilters(id, filterIDs)
+	rules, err := t.manager.ListRules(id, ruleIDs)
 	if err != nil {
 		HandleFilterError(w, req, err)
 		return err
 	}
 
 	respJSON := struct {
-		Filters []resources.Rule `json:"filters"`
+		Rules []resources.Rule `json:"rules"`
 	}{
-		Filters: filters,
+		Rules: rules,
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -151,11 +151,11 @@ func (t *Tenant) GetFilters(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 // DeleteFilters deletes filters in bulk
-func (t *Tenant) DeleteFilters(w rest.ResponseWriter, req *rest.Request) error {
+func (t *Tenant) DeleteRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
-	filterIDs := getQueryIDs("id", req)
+	ruleIDs := getQueryIDs("id", req)
 
-	if err := t.manager.DeleteFilters(id, filterIDs); err != nil {
+	if err := t.manager.DeleteRules(id, ruleIDs); err != nil {
 		HandleFilterError(w, req, err)
 		return err
 	}
@@ -379,10 +379,10 @@ func processError(w rest.ResponseWriter, req *rest.Request, err error) {
 			log.Error("Service unavailable")
 			RestError(w, req, http.StatusServiceUnavailable, e.ErrorMessage)
 		} else if e, ok := err.(*manager.RuleNotFoundError); ok {
-			log.Error("Filter ID not fount")
+			log.Error("Rule ID not found")
 			RestError(w, req, http.StatusNotFound, e.ErrorMessage)
 		} else {
-			log.Error("Unknow availability error occured")
+			log.Error("Unknown availability error occured")
 			RestError(w, req, http.StatusServiceUnavailable, "unknown_availability_error")
 		}
 	}

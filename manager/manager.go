@@ -21,8 +21,6 @@ import (
 
 	"fmt"
 
-	"errors"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/nginx"
@@ -42,10 +40,10 @@ type Manager interface {
 	DeleteVersion(id, service string) error
 	GetVersion(id, service string) (resources.Version, error)
 
-	AddFilters(id string, filters []resources.Rule) error
-	ListFilters(id string, filterIDs []string) ([]resources.Rule, error)
+	AddRules(id string, filters []resources.Rule) error
+	ListRules(id string, filterIDs []string) ([]resources.Rule, error)
 	//UpdateFilters(id string, filters []resources.Rule) error
-	DeleteFilters(id string, filterIDs []string) error
+	DeleteRules(id string, filterIDs []string) error
 }
 
 type manager struct {
@@ -117,9 +115,10 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 		entry.ProxyConfig.ReqTrackingHeader = "X-Request-ID" // FIXME: common location for this?
 	}
 
-	if err = validateRules(entry.ProxyConfig.Filters.Rules); err != nil {
-		// RestError() called in validate function
-		return err
+	for _, rule := range entry.ProxyConfig.Filters.Rules {
+		if err = validateRule(rule); err != nil {
+			return err
+		}
 	}
 
 	rules := []resources.Rule{}
@@ -257,8 +256,10 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	if tenantInfo.Filters.Rules != nil {
-		if err = validateRules(tenantInfo.Filters.Rules); err != nil {
-			return err
+		for _, rule := range tenantInfo.Filters.Rules {
+			if err = validateRule(rule); err != nil {
+				return err
+			}
 		}
 
 		rules := []resources.Rule{}
@@ -410,41 +411,37 @@ func (m *manager) GetVersion(id, service string) (resources.Version, error) {
 
 }
 
-func validateRules(filters []resources.Rule) error {
-	for _, filter := range filters {
+func validateRule(rule resources.Rule) error {
+	if rule.Destination == "" {
+		return &InvalidRuleError{Reason: "invalid destination", ErrorMessage: "invalid_destination"}
+	}
 
-		if filter.Destination == "" {
-			return &InvalidRuleError{Reason: "invalid destination", ErrorMessage: "invalid_destination"}
-		}
+	if rule.AbortProbability < 0.0 || rule.AbortProbability > 1.0 {
+		return &InvalidRuleError{Reason: "invalid abort probability", ErrorMessage: "invalid_abort_probability"}
+	}
 
-		if filter.AbortProbability < 0.0 || filter.AbortProbability > 1.0 {
-			return &InvalidRuleError{Reason: "invalid abort probability", ErrorMessage: "invalid_abort_probability"}
-		}
+	if rule.ReturnCode < 0 || rule.ReturnCode >= 600 {
+		return &InvalidRuleError{Reason: "invalid return code", ErrorMessage: "invalid_return_code"}
+	}
 
-		if filter.ReturnCode < 0 || filter.ReturnCode >= 600 {
-			return &InvalidRuleError{Reason: "invalid return code", ErrorMessage: "invalid_return_code"}
-		}
+	if rule.DelayProbability < 0.0 || rule.DelayProbability > 1.0 {
+		return &InvalidRuleError{Reason: "invalid probability", ErrorMessage: "invalid_delay_probability"}
+	}
 
-		if filter.DelayProbability < 0.0 || filter.DelayProbability > 1.0 {
-			return &InvalidRuleError{Reason: "invalid probability", ErrorMessage: "invalid_delay_probability"}
-		}
+	if rule.Delay < 0 || rule.Delay > 600 {
+		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
+	}
 
-		if filter.Delay < 0 || filter.Delay > 600 {
-			return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
-		}
+	if (rule.DelayProbability != 0.0 && rule.Delay == 0.0) || (rule.DelayProbability == 0.0 && rule.Delay != 0.0) {
+		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
+	}
 
-		if (filter.DelayProbability != 0.0 && filter.Delay == 0.0) || (filter.DelayProbability == 0.0 && filter.Delay != 0.0) {
-			return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
-		}
+	// if filter.Header == "" {
+	// 	filter.Header = "X-Filter-Header"
+	// }
 
-		// if filter.Header == "" {
-		// 	filter.Header = "X-Filter-Header"
-		// }
-
-		if filter.Pattern == "" {
-			filter.Pattern = "*"
-		}
-
+	if rule.Pattern == "" {
+		rule.Pattern = "*"
 	}
 
 	return nil
@@ -515,42 +512,13 @@ func (e *FiltersNotFoundError) Error() string {
 	return "proxyconfig: not found"
 }
 
-func validateFilter(filter resources.Rule) error {
-	if filter.Destination == "" {
-		return errors.New("invalid destination")
-	}
-
-	if filter.AbortProbability < 0.0 || filter.AbortProbability > 1.0 {
-		return errors.New("invalid abort probability")
-	}
-
-	if filter.ReturnCode < 0 || filter.ReturnCode >= 600 {
-		return errors.New("invalid return code")
-	}
-
-	if filter.DelayProbability < 0.0 || filter.DelayProbability > 1.0 {
-		return errors.New("invalid probability")
-	}
-
-	if filter.Delay < 0 || filter.Delay > 600 {
-		return errors.New("invalid duration")
-	}
-
-	if (filter.DelayProbability != 0.0 && filter.Delay == 0.0) || (filter.DelayProbability == 0.0 && filter.Delay != 0.0) {
-		return errors.New("invalid delay")
-	}
-
-	return nil
-}
-
-// AddFilters to a tenant.
-func (m *manager) AddFilters(id string, filters []resources.Rule) error {
-	// TODO: ensure we are operating on a non-orphan
+// AddRules to a tenant.
+func (m *manager) AddRules(id string, filters []resources.Rule) error {
 
 	// Validate filters
 	invalidFilters := make([]InvalidFilterError, 0, len(filters))
 	for i, filter := range filters {
-		if err := validateFilter(filter); err != nil {
+		if err := validateRule(filter); err != nil {
 			filterErr := InvalidFilterError{
 				Index:       i,
 				Description: "bad_filter",
@@ -565,7 +533,7 @@ func (m *manager) AddFilters(id string, filters []resources.Rule) error {
 		return &err
 	}
 
-	conf, err := m.db.Read(id)
+	entry, err := m.db.Read(id)
 	if err != nil {
 		return err
 	}
@@ -576,37 +544,36 @@ func (m *manager) AddFilters(id string, filters []resources.Rule) error {
 	}
 
 	// Add to the existing filters
-	conf.ProxyConfig.Filters.Rules = append(conf.ProxyConfig.Filters.Rules, filters...)
+	entry.ProxyConfig.Filters.Rules = append(entry.ProxyConfig.Filters.Rules, filters...)
 
 	// Write the results
-	if err = m.db.Update(conf); err != nil {
+	if err = m.db.Update(entry); err != nil {
 		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
 		return err
 	}
 
-	// Notify of changes
-	if err = m.producerCache.SendEvent(id, conf.ProxyConfig.Credentials.Kafka); err != nil {
+	// Send Kafka event
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// ListFilters with the specified IDs in the indicated tenant. If no filter IDs are provided, all filters are listed.
-func (m *manager) ListFilters(id string, filterIDs []string) ([]resources.Rule, error) {
-	// TODO: make sure we aren't operating on an orphan?
-
-	conf, err := m.db.Read(id)
+// ListRules with the specified IDs in the indicated tenant. If no filter IDs are provided, all filters are listed.
+func (m *manager) ListRules(id string, filterIDs []string) ([]resources.Rule, error) {
+	entry, err := m.db.Read(id)
 	if err != nil {
 		return []resources.Rule{}, err
 	}
 
 	filters := make([]resources.Rule, 0, len(filterIDs))
 	if len(filterIDs) == 0 {
-		filters = conf.ProxyConfig.Filters.Rules
+		filters = entry.ProxyConfig.Filters.Rules
 	} else {
 		filterMap := make(map[string]resources.Rule)
-		for _, filter := range conf.ProxyConfig.Filters.Rules {
+		for _, filter := range entry.ProxyConfig.Filters.Rules {
 			filterMap[filter.ID] = filter
 		}
 
@@ -632,23 +599,23 @@ func (m *manager) ListFilters(id string, filterIDs []string) ([]resources.Rule, 
 	return filters, nil
 }
 
-// DeleteFilters for a tenant. If no filter IDs are provided, all filters are deleted.
-func (m *manager) DeleteFilters(id string, filterIDs []string) error {
-	conf, err := m.db.Read(id)
+// DeleteRules for a tenant. If no filter IDs are provided, all filters are deleted.
+func (m *manager) DeleteRules(id string, filterIDs []string) error {
+	entry, err := m.db.Read(id)
 	if err != nil {
 		return err
 	}
 
 	if len(filterIDs) == 0 {
-		conf.ProxyConfig.Filters.Rules = []resources.Rule{}
+		entry.ProxyConfig.Filters.Rules = []resources.Rule{}
 	} else {
 		filterMap := make(map[string]bool)
 		for _, filterID := range filterIDs {
 			filterMap[filterID] = false
 		}
 
-		filters := make([]resources.Rule, 0, len(conf.ProxyConfig.Filters.Rules))
-		for _, filter := range conf.ProxyConfig.Filters.Rules {
+		filters := make([]resources.Rule, 0, len(entry.ProxyConfig.Filters.Rules))
+		for _, filter := range entry.ProxyConfig.Filters.Rules {
 			_, exists := filterMap[filter.ID]
 			if exists {
 				filterMap[filter.ID] = true
@@ -673,17 +640,18 @@ func (m *manager) DeleteFilters(id string, filterIDs []string) error {
 			return err
 		}
 
-		conf.ProxyConfig.Filters.Rules = filters
+		entry.ProxyConfig.Filters.Rules = filters
 	}
 
 	// Write the results
-	if err = m.db.Update(conf); err != nil {
+	if err = m.db.Update(entry); err != nil {
 		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
 		return err
 	}
 
-	// Notify of changes
-	if err = m.producerCache.SendEvent(id, conf.ProxyConfig.Credentials.Kafka); err != nil {
+	// Send Kafka event
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 

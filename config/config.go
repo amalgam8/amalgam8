@@ -64,7 +64,7 @@ type Controller struct {
 // Config TODO
 type Config struct {
 	ServiceName    string
-	ServiceVerion  string
+	ServiceVersion string
 	EndpointHost   string
 	EndpointPort   int
 	LogstashServer string
@@ -100,7 +100,7 @@ func New(context *cli.Context) *Config {
 
 	return &Config{
 		ServiceName:    context.String(serviceName),
-		ServiceVerion:  context.String(serviceVersion),
+		ServiceVersion: context.String(serviceVersion),
 		EndpointHost:   context.String(endpointHost),
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),

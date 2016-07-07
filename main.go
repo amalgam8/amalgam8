@@ -22,6 +22,8 @@ import (
 
 	"fmt"
 
+	"encoding/json"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
@@ -123,6 +125,15 @@ func sidecarMain(conf config.Config) error {
 				Value: address,
 			},
 			TTL: 60,
+		}
+
+		if conf.ServiceVersion != "" {
+			data, err := json.Marshal(map[string]string{"version": conf.ServiceVersion})
+			if err == nil {
+				serviceInstance.Metadata = data
+			} else {
+				logrus.WithError(err).Warn("Could not marshal service version metadata")
+			}
 		}
 
 		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{

@@ -58,7 +58,6 @@ var _ = Describe("Tenant Poller", func() {
 		}
 		c = &config.Config{
 			Tenant: config.Tenant{
-				ID:        "id",
 				Token:     "token",
 				TTL:       60 * time.Second,
 				Heartbeat: 30 * time.Second,

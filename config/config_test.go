@@ -56,7 +56,6 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 			c = &Config{
 				Tenant: Tenant{
-					ID:        "id",
 					Token:     "token",
 					TTL:       60 * time.Second,
 					Heartbeat: 30 * time.Second,
@@ -104,11 +103,6 @@ var _ = Describe("Config", func() {
 
 		It("rejects an invalid URL", func() {
 			c.Controller.URL = "123456"
-			Expect(c.Validate(true)).To(HaveOccurred())
-		})
-
-		It("rejects an empty tenant ID", func() {
-			c.Tenant.ID = ""
 			Expect(c.Validate(true)).To(HaveOccurred())
 		})
 

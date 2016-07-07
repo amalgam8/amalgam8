@@ -69,14 +69,17 @@ func (l *listener) listenForUpdate() error {
 			return err
 		}
 
-		if key == l.config.Tenant.ID {
+		if key == l.config.Tenant.Token {
 			logrus.WithFields(logrus.Fields{
 				"key":   key,
-				"value": value,
+				"value": string(value),
 			}).Info("Tenant event received")
 			break
 		}
 	}
+
+	// TODO
+	// use configTemplate object
 
 	// Get latest config from Controller
 	conf, err := l.controller.GetNGINXConfig(nil)

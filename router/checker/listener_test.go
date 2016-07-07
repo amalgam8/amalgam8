@@ -28,20 +28,23 @@ import (
 var _ = Describe("Tenant listener", func() {
 
 	var (
-		consumer *MockConsumer
-		rc       *clients.MockController
-		n        *mockNginx
-		c        *config.Config
-		l        *listener
-
+		consumer    *MockConsumer
+		rc          *clients.MockController
+		n           *mockNginx
+		c           *config.Config
+		l           *listener
+		tenantToken string
 		updateCount int
 	)
 
 	BeforeEach(func() {
 		updateCount = 0
 
+		tenantToken = "tenant_token"
+
 		consumer = &MockConsumer{
-			ReceiveEventKey: "id",
+			ReceiveEventKey:   tenantToken,
+			ReceiveEventValue: []byte{},
 		}
 		rc = &clients.MockController{}
 		n = &mockNginx{
@@ -52,8 +55,7 @@ var _ = Describe("Tenant listener", func() {
 		}
 		c = &config.Config{
 			Tenant: config.Tenant{
-				ID:        "id",
-				Token:     "token",
+				Token:     tenantToken,
 				TTL:       60 * time.Second,
 				Heartbeat: 30 * time.Second,
 			},

@@ -52,7 +52,6 @@ type Kafka struct {
 }
 
 type tenantInfo struct {
-	ID          string            `json:"id"`
 	Credentials TenantCredentials `json:"credentials"`
 	Port        int               `json:"port"`
 }
@@ -80,7 +79,6 @@ func NewController(conf *config.Config) Controller {
 func (c *controller) Register() error {
 
 	bodyJSON := tenantInfo{
-		ID: c.config.Tenant.ID,
 		Credentials: TenantCredentials{
 			Kafka: Kafka{
 				APIKey:   c.config.Kafka.APIKey,
@@ -119,19 +117,17 @@ func (c *controller) Register() error {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Failed to register with Controller")
 		return &ConnectionError{Message: err.Error()}
 	}
 
 	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusCreated {
+	if resp.StatusCode != http.StatusOK {
 		respBytes, _ := ioutil.ReadAll(resp.Body)
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 
 		if resp.Header.Get("request-id") == "" {
@@ -157,7 +153,7 @@ func (c *controller) Register() error {
 
 func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 
-	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants/" + c.config.Tenant.ID + "/nginx")
+	url, err := url.Parse(c.config.Controller.URL + "/v1/nginx")
 	if err != nil {
 		return "", err
 	}
@@ -172,7 +168,6 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Error building request to get rules from controller")
 		return "", err
 	}
@@ -184,7 +179,6 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Failed to retrieve rules from controller")
 		return "", err
 	}
@@ -199,8 +193,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 		return "", errors.New("Controller returned bad response code") // FIXME: custom error?
 	}
@@ -210,7 +203,6 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Error reading rules JSON from controller")
 		return "", err
 	}
@@ -224,7 +216,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		Credentials TenantCredentials `json:"credentials"`
 	}{}
 
-	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants/" + c.config.Tenant.ID)
+	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants")
 	if err != nil {
 		return respJSON.Credentials, err
 	}
@@ -234,7 +226,6 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Error building request to get creds from Controller")
 		return respJSON.Credentials, err
 	}
@@ -246,7 +237,6 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Failed to retrieve creds from Controller")
 		return respJSON.Credentials, &ConnectionError{Message: err.Error()}
 	}
@@ -257,8 +247,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
-			"body":      string(respBytes),
+			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
 
 		if resp.Header.Get("request-id") == "" {
@@ -283,7 +272,6 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Error reading rules JSON from Controller")
 		return respJSON.Credentials, err
 	}
@@ -293,7 +281,6 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-			"tenant_id": c.config.Tenant.ID,
 		}).Warn("Error reading creds JSON from Controller")
 		return respJSON.Credentials, err
 	}

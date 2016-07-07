@@ -19,11 +19,11 @@ type MockConsumer struct {
 	CloseError        error
 	ReceiveEventError error
 	ReceiveEventKey   string
-	ReceiveEventValue string
+	ReceiveEventValue []byte
 }
 
 // ReceiveEvent mocks method
-func (c *MockConsumer) ReceiveEvent() (string, string, error) {
+func (c *MockConsumer) ReceiveEvent() (string, []byte, error) {
 	return c.ReceiveEventKey, c.ReceiveEventValue, c.ReceiveEventError
 }
 

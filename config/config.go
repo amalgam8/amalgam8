@@ -27,7 +27,6 @@ import (
 
 // Tenant stores tenant configuration
 type Tenant struct {
-	ID        string
 	Token     string
 	TTL       time.Duration
 	Heartbeat time.Duration
@@ -79,6 +78,7 @@ type Config struct {
 	Nginx          Nginx
 	LogLevel       logrus.Level
 	AppArgs        []string
+	ForceUpdate    bool
 }
 
 // New TODO
@@ -95,13 +95,20 @@ func New(context *cli.Context) *Config {
 
 	endpointHost := context.String(endpointHost)
 	if endpointHost == "" {
-		endpointHost = LocalIP()
+		for {
+			endpointHost = LocalIP()
+			if endpointHost != "" {
+				break
+			}
+			logrus.Warn("Could not obtain local IP")
+			time.Sleep(time.Second * 10)
+		}
 	}
 
 	return &Config{
 		ServiceName:    context.String(serviceName),
 		ServiceVersion: context.String(serviceVersion),
-		EndpointHost:   context.String(endpointHost),
+		EndpointHost:   endpointHost,
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),
 		Register:       context.BoolT(register),
@@ -113,7 +120,6 @@ func New(context *cli.Context) *Config {
 			Poll: context.Duration(controllerPoll),
 		},
 		Tenant: Tenant{
-			ID:        context.String(tenantID),
 			Token:     context.String(tenantToken),
 			TTL:       context.Duration(tenantTTL),
 			Heartbeat: context.Duration(tenantHeartbeat),
@@ -133,8 +139,9 @@ func New(context *cli.Context) *Config {
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),
 		},
-		LogLevel: loggingLevel,
-		AppArgs:  context.Args(),
+		LogLevel:    loggingLevel,
+		AppArgs:     context.Args(),
+		ForceUpdate: context.Bool(forceUpdate),
 	}
 }
 
@@ -190,7 +197,6 @@ func (c *Config) Validate(validateCreds bool) error {
 
 	if c.Proxy {
 		validators = append(validators,
-			IsNotEmpty("Tenant ID", c.Tenant.ID),
 			IsNotEmpty("Tenant token", c.Tenant.Token),
 			IsValidURL("Controller URL", c.Controller.URL),
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),

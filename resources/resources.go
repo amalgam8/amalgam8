@@ -201,7 +201,7 @@ type ConfigTemplate struct {
 	Proxies              []ServiceTemplate `json:"proxies"`
 }
 
-// VersionedUpstreams
+// VersionedUpstreams contains upstreams by version
 type VersionedUpstreams struct {
 	UpstreamName string   `json:"name"`
 	Upstreams    []string `json:"upstreams"`

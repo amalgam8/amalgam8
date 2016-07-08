@@ -492,34 +492,39 @@ func (m *manager) updateProxyConfig(entry resources.TenantEntry) error {
 	return nil
 }
 
-type InvalidFilterError struct {
+// InvalidRuleIndexError describes an error involving a rule at a index
+type InvalidRuleIndexError struct {
 	Index       int
 	Description string
 	Filter      resources.Rule
 }
 
-type InvalidFiltersError []InvalidFilterError
+// InvalidRulesError list of rule errors
+type InvalidRulesError []InvalidRuleIndexError
 
-func (e *InvalidFiltersError) Error() string {
-	return "proxyconfig: invalid filters"
+// Error description
+func (e *InvalidRulesError) Error() string {
+	return "manager: invalid filters"
 }
 
-type FiltersNotFoundError struct {
+// RulesNotFoundError describes 1..N rules that were not found
+type RulesNotFoundError struct {
 	IDs []string
 }
 
-func (e *FiltersNotFoundError) Error() string {
-	return "proxyconfig: not found"
+// Error description
+func (e *RulesNotFoundError) Error() string {
+	return "manager: not found"
 }
 
 // AddRules to a tenant.
 func (m *manager) AddRules(id string, filters []resources.Rule) error {
 
 	// Validate filters
-	invalidFilters := make([]InvalidFilterError, 0, len(filters))
+	invalidFilters := make([]InvalidRuleIndexError, 0, len(filters))
 	for i, filter := range filters {
 		if err := validateRule(filter); err != nil {
-			filterErr := InvalidFilterError{
+			filterErr := InvalidRuleIndexError{
 				Index:       i,
 				Description: "bad_filter",
 				Filter:      filter,
@@ -529,7 +534,7 @@ func (m *manager) AddRules(id string, filters []resources.Rule) error {
 	}
 
 	if len(invalidFilters) > 0 {
-		err := InvalidFiltersError(invalidFilters)
+		err := InvalidRulesError(invalidFilters)
 		return &err
 	}
 
@@ -588,7 +593,7 @@ func (m *manager) ListRules(id string, filterIDs []string) ([]resources.Rule, er
 		}
 
 		if len(missingIDs) > 0 {
-			err := &FiltersNotFoundError{
+			err := &RulesNotFoundError{
 				IDs: missingIDs,
 			}
 
@@ -633,7 +638,7 @@ func (m *manager) DeleteRules(id string, filterIDs []string) error {
 		}
 
 		if len(missingIDs) > 0 {
-			err := &FiltersNotFoundError{
+			err := &RulesNotFoundError{
 				IDs: missingIDs,
 			}
 

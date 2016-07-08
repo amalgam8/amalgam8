@@ -34,6 +34,7 @@ func (m *MockGenerator) Generate(w io.Writer, id string, lastUpdate *time.Time) 
 	return m.GenerateError
 }
 
+// TemplateConfig mocks method
 func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
 	return m.ConfigTemplateValue
 }

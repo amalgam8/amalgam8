@@ -66,14 +66,16 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 	}
 }
 
-type RestError2 struct {
+// TranslatableError stores information required to generate an error description for a REST API
+type TranslatableError struct {
 	ID    string
 	Index int
 	Error string
 	Args  []interface{}
 }
 
-func WriteRestErrors(w rest.ResponseWriter, r *rest.Request, restErrors []RestError2, code int) {
+// WriteRestErrors writes a sequence of error descriptions
+func WriteRestErrors(w rest.ResponseWriter, r *rest.Request, restErrors []TranslatableError, code int) {
 	locale := r.Header.Get("Accept-language")
 	T, err := i18n.Tfunc(locale, "en-US")
 	if err != nil {
@@ -109,6 +111,7 @@ func WriteRestErrors(w rest.ResponseWriter, r *rest.Request, restErrors []RestEr
 	return
 }
 
+// Error JSON
 type Error struct {
 	ID          string `json:"id,omitempty"`
 	Index       int    `json:"index,omitempty"`
@@ -116,10 +119,12 @@ type Error struct {
 	Description string `json:"description"`
 }
 
+// ErrorList JSON
 type ErrorList struct {
 	Errors []Error `json:"errors"`
 }
 
+// GetTenantID obtains the tenant ID
 func GetTenantID(req *rest.Request) string {
 	tenantID := req.Env[middleware.AuthEnv]
 

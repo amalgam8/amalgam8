@@ -65,12 +65,12 @@ func (t *Tenant) Routes() []*rest.Route {
 	}
 }
 
-func HandleFilterError(w rest.ResponseWriter, req *rest.Request, err error) {
-	if invalidFiltersErr, ok := err.(*manager.InvalidFiltersError); ok {
+func handleRuleError(w rest.ResponseWriter, req *rest.Request, err error) {
+	if invalidRulesErr, ok := err.(*manager.InvalidRulesError); ok {
 		// TODO: in the case of a PUT, we may want to indicate the invalid filters by ID instead of index
-		restErrors := make([]RestError2, 0, len(*invalidFiltersErr))
-		for _, filterErr := range *invalidFiltersErr {
-			restErrors = append(restErrors, RestError2{
+		restErrors := make([]TranslatableError, 0, len(*invalidRulesErr))
+		for _, filterErr := range *invalidRulesErr {
+			restErrors = append(restErrors, TranslatableError{
 				Index: filterErr.Index,
 				Error: "bad_filter",
 			})
@@ -78,10 +78,10 @@ func HandleFilterError(w rest.ResponseWriter, req *rest.Request, err error) {
 
 		WriteRestErrors(w, req, restErrors, http.StatusBadRequest)
 		return
-	} else if filtersNotFoundErr, ok := err.(*manager.FiltersNotFoundError); ok {
-		restErrors := make([]RestError2, 0, len(filtersNotFoundErr.IDs))
-		for _, ID := range filtersNotFoundErr.IDs {
-			restErrors = append(restErrors, RestError2{
+	} else if rulesNotFoundErr, ok := err.(*manager.RulesNotFoundError); ok {
+		restErrors := make([]TranslatableError, 0, len(rulesNotFoundErr.IDs))
+		for _, ID := range rulesNotFoundErr.IDs {
+			restErrors = append(restErrors, TranslatableError{
 				ID:    ID,
 				Error: "not_found",
 			})
@@ -96,7 +96,7 @@ func HandleFilterError(w rest.ResponseWriter, req *rest.Request, err error) {
 	RestError(w, req, http.StatusInternalServerError, err.Error()) //"unknown_error")
 }
 
-// PostFilters creates filters in bulk
+// PostRules creates filters in bulk
 func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 
@@ -111,7 +111,7 @@ func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	if err = t.manager.AddRules(id, filtersJSON.Filters); err != nil {
-		HandleFilterError(w, req, err)
+		handleRuleError(w, req, err)
 		return err
 	}
 
@@ -121,20 +121,20 @@ func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// PutFilters updates filters in bulk
+// PutRules updates filters in bulk
 func (t *Tenant) PutRules(w rest.ResponseWriter, req *rest.Request) error {
 	w.WriteHeader(http.StatusNotImplemented)
 	return nil
 }
 
-// GetFilters reads filters in bulk
+// GetRules reads filters in bulk
 func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 	ruleIDs := getQueryIDs("id", req)
 
 	rules, err := t.manager.ListRules(id, ruleIDs)
 	if err != nil {
-		HandleFilterError(w, req, err)
+		handleRuleError(w, req, err)
 		return err
 	}
 
@@ -150,13 +150,13 @@ func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-// DeleteFilters deletes filters in bulk
+// DeleteRules deletes filters in bulk
 func (t *Tenant) DeleteRules(w rest.ResponseWriter, req *rest.Request) error {
 	id := req.PathParam("id")
 	ruleIDs := getQueryIDs("id", req)
 
 	if err := t.manager.DeleteRules(id, ruleIDs); err != nil {
-		HandleFilterError(w, req, err)
+		handleRuleError(w, req, err)
 		return err
 	}
 

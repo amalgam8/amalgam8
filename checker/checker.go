@@ -21,12 +21,14 @@ import (
 
 	"net/http"
 
+	"encoding/json"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
+	"github.com/amalgam8/registry/client"
 )
 
 // Checker client
@@ -36,26 +38,26 @@ type Checker interface {
 
 type checker struct {
 	db            database.Tenant
-	registry      clients.Registry
 	producerCache notification.TenantProducerCache
 	generator     nginx.Generator
+	factory       RegistryFactory
 }
 
 // Config options
 type Config struct {
 	Database      database.Tenant
-	Registry      clients.Registry
 	ProducerCache notification.TenantProducerCache
 	Generator     nginx.Generator
+	Factory       RegistryFactory
 }
 
 // New instantiates new instance
 func New(conf Config) Checker {
 	return &checker{
 		db:            conf.Database,
-		registry:      conf.Registry,
 		producerCache: conf.ProducerCache,
 		generator:     conf.Generator,
+		factory:       conf.Factory,
 	}
 }
 
@@ -134,7 +136,13 @@ func (c *checker) catalogsEqual(a, b resources.ServiceCatalog) bool {
 func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCatalog, error) {
 	catalog := resources.ServiceCatalog{}
 
-	instances, err := c.registry.GetInstances(sd.Token, sd.URL)
+	registry, err := c.factory.NewRegistryClient(sd.Token, sd.URL)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to initialize registry client")
+		return catalog, err
+	}
+
+	instances, err := registry.ListInstances(client.InstanceFilter{})
 	if err != nil {
 		// log err
 		return catalog, err
@@ -150,10 +158,13 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 			}
 		}
 
+		metadata := map[string]string{}
+		err = json.Unmarshal(instance.Metadata, &metadata)
+
 		endpoint := resources.Endpoint{
 			Type:     instance.Endpoint.Type,
 			Value:    instance.Endpoint.Value,
-			Metadata: resources.MetaData{Version: instance.MetaData.Version},
+			Metadata: resources.MetaData{Version: metadata["version"]},
 		}
 
 		serviceMap[instance.ServiceName].Endpoints = append(serviceMap[instance.ServiceName].Endpoints, endpoint)

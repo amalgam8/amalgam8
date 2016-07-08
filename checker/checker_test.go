@@ -17,11 +17,11 @@ package checker
 import (
 	"time"
 
-	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
+	"github.com/amalgam8/registry/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -29,26 +29,30 @@ import (
 var _ = Describe("Checker", func() {
 
 	var (
-		checker  Checker
-		id       string
-		sdClient *clients.MockRegistry
-		db       database.Tenant
-		cache    *notification.MockTenantProducerCache
-		n        *nginx.MockGenerator
+		checker   Checker
+		id        string
+		db        database.Tenant
+		cache     *notification.MockTenantProducerCache
+		n         *nginx.MockGenerator
+		factory   *MockRegistyFactory
+		regClient *MockRegistryClient
 	)
 
 	Context("Checker", func() {
 
 		BeforeEach(func() {
+			regClient = &MockRegistryClient{}
+			factory = &MockRegistyFactory{
+				RegClient: regClient,
+			}
 			db = database.NewTenant(database.NewMemoryCloudantDB())
-			sdClient = new(clients.MockRegistry)
 			cache = new(notification.MockTenantProducerCache)
 			n = &nginx.MockGenerator{}
 			checker = New(Config{
 				Database:      db,
-				Registry:      sdClient,
 				ProducerCache: cache,
 				Generator:     n,
+				Factory:       factory,
 			})
 
 			id = "abcdef"
@@ -78,7 +82,7 @@ var _ = Describe("Checker", func() {
 			Context("has checked registered IDs", func() {
 				BeforeEach(func() {
 
-					sdClient.GetInstancesVal = getBaseInstances()
+					regClient.ListInstancesVal = getBaseInstances()
 
 					Expect(checker.Check(nil)).ToNot(HaveOccurred())
 				})
@@ -106,34 +110,34 @@ var _ = Describe("Checker", func() {
 	})
 })
 
-func getBaseInstances() []clients.Instance {
-	endpoint := clients.Endpoint{
+func getBaseInstances() []*client.ServiceInstance {
+	endpoint := client.ServiceEndpoint{
 		Type:  "http",
 		Value: "A:9999",
 	}
-	inst := clients.Instance{
+	inst := &client.ServiceInstance{
 		ServiceName: "A",
 		Endpoint:    endpoint,
 	}
-	endpoint2 := clients.Endpoint{
+	endpoint2 := client.ServiceEndpoint{
 		Type:  "http",
 		Value: "A:9988",
 	}
-	inst2 := clients.Instance{
+	inst2 := &client.ServiceInstance{
 		ServiceName: "A",
 		Endpoint:    endpoint2,
 	}
 
-	endpoint3 := clients.Endpoint{
+	endpoint3 := client.ServiceEndpoint{
 		Type:  "http",
 		Value: "B:9999",
 	}
-	inst3 := clients.Instance{
+	inst3 := &client.ServiceInstance{
 		ServiceName: "B",
 		Endpoint:    endpoint3,
 	}
 
-	var instances []clients.Instance
+	var instances []*client.ServiceInstance
 	instances = append(instances, inst)
 	instances = append(instances, inst2)
 	return append(instances, inst3)

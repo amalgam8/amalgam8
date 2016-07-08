@@ -15,6 +15,22 @@
 hash: 704599bdd525e74aba6e0f700171df049889d8b2469b67a18640312e43e56530
 updated: 2016-06-06T13:31:47.406384659-05:00
 imports:
+- name: github.com/amalgam8/registry
+  version: 886b543ca45c2c20d5c97d1cd150585ec5d628bd
+  subpackages:
+  - client
+  - api/protocol/amalgam8
+  - api/middleware
+  - api/protocol
+  - auth
+  - store
+  - utils/i18n
+  - utils/logging
+  - utils/reflection
+  - replication
+  - utils/channels
+  - cluster
+  - utils/health
 - name: github.com/ant0ine/go-json-rest
   version: 37ad7dc626602a8355801da6acd85155655520f8
   subpackages:

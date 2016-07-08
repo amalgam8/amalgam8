@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 details-v1:
-  image: amalgam8/a8-examples-bookinfo-details-sidecar:v1
+  image: amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
@@ -26,7 +26,7 @@ details-v1:
     - registry
 
 ratings-v1:
-  image: amalgam8/a8-examples-bookinfo-ratings-sidecar:v1
+  image: amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
@@ -39,7 +39,7 @@ ratings-v1:
     - registry
 
 reviews-v1:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
@@ -52,15 +52,14 @@ reviews-v1:
     - registry
 
 reviews-v2:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
     - SERVICE=reviews
     - SERVICE_VERSION=v2
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s
@@ -72,15 +71,14 @@ reviews-v2:
     - registry
 
 reviews-v3:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
     - SERVICE=reviews
     - SERVICE_VERSION=v3
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s
@@ -92,15 +90,14 @@ reviews-v3:
     - registry
 
 productpage-v1:
-  image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1
+  image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine
   environment:
     - REGISTRY_URL=http://registry:8080
     - REGISTRY_TOKEN=local
     - SERVICE=productpage
     - SERVICE_VERSION=v1
     - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=12345
-    - TENANT_ID=local
+    - TENANT_TOKEN=local
     - LOGSTASH_SERVER='logstash:8092'
     - CONTROLLER_URL=http://controller:6379
     - CONTROLLER_POLL=5s

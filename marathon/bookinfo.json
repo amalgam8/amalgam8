@@ -9,7 +9,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -36,7 +36,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-ratings-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -63,7 +63,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -90,7 +90,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -107,8 +107,7 @@
 			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v2",
-			            "TENANT_TOKEN":"12345",
-			            "TENANT_ID": "local",
+			            "TENANT_TOKEN":"local",
                         "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",
@@ -123,7 +122,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -140,8 +139,7 @@
 			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "reviews",
                         "SERVICE_VERSION" : "v3",
-			            "TENANT_TOKEN":"12345",
-			            "TENANT_ID": "local",
+			            "TENANT_TOKEN":"local",
                         "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",
@@ -156,7 +154,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1",
+			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -173,8 +171,7 @@
 			            "REGISTRY_TOKEN" : "local",
 			            "SERVICE" : "productpage",
 				        "SERVICE_VERSION" : "v1",
-			            "TENANT_TOKEN":"12345",
-			            "TENANT_ID": "local",
+			            "TENANT_TOKEN":"local",
 				        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
 		                "CONTROLLER_POLL" : "15s",

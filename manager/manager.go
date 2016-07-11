@@ -26,6 +26,7 @@ import (
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
+	"github.com/pborman/uuid"
 )
 
 // Manager client
@@ -34,9 +35,15 @@ type Manager interface {
 	Set(id string, rules resources.TenantInfo) error
 	Get(id string) (resources.TenantEntry, error)
 	Delete(id string) error
+
 	SetVersion(id string, version resources.Version) error
 	DeleteVersion(id, service string) error
 	GetVersion(id, service string) (resources.Version, error)
+
+	AddRules(id string, filters []resources.Rule) error
+	ListRules(id string, filterIDs []string) ([]resources.Rule, error)
+	//UpdateFilters(id string, filters []resources.Rule) error
+	DeleteRules(id string, filterIDs []string) error
 }
 
 type manager struct {
@@ -108,9 +115,10 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 		entry.ProxyConfig.ReqTrackingHeader = "X-Request-ID" // FIXME: common location for this?
 	}
 
-	if err = validateRules(entry.ProxyConfig.Filters.Rules); err != nil {
-		// RestError() called in validate function
-		return err
+	for _, rule := range entry.ProxyConfig.Filters.Rules {
+		if err = validateRule(rule); err != nil {
+			return err
+		}
 	}
 
 	rules := []resources.Rule{}
@@ -248,8 +256,10 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	}
 
 	if tenantInfo.Filters.Rules != nil {
-		if err = validateRules(tenantInfo.Filters.Rules); err != nil {
-			return err
+		for _, rule := range tenantInfo.Filters.Rules {
+			if err = validateRule(rule); err != nil {
+				return err
+			}
 		}
 
 		rules := []resources.Rule{}
@@ -401,41 +411,37 @@ func (m *manager) GetVersion(id, service string) (resources.Version, error) {
 
 }
 
-func validateRules(filters []resources.Rule) error {
-	for _, filter := range filters {
+func validateRule(rule resources.Rule) error {
+	if rule.Destination == "" {
+		return &InvalidRuleError{Reason: "invalid destination", ErrorMessage: "invalid_destination"}
+	}
 
-		if filter.Destination == "" {
-			return &InvalidRuleError{Reason: "invalid destination", ErrorMessage: "invalid_destination"}
-		}
+	if rule.AbortProbability < 0.0 || rule.AbortProbability > 1.0 {
+		return &InvalidRuleError{Reason: "invalid abort probability", ErrorMessage: "invalid_abort_probability"}
+	}
 
-		if filter.AbortProbability < 0.0 || filter.AbortProbability > 1.0 {
-			return &InvalidRuleError{Reason: "invalid abort probability", ErrorMessage: "invalid_abort_probability"}
-		}
+	if rule.ReturnCode < 0 || rule.ReturnCode >= 600 {
+		return &InvalidRuleError{Reason: "invalid return code", ErrorMessage: "invalid_return_code"}
+	}
 
-		if filter.ReturnCode < 0 || filter.ReturnCode >= 600 {
-			return &InvalidRuleError{Reason: "invalid return code", ErrorMessage: "invalid_return_code"}
-		}
+	if rule.DelayProbability < 0.0 || rule.DelayProbability > 1.0 {
+		return &InvalidRuleError{Reason: "invalid probability", ErrorMessage: "invalid_delay_probability"}
+	}
 
-		if filter.DelayProbability < 0.0 || filter.DelayProbability > 1.0 {
-			return &InvalidRuleError{Reason: "invalid probability", ErrorMessage: "invalid_delay_probability"}
-		}
+	if rule.Delay < 0 || rule.Delay > 600 {
+		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
+	}
 
-		if filter.Delay < 0 || filter.Delay > 600 {
-			return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
-		}
+	if (rule.DelayProbability != 0.0 && rule.Delay == 0.0) || (rule.DelayProbability == 0.0 && rule.Delay != 0.0) {
+		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
+	}
 
-		if (filter.DelayProbability != 0.0 && filter.Delay == 0.0) || (filter.DelayProbability == 0.0 && filter.Delay != 0.0) {
-			return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
-		}
+	// if filter.Header == "" {
+	// 	filter.Header = "X-Filter-Header"
+	// }
 
-		// if filter.Header == "" {
-		// 	filter.Header = "X-Filter-Header"
-		// }
-
-		if filter.Pattern == "" {
-			filter.Pattern = "*"
-		}
-
+	if rule.Pattern == "" {
+		rule.Pattern = "*"
 	}
 
 	return nil
@@ -480,6 +486,177 @@ func (m *manager) updateProxyConfig(entry resources.TenantEntry) error {
 			"err": err,
 			"id":  entry.ID,
 		}).Error("Failed attempting to update proxy config")
+		return err
+	}
+
+	return nil
+}
+
+// InvalidRuleIndexError describes an error involving a rule at a index
+type InvalidRuleIndexError struct {
+	Index       int
+	Description string
+	Filter      resources.Rule
+}
+
+// InvalidRulesError list of rule errors
+type InvalidRulesError []InvalidRuleIndexError
+
+// Error description
+func (e *InvalidRulesError) Error() string {
+	return "manager: invalid filters"
+}
+
+// RulesNotFoundError describes 1..N rules that were not found
+type RulesNotFoundError struct {
+	IDs []string
+}
+
+// Error description
+func (e *RulesNotFoundError) Error() string {
+	return "manager: not found"
+}
+
+// AddRules to a tenant.
+func (m *manager) AddRules(id string, filters []resources.Rule) error {
+
+	// Validate filters
+	invalidFilters := make([]InvalidRuleIndexError, 0, len(filters))
+	for i, filter := range filters {
+		if err := validateRule(filter); err != nil {
+			filterErr := InvalidRuleIndexError{
+				Index:       i,
+				Description: "bad_filter",
+				Filter:      filter,
+			}
+			invalidFilters = append(invalidFilters, filterErr)
+		}
+	}
+
+	if len(invalidFilters) > 0 {
+		err := InvalidRulesError(invalidFilters)
+		return &err
+	}
+
+	entry, err := m.db.Read(id)
+	if err != nil {
+		return err
+	}
+
+	// Generate IDs
+	for i := 0; i < len(filters); i++ {
+		filters[i].ID = uuid.New()
+	}
+
+	// Add to the existing filters
+	entry.ProxyConfig.Filters.Rules = append(entry.ProxyConfig.Filters.Rules, filters...)
+
+	// Write the results
+	if err = m.db.Update(entry); err != nil {
+		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
+		return err
+	}
+
+	// Send Kafka event
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ListRules with the specified IDs in the indicated tenant. If no filter IDs are provided, all filters are listed.
+func (m *manager) ListRules(id string, filterIDs []string) ([]resources.Rule, error) {
+	entry, err := m.db.Read(id)
+	if err != nil {
+		return []resources.Rule{}, err
+	}
+
+	filters := make([]resources.Rule, 0, len(filterIDs))
+	if len(filterIDs) == 0 {
+		filters = entry.ProxyConfig.Filters.Rules
+	} else {
+		filterMap := make(map[string]resources.Rule)
+		for _, filter := range entry.ProxyConfig.Filters.Rules {
+			filterMap[filter.ID] = filter
+		}
+
+		missingIDs := make([]string, 0, len(filterIDs))
+		for _, filterID := range filterIDs {
+			filter, exists := filterMap[filterID]
+			if exists {
+				filters = append(filters, filter)
+			} else {
+				missingIDs = append(missingIDs, filterID)
+			}
+		}
+
+		if len(missingIDs) > 0 {
+			err := &RulesNotFoundError{
+				IDs: missingIDs,
+			}
+
+			return []resources.Rule{}, err
+		}
+	}
+
+	return filters, nil
+}
+
+// DeleteRules for a tenant. If no filter IDs are provided, all filters are deleted.
+func (m *manager) DeleteRules(id string, filterIDs []string) error {
+	entry, err := m.db.Read(id)
+	if err != nil {
+		return err
+	}
+
+	if len(filterIDs) == 0 {
+		entry.ProxyConfig.Filters.Rules = []resources.Rule{}
+	} else {
+		filterMap := make(map[string]bool)
+		for _, filterID := range filterIDs {
+			filterMap[filterID] = false
+		}
+
+		filters := make([]resources.Rule, 0, len(entry.ProxyConfig.Filters.Rules))
+		for _, filter := range entry.ProxyConfig.Filters.Rules {
+			_, exists := filterMap[filter.ID]
+			if exists {
+				filterMap[filter.ID] = true
+			} else {
+				filters = append(filters, filter)
+			}
+		}
+
+		missingIDs := make([]string, 0, len(filterIDs))
+		for _, filterID := range filterIDs {
+			deleted := filterMap[filterID]
+			if !deleted {
+				missingIDs = append(missingIDs, filterID)
+			}
+		}
+
+		if len(missingIDs) > 0 {
+			err := &RulesNotFoundError{
+				IDs: missingIDs,
+			}
+
+			return err
+		}
+
+		entry.ProxyConfig.Filters.Rules = filters
+	}
+
+	// Write the results
+	if err = m.db.Update(entry); err != nil {
+		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
+		return err
+	}
+
+	// Send Kafka event
+	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
 		return err
 	}
 

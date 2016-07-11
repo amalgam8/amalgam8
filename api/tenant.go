@@ -38,7 +38,7 @@ type TenantConfig struct {
 	Manager  manager.Manager
 }
 
-// NewTenant creates struct
+// NewTenant instantiates instance of the API
 func NewTenant(conf TenantConfig) *Tenant {
 	return &Tenant{
 		reporter: conf.Reporter,
@@ -53,10 +53,115 @@ func (t *Tenant) Routes() []*rest.Route {
 		rest.Put("/v1/tenants", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
 		rest.Get("/v1/tenants", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
 		rest.Delete("/v1/tenants", reportMetric(t.reporter, t.DeleteTenant, "tenants_delete")),
+
 		rest.Put("/v1/versions/#service", reportMetric(t.reporter, t.PutServiceVersions, "versions_update")),
 		rest.Get("/v1/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
-		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_update")),
+		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_delete")),
+
+		rest.Get("/v1/rules", reportMetric(t.reporter, t.GetRules, "rules_read")),
+		rest.Delete("/v1/rules", reportMetric(t.reporter, t.DeleteRules, "rules_delete")),
+		rest.Post("/v1/rules", reportMetric(t.reporter, t.PostRules, "rules_create")),
+		rest.Put("/v1/rules", reportMetric(t.reporter, t.PutRules, "rules_update")),
 	}
+}
+
+func handleRuleError(w rest.ResponseWriter, req *rest.Request, err error) {
+	if invalidRulesErr, ok := err.(*manager.InvalidRulesError); ok {
+		// TODO: in the case of a PUT, we may want to indicate the invalid filters by ID instead of index
+		restErrors := make([]TranslatableError, 0, len(*invalidRulesErr))
+		for _, filterErr := range *invalidRulesErr {
+			restErrors = append(restErrors, TranslatableError{
+				Index: filterErr.Index,
+				Error: "bad_filter",
+			})
+		}
+
+		WriteRestErrors(w, req, restErrors, http.StatusBadRequest)
+		return
+	} else if rulesNotFoundErr, ok := err.(*manager.RulesNotFoundError); ok {
+		restErrors := make([]TranslatableError, 0, len(rulesNotFoundErr.IDs))
+		for _, ID := range rulesNotFoundErr.IDs {
+			restErrors = append(restErrors, TranslatableError{
+				ID:    ID,
+				Error: "not_found",
+			})
+		}
+
+		WriteRestErrors(w, req, restErrors, http.StatusNotFound)
+		return
+	}
+
+	// TODO: handle 409s, 500s, 502s, 503s
+
+	RestError(w, req, http.StatusInternalServerError, err.Error()) //"unknown_error")
+}
+
+// PostRules creates filters in bulk
+func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+
+	filtersJSON := struct {
+		Filters []resources.Rule `json:"filters"`
+	}{}
+
+	err := req.DecodeJsonPayload(&filtersJSON)
+	if err != nil {
+		RestError(w, req, http.StatusBadRequest, "json_error")
+		return err
+	}
+
+	if err = t.manager.AddRules(id, filtersJSON.Filters); err != nil {
+		handleRuleError(w, req, err)
+		return err
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&filtersJSON)
+
+	return nil
+}
+
+// PutRules updates filters in bulk
+func (t *Tenant) PutRules(w rest.ResponseWriter, req *rest.Request) error {
+	w.WriteHeader(http.StatusNotImplemented)
+	return nil
+}
+
+// GetRules reads filters in bulk
+func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+	ruleIDs := getQueryIDs("id", req)
+
+	rules, err := t.manager.ListRules(id, ruleIDs)
+	if err != nil {
+		handleRuleError(w, req, err)
+		return err
+	}
+
+	respJSON := struct {
+		Rules []resources.Rule `json:"rules"`
+	}{
+		Rules: rules,
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&respJSON)
+
+	return nil
+}
+
+// DeleteRules deletes filters in bulk
+func (t *Tenant) DeleteRules(w rest.ResponseWriter, req *rest.Request) error {
+	id := req.PathParam("id")
+	ruleIDs := getQueryIDs("id", req)
+
+	if err := t.manager.DeleteRules(id, ruleIDs); err != nil {
+		handleRuleError(w, req, err)
+		return err
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
 // PostTenant initializes a tenant in the Controller
@@ -274,10 +379,10 @@ func processError(w rest.ResponseWriter, req *rest.Request, err error) {
 			log.Error("Service unavailable")
 			RestError(w, req, http.StatusServiceUnavailable, e.ErrorMessage)
 		} else if e, ok := err.(*manager.RuleNotFoundError); ok {
-			log.Error("Filter ID not fount")
+			log.Error("Rule ID not found")
 			RestError(w, req, http.StatusNotFound, e.ErrorMessage)
 		} else {
-			log.Error("Unknow availability error occured")
+			log.Error("Unknown availability error occured")
 			RestError(w, req, http.StatusServiceUnavailable, "unknown_availability_error")
 		}
 	}

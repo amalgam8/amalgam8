@@ -35,10 +35,6 @@ import (
 	"github.com/codegangsta/cli"
 )
 
-const (
-	statsdPrefix = "sp-XXXXXXX"
-)
-
 func main() {
 	app := cli.NewApp()
 
@@ -66,6 +62,7 @@ func controllerCommand(context *cli.Context) {
 func controllerMain(conf config.Config) error {
 	var err error
 
+	logrus.ErrorKey = "error"
 	logrus.Info(conf.LogLevel)
 	logrus.SetLevel(conf.LogLevel)
 
@@ -96,8 +93,9 @@ func controllerMain(conf config.Config) error {
 		db := database.NewMemoryCloudantDB()
 		tenantDB = database.NewTenant(db)
 	} else {
+		err = errors.New("unsupported database type")
 		setupHandler.SetError(err)
-		return errors.New("")
+		return err
 	}
 
 	tpc := notification.NewTenantProducerCache()
@@ -131,24 +129,15 @@ func controllerMain(conf config.Config) error {
 		Reporter:  reporter,
 		Generator: g,
 	})
-
 	t := api.NewTenant(api.TenantConfig{
 		Reporter: reporter,
 		Manager:  r,
 	})
-
 	p := api.NewPoll(reporter, c)
-
 	h := api.NewHealth(reporter)
 
-	routes := n.Routes()
-	routes = append(routes, t.Routes()...)
-	routes = append(routes, h.Routes()...)
-	routes = append(routes, p.Routes()...)
-
-	api := rest.NewApi()
-
-	api.Use(
+	a := rest.NewApi()
+	a.Use(
 		&rest.TimerMiddleware{},
 		&rest.RecorderMiddleware{},
 		&rest.RecoverMiddleware{
@@ -163,6 +152,11 @@ func controllerMain(conf config.Config) error {
 		&middleware.LoggingMiddleware{},
 	)
 
+	routes := n.Routes()
+	routes = append(routes, t.Routes()...)
+	routes = append(routes, h.Routes()...)
+	routes = append(routes, p.Routes()...)
+
 	router, err := rest.MakeRouter(
 		routes...,
 	)
@@ -170,9 +164,9 @@ func controllerMain(conf config.Config) error {
 		setupHandler.SetError(err)
 		return err
 	}
-	api.SetApp(router)
+	a.SetApp(router)
 
-	setupHandler.SetHandler(api.MakeHandler())
+	setupHandler.SetHandler(a.MakeHandler())
 
 	//start garbage collection on kafka producer cache
 	tpc.StartGC()

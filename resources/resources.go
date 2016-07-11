@@ -166,6 +166,7 @@ type Filters struct {
 
 // Rule TODO
 type Rule struct {
+	ID               string  `json:"id"`
 	Source           string  `json:"source"`
 	Destination      string  `json:"destination"`
 	Header           string  `json:"header"`
@@ -200,7 +201,7 @@ type ConfigTemplate struct {
 	Proxies              []ServiceTemplate `json:"proxies"`
 }
 
-// VersionedUpstreams
+// VersionedUpstreams contains upstreams by version
 type VersionedUpstreams struct {
 	UpstreamName string   `json:"name"`
 	Upstreams    []string `json:"upstreams"`

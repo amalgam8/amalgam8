@@ -14,6 +14,7 @@ const (
 	TenantHeader = "A8-Tenant-ID"
 )
 
+// Authenticator authenticates tokens
 type Authenticator interface {
 	Authenticate(token string) (string, error)
 }
@@ -38,38 +39,22 @@ func (mw *AuthMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 				r.Env[AuthEnv] = tenantID
 				h(w, r)
 				return
-			} else {
-				logrus.WithFields(logrus.Fields{
-					"remote_address": r.RemoteAddr,
-					"request_id":     reqID,
-					"method":         r.Method,
-					"url":            r.URL,
-				}).Error("Missing tenant ID header")
-				w.WriteHeader(http.StatusUnauthorized)
-				return
 			}
-		} else {
+			logrus.WithFields(logrus.Fields{
+				"remote_address": r.RemoteAddr,
+				"request_id":     reqID,
+				"method":         r.Method,
+				"url":            r.URL,
+			}).Error("Missing tenant ID header")
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-			if authToken != "" {
-				id, err := mw.Auth.Authenticate(authToken)
-				if err != nil {
-					logrus.WithFields(logrus.Fields{
-						"err":            err,
-						"remote_address": r.RemoteAddr,
-						"request_id":     reqID,
-						"method":         r.Method,
-						"url":            r.URL,
-					}).Error("Invalid authentication token")
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				} else {
-					r.Env[AuthEnv] = id
-					h(w, r)
-					return
-				}
-
-			} else {
+		if authToken != "" {
+			id, err := mw.Auth.Authenticate(authToken)
+			if err != nil {
 				logrus.WithFields(logrus.Fields{
+					"err":            err,
 					"remote_address": r.RemoteAddr,
 					"request_id":     reqID,
 					"method":         r.Method,
@@ -78,6 +63,17 @@ func (mw *AuthMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
+			r.Env[AuthEnv] = id
+			h(w, r)
+			return
 		}
+		logrus.WithFields(logrus.Fields{
+			"remote_address": r.RemoteAddr,
+			"request_id":     reqID,
+			"method":         r.Method,
+			"url":            r.URL,
+		}).Error("Invalid authentication token")
+		w.WriteHeader(http.StatusUnauthorized)
+		return
 	}
 }

@@ -27,6 +27,15 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
+func getQueryIDs(key string, req *rest.Request) []string {
+	queries := req.URL.Query()
+	values, ok := queries[key]
+	if !ok || len(values) == 0 {
+		return []string{}
+	}
+	return values
+}
+
 func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
 		if ce, ok := err.(*database.DBError); ok {
@@ -57,6 +66,65 @@ func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.R
 	}
 }
 
+// TranslatableError stores information required to generate an error description for a REST API
+type TranslatableError struct {
+	ID    string
+	Index int
+	Error string
+	Args  []interface{}
+}
+
+// WriteRestErrors writes a sequence of error descriptions
+func WriteRestErrors(w rest.ResponseWriter, r *rest.Request, restErrors []TranslatableError, code int) {
+	locale := r.Header.Get("Accept-language")
+	T, err := i18n.Tfunc(locale, "en-US")
+	if err != nil {
+		logrus.WithError(err).WithField(
+			"accept_language_header", locale,
+		).Error("Could not get translation function")
+	}
+
+	if len(restErrors) == 0 {
+		w.WriteHeader(code)
+	} else {
+		errorResp := ErrorList{
+			Errors: make([]Error, 0, len(restErrors)),
+		}
+		for _, restError := range restErrors {
+			translated := T(restError.Error, restError.Args...)
+
+			errorResp.Errors = append(
+				errorResp.Errors,
+				Error{
+					Index:       restError.Index,
+					ID:          restError.ID,
+					Error:       restError.Error,
+					Description: translated,
+				},
+			)
+		}
+
+		w.WriteHeader(code)
+		w.WriteJson(&errorResp)
+	}
+
+	return
+}
+
+// Error JSON
+type Error struct {
+	ID          string `json:"id,omitempty"`
+	Index       int    `json:"index,omitempty"`
+	Error       string `json:"error"`
+	Description string `json:"description"`
+}
+
+// ErrorList JSON
+type ErrorList struct {
+	Errors []Error `json:"errors"`
+}
+
+// GetTenantID obtains the tenant ID
 func GetTenantID(req *rest.Request) string {
 	tenantID := req.Env[middleware.AuthEnv]
 
@@ -80,12 +148,9 @@ func RestError(w rest.ResponseWriter, r *rest.Request, code int, id string, args
 
 	translated := T(id, args...)
 
-	errorResp := struct {
-		Error   string `json:"error"`
-		Message string `json:"message"`
-	}{
-		Error:   id,
-		Message: translated,
+	errorResp := Error{
+		Error:       id,
+		Description: translated,
 	}
 
 	w.WriteHeader(code)

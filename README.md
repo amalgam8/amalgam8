@@ -7,16 +7,19 @@
 [Travis]: https://travis-ci.org/amalgam8/sidecar
 [Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
 
-A language agnostic sidecar for building microservice applications with
+A language agnostic service proxy for building microservice applications with
 automatic service registration, and load-balancing.
 
-An overview of the Amalgam8 project is available here: http://amalgam8.io/
+An overview of the Amalgam8 project is available here: https://amalgam8.io/
 
-## Architecture
+Documentation related to the sidecar can be found at
+https://amalgam8.io/docs
 
-![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/sidecar.jpg)
+<!-- ## Architecture -->
 
-Refer to the [amalgam8 overview](https://github.com/amalgam8/amalgam8.github.io/blob/master/overview.md#tenant-process) for details.
+<!-- ![Sidecar architecture](https://github.com/amalgam8/sidecar/blob/master/sidecar.jpg) -->
+
+<!-- Refer to the [amalgam8 overview](https://github.com/amalgam8/amalgam8.github.io/blob/master/overview.md#tenant-process) for details. -->
 
 ## Usage
 A prebuild Docker image is available at Docker Hub. Install Docker 1.8 or 1.9 and run the following:
@@ -24,38 +27,41 @@ A prebuild Docker image is available at Docker Hub. Install Docker 1.8 or 1.9 an
 ```docker pull amalgam8/a8-sidecar:0.1```
 
 ### Configuration options
-Configuration options can be set through environment variables or command line flags. 
+Configuration options can be set through environment variables or command
+line flags.
 
-| Environment Key | Flag Name                   | Description | Default Value |
-|:----------------|:----------------------------|:------------|:--------------|
-| LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info |
-| SERVICE | --service | service name to register with | |
-| SERVICE_VERSION | --service_version | service version to register with (optional). Service is UNVERSIONED by default |  |
-| ENDPOINT_HOST | --endpoint_host | service endpoint host name (optional). Defaults to the IP (e.g., container) where the sidecar is running |  |
-| ENDPOINT_PORT | --endpoint_port | service endpoint port | |
-| REGISTER | --register | enable automatic service registration and heartbeat |  |
-| PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  |
-| LOG | --log | enable logging of outgoing requests through proxy using FileBeat |  |
-| SUPERVISE | --supervise | Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation |  |
-| TENANT_ID | --tenant_id | service Proxy instance GUID |  |
-| TENANT_TOKEN | --tenant_token | token for Service Proxy instance |  |
-| TENANT_TTL | --tenant_ttl | tenant TTL for Registry | 1m0s |
-| TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry |  |
-| REGISTRY_URL | --registry_url | registry URL | 45s |
-| REGISTRY_TOKEN | --registry_token | registry API token | |
-| NGINX_PORT | --nginx_port | port for NGINX | 6379 |
-| CONTROLLER_URL | --controller_url | controller URL |  |
-| CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s |
-| LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  |
-| KAFKA_USER | --kafka_user | kafka username |  |
-| KAFKA_PASS | --kafka_pass | kafka password |  |
-| KAFKA_TOKEN | --kafka_token | kafka token |  |
-| KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  |
-| KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  |
-| KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  |
-| KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  |
-|  | --help, -h | show help | |
-|  | --version, -v | print the version | |
+**Note:** Atleast one of `-register` or `-proxy` must be enabled.
+
+| Environment Key | Flag Name                   | Description | Default Value |Required|
+|:----------------|:----------------------------|:------------|:--------------|--------|
+| LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
+| SERVICE | --service | service name to register with | | yes |
+| SERVICE_VERSION | --service_version | service version to register with. Service is UNVERSIONED by default |  | needed if you wish to register different versions under same name |
+| ENDPOINT_HOST | --endpoint_host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
+| ENDPOINT_PORT | --endpoint_port | service endpoint port |  | yes |
+| REGISTER | --register | enable automatic service registration and heartbeat | true | See note above |
+| PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
+| LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
+| SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
+| TENANT_ID | --tenant_id | The ID associated with the tenant in the Controller and possibly the underlying PaaS |  | yes when `-proxy` is enabled |
+| TENANT_TOKEN | --tenant_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
+| TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
+| TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
+| REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
+| REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
+| NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
+| CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
+| CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
+| LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
+| KAFKA_USER | --kafka_user | kafka username |  | Kafka-based communication with controller is optional |
+| KAFKA_PASS | --kafka_pass | kafka password |  | Kafka-based communication with controller is optional |
+| KAFKA_TOKEN | --kafka_token | kafka token |  | Kafka-based communication with controller is optional |
+| KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  | Kafka-based communication with controller is optional |
+| KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  | Kafka-based communication with controller is optional |
+| KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  | Kafka-based communication with controller is optional |
+| KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  | Kafka-based communication with controller is optional |
+|  | --help, -h | show help | | |
+|  | --version, -v | print the version | | |
 
 ## Build from source
 The following sections describe options for building the sidecar from source. Instructions on using a prebuilt Docker image are available [above](https://github.com/amalgam8/sidecar#usage).

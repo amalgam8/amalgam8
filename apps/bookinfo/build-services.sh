@@ -14,31 +14,33 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
-
-#gunicorn -D -w 1 -b 0.0.0.0:10081 --reload details:app
-#gunicorn -D -w 1 -b 0.0.0.0:10082 --reload reviews:app
-#gunicorn -w 1 -b 0.0.0.0:19080 --reload --access-logfile prod.log --error-logfile prod.log productpage:app >>prod.log 2>&1 &
-
 set -o errexit
 
-pushd productpage
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+pushd $SCRIPTDIR/productpage
   docker build -t amalgam8/a8-examples-bookinfo-productpage:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine -f Dockerfile.sidecar .
 popd
 
-pushd details
+pushd $SCRIPTDIR/details
   docker build -t amalgam8/a8-examples-bookinfo-details:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine -f Dockerfile.sidecar .
 popd
 
-pushd reviews
+pushd $SCRIPTDIR/reviews
   #plain build -- no ratings
   docker build -t amalgam8/a8-examples-bookinfo-reviews:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine -f Dockerfile.sidecar .
   #with ratings black stars
   docker build -t amalgam8/a8-examples-bookinfo-reviews:v2 --build-arg enable_ratings=true .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine --build-arg enable_ratings=true -f Dockerfile.sidecar .
   #with ratings red stars
   docker build -t amalgam8/a8-examples-bookinfo-reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
+  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine --build-arg enable_ratings=true --build-arg star_color=red -f Dockerfile.sidecar .
 popd
 
-pushd ratings
+pushd $SCRIPTDIR/ratings
   docker build -t amalgam8/a8-examples-bookinfo-ratings:v1 .
+  docker build -t amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine -f Dockerfile.sidecar .
 popd

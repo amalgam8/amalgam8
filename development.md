@@ -1,11 +1,9 @@
 # Amalgam8 Developer Instructions
 
-*Note: These instructions are currently only available for Amalgam8 on local Kubernetes.*
-
 The easiest way to set up an environment where you can compile and experiment with Amalgam8 source code
 is by using the same vagrant VM that is used for the sample microservice demos in
-the [examples](https://github.com/amalgam8/examples) project. However, in this case you must pull more
-git repos before doing the "vagrant up".
+the [examples](https://github.com/amalgam8/examples) project. However, in this case you must
+checkout the master branch and pull more git repos before doing the "vagrant up".
 
 Alternatively you can set up the required prerequisites that are described in the 
 [Vagrantfile](https://github.com/amalgam8/examples/blob/master/Vagrantfile) by yourself,
@@ -15,17 +13,33 @@ To get started using the provided Vagrant file, run the following commands:
 
 ```bash
 git clone git@github.com:amalgam8/examples.git
+cd examples
+git checkout master
+cd ..
+
 git clone git@github.com:amalgam8/registry.git
 git clone git@github.com:amalgam8/controller.git
 git clone git@github.com:amalgam8/sidecar.git
+git clone git@github.com:amalgam8/a8ctl.git
 
 cd examples
 vagrant up
 vagrant ssh
+
+cd $GOPATH/src/github.com/amalgam8/examples
 ```
 
 In this environment, you can run all the same samples and demos that are described in https://github.com/amalgam8/examples/blob/master/README.md,
 and you have the ability to also compile the code and build the images locally.
+
+If you need to use the latest (potentially unreleased) version of the Amalgam8 CLI, run the following commands:
+
+```
+sudo pip uninstall a8ctl
+pushd ../a8ctl
+sudo python setup.py develop
+popd
+```
 
 You can compile and build the control plane or sidecar images locally, by running one of the following commands:
 
@@ -45,7 +59,7 @@ If you change the base sidecar image and rebuild it, ensure that you also locall
 
 ```
 apps/helloworld/build.sh
-apps/bookinfo/build-services-baseimages.sh
+apps/bookinfo/build-services.sh
 ```
 
 To remove locally-compiled Amalgam8 images and use the Amalgam8 images from Docker Hub:

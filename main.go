@@ -24,7 +24,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/checker"
-	"github.com/amalgam8/controller/clients"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/manager"
@@ -99,8 +98,6 @@ func controllerMain(conf config.Config) error {
 		return err
 	}
 
-	registry := clients.NewRegistry()
-
 	tpc := notification.NewTenantProducerCache()
 
 	g, err := nginx.NewGenerator(nginx.Config{
@@ -119,11 +116,13 @@ func controllerMain(conf config.Config) error {
 		Generator:     g,
 	})
 
+	factory := checker.NewRegistryFactory()
+
 	c := checker.New(checker.Config{
 		Database:      tenantDB,
-		Registry:      registry,
 		ProducerCache: tpc,
 		Generator:     g,
+		Factory:       factory,
 	})
 
 	n := api.NewNGINX(api.NGINXConfig{

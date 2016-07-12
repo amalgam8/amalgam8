@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
+	"fmt"
 )
 
 const (
@@ -54,77 +55,77 @@ const (
 var TenantFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   logLevel,
-		EnvVar: strings.ToUpper(logLevel),
+		EnvVar: envVar(logLevel),
 		Value:  "info",
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
 	},
 
 	cli.BoolFlag{
 		Name:   forceUpdate,
-		EnvVar: strings.ToUpper(forceUpdate),
+		EnvVar: envVar(forceUpdate),
 		Usage:  "Update Registry and Kafka credentials on startup",
 	},
 
 	cli.StringFlag{
 		Name:   serviceName,
-		EnvVar: strings.ToUpper(serviceName),
+		EnvVar: envVar(serviceName),
 		Usage:  "Service name to register with",
 	},
 	cli.StringFlag{
 		Name:   serviceVersion,
-		EnvVar: strings.ToUpper(serviceVersion),
+		EnvVar: envVar(serviceVersion),
 		Usage:  "Service version to register with",
 	},
 	cli.StringFlag{
 		Name:   endpointHost,
-		EnvVar: strings.ToUpper(endpointHost),
+		EnvVar: envVar(endpointHost),
 		Usage:  "Service endpoint host name (local IP is used if none specified)",
 	},
 	cli.IntFlag{
 		Name:   endpointPort,
-		EnvVar: strings.ToUpper(endpointPort),
+		EnvVar: envVar(endpointPort),
 		Usage:  "Service endpoint port",
 	},
 
 	cli.BoolTFlag{
 		Name:   register,
-		EnvVar: strings.ToUpper(register),
+		EnvVar: envVar(register),
 		Usage:  "Enable automatic service registration and heartbeat",
 	},
 
 	cli.BoolTFlag{
 		Name:   proxy,
-		EnvVar: strings.ToUpper(proxy),
+		EnvVar: envVar(proxy),
 		Usage:  "Enable automatic service discovery and load balancing across services using NGINX",
 	},
 
 	cli.BoolTFlag{
 		Name:   log,
-		EnvVar: strings.ToUpper(log),
+		EnvVar: envVar(log),
 		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",
 	},
 
 	cli.BoolFlag{
 		Name:   supervise,
-		EnvVar: strings.ToUpper(supervise),
+		EnvVar: envVar(supervise),
 		Usage:  "Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation",
 	},
 
 	// Tenant
 	cli.StringFlag{
 		Name:   tenantToken,
-		EnvVar: strings.ToUpper(tenantToken),
+		EnvVar: envVar(tenantToken),
 		Usage:  "Token for Service Proxy instance",
 	},
 	cli.DurationFlag{
 		Name:   tenantTTL,
-		EnvVar: strings.ToUpper(tenantTTL),
+		EnvVar: envVar(tenantTTL),
 		Value:  time.Duration(time.Minute),
 		Usage:  "Tenant TTL for Registry",
 	},
 	cli.DurationFlag{
 		Name:   tenantHeartbeat,
-		EnvVar: strings.ToUpper(tenantHeartbeat),
+		EnvVar: envVar(tenantHeartbeat),
 		Value:  time.Duration(time.Second * 45),
 		Usage:  "Tenant heartbeat interval to Registry",
 	},
@@ -132,19 +133,19 @@ var TenantFlags = []cli.Flag{
 	// Registry
 	cli.StringFlag{
 		Name:   registryURL,
-		EnvVar: strings.ToUpper(registryURL),
+		EnvVar: envVar(registryURL),
 		Usage:  "URL for Registry",
 	},
 	cli.StringFlag{
 		Name:   registryToken,
-		EnvVar: strings.ToUpper(registryToken),
+		EnvVar: envVar(registryToken),
 		Usage:  "API token for Regsitry",
 	},
 
 	// NGINX
 	cli.IntFlag{
 		Name:   nginxPort,
-		EnvVar: strings.ToUpper(nginxPort),
+		EnvVar: envVar(nginxPort),
 		Value:  6379,
 		Usage:  "Port for NGINX",
 	},
@@ -152,12 +153,12 @@ var TenantFlags = []cli.Flag{
 	// Controller
 	cli.StringFlag{
 		Name:   controllerURL,
-		EnvVar: strings.ToUpper(controllerURL),
+		EnvVar: envVar(controllerURL),
 		Usage:  "URL for Controller service",
 	},
 	cli.DurationFlag{
 		Name:   controllerPoll,
-		EnvVar: strings.ToUpper(controllerPoll),
+		EnvVar: envVar(controllerPoll),
 		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
@@ -165,44 +166,48 @@ var TenantFlags = []cli.Flag{
 	// Logserver
 	cli.StringFlag{
 		Name:   logstashServer,
-		EnvVar: strings.ToUpper(logstashServer),
+		EnvVar: envVar(logstashServer),
 		Usage:  "Logstash target for nginx logs",
 	},
 
 	// Kafka
 	cli.StringFlag{
 		Name:   kafkaUsername,
-		EnvVar: strings.ToUpper(kafkaUsername),
+		EnvVar: envVar(kafkaUsername),
 		Usage:  "Username for Kafka service",
 	},
 	cli.StringFlag{
 		Name:   kafkaPassword,
-		EnvVar: strings.ToUpper(kafkaPassword),
+		EnvVar: envVar(kafkaPassword),
 		Usage:  "Password for Kafka service",
 	},
 	cli.StringFlag{
 		Name:   kafkaToken,
-		EnvVar: strings.ToUpper(kafkaToken),
+		EnvVar: envVar(kafkaToken),
 		Usage:  "Token for Kafka service",
 	},
 	cli.StringFlag{
 		Name:   kafkaAdminURL,
-		EnvVar: strings.ToUpper(kafkaAdminURL),
+		EnvVar: envVar(kafkaAdminURL),
 		Usage:  "Admin URL for Kafka service",
 	},
 	cli.StringFlag{
 		Name:   kafkaRestURL,
-		EnvVar: strings.ToUpper(kafkaRestURL),
+		EnvVar: envVar(kafkaRestURL),
 		Usage:  "REST URL for Kafka service",
 	},
 	cli.BoolFlag{
 		Name:   kafkaSASL,
-		EnvVar: strings.ToUpper(kafkaSASL),
+		EnvVar: envVar(kafkaSASL),
 		Usage:  "Use SASL/PLAIN authentication for Kafka",
 	},
 	cli.StringSliceFlag{
 		Name:   kafkaBrokers,
-		EnvVar: strings.ToUpper(kafkaBrokers),
+		EnvVar: envVar(kafkaBrokers),
 		Usage:  "Kafka broker",
 	},
+}
+
+func envVar(name string) string {
+	return strings.ToUpper(fmt.Sprintf("%v%v", "A8_", name))
 }

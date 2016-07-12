@@ -18,8 +18,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
 	"fmt"
+
+	"github.com/codegangsta/cli"
 )
 
 const (

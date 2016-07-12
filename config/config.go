@@ -207,45 +207,46 @@ func (c *Config) Validate(validateCreds bool) error {
 				IsNotEmpty("Registry token", c.Registry.Token),
 				IsValidURL("Regsitry URL", c.Registry.URL),
 			)
-		}
-	}
 
-	// If any of the Message Hub config is present validate the Message Hub config
-	if validateCreds && (len(c.Kafka.Brokers) > 0 || c.Kafka.Username != "" || c.Kafka.Password != "") {
-		validators = append(validators,
-			func() error {
-				if len(c.Kafka.Brokers) == 0 {
-					return errors.New("Kafka requires at least one broker")
-				}
-
-				for _, broker := range c.Kafka.Brokers {
-					if err := IsNotEmpty("Kafka broker", broker)(); err != nil {
-						return err
-					}
-				}
-				return nil
-			},
-		)
-		if c.Kafka.SASL {
-			validators = append(validators,
-				IsNotEmpty("Kafka username", c.Kafka.Username),
-				IsNotEmpty("Kafka password", c.Kafka.Password),
-				IsNotEmpty("Kafka token", c.Kafka.APIKey),
-				IsValidURL("Kafka Rest URL", c.Kafka.RestURL),
-			)
-		} else {
-			validators = append(validators,
-				func() error {
-					if len(c.Kafka.Brokers) != 0 {
-						if c.Kafka.Username != "" || c.Kafka.Password != "" ||
-							c.Kafka.RestURL != "" || c.Kafka.APIKey != "" {
-							return errors.New("Kafka credentials provided when SASL authentication disabled")
+			// If any of the Kafka config is present validate the Message Hub config
+			if len(c.Kafka.Brokers) > 0 || c.Kafka.Username != "" || c.Kafka.Password != "" {
+				validators = append(validators,
+					func() error {
+						if len(c.Kafka.Brokers) == 0 {
+							return errors.New("Kafka requires at least one broker")
 						}
-					}
 
-					return nil
-				},
-			)
+						for _, broker := range c.Kafka.Brokers {
+							if err := IsNotEmpty("Kafka broker", broker)(); err != nil {
+								return err
+							}
+						}
+						return nil
+					},
+				)
+				if c.Kafka.SASL {
+					validators = append(validators,
+						IsNotEmpty("Kafka username", c.Kafka.Username),
+						IsNotEmpty("Kafka password", c.Kafka.Password),
+						IsNotEmpty("Kafka token", c.Kafka.APIKey),
+						IsValidURL("Kafka Rest URL", c.Kafka.RestURL),
+					)
+				} else {
+					validators = append(validators,
+						func() error {
+							if len(c.Kafka.Brokers) != 0 {
+								if c.Kafka.Username != "" || c.Kafka.Password != "" ||
+									c.Kafka.RestURL != "" || c.Kafka.APIKey != "" {
+									return errors.New("Kafka credentials provided when SASL authentication disabled")
+								}
+							}
+
+							return nil
+						},
+					)
+				}
+			}
+
 		}
 	}
 

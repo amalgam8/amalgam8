@@ -12,7 +12,7 @@ function get_version(service, default_version, version_selectors)
     local cookie_version = ngx.var.cookie_version -- check for cookie
     if cookie_version then
         if version_selectors and (version_selectors[cookie_version] or cookie_version == default_version) then
-            -- ngx.log(ngx.DEBUG, "returning cookie_version: ", cookie_version)
+            -- ngx.log(ngx.WARN, "returning cookie_version: ", cookie_version)
             return cookie_version
         else
             add_cookie("version=; Path=/" .. service .. "; Expires=" .. ngx.cookie_time(0)) -- tell client to delete old cookie
@@ -22,7 +22,7 @@ function get_version(service, default_version, version_selectors)
     if version_selectors then
         add_cookie("version=" .. selected_version .. "; Path=/" .. service)
     end
-    -- ngx.log(ngx.DEBUG, "returning: ", cookie_version)
+    -- ngx.log(ngx.WARN, "returning: ", cookie_version)
     return cookie_version   
 end
 
@@ -33,6 +33,16 @@ function select_version(service, default_version, version_selectors)
             if selector.user and ngx.var.cookie_user and selector.user == ngx.var.cookie_user then
                 selected_version = version
                 break
+            elseif selector.header then -- example: --selector 'v2(header="Foo:bar")'
+                local name, pattern = selector.header:match("([^:]+):([^:]+)")
+                local header = ngx.req.get_headers()[name]
+                if header then
+                    local m, err = ngx.re.match(header, pattern, "o")
+                    if m then
+                        selected_version = version
+                        break
+                    end
+                end
             elseif selector.weight then
                 if math.random() < selector.weight then
                     selected_version = version
@@ -44,7 +54,7 @@ function select_version(service, default_version, version_selectors)
             end
         end
     end
-    -- ngx.log(ngx.DEBUG, "returning: ", selected_version)
+    -- ngx.log(ngx.WARN, "returning: ", selected_version)
     return selected_version
 end
 

@@ -50,16 +50,16 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: CONTROLLER_URL
+        - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: TENANT_TOKEN
+        - name: A8_TENANT_TOKEN
           value: local
-        - name: SERVICE
+        - name: A8_SERVICE
           value: gateway
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           #filebeat YAML issue workaround
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: CONTROLLER_POLL
+        - name: A8_CONTROLLER_POLL
           value: 15s
-        - name: REGISTER
+        - name: A8_REGISTER
           value: "false"

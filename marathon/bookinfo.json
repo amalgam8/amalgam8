@@ -22,10 +22,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python details.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "details",
-                        "SERVICE_VERSION" : "v1"
+                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "details",
+                        "A8_SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -49,10 +49,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python ratings.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "ratings",
-                        "SERVICE_VERSION" : "v1"
+                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "ratings",
+                        "A8_SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -76,10 +76,10 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "reviews",
-                        "SERVICE_VERSION" : "v1"
+                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "reviews",
+                        "A8_SERVICE_VERSION" : "v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -103,15 +103,15 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "reviews",
-                        "SERVICE_VERSION" : "v2",
-			            "TENANT_TOKEN":"local",
-                        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
-		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
-		                "CONTROLLER_POLL" : "15s",
-                        "KAFKA_BROKER" : "__REPLACEME__:9092"
+                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "reviews",
+                        "A8_SERVICE_VERSION" : "v2",
+			            "A8_TENANT_TOKEN":"local",
+                        "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
+		                "A8_CONTROLLER_POLL" : "15s",
+                        "A8_KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -135,15 +135,15 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
-                        "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "reviews",
-                        "SERVICE_VERSION" : "v3",
-			            "TENANT_TOKEN":"local",
-                        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
-		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
-		                "CONTROLLER_POLL" : "15s",
-                        "KAFKA_BROKER" : "__REPLACEME__:9092"
+                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "reviews",
+                        "A8_SERVICE_VERSION" : "v3",
+			            "A8_TENANT_TOKEN":"local",
+                        "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
+		                "A8_CONTROLLER_POLL" : "15s",
+                        "A8_KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -167,15 +167,15 @@
 		            },
                     "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python productpage.py 9080 http://localhost:6379",
 		            "env": {
-			            "REGISTRY_URL": "http://__REPLACEME__:31300",
-			            "REGISTRY_TOKEN" : "local",
-			            "SERVICE" : "productpage",
-				        "SERVICE_VERSION" : "v1",
-			            "TENANT_TOKEN":"local",
-				        "LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
-		                "CONTROLLER_URL":"http://__REPLACEME__:31200",
-		                "CONTROLLER_POLL" : "15s",
-				        "KAFKA_BROKER" : "__REPLACEME__:9092"
+			            "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+			            "A8_REGISTRY_TOKEN" : "local",
+			            "A8_SERVICE" : "productpage",
+				        "A8_SERVICE_VERSION" : "v1",
+			            "A8_TENANT_TOKEN":"local",
+				        "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
+		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
+		                "A8_CONTROLLER_POLL" : "15s",
+				        "A8_KAFKA_BROKER" : "__REPLACEME__:9092"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,

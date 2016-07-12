@@ -15,25 +15,25 @@
 helloworld-v1:
   image: amalgam8/a8-examples-helloworld-sidecar:v1
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=helloworld
-    - SERVICE_VERSION=v1
-    - LOG=false
-    - PROXY=false
-    - ENDPOINT_PORT=5000
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=helloworld
+    - A8_SERVICE_VERSION=v1
+    - A8_LOG=false
+    - A8_PROXY=false
+    - A8_ENDPOINT_PORT=5000
   external_links:
     - registry
 
 helloworld-v2:
   image: amalgam8/a8-examples-helloworld-sidecar:v2
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=helloworld
-    - SERVICE_VERSION=v2
-    - LOG=false
-    - PROXY=false
-    - ENDPOINT_PORT=5000
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=helloworld
+    - A8_SERVICE_VERSION=v2
+    - A8_LOG=false
+    - A8_PROXY=false
+    - A8_ENDPOINT_PORT=5000
   external_links:
     - registry

@@ -41,21 +41,21 @@ spec:
           - --log=false
           - --supervise=false
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: details
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: REGISTRY_URL
+        - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: REGISTRY_TOKEN
+        - name: A8_REGISTRY_TOKEN
           value: local
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"
 ---
 apiVersion: v1
@@ -87,21 +87,21 @@ spec:
           - --log=false
           - --supervise=false
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: ratings
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: REGISTRY_URL
+        - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: REGISTRY_TOKEN
+        - name: A8_REGISTRY_TOKEN
           value: local
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"
 ---
 apiVersion: v1
@@ -131,21 +131,21 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: CONTROLLER_URL
+        - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: TENANT_TOKEN
+        - name: A8_TENANT_TOKEN
           value: local
-        - name: SERVICE
+        - name: A8_SERVICE
           value: reviews
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"
 ---
 apiVersion: v1
@@ -175,21 +175,21 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: CONTROLLER_URL
+        - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: TENANT_TOKEN
+        - name: A8_TENANT_TOKEN
           value: local
-        - name: SERVICE
+        - name: A8_SERVICE
           value: reviews
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v2
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"
 ---
 apiVersion: v1
@@ -219,21 +219,21 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: CONTROLLER_URL
+        - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: TENANT_TOKEN
+        - name: A8_TENANT_TOKEN
           value: local
-        - name: SERVICE
+        - name: A8_SERVICE
           value: reviews
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v3
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"
 ---
 apiVersion: v1
@@ -263,19 +263,19 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: CONTROLLER_URL
+        - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: TENANT_TOKEN
+        - name: A8_TENANT_TOKEN
           value: local
-        - name: SERVICE
+        - name: A8_SERVICE
           value: productpage
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "9080"

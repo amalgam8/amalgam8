@@ -15,55 +15,55 @@
 details-v1:
   image: amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=details
-    - SERVICE_VERSION=v1
-    - LOG=false
-    - PROXY=false
-    - ENDPOINT_PORT=9080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=details
+    - A8_SERVICE_VERSION=v1
+    - A8_LOG=false
+    - A8_PROXY=false
+    - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
 
 ratings-v1:
   image: amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=ratings
-    - SERVICE_VERSION=v1
-    - LOG=false
-    - PROXY=false
-    - ENDPOINT_PORT=9080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=ratings
+    - A8_SERVICE_VERSION=v1
+    - A8_LOG=false
+    - A8_PROXY=false
+    - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
 
 reviews-v1:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=reviews
-    - SERVICE_VERSION=v1
-    - LOG=false
-    - PROXY=false
-    - ENDPOINT_PORT=9080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=reviews
+    - A8_SERVICE_VERSION=v1
+    - A8_LOG=false
+    - A8_PROXY=false
+    - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
 
 reviews-v2:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=reviews
-    - SERVICE_VERSION=v2
-    - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=local
-    - LOGSTASH_SERVER='logstash:8092'
-    - CONTROLLER_URL=http://controller:6379
-    - CONTROLLER_POLL=5s
-    - KAFKA_BROKER=kafka:9092
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=reviews
+    - A8_SERVICE_VERSION=v2
+    - A8_ENDPOINT_PORT=9080
+    - A8_TENANT_TOKEN=local
+    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_CONTROLLER_POLL=5s
+    - A8_KAFKA_BROKER=kafka:9092
   external_links:
     - kafka
     - logstash
@@ -73,16 +73,16 @@ reviews-v2:
 reviews-v3:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=reviews
-    - SERVICE_VERSION=v3
-    - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=local
-    - LOGSTASH_SERVER='logstash:8092'
-    - CONTROLLER_URL=http://controller:6379
-    - CONTROLLER_POLL=5s
-    - KAFKA_BROKER=kafka:9092
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=reviews
+    - A8_SERVICE_VERSION=v3
+    - A8_ENDPOINT_PORT=9080
+    - A8_TENANT_TOKEN=local
+    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_CONTROLLER_POLL=5s
+    - A8_KAFKA_BROKER=kafka:9092
   external_links:
     - kafka
     - logstash
@@ -92,16 +92,16 @@ reviews-v3:
 productpage-v1:
   image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine
   environment:
-    - REGISTRY_URL=http://registry:8080
-    - REGISTRY_TOKEN=local
-    - SERVICE=productpage
-    - SERVICE_VERSION=v1
-    - ENDPOINT_PORT=9080
-    - TENANT_TOKEN=local
-    - LOGSTASH_SERVER='logstash:8092'
-    - CONTROLLER_URL=http://controller:6379
-    - CONTROLLER_POLL=5s
-    - KAFKA_BROKER=kafka:9092
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
+    - A8_SERVICE=productpage
+    - A8_SERVICE_VERSION=v1
+    - A8_ENDPOINT_PORT=9080
+    - A8_TENANT_TOKEN=local
+    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_CONTROLLER_POLL=5s
+    - A8_KAFKA_BROKER=kafka:9092
   external_links:
     - kafka
     - logstash

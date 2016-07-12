@@ -50,7 +50,7 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
 ---
 apiVersion: v1
@@ -76,5 +76,5 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v2

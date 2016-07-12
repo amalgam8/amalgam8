@@ -16,13 +16,13 @@
 gateway:
   image: amalgam8/a8-sidecar:0.1-alpine
   environment:
-    - CONTROLLER_URL=http://controller:6379
-    - TENANT_TOKEN=local
-    - KAFKA_BROKER=kafka:9092
-    - REGISTER=false
-    - SERVICE=gateway
-    - LOGSTASH_SERVER='logstash:8092'
-    - CONTROLLER_POLL=15s
+    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_TENANT_TOKEN=local
+    - A8_KAFKA_BROKER=kafka:9092
+    - A8_REGISTER=false
+    - A8_SERVICE=gateway
+    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_CONTROLLER_POLL=15s
   ports:
     - "32000:6379"
   external_links:

@@ -34,9 +34,9 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: helloworld
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
       - name: servicereg
         image: amalgam8/a8-sidecar:0.1
@@ -46,21 +46,21 @@ spec:
           - --log=false
           - --supervise=false
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: helloworld
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v1
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: REGISTRY_URL
+        - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: REGISTRY_TOKEN
+        - name: A8_REGISTRY_TOKEN
           value: local
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "5000"
 ---
 apiVersion: v1
@@ -85,9 +85,9 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: helloworld
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v2
       - name: servicereg
         image: amalgam8/a8-sidecar:0.1
@@ -97,19 +97,19 @@ spec:
           - --log=false
           - --supervise=false
         env:
-        - name: SERVICE
+        - name: A8_SERVICE
           value: helloworld
-        - name: SERVICE_VERSION
+        - name: A8_SERVICE_VERSION
           value: v2
-        - name: LOGSTASH_SERVER
+        - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
-        - name: REGISTRY_URL
+        - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: REGISTRY_TOKEN
+        - name: A8_REGISTRY_TOKEN
           value: local
-        - name: ENDPOINT_HOST
+        - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
-        - name: ENDPOINT_PORT
+        - name: A8_ENDPOINT_PORT
           value: "5000"

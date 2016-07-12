@@ -36,6 +36,7 @@ func DoAppSupervision(cmdArgs []string) {
 		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
 		err := cmd.Start()
 		if err != nil {

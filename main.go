@@ -182,7 +182,7 @@ func startProxy(conf *config.Config) error {
 					Username:    conf.Kafka.Username,
 					Password:    conf.Kafka.Password,
 					ClientID:    conf.Kafka.APIKey,
-					Topic:       "NewRules",
+					Topic:       "A8_NewRules",
 					SASLEnabled: conf.Kafka.SASL,
 				})
 				if err != nil {

@@ -22,7 +22,7 @@ import (
 )
 
 // TopicName topic to send events to
-const TopicName = "NewRules"
+const TopicName = "A8_NewRules"
 
 // TenantProducerCache maintains a lazy-initialized list of producers for tenant spaces.
 type TenantProducerCache interface {

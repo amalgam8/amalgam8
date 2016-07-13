@@ -35,6 +35,16 @@ function select_version(service, default_version, version_selectors)
             if selector.user and ngx.var.cookie_user and selector.user == ngx.var.cookie_user then
                 selected_version = version
                 break
+	    elseif selector.header then -- example: --selector 'v2(header="Foo:bar")'
+	       local name, pattern = selector.header:match("([^:]+):([^:]+)")
+	       local header = ngx.req.get_headers()[name]
+	       if header then
+		  local m, err = ngx.re.match(header, pattern, "o")
+		  if m then
+		     selected_version = version
+		     break
+		  end
+	       end
             elseif selector.weight then
                 if math.random() < selector.weight then
                     selected_version = version

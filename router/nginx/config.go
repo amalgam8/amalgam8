@@ -36,6 +36,7 @@ type config struct {
 
 // NewConfig creates a new config
 func NewConfig() Config {
+
 	return &config{}
 }
 

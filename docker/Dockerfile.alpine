@@ -128,6 +128,7 @@ RUN set -ex \
 ADD nginx/lua /opt/a8_lualib
 ADD nginx/conf /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/nginx.conf.tmpl /usr/bin/nginx.conf.tmpl
 
 ADD /bin/a8sidecar /usr/bin/a8sidecar
 

@@ -12,15 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Service registration side-car image for self-registering microservice applications.
-#
-# The following environment variables must be set in instances of this image:
-#    SD_URL: service discovery service url
-#    SD_TOKEN: authorization token for service discovery service
-#    SERVICE: microservice name with optional ":" followed by version tag (e.g., "helloworld:v1")
-#    ENDPOINT_HOST: host or ip address of microservice instance (optional - defaults to the IP of the container instance)
-#    ENDPOINT_PORT: port of microservice instance
-#
 FROM ubuntu:14.04
 
 ADD /bin/a8sidecar /usr/bin/a8sidecar

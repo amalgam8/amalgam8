@@ -82,6 +82,28 @@ func (n *nginx) Update(data []byte) error {
 		return err
 	}
 
+	// Determine if NGINX is running
+	running, err := n.service.Running()
+	if err != nil {
+		log.WithField("err", err).Error("Could not get status of NGINX service")
+		return err
+	}
+
+	var nginxErr error
+	if running {
+		// NGINX is already running; attempt to reload NGINX
+		nginxErr = n.reloadNginx()
+	} else {
+		// NGINX is not running; attempt to start NGINX
+		nginxErr = n.startNginx()
+	}
+
+	// log the failed nginx config
+	if nginxErr != nil {
+		log.WithField("config", string(data)).Error("Failed NGINX config")
+		return nginxErr
+	}
+
 	if err = n.nginxClient.UpdateHttpUpstreams(templateConf); err != nil {
 		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
 		return err
@@ -123,7 +145,7 @@ func (n *nginx) Update(data []byte) error {
 	//
 	//// log the failed nginx config
 	//if nginxErr != nil {
-	//	log.WithField("config", string(configBytes)).Error("Failed NGINX config")
+	//	log.WithField("config", string(data)).Error("Failed NGINX config")
 	//	return nginxErr
 	//}
 

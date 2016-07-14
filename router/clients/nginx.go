@@ -46,6 +46,7 @@ func (n *nginx) UpdateHttpUpstreams(conf resources.NGINXJson) error {
 	resp, err := n.httpClient.Do(req)
 	if err != nil {
 		logrus.WithError(err).Error("Failed to send request to NGINX server")
+		return err
 	}
 
 	defer resp.Body.Close()

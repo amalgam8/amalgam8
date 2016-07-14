@@ -24,7 +24,7 @@ import (
 type MockController struct {
 	RegisterError  error
 	ConfigError    error
-	ConfigTemplate resources.ConfigTemplate
+	ConfigTemplate resources.NGINXJson
 	GetCredsError  error
 	GetCredsVal    TenantCredentials
 }
@@ -35,7 +35,7 @@ func (m *MockController) Register() error {
 }
 
 // GetNGINXConfig mocks interface
-func (m *MockController) GetNGINXConfig(version *time.Time) (*resources.ConfigTemplate, error) {
+func (m *MockController) GetNGINXConfig(version *time.Time) (*resources.NGINXJson, error) {
 	return &m.ConfigTemplate, m.ConfigError
 }
 

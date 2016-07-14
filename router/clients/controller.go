@@ -31,7 +31,7 @@ import (
 // Controller TODO
 type Controller interface {
 	Register() error
-	GetNGINXConfig(version *time.Time) (*resources.ConfigTemplate, error)
+	GetNGINXConfig(version *time.Time) (*resources.NGINXJson, error)
 	GetCredentials() (TenantCredentials, error)
 }
 
@@ -152,7 +152,7 @@ func (c *controller) Register() error {
 	return nil
 }
 
-func (c *controller) GetNGINXConfig(version *time.Time) (*resources.ConfigTemplate, error) {
+func (c *controller) GetNGINXConfig(version *time.Time) (*resources.NGINXJson, error) {
 
 	url, err := url.Parse(c.config.Controller.URL + "/v1/nginx")
 	if err != nil {
@@ -208,7 +208,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*resources.ConfigTempla
 		return nil, err
 	}
 
-	templateConf := resources.ConfigTemplate{}
+	templateConf := resources.NGINXJson{}
 	if err = json.Unmarshal(body, &templateConf); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"err": err,

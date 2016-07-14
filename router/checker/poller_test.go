@@ -48,7 +48,7 @@ var _ = Describe("Tenant Poller", func() {
 		updateCount = 0
 
 		rc = &clients.MockController{
-			ConfigTemplate: resources.ConfigTemplate{},
+			ConfigTemplate: resources.NGINXJson{},
 		}
 		n = &mockNginx{
 			UpdateFunc: func(data []byte) error {

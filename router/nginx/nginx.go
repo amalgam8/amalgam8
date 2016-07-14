@@ -15,16 +15,14 @@
 package nginx
 
 import (
-	"strings"
 	"sync"
 	"text/template"
-
-	"bytes"
 
 	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
+	"github.com/amalgam8/sidecar/router/clients"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -43,6 +41,7 @@ type nginx struct {
 	serviceName string
 	template    *template.Template
 	mutex       sync.Mutex
+	nginxClient clients.NGINX
 }
 
 type NGINXConf struct {
@@ -50,6 +49,7 @@ type NGINXConf struct {
 	Service     Service
 	ServiceName string
 	Path        string
+	NGINXClient clients.NGINX
 }
 
 // NewNginx creates new Nginx instance
@@ -63,6 +63,7 @@ func NewNginx(conf NGINXConf) (Nginx, error) {
 		service:     conf.Service,     //NewService(),
 		serviceName: conf.ServiceName, //serviceName,
 		template:    t,
+		nginxClient: conf.NGINXClient,
 	}, nil
 }
 
@@ -72,7 +73,7 @@ func (n *nginx) Update(data []byte) error {
 	defer n.mutex.Unlock()
 
 	var err error
-	templateConf := resources.ConfigTemplate{}
+	templateConf := resources.NGINXJson{}
 	if err = json.Unmarshal(data, &templateConf); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"err":   err,
@@ -81,45 +82,50 @@ func (n *nginx) Update(data []byte) error {
 		return err
 	}
 
-	buf := bytes.NewBuffer([]byte{})
-
-	if err = n.template.Execute(buf, &templateConf); err != nil {
+	if err = n.nginxClient.UpdateHttpUpstreams(templateConf); err != nil {
+		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
 		return err
 	}
 
-	configBytes := buf.Bytes()
-
-	// Replace service name
-	configStr := string(configBytes)
-	configStr = strings.Replace(configStr, "__SERVICE_NAME__", n.serviceName, -1)
-
-	// Update the NGINX configuration file
-	if err = n.config.Update(configStr); err != nil {
-		log.WithField("err", err).Error("Could not update NGINX configuration file")
-		return err
-	}
-
-	// Determine if NGINX is running
-	running, err := n.service.Running()
-	if err != nil {
-		log.WithField("err", err).Error("Could not get status of NGINX service")
-		return err
-	}
-
-	var nginxErr error
-	if running {
-		// NGINX is already running; attempt to reload NGINX
-		nginxErr = n.reloadNginx()
-	} else {
-		// NGINX is not running; attempt to start NGINX
-		nginxErr = n.startNginx()
-	}
-
-	// log the failed nginx config
-	if nginxErr != nil {
-		log.WithField("config", string(configBytes)).Error("Failed NGINX config")
-		return nginxErr
-	}
+	//buf := bytes.NewBuffer([]byte{})
+	//
+	//if err = n.template.Execute(buf, &templateConf); err != nil {
+	//	return err
+	//}
+	//
+	//configBytes := buf.Bytes()
+	//
+	//// Replace service name
+	//configStr := string(configBytes)
+	//configStr = strings.Replace(configStr, "__SERVICE_NAME__", n.serviceName, -1)
+	//
+	//// Update the NGINX configuration file
+	//if err = n.config.Update(configStr); err != nil {
+	//	log.WithField("err", err).Error("Could not update NGINX configuration file")
+	//	return err
+	//}
+	//
+	//// Determine if NGINX is running
+	//running, err := n.service.Running()
+	//if err != nil {
+	//	log.WithField("err", err).Error("Could not get status of NGINX service")
+	//	return err
+	//}
+	//
+	//var nginxErr error
+	//if running {
+	//	// NGINX is already running; attempt to reload NGINX
+	//	nginxErr = n.reloadNginx()
+	//} else {
+	//	// NGINX is not running; attempt to start NGINX
+	//	nginxErr = n.startNginx()
+	//}
+	//
+	//// log the failed nginx config
+	//if nginxErr != nil {
+	//	log.WithField("config", string(configBytes)).Error("Failed NGINX config")
+	//	return nginxErr
+	//}
 
 	return nil
 }

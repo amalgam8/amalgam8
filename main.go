@@ -161,6 +161,7 @@ func startProxy(conf *config.Config) error {
 	var err error
 
 	rc := clients.NewController(conf)
+	nc := clients.NewNGINXClient("http://localhost:5813")
 
 	nginx, err := nginx.NewNginx(
 		nginx.NGINXConf{
@@ -168,6 +169,7 @@ func startProxy(conf *config.Config) error {
 			Service:     nginx.NewService(),
 			Config:      nginx.NewConfig(),
 			Path:        "/usr/bin/nginx.conf.tmpl",
+			NGINXClient: nc,
 		},
 	)
 

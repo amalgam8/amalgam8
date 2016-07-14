@@ -15,69 +15,141 @@
 package nginx
 
 import (
-	"io"
 	"strings"
-	"text/template"
 
 	"time"
 
+	"strconv"
+
+
+	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/resources"
 )
 
 // Generator produces NGINX configurations for tenants
 type Generator interface {
-	Generate(w io.Writer, id string, lastUpdate *time.Time) error
+	Generate(id string, lastUpdate *time.Time) (*resources.ConfigTemplate, error)
 	TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate
 }
 
 type generator struct {
-	template *template.Template
-	db       database.Tenant
+	db database.Tenant
 }
 
 // Config options for the NGINX generator
 type Config struct {
-	Path     string
 	Database database.Tenant
 }
 
 // NewGenerator creates a new NGINX generator using the given Golang template file
 func NewGenerator(conf Config) (Generator, error) {
-	t, err := template.ParseFiles(conf.Path)
-	if err != nil {
-		return nil, err
-	}
 
 	g := &generator{
-		template: t,
-		db:       conf.Database,
+		db: conf.Database,
 	}
 
 	return g, nil
 }
 
 // Generate a NGINX config for a tenant using its catalog and proxy configuration.
-func (g *generator) Generate(w io.Writer, id string, lastUpdate *time.Time) error {
+func (g *generator) Generate(id string, lastUpdate *time.Time) (*resources.NGINXJson, error) {
+
 	// Get inputs
 	entry, err := g.db.Read(id)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if lastUpdate != nil && entry.ServiceCatalog.LastUpdate.After(*lastUpdate) {
-		return nil
+		return nil, nil
 	}
 
 	// Generate the struct for the template
-	templateConf := g.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
+	//templateConf := g.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
 
-	// Generate the NGINX configuration
-	if err := g.template.Execute(w, &templateConf); err != nil {
-		return err
+	retval := resources.NGINXJson{
+		Upstreams: make(map[string]resources.NGINXUpstream, 0),
+		Services:  make(map[string]resources.NGINXService, 0),
+	}
+	faults := []resources.NGINXFault{}
+	for _, rule := range entry.ProxyConfig.Filters.Rules {
+		fault := resources.NGINXFault{
+			Delay:            rule.Delay,
+			DelayProbability: rule.DelayProbability,
+			AbortProbability: rule.AbortProbability,
+			AbortCode:        rule.ReturnCode,
+			Source:           rule.Source,
+			Destination:      rule.Destination,
+			Header:           rule.Header,
+			Pattern:          rule.Pattern,
+		}
+		faults = append(faults, fault)
+	}
+	retval.Faults = faults
+
+	types := map[string]string{}
+	for _, service := range entry.ServiceCatalog.Services {
+		upstreams := map[string][]resources.NGINXEndpoint{}
+		for _, endpoint := range service.Endpoints {
+			version := endpoint.Metadata.Version
+			upstreamName := service.Name
+			if version != "" {
+				upstreamName += "_" + version
+			} else {
+				upstreamName += "_" + "UNVERSIONED"
+			}
+
+			types[service.Name] = endpoint.Type
+
+			vals := strings.Split(endpoint.Value, ":")
+			if len(vals) != 2 {
+				logrus.WithFields(logrus.Fields{
+					"endpoint": endpoint,
+					"values":   vals,
+				}).Error("could not parse host and port from service endpoint")
+			}
+			host := vals[0]
+			port, err := strconv.Atoi(vals[1])
+			if err != nil {
+			}
+			logrus.WithFields(logrus.Fields{
+				"err":  err,
+				"port": vals[1],
+			}).Error("port not a valid int")
+
+			versionUpstreams := upstreams[upstreamName]
+			nginxEndpoint := resources.NGINXEndpoint{
+				Host: host,
+				Port: port,
+			}
+			if versionUpstreams == nil {
+				versionUpstreams = []resources.NGINXEndpoint{nginxEndpoint}
+			} else {
+				versionUpstreams = append(versionUpstreams, nginxEndpoint)
+			}
+			upstreams[upstreamName] = versionUpstreams
+		}
+
+		for k, v := range upstreams {
+			retval.Upstreams[k] = resources.NGINXUpstream{
+				Upstreams: v,
+			}
+		}
 	}
 
-	return nil
+	for _, version := range entry.ProxyConfig.Filters.Versions {
+		retval.Services[version.Service] = resources.NGINXService{
+			Default:   version.Default,
+			Selectors: version.Selectors,
+			Type:      types[version.Service],
+		}
+	}
+
+	//data, _ := json.MarshalIndent(&retval, "", "     ")
+	//fmt.Println(string(data))
+
+	return &retval, nil
 }
 
 /*

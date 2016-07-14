@@ -101,7 +101,6 @@ func controllerMain(conf config.Config) error {
 	tpc := notification.NewTenantProducerCache()
 
 	g, err := nginx.NewGenerator(nginx.Config{
-		Path:     "./nginx/nginx.conf.tmpl",
 		Database: tenantDB,
 	})
 	if err != nil {

@@ -186,9 +186,8 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*resources.NGINXJson, e
 
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNoContent {
-
 		logrus.Debug("No new rules received")
-		return "", nil
+		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
 		respBytes, _ := ioutil.ReadAll(resp.Body)
 		logrus.WithFields(logrus.Fields{

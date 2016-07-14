@@ -1,11 +1,13 @@
 local json     = require("cjson.safe")
 local math     = require("math")
 local balancer = require("ngx.balancer")
-local lock     = require("resty.lock")
 local string   = require("resty.string")
 
-local _M = { _VERSION = '0.1.0' }
-local mt = { __index = _M }
+local Amalgam8 = { _VERSION = '0.2.0',
+	     upstreams_dict = {},
+	     faults_dict = {},
+	     services_dict = {}
+}
 
 local function decodeJson(input)
    local upstreams = {}
@@ -60,62 +62,35 @@ local function decodeJson(input)
    return upstreams, services, faults
 end
 
-local function unlocked(l, cause)
-   local _, err = l:unlock()
-   if err then
-      ngx.log(ngx.ERR, "error unlocking lock:" .. err)
-   end
+function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
+   o = {}
+   setmetatable(o, self)
+   self.__index = self
 
-   return cause
-end
-
-function _M.new(_, upstreams_dict, services_dict, faults_dict,  locks_dict)
    local upstreams = ngx.shared[upstreams_dict]
    if not upstreams then
-      return nil, "upstreams dictionary " .. upstreams_dict .. " not found"
+      return "upstreams dictionary " .. upstreams_dict .. " not found"
    end
 
    local services = ngx.shared[services_dict]
    if not services then
-      return nil, "services dictionary " .. services_dict .. " not found"
+      return "services dictionary " .. services_dict .. " not found"
    end
 
    local faults = ngx.shared[faults_dict]
    if not faults then
-      return nil, "faults dictionary " .. faults_dict .. " not found"
+      return "faults dictionary " .. faults_dict .. " not found"
    end
 
-   local locks = ngx.shared[locks_dict]
-   if not locks then
-      return nil, "locks dictionary " .. locks_dict .. " not found"
-   end
-
-   local self = {
-      upstreams_dict   = upstreams_dict,
-      services_dict   = services_dict,
-      faults_dict    = faults_dict,
-      locks_dict  = locks_dict,
-   }
-
-   return setmetatable(self, mt)
+   self.upstreams_dict = upstreams
+   self.services_dict = services
+   self.faults_dict = faults
+   return o
 end
 
-function _M.updateUpstream(self, name, upstream)
+function Amalgam8:updateUpstream(name, upstream)
    if table.getn(upstream.servers) == 0 then
-      return
-   end
-
-   local l = lock:new(self.locks_dict, {
-                         exptime  = 10,
-                         timeout  = 5,
-                         step     = 0.01,
-                         ratio    = 2,
-                         max_step = 0.1,
-   })
-
-   local _, err = l:lock(name)
-   if err then
-      return err
+      return nil
    end
 
    local current = {
@@ -125,42 +100,28 @@ function _M.updateUpstream(self, name, upstream)
 
    for _, server in ipairs(upstream.servers) do
       if not server.host then
-         return unlocked(l, "null host for server")
+         return "null host for server"
       end
 
       if not server.port then
-         return unlocked(l, "null port for server")
+         return "null port for server"
       end
    end
 
    local current_serialized, err = json.encode(current)
    if err then
-      return unlocked(l, err)
+      return err
    end
 
-   local _, err = ngx.shared[self.upstreams_dict]:set(name, current_serialized)
-   if err then
-      return unlocked(l, err)
-   end
-
-   -- ngx.log(ngx.NOTICE, "updated " .. name .. " with " .. table.getn(upstream.servers) .. " upstreams")
-
-   return unlocked(l)
-end
-
-function _M.updateService(self, name, version_selector)
-   local l = lock:new(self.locks_dict, {
-                         exptime  = 10,
-                         timeout  = 5,
-                         step     = 0.01,
-                         ratio    = 2,
-                         max_step = 0.1,
-   })
-
-   local _, err = l:lock(name)
+   local _, err = self.upstreams_dict:set(name, current_serialized)
    if err then
       return err
    end
+
+   return nil
+end
+
+function Amalgam8:updateService(name, version_selector)
 
    local current = {
       name         = name,
@@ -168,7 +129,7 @@ function _M.updateService(self, name, version_selector)
    }
 
    if not version_selector.default then
-      return unlocked(l, "null entry for default version")
+      return "null entry for default version"
    end
 
    if version_selector.selectors then
@@ -183,31 +144,20 @@ function _M.updateService(self, name, version_selector)
 
    local current_serialized, err = json.encode(current)
    if err then
-      return unlocked(l, err)
+      return err
    end
 
-   local _, err = ngx.shared[self.services_dict]:set(name, current_serialized)
-   if err then
-      return unlocked(l, err)
-   end
-
-   return unlocked(l)
-end
-
-function _M.updateFault(self, i, fault)
-   local l = lock:new(self.locks_dict, {
-                         exptime  = 10,
-                         timeout  = 5,
-                         step     = 0.01,
-                         ratio    = 2,
-                         max_step = 0.1,
-   })
-
-   local name = tostring(i)
-   local _, err = l:lock(name)
+   local _, err = self.services_dict:set(name, current_serialized)
    if err then
       return err
    end
+
+   return nil
+end
+
+function Amalgam8:updateFault(i, fault)
+
+   local name = tostring(i)
 
    local current = {
       name  = name,
@@ -220,25 +170,27 @@ function _M.updateFault(self, i, fault)
    local current_serialized, err = json.encode(current)
    if err or not current_serialized then
       ngx.log(ngx.ERR, "JSON encoding failed for fault fault between " .. fault.source .. " and " .. fault.destination .. " err:" .. err)
-      return unlocked(l, err)
+      return err
    end
 
-   local _, err = table.insert(ngx.shared[self.faults_dict], current_serialized)
+   -- local _, err = table.insert(self.faults_dict, current_serialized)
+   local _, err = self.faults_dict:set(i, current_serialized)
    if err then
       ngx.log(ngx.ERR, "Failed to update faults_dict for fault between " .. fault.source .. " and " .. fault.destination .. " err:" .. err)
-      return unlocked(l, err)
+      return err
    end
 
-   return unlocked(l)
+   return nil
 end
 
-function _M.updateProxy(self, input)
+function Amalgam8:updateProxy(input)
    local upstreams, services, faults = decodeJson(input)
 
    for name, upstream in pairs(upstreams) do
       err = self:updateUpstream(name, upstream)
       if err then
          err = "error updating upstream " .. name .. ": " .. err
+	 break
       end
    end
 
@@ -250,62 +202,55 @@ function _M.updateProxy(self, input)
       err = self:updateService(name, version_selector)
       if err then
          err = "error updating service " .. name .. ": " .. err
-      end
-   end
-
-   for i, fault in ipairs(faults) do
-      err = self:updateFault(i, fault)
-      if err then
-         err = "error updating fault " .. fault.destination .. ": " .. err
+	 break
       end
    end
 
    if err then
       return err
    end
-end
 
-function _M.getUpstream(self, name)
-   local serialized = ngx.shared[self.upstreams_dict]:get(name)
-   if serialized then
-      return json.decode(serialized)
+   for i, fault in ipairs(faults) do
+      err = self:updateFault(i, fault)
+      if err then
+         err = "error updating fault " .. fault.destination .. ": " .. err
+	 break
+      end
    end
-end
 
-function _M.getService(self, name)
-   local serialized = ngx.shared[self.services_dict]:get(name)
-   if serialized then
-      return json.decode(serialized)
-   end
-end
-
-function _M.init(upstreams_dict, services_dict, faults_dict,  locks_dict)
-   local a8proxy, err = _M:new(upstreams_dict, services_dict, faults_dict,  locks_dict)
    if err then
-      ngx.log(ngx.ERR, "error creating a8proxy instance: " .. err)
-      return
+      return err
+   end
+
+   self.faults_dict:set("len", table.getn(faults))
+end
+
+function Amalgam8:getUpstream(name)
+   local serialized = self.upstreams_dict:get(name)
+   if serialized then
+      return json.decode(serialized)
+   end
+end
+
+function Amalgam8:getService(name)
+   local serialized = self.services_dict:get(name)
+   if serialized then
+      return json.decode(serialized)
    end
 end
 
 --- FIXME
-function _M.resetState(self)
-   ngx.shared[self.upstreams_dict]:flush_all()
-   ngx.shared[self.upstreams_dict]:flush_expired()
-   ngx.shared[self.services_dict]:flush_all()
-   ngx.shared[self.services_dict]:flush_expired()
-   ngx.shared[self.faults_dict]:flush_all()
-   ngx.shared[self.faults_dict]:flush_expired()
-   ngx.shared[self.locks_dict]:flush_all()
-   ngx.shared[self.locks_dict]:flush_expired()
+function Amalgam8:resetState()
+   self.upstreams_dict:flush_all()
+   self.upstreams_dict:flush_expired()
+   self.services_dict:flush_all()
+   self.services_dict:flush_expired()
+   self.faults_dict:flush_all()
+   self.faults_dict:flush_expired()
+   self.faults_dict:set("len", 0) --marker
 end
 
-function _M.handle(upstreams_dict, services_dict, faults_dict,  locks_dict)
-   local a8proxy, err = _M:new(upstreams_dict, services_dict, faults_dict,  locks_dict)
-   if err then
-      ngx.log(ngx.ERR, "error creating a8proxy instance: " .. err)
-      ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
-   end
-
+function Amalgam8:updateConfig()
    if ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
       ngx.req.read_body()
 
@@ -315,15 +260,9 @@ function _M.handle(upstreams_dict, services_dict, faults_dict,  locks_dict)
          ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
       end
 
-      -- TODO: FIXME. This is bad. Can't clear out all tables and then
-      -- load them again. This is essentially equivalent to config
-      -- reload. Use a big fat lock to protect all state and use
-      -- reader-writer locks to optimize access to the tables. Right
-      -- now, this implementation has race conditions and will not work
-      -- at high load. As such, the code is currenly not using locks fully.
-      -- The get functions should be using locks as well.
-      a8proxy:resetState()
-      local err = a8proxy:updateProxy(input)
+      -- TODO: FIXME. There is no concept of locking so far.
+      self:resetState()
+      err = self:updateProxy(input)
       if err then
          ngx.log(ngx.ERR, "error updating proxy: " .. err)
          ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
@@ -333,20 +272,14 @@ function _M.handle(upstreams_dict, services_dict, faults_dict,  locks_dict)
    end
 end
 
-function _M.balance(upstreams_dict, services_dict, faults_dict,  locks_dict)
+function Amalgam8:balance()
    local name = ngx.var.a8proxy_upstream
    if not name then
       ngx.log(ngx.ERR, "$a8proxy_upstream is not specified")
       return
    end
 
-   local a8proxy, err = _M:new(upstreams_dict, services_dict, faults_dict,  locks_dict)
-   if err then
-      ngx.log(ngx.ERR, "error creating a8proxy instance: " .. err)
-      return
-   end
-
-   local upstream, err = a8proxy:getUpstream(name)
+   local upstream, err = self:getUpstream(name)
    if err then
       ngx.log(ngx.ERR, "error getting upstream " .. name .. ": " .. err)
       return
@@ -368,20 +301,14 @@ function _M.balance(upstreams_dict, services_dict, faults_dict,  locks_dict)
    end
 end
 
-function _M.get_rules(upstreams_dict, services_dict, faults_dict, locks_dict)
+function Amalgam8:get_version_rules()
    local name = ngx.var.service_name
    if not name then
       ngx.log(ngx.ERR, "$service_name is not specified")
       return nil, nil
    end
 
-   local a8proxy, err = _M:new(upstreams_dict, services_dict, faults_dict,  locks_dict)
-   if err then
-      ngx.log(ngx.ERR, "error creating a8proxy instance: " .. err)
-      return nil, nil
-   end
-
-   local service, err = a8proxy:getService(name)
+   local service, err = self:getService(name)
    if err then
       ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
       return nil, nil
@@ -395,4 +322,4 @@ function _M.get_rules(upstreams_dict, services_dict, faults_dict, locks_dict)
    return service.version_selector.default, service.version_selector.selectors
 end
 
-return _M
+return Amalgam8

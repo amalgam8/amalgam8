@@ -20,10 +20,12 @@ function inject_faults(destination, faults_dict)
       }
       source, destination cannot be wildcards
    ]]
-
-   for i, _ in ipairs(faults_dict) do
-      -- TODO:  This is suboptimal, to decode JSON for each rule match. Need to have nested lua tables
-      local fault_str = faults_dict[i]
+   local len = faults_dict:get("len")
+   if len == 0 then
+      return
+   end
+   for i=1,len do
+      local fault_str = faults_dict:get(i)
       local obj, err = json.decode(fault_str)
       if err then
          ngx.log(ngx.ERR, "error decoding fault spec for " .. destination .. " err:" .. err)

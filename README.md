@@ -34,32 +34,31 @@ line flags.
 
 | Environment Key | Flag Name                   | Description | Default Value |Required|
 |:----------------|:----------------------------|:------------|:--------------|--------|
-| LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
-| SERVICE | --service | service name to register with | | yes |
-| SERVICE_VERSION | --service_version | service version to register with. Service is UNVERSIONED by default |  | needed if you wish to register different versions under same name |
-| ENDPOINT_HOST | --endpoint_host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
-| ENDPOINT_PORT | --endpoint_port | service endpoint port |  | yes |
-| REGISTER | --register | enable automatic service registration and heartbeat | true | See note above |
-| PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
-| LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
-| SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
-| TENANT_ID | --tenant_id | The ID associated with the tenant in the Controller and possibly the underlying PaaS |  | yes when `-proxy` is enabled |
-| TENANT_TOKEN | --tenant_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
-| TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
-| TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
-| REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
-| REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
-| NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
-| CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
-| CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
-| LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
-| KAFKA_USER | --kafka_user | kafka username |  | Kafka-based communication with controller is optional |
-| KAFKA_PASS | --kafka_pass | kafka password |  | Kafka-based communication with controller is optional |
-| KAFKA_TOKEN | --kafka_token | kafka token |  | Kafka-based communication with controller is optional |
-| KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  | Kafka-based communication with controller is optional |
-| KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  | Kafka-based communication with controller is optional |
-| KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  | Kafka-based communication with controller is optional |
-| KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  | Kafka-based communication with controller is optional |
+| A8_LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
+| A8_SERVICE | --service | service name to register with | | yes |
+| A8_SERVICE_VERSION | --service_version | service version to register with. Service is UNVERSIONED by default |  | needed if you wish to register different versions under same name |
+| A8_ENDPOINT_HOST | --endpoint_host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
+| A8_ENDPOINT_PORT | --endpoint_port | service endpoint port |  | yes |
+| A8_REGISTER | --register | enable automatic service registration and heartbeat | true | See note above |
+| A8_PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
+| A8_LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
+| A8_SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
+| A8_TENANT_TOKEN | --tenant_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
+| A8_TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
+| A8_TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
+| A8_REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
+| A8_REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
+| A8_NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
+| A8_CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
+| A8_CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
+| A8_LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
+| A8_KAFKA_USER | --kafka_user | kafka username |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_PASS | --kafka_pass | kafka password |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_TOKEN | --kafka_token | kafka token |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  | Kafka-based communication with controller is optional |
+| A8_KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  | Kafka-based communication with controller is optional |
 |  | --help, -h | show help | | |
 |  | --version, -v | print the version | | |
 

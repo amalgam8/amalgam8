@@ -12,28 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-# Service Proxy tenant image with optional service registration.
-#
-# The following environment variables must be set in instances of this image:
-#    RE_URL: service proxy (rulesengine) service url
-#    SP_TENANT_TOKEN: servcie proxy auth token
-#    SP_TENANT_ID: service proxy tenant id
-#
-#    The following are temporary ... image will get them from RE_URL at init time
-#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_API_KEY
-#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_USER
-#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_PASSWORD
-#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_0
-#    VCAP_SERVICES_MESSAGEHUB_0_CREDENTIALS_KAFKA_BROKERS_SASL_1
-#    ...
-#
-# If the following environment variables are set, this image will also perform the specified service registration:
-#    SD_URL: service discovery service url
-#    SD_TOKEN: authorization token for service discovery service
-#    SERVICE: microservice name with optional ":" followed by version tag (e.g., "helloworld:v1")
-#    ENDPOINT_HOST: host or ip address of microservice instance (optional - defaults to the IP of the container instance)
-#    ENDPOINT_PORT: port of microservice instance
-#
 FROM ubuntu:14.04
 
 RUN adduser --disabled-password --gecos "" nginx

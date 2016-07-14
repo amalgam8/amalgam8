@@ -15,6 +15,8 @@
 package api
 
 import (
+	"github.com/ant0ine/go-json-rest/rest"
+
 	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/store"
 )
@@ -24,5 +26,6 @@ type Config struct {
 	HTTPAddressSpec string
 	CatalogMap      store.CatalogMap
 	Authenticator   auth.Authenticator
+	Middlewares     []rest.Middleware
 	RequireHTTPS    bool
 }

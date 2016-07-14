@@ -20,9 +20,9 @@ type Predicate func(si *ServiceInstance) bool
 // Catalog for managing instances within a registry namespace
 type Catalog interface {
 	Register(si *ServiceInstance) (*ServiceInstance, error)
-	Deregister(instanceID string) error
-	Renew(instanceID string) error
-	SetStatus(instanceID, status string) error
+	Deregister(instanceID string) (*ServiceInstance, error)
+	Renew(instanceID string) (*ServiceInstance, error)
+	SetStatus(instanceID, status string) (*ServiceInstance, error)
 
 	Instance(instanceID string) (*ServiceInstance, error)
 	List(serviceName string, predicate Predicate) ([]*ServiceInstance, error)

@@ -241,43 +241,43 @@ func (imc *inMemoryCatalog) Register(si *ServiceInstance) (*ServiceInstance, err
 	return newSI.DeepClone(), nil
 }
 
-func (imc *inMemoryCatalog) Deregister(instanceID string) error {
+func (imc *inMemoryCatalog) Deregister(instanceID string) (*ServiceInstance, error) {
 	imc.Lock()
 	defer imc.Unlock()
 
-	deleted := imc.delete(instanceID)
-	if !deleted {
-		return NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
+	instance := imc.delete(instanceID)
+	if instance == nil {
+		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 
-	return nil
+	return instance, nil
 }
 
-func (imc *inMemoryCatalog) Renew(instanceID string) error {
+func (imc *inMemoryCatalog) Renew(instanceID string) (*ServiceInstance, error) {
 	imc.RLock()
 	defer imc.RUnlock()
 
 	instance, exists := imc.instances[instanceID]
 	if !exists {
-		return NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
+		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 
 	imc.renew(instance)
-	return nil
+	return instance.DeepClone(), nil
 }
 
-func (imc *inMemoryCatalog) SetStatus(instanceID, status string) error {
+func (imc *inMemoryCatalog) SetStatus(instanceID, status string) (*ServiceInstance, error) {
 	imc.Lock()
 	defer imc.Unlock()
 
 	instance, exists := imc.instances[instanceID]
 	if !exists {
-		return NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
+		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 
 	instance.Status = status
 	imc.renew(instance)
-	return nil
+	return instance.DeepClone(), nil
 }
 
 func (imc *inMemoryCatalog) List(serviceName string, predicate Predicate) ([]*ServiceInstance, error) {
@@ -370,10 +370,10 @@ func (imc *inMemoryCatalog) checkIfExpired(instanceID string) {
 
 // delete deletes the specified instanceID from the catalog internal datastructures.
 // It assumes the catalog's write-lock is acquired by the calling goroutine.
-func (imc *inMemoryCatalog) delete(instanceID string) bool {
+func (imc *inMemoryCatalog) delete(instanceID string) *ServiceInstance {
 	instance, exists := imc.instances[instanceID]
 	if !exists {
-		return false
+		return nil
 	}
 	serviceName := instance.ServiceName
 
@@ -398,7 +398,7 @@ func (imc *inMemoryCatalog) delete(instanceID string) bool {
 	}
 
 	imc.instancesMetric.Dec(1)
-	return true
+	return instance
 }
 
 func (imc *inMemoryCatalog) renew(instance *ServiceInstance) {

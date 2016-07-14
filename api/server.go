@@ -95,7 +95,16 @@ func (s *server) setup() (http.Handler, error) {
 	restAPI.Use(
 		&rest.RecoverMiddleware{},
 		&middleware.AccessLog{},
-		middleware.NewTrace(),
+		middleware.NewTrace())
+
+	// Add the extension middlewares here
+	for _, mw := range s.config.Middlewares {
+		if mw != nil {
+			restAPI.Use(mw)
+		}
+	}
+
+	restAPI.Use(
 		&middleware.MetricsMiddleware{},
 		&rest.TimerMiddleware{},
 		&rest.RecorderMiddleware{},

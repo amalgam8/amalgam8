@@ -25,6 +25,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/api/middleware"
 	"github.com/amalgam8/registry/store"
 	"github.com/amalgam8/registry/utils/i18n"
@@ -49,7 +50,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", req)
 
@@ -67,7 +68,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	if sir, err = catalog.Register(si); err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -75,7 +76,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance is nil",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -83,7 +84,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	} else if sir.ID == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is empty",
 		}).Warnf("Failed to register instance %s", sir)
 
@@ -91,12 +92,13 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
+	r.Env[env.ServiceInstance] = sir
 	routes.sendRegistrationResponse(w, r, sir)
 }
 
 func (routes *Routes) sendRegistrationResponse(w rest.ResponseWriter, r *rest.Request, sir *store.ServiceInstance) {
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Instance %s registered", sir)
 
 	ttl := uint32(sir.TTL / time.Second)
@@ -117,7 +119,7 @@ func (routes *Routes) sendRegistrationResponse(w rest.ResponseWriter, r *rest.Re
 
 	if err := w.WriteJson(instance); err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to write registration response for instance %s", sir)
 
@@ -132,7 +134,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 	if err = r.DecodeJsonPayload(&req); err != nil {
 
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to register instance")
 
@@ -142,7 +144,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 
 	if req.ServiceName == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "service name is required",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -152,7 +154,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 
 	if req.Endpoint == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Endpoint is required",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -162,7 +164,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 
 	if req.Endpoint.Type == "" || req.Endpoint.Value == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Endpoint type or value are missing or mismatched",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -177,7 +179,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 	case EndpointTypeUser:
 	default:
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Endpoint type is of invalid value",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -193,7 +195,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 
 	if !metadataValid {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Metadata is invalid",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -213,7 +215,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 	case store.OutOfService:
 	default:
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Status field is not a valid value",
 		}).Warnf("Failed to register instance %+v", req)
 
@@ -234,7 +236,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to deregister instance")
 
@@ -245,16 +247,17 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to deregister instance %s", iid)
 		// error response set by routes.catalog()
 		return
 	}
 
-	if err := catalog.Deregister(iid); err != nil {
+	si, err := catalog.Deregister(iid)
+	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to deregister instance %s", iid)
 
@@ -263,9 +266,10 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Instance id %s deregistered", iid)
 
+	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -273,7 +277,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to renew instance")
 
@@ -284,16 +288,17 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", iid)
 
 		return
 	}
 
-	if err := catalog.Renew(iid); err != nil {
+	si, err := catalog.Renew(iid)
+	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to renew instance %s", iid)
 
@@ -301,6 +306,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
+	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -310,7 +316,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 	fields, err := extractFields(r)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to list instances")
 
@@ -321,7 +327,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 	sc, err := newSelectCriteria(r)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Error("Failed to list instances")
 
@@ -332,7 +338,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Error("Failed to list instances")
 
@@ -342,7 +348,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 	services := catalog.ListServices(nil)
 	if services == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "services list is nil",
 		}).Error("Failed to list instances")
 
@@ -355,7 +361,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 		instances, err := catalog.List(svc.ServiceName, sc.instanceFilter)
 		if err != nil {
 			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env["REMOTE_USER"],
+				"namespace": r.Env[env.Namespace],
 				"error":     err,
 			}).Errorf("Failed to list instances for service %s", svc.ServiceName)
 
@@ -367,7 +373,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 			inst, err := copyInstanceWithFilter(svc.ServiceName, si, fields)
 			if err != nil {
 				routes.logger.WithFields(log.Fields{
-					"namespace": r.Env["REMOTE_USER"],
+					"namespace": r.Env[env.Namespace],
 					"error":     err,
 				}).Warn("Failed to list instances")
 
@@ -380,7 +386,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 
 	if err = w.WriteJson(&InstancesList{Instances: insts}); err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode instances list response")
 
@@ -389,7 +395,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Lookup instances (%d)", len(insts))
 }
 

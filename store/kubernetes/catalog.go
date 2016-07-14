@@ -119,19 +119,19 @@ func (kc *k8sCatalog) Register(si *store.ServiceInstance) (*store.ServiceInstanc
 	return nil, store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "Register")
 }
 
-func (kc *k8sCatalog) Deregister(instanceID string) error {
+func (kc *k8sCatalog) Deregister(instanceID string) (*store.ServiceInstance, error) {
 	kc.logger.Infof("Unsupported API (Deregister) called")
-	return store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "Deregister")
+	return nil, store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "Deregister")
 }
 
-func (kc *k8sCatalog) Renew(instanceID string) error {
+func (kc *k8sCatalog) Renew(instanceID string) (*store.ServiceInstance, error) {
 	kc.logger.Infof("Unsupported API (Renew) called")
-	return store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "Renew")
+	return nil, store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "Renew")
 }
 
-func (kc *k8sCatalog) SetStatus(instanceID, status string) error {
+func (kc *k8sCatalog) SetStatus(instanceID, status string) (*store.ServiceInstance, error) {
 	kc.logger.Infof("Unsupported API (SetStatus) called")
-	return store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "SetStatus")
+	return nil, store.NewError(store.ErrorBadRequest, "Read-only Catalog: API Not Supported", "SetStatus")
 }
 
 func (kc *k8sCatalog) refresh() {

@@ -36,16 +36,16 @@ func (mc *mockCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
 	return nil, nil
 }
 
-func (mc *mockCatalog) Deregister(instanceID string) error {
-	return nil
+func (mc *mockCatalog) Deregister(instanceID string) (*ServiceInstance, error) {
+	return nil, nil
 }
 
-func (mc *mockCatalog) Renew(instanceID string) error {
-	return nil
+func (mc *mockCatalog) Renew(instanceID string) (*ServiceInstance, error) {
+	return nil, nil
 }
 
-func (mc *mockCatalog) SetStatus(instanceID, status string) error {
-	return nil
+func (mc *mockCatalog) SetStatus(instanceID, status string) (*ServiceInstance, error) {
+	return nil, nil
 }
 
 func (mc *mockCatalog) Instance(instanceID string) (*ServiceInstance, error) {

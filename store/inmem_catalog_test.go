@@ -449,9 +449,11 @@ func TestDeregisterInstance(t *testing.T) {
 	instance := newServiceInstance("Calc", "192.168.0.1", 9080)
 
 	id, _ := doRegister(catalog, instance)
-	err := catalog.Deregister(id)
+	dInstance, err := catalog.Deregister(id)
 
 	assert.NoError(t, err)
+	assert.NotNil(t, dInstance)
+	assertSameInstance(t, instance, dInstance)
 
 	instances, err := catalog.List("Calc", nil)
 
@@ -473,9 +475,11 @@ func TestDeregisterInstanceMultipleServiceInstances(t *testing.T) {
 	id1, _ := doRegister(catalog, instance1)
 	doRegister(catalog, instance2)
 
-	err := catalog.Deregister(id1)
+	dInstance, err := catalog.Deregister(id1)
 
 	assert.NoError(t, err)
+	assert.NotNil(t, dInstance)
+	assertSameInstance(t, instance1, dInstance)
 
 	instances, err := catalog.List("Calc", nil)
 
@@ -490,9 +494,10 @@ func TestDeregisterInstanceNotRegistered(t *testing.T) {
 	catalog := newInMemoryCatalog(nil)
 
 	id := "service-ID"
-	err := catalog.Deregister(id)
+	dInstance, err := catalog.Deregister(id)
 
 	assert.Error(t, err)
+	assert.Nil(t, dInstance)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
 
 }
@@ -506,9 +511,10 @@ func TestDeregisterInstanceAlreadyDeregistered(t *testing.T) {
 	id, _ := doRegister(catalog, instance)
 	catalog.Deregister(id)
 
-	err := catalog.Deregister(id)
+	dInstance, err := catalog.Deregister(id)
 
 	assert.Error(t, err)
+	assert.Nil(t, dInstance)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
 }
 
@@ -522,9 +528,10 @@ func TestDeregisterInstanceAlreadyExpired(t *testing.T) {
 	id, _ := doRegister(catalog, instance)
 	time.Sleep(testShortTTL * 2)
 
-	err := catalog.Deregister(id)
+	dInstance, err := catalog.Deregister(id)
 
 	assert.Error(t, err)
+	assert.Nil(t, dInstance)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
 
 }
@@ -539,9 +546,11 @@ func TestRenewInstance(t *testing.T) {
 	}
 
 	id, _ := doRegister(catalog, instance)
-	err := catalog.Renew(id)
+	rInstance, err := catalog.Renew(id)
 
 	assert.NoError(t, err)
+	assert.NotNil(t, rInstance)
+	assertSameInstance(t, instance, rInstance)
 
 }
 
@@ -549,7 +558,7 @@ func TestRenewInstanceNotRegistered(t *testing.T) {
 
 	catalog := newInMemoryCatalog(nil)
 
-	err := catalog.Renew("some-bogus-id")
+	_, err := catalog.Renew("some-bogus-id")
 
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
@@ -564,7 +573,7 @@ func TestRenewInstanceAlreadyDeregistered(t *testing.T) {
 
 	id, _ := doRegister(catalog, instance)
 	catalog.Deregister(id)
-	err := catalog.Renew(id)
+	_, err := catalog.Renew(id)
 
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
@@ -581,7 +590,7 @@ func TestRenewInstanceAlreadyExpired(t *testing.T) {
 	id, _ := doRegister(catalog, instance)
 	time.Sleep(testShortTTL * 2)
 
-	err := catalog.Renew(id)
+	_, err := catalog.Renew(id)
 
 	assert.Error(t, err)
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
@@ -629,7 +638,9 @@ func TestSingleServiceQuota(t *testing.T) {
 	assert.Empty(t, id)
 
 	// deregister instance and register a new one should succeed
-	assert.NoError(t, catalog.Deregister(instanceID))
+	dInstance, err := catalog.Deregister(instanceID)
+	assert.NoError(t, err)
+	assert.NotNil(t, dInstance)
 	id, err = doRegister(catalog, instance)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, id)
@@ -662,7 +673,9 @@ func TestMultipleServicesQuota(t *testing.T) {
 	assert.Empty(t, id)
 
 	// deregister instance and register a new one should succeed
-	assert.NoError(t, catalog.Deregister(instanceID))
+	dInstance, err := catalog.Deregister(instanceID)
+	assert.NoError(t, err)
+	assert.NotNil(t, dInstance)
 	id, err = doRegister(catalog, instance)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, id)
@@ -1162,7 +1175,7 @@ func TestDeregisterInstancesSameServiceConcurrently(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			time.Sleep(time.Duration(rand.Int31n(1000)) * time.Millisecond)
-			err := catalog.Deregister(id)
+			_, err := catalog.Deregister(id)
 			assert.NoError(t, err, "Error deregistering instance ID %v: %v", id, err)
 		}()
 
@@ -1213,7 +1226,7 @@ func TestDeregisterInstancesConcurrently(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			time.Sleep(time.Duration(rand.Int31n(1000)) * time.Millisecond)
-			err := catalog.Deregister(id)
+			_, err := catalog.Deregister(id)
 			assert.NoError(t, err, "Error deregistering instance ID %v: %v", id, err)
 		}()
 
@@ -1250,7 +1263,7 @@ func TestRenewInstancePreventExpiration(t *testing.T) {
 	go func() {
 		for i := 0; i < 10; i++ {
 			time.Sleep(testShortTTL / 2)
-			err := catalog.Renew(id)
+			_, err := catalog.Renew(id)
 			assert.NoError(t, err)
 		}
 		done <- true
@@ -1315,7 +1328,7 @@ func TestRenewInstancesConcurrently(t *testing.T) {
 					{
 						duration := randPercentOfDuration(0.25, 0.5, ttl)
 						time.Sleep(duration)
-						err := catalog.Renew(id)
+						_, err := catalog.Renew(id)
 						assert.NoError(t, err, "Renewal of instance %v failed: %v", id, err)
 
 					}
@@ -1390,7 +1403,7 @@ func TestRenewAndExpireInstancesConcurrently(t *testing.T) {
 						}
 						duration := randPercentOfDuration(0.25, 0.5, ttl)
 						time.Sleep(duration)
-						err := catalog.Renew(id)
+						_, err := catalog.Renew(id)
 						assert.NoError(t, err, "Renewal of instance %v failed: %v", id, err)
 					}
 				}

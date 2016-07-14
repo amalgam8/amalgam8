@@ -65,15 +65,15 @@ func (mc *multiCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) 
 	return mc.catalogs[rwCatalogIndex].Register(si)
 }
 
-func (mc *multiCatalog) Deregister(instanceID string) error {
+func (mc *multiCatalog) Deregister(instanceID string) (*ServiceInstance, error) {
 	return mc.catalogs[rwCatalogIndex].Deregister(instanceID)
 }
 
-func (mc *multiCatalog) Renew(instanceID string) error {
+func (mc *multiCatalog) Renew(instanceID string) (*ServiceInstance, error) {
 	return mc.catalogs[rwCatalogIndex].Renew(instanceID)
 }
 
-func (mc *multiCatalog) SetStatus(instanceID, status string) error {
+func (mc *multiCatalog) SetStatus(instanceID, status string) (*ServiceInstance, error) {
 	return mc.catalogs[rwCatalogIndex].SetStatus(instanceID, status)
 }
 

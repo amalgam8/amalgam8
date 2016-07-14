@@ -141,10 +141,10 @@ func (rpc *replicatedCatalog) Register(si *ServiceInstance) (*ServiceInstance, e
 	return result, nil
 }
 
-func (rpc *replicatedCatalog) Deregister(instanceID string) error {
-	err := rpc.local.Deregister(instanceID)
+func (rpc *replicatedCatalog) Deregister(instanceID string) (*ServiceInstance, error) {
+	instance, err := rpc.local.Deregister(instanceID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg, err := json.Marshal(&replicatedMsg{RepType: DEREGISTER, Payload: []byte(instanceID)})
@@ -160,13 +160,13 @@ func (rpc *replicatedCatalog) Deregister(instanceID string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
-func (rpc *replicatedCatalog) Renew(instanceID string) error {
-	err := rpc.local.Renew(instanceID)
+func (rpc *replicatedCatalog) Renew(instanceID string) (*ServiceInstance, error) {
+	instance, err := rpc.local.Renew(instanceID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg, err := json.Marshal(&replicatedMsg{RepType: RENEW, Payload: []byte(instanceID)})
@@ -182,13 +182,13 @@ func (rpc *replicatedCatalog) Renew(instanceID string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
-func (rpc *replicatedCatalog) SetStatus(instanceID, status string) error {
-	err := rpc.local.SetStatus(instanceID, status)
+func (rpc *replicatedCatalog) SetStatus(instanceID, status string) (*ServiceInstance, error) {
+	instance, err := rpc.local.SetStatus(instanceID, status)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	payload, _ := json.Marshal(&replicatedStatus{instanceID, status})
@@ -205,7 +205,7 @@ func (rpc *replicatedCatalog) SetStatus(instanceID, status string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
 func (rpc *replicatedCatalog) Instance(instanceID string) (*ServiceInstance, error) {
@@ -251,7 +251,7 @@ func (rpc *replicatedCatalog) handleIncomingMsgs() {
 			break
 		case DEREGISTER:
 			instanceID := string(data.Payload)
-			err := rpc.local.Deregister(instanceID)
+			_, err := rpc.local.Deregister(instanceID)
 			if err != nil {
 				rpc.logger.WithFields(log.Fields{
 					"error": err,
@@ -260,7 +260,7 @@ func (rpc *replicatedCatalog) handleIncomingMsgs() {
 			break
 		case RENEW:
 			instanceID := string(data.Payload)
-			err := rpc.local.Renew(instanceID)
+			_, err := rpc.local.Renew(instanceID)
 			if err != nil {
 				msg, err := json.Marshal(&replicatedMsg{RepType: READREPAIR, Payload: data.Payload})
 				if err != nil {
@@ -280,7 +280,7 @@ func (rpc *replicatedCatalog) handleIncomingMsgs() {
 				}).Errorf("Failed to unmarshal replicated instance status. data: %s", string(data.Payload))
 				break
 			}
-			err = rpc.local.SetStatus(repStatus.InstanceID, repStatus.Status)
+			_, err = rpc.local.SetStatus(repStatus.InstanceID, repStatus.Status)
 			if err != nil {
 				rpc.logger.WithFields(log.Fields{
 					"error": err,

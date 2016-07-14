@@ -29,8 +29,7 @@ const (
 
 // ServiceInstance represents a runtime instance of a service.
 type ServiceInstance struct {
-	ID string
-	//Protocol         protocol.Type
+	ID               string
 	ServiceName      string
 	Endpoint         *Endpoint
 	Status           string

@@ -40,6 +40,9 @@ function inject_faults(destination, faults_dict)
                   local m, err = ngx.re.match(header, fault.pattern, "o")
                   if m then
                      -- ngx.log(ngx.NOTICE, "pattern match successful " .. fault.pattern)
+                     --TODO: Need to figure out whether header and value should be logged irrespective of destination, in terms of gremlin assertions.
+                     ngx.var.gremlin_header_name = fault.header
+                     ngx.var.gremlin_header_val = header
 
                      -- DELAYS
                      if fault.delay_probability > 0.0 then

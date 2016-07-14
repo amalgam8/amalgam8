@@ -21,7 +21,6 @@ import (
 
 	"strconv"
 
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/resources"
@@ -29,7 +28,7 @@ import (
 
 // Generator produces NGINX configurations for tenants
 type Generator interface {
-	Generate(id string, lastUpdate *time.Time) (*resources.ConfigTemplate, error)
+	Generate(id string, lastUpdate *time.Time) (*resources.NGINXJson, error)
 	TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate
 }
 

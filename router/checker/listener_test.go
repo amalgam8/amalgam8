@@ -16,7 +16,6 @@ package checker
 
 import (
 	"errors"
-	"io"
 	"time"
 
 	"github.com/amalgam8/sidecar/config"
@@ -48,7 +47,7 @@ var _ = Describe("Tenant listener", func() {
 		}
 		rc = &clients.MockController{}
 		n = &mockNginx{
-			UpdateFunc: func(reader io.Reader) error {
+			UpdateFunc: func([]byte) error {
 				updateCount++
 				return nil
 			},
@@ -97,18 +96,19 @@ var _ = Describe("Tenant listener", func() {
 	})
 
 	It("reports NGINX update failure", func() {
-		n.UpdateFunc = func(reader io.Reader) error {
+		n.UpdateFunc = func([]byte) error {
 			return errors.New("Update NGINX failed")
 		}
 
 		Expect(l.listenForUpdate()).To(HaveOccurred())
 	})
 
-	It("does not update NGINX if unable to obtain config from Controller", func() {
-		rc.ConfigError = errors.New("Get rules failed")
-
-		Expect(l.listenForUpdate()).To(HaveOccurred())
-		Expect(updateCount).To(Equal(0))
-	})
+	// No Longer needs to call controller on for config, data comes over kafka message
+	//It("does not update NGINX if unable to obtain config from Controller", func() {
+	//	rc.ConfigError = errors.New("Get rules failed")
+	//
+	//	Expect(l.listenForUpdate()).To(HaveOccurred())
+	//	Expect(updateCount).To(Equal(0))
+	//})
 
 })

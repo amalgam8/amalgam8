@@ -125,6 +125,7 @@ RUN set -ex \
 
 ADD docker/splib.lua /lua/splib.lua
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/nginx.conf.tmpl /usr/bin/nginx.conf.tmpl
 
 ADD /bin/a8sidecar /usr/bin/a8sidecar
 

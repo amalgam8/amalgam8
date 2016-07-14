@@ -15,12 +15,16 @@
 package nginx
 
 import (
-	"io"
-	"io/ioutil"
 	"strings"
 	"sync"
+	"text/template"
+
+	"bytes"
+
+	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/resources"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -30,35 +34,60 @@ var log = logrus.WithFields(logrus.Fields{
 // Nginx manages updates to NGINX configuration
 type Nginx interface {
 	// Update NGINX to run with the provided configuration
-	Update(reader io.Reader) error
+	Update(data []byte) error
 }
 
 type nginx struct {
 	config      Config
 	service     Service
 	serviceName string
+	template    *template.Template
 	mutex       sync.Mutex
 }
 
+type NGINXConf struct {
+	Config      Config
+	Service     Service
+	ServiceName string
+	Path        string
+}
+
 // NewNginx creates new Nginx instance
-func NewNginx(serviceName string) Nginx {
-	return &nginx{
-		config:      NewConfig(),
-		service:     NewService(),
-		serviceName: serviceName,
+func NewNginx(conf NGINXConf) (Nginx, error) {
+	t, err := template.ParseFiles(conf.Path)
+	if err != nil {
+		return nil, err
 	}
+	return &nginx{
+		config:      conf.Config,      //NewConfig(),
+		service:     conf.Service,     //NewService(),
+		serviceName: conf.ServiceName, //serviceName,
+		template:    t,
+	}, nil
 }
 
 // Update NGINX to run with the provided configuration
-func (n *nginx) Update(reader io.Reader) error {
+func (n *nginx) Update(data []byte) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	configBytes, err := ioutil.ReadAll(reader)
-	if err != nil {
-		log.WithField("err", err).Error("Could not read config")
+	var err error
+	templateConf := resources.ConfigTemplate{}
+	if err = json.Unmarshal(data, &templateConf); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err":   err,
+			"value": string(data),
+		}).Error("Could not unmarshal object")
 		return err
 	}
+
+	buf := bytes.NewBuffer([]byte{})
+
+	if err = n.template.Execute(buf, &templateConf); err != nil {
+		return err
+	}
+
+	configBytes := buf.Bytes()
 
 	// Replace service name
 	configStr := string(configBytes)

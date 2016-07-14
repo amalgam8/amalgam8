@@ -14,15 +14,19 @@
 
 package clients
 
-import "time"
+import (
+	"time"
+
+	"github.com/amalgam8/controller/resources"
+)
 
 // MockController mocks the Controller interface
 type MockController struct {
-	RegisterError error
-	ConfigError   error
-	ConfigString  string
-	GetCredsError error
-	GetCredsVal   TenantCredentials
+	RegisterError  error
+	ConfigError    error
+	ConfigTemplate resources.ConfigTemplate
+	GetCredsError  error
+	GetCredsVal    TenantCredentials
 }
 
 // Register mocks interface
@@ -31,8 +35,8 @@ func (m *MockController) Register() error {
 }
 
 // GetNGINXConfig mocks interface
-func (m *MockController) GetNGINXConfig(version *time.Time) (string, error) {
-	return m.ConfigString, m.ConfigError
+func (m *MockController) GetNGINXConfig(version *time.Time) (*resources.ConfigTemplate, error) {
+	return &m.ConfigTemplate, m.ConfigError
 }
 
 // GetCredentials mocks interface

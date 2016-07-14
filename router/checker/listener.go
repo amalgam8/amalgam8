@@ -15,8 +15,6 @@
 package checker
 
 import (
-	"bytes"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
@@ -61,38 +59,29 @@ func (l *listener) Start() error {
 // changed. Once the event occurs we attempt to update our configuration.
 func (l *listener) listenForUpdate() error {
 
+	var msgBytes []byte
+
 	// Sleep until we receive an event indicating that the our rules have changed
 	for {
 		key, value, err := l.consumer.ReceiveEvent()
+		msgBytes = value
 		if err != nil {
 			logrus.WithError(err).Error("Couldn't read from Kafka bus")
 			return err
 		}
 
 		if key == l.config.Tenant.Token {
+
 			logrus.WithFields(logrus.Fields{
 				"key":   key,
-				"value": string(value),
+				"value": string(msgBytes),
 			}).Info("Tenant event received")
 			break
 		}
 	}
 
-	// TODO
-	// use configTemplate object
-
-	// Get latest config from Controller
-	conf, err := l.controller.GetNGINXConfig(nil)
-	if err != nil {
-		logrus.WithError(err).Error("Call to Controller failed")
-		return err
-	}
-	//since version="", Controller should never return empty string
-
-	reader := bytes.NewBufferString(conf)
-
 	// Update our existing NGINX config
-	if err := l.nginx.Update(reader); err != nil {
+	if err := l.nginx.Update(msgBytes); err != nil {
 		logrus.WithError(err).Error("Could not update NGINX config")
 		return err
 	}

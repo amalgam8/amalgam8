@@ -162,7 +162,19 @@ func startProxy(conf *config.Config) error {
 
 	rc := clients.NewController(conf)
 
-	nginx := nginx.NewNginx(conf.ServiceName)
+	nginx, err := nginx.NewNginx(
+		nginx.NGINXConf{
+			ServiceName: conf.ServiceName,
+			Service:     nginx.NewService(),
+			Config:      nginx.NewConfig(),
+			Path:        "/usr/bin/nginx.conf.tmpl",
+		},
+	)
+
+	if err != nil {
+		logrus.WithError(err).Error("Failed to initialize NGINX object")
+		return err
+	}
 
 	err = checkIn(rc, conf)
 	if err != nil {

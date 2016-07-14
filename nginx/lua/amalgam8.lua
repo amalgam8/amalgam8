@@ -43,7 +43,7 @@ local function decodeJson(input)
          ngx.log(ngx.WARNING, "Server_name variable is empty! Cannot generate fault injection rules")
       else
          for i, fault in ipairs(input.faults) do
-            if fault.source == ngx.var.server_name then
+            if fault.source == ngx.var.source_service then
                table.insert(faults, {
                                source = fault.source,
                                destination = fault.destination,

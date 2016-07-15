@@ -17,8 +17,7 @@ helloworld-v1:
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_REGISTRY_TOKEN=local
-    - A8_SERVICE=helloworld
-    - A8_SERVICE_VERSION=v1
+    - A8_SERVICE=helloworld:v1
     - A8_LOG=false
     - A8_PROXY=false
     - A8_ENDPOINT_PORT=5000
@@ -30,8 +29,7 @@ helloworld-v2:
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_REGISTRY_TOKEN=local
-    - A8_SERVICE=helloworld
-    - A8_SERVICE_VERSION=v2
+    - A8_SERVICE=helloworld:v2
     - A8_LOG=false
     - A8_PROXY=false
     - A8_ENDPOINT_PORT=5000

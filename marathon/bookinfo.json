@@ -24,8 +24,7 @@
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "details",
-                        "A8_SERVICE_VERSION" : "v1"
+			            "A8_SERVICE" : "details:v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -51,8 +50,7 @@
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "ratings",
-                        "A8_SERVICE_VERSION" : "v1"
+			            "A8_SERVICE" : "ratings:v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -78,8 +76,7 @@
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "reviews",
-                        "A8_SERVICE_VERSION" : "v1"
+			            "A8_SERVICE" : "reviews:v1"
 		            },
 		            "instances": 1,
 		            "cpus": 0.1,
@@ -105,8 +102,7 @@
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "reviews",
-                        "A8_SERVICE_VERSION" : "v2",
+			            "A8_SERVICE" : "reviews:v2",
 			            "A8_TENANT_TOKEN":"local",
                         "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
@@ -137,8 +133,7 @@
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "reviews",
-                        "A8_SERVICE_VERSION" : "v3",
+			            "A8_SERVICE" : "reviews:v3",
 			            "A8_TENANT_TOKEN":"local",
                         "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
@@ -169,8 +164,7 @@
 		            "env": {
 			            "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_REGISTRY_TOKEN" : "local",
-			            "A8_SERVICE" : "productpage",
-				        "A8_SERVICE_VERSION" : "v1",
+			            "A8_SERVICE" : "productpage:v1",
 			            "A8_TENANT_TOKEN":"local",
 				        "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		                "A8_CONTROLLER_URL":"http://__REPLACEME__:31200",

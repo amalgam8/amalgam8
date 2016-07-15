@@ -50,8 +50,8 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: A8_SERVICE_VERSION
-          value: v1
+        - name: A8_SERVICE
+          value: helloworld:v1
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -76,5 +76,5 @@ spec:
         ports:
         - containerPort: 5000
         env:
-        - name: A8_SERVICE_VERSION
-          value: v2
+        - name: A8_SERVICE
+          value: helloworld:v2

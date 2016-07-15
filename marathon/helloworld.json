@@ -24,8 +24,7 @@
 		    "env": {
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "A8_REGISTRY_TOKEN" : "local",
-			    "A8_SERVICE" : "helloworld",
-                "A8_SERVICE_VERSION" : "v1"
+			    "A8_SERVICE" : "helloworld:v1"
 		    },
 		    "instances": 2,
 		    "cpus": 0.1,
@@ -51,8 +50,7 @@
 		    "env": {
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "A8_REGISTRY_TOKEN" : "local",
-			    "A8_SERVICE" : "helloworld",
-                "A8_SERVICE_VERSION" : "v2"
+			    "A8_SERVICE" : "helloworld:v2"
 		    },
 		    "instances": 2,
 		    "cpus": 0.1,

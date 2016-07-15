@@ -35,9 +35,7 @@ spec:
         - containerPort: 5000
         env:
         - name: A8_SERVICE
-          value: helloworld
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: helloworld:v1
       - name: servicereg
         image: amalgam8/a8-sidecar:0.2-alpine
         imagePullPolicy: IfNotPresent
@@ -47,9 +45,7 @@ spec:
           - --supervise=false
         env:
         - name: A8_SERVICE
-          value: helloworld
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: helloworld:v1
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
@@ -86,9 +82,7 @@ spec:
         - containerPort: 5000
         env:
         - name: A8_SERVICE
-          value: helloworld
-        - name: A8_SERVICE_VERSION
-          value: v2
+          value: helloworld:v2
       - name: servicereg
         image: amalgam8/a8-sidecar:0.2-alpine
         imagePullPolicy: IfNotPresent
@@ -98,9 +92,7 @@ spec:
           - --supervise=false
         env:
         - name: A8_SERVICE
-          value: helloworld
-        - name: A8_SERVICE_VERSION
-          value: v2
+          value: helloworld:v2
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL

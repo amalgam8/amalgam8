@@ -42,9 +42,7 @@ spec:
           - --supervise=false
         env:
         - name: A8_SERVICE
-          value: details
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: details:v1
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
@@ -88,9 +86,7 @@ spec:
           - --supervise=false
         env:
         - name: A8_SERVICE
-          value: ratings
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: ratings:v1
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
@@ -136,9 +132,7 @@ spec:
         - name: A8_TENANT_TOKEN
           value: local
         - name: A8_SERVICE
-          value: reviews
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: reviews:v1
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_ENDPOINT_HOST
@@ -180,9 +174,7 @@ spec:
         - name: A8_TENANT_TOKEN
           value: local
         - name: A8_SERVICE
-          value: reviews
-        - name: A8_SERVICE_VERSION
-          value: v2
+          value: reviews:v2
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_ENDPOINT_HOST
@@ -224,9 +216,7 @@ spec:
         - name: A8_TENANT_TOKEN
           value: local
         - name: A8_SERVICE
-          value: reviews
-        - name: A8_SERVICE_VERSION
-          value: v3
+          value: reviews:v3
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_ENDPOINT_HOST
@@ -268,9 +258,7 @@ spec:
         - name: A8_TENANT_TOKEN
           value: local
         - name: A8_SERVICE
-          value: productpage
-        - name: A8_SERVICE_VERSION
-          value: v1
+          value: productpage:v1
         - name: A8_LOGSTASH_SERVER
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_ENDPOINT_HOST

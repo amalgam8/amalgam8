@@ -9,7 +9,7 @@ Then
 
 ```bash
 docker build -f docker/Dockerfile.ubuntu -t nginx_trial .
-docker run -it --entrypoint /bin/bash -v `pwd`/nginx/lua:/opt/a8_lualib -v `pwd`/nginx/old:/opt/old nginx_trial
+docker run -it -e A8_SERVICE=source -e A8_SERVICE_VERSION=v1 --entrypoint /bin/bash -v `pwd`/nginx/lua:/opt/a8_lualib -v `pwd`/nginx/old:/opt/old nginx_trial
 ```
 
 Once you are inside the container, start the main nginx server and the
@@ -22,7 +22,7 @@ nginx -c /opt/old/nginx.conf.plain
 
 Now, initialize the upstreams with
 ```bash
-curl -X POST http://localhost:5813/a8-admin -d @old/7_inject_faults.json
+curl -X POST http://localhost:5813/a8-admin -d @/opt/old/7_inject_faults.json
 ```
 
 and test with

@@ -219,12 +219,12 @@ type ServiceTemplate struct {
 type NGINXJson struct {
 	Upstreams map[string]NGINXUpstream `json:"upstreams"`
 	Services  map[string]NGINXService  `json:"services"`
-	Faults    []NGINXFault             `json:"faults"`
+	Faults    []NGINXFault             `json:"faults,omitempty"`
 }
 
 type NGINXService struct {
 	Default   string `json:"default"`
-	Selectors string `json:"selectors"`
+	Selectors string `json:"selectors,omitempty"`
 	Type      string `json:"type"`
 }
 

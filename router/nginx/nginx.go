@@ -106,46 +106,6 @@ func (n *nginx) Update(data []byte) error {
 		return err
 	}
 
-	//buf := bytes.NewBuffer([]byte{})
-	//
-	//if err = n.template.Execute(buf, &templateConf); err != nil {
-	//	return err
-	//}
-	//
-	//configBytes := buf.Bytes()
-	//
-	//// Replace service name
-	//configStr := string(configBytes)
-	//configStr = strings.Replace(configStr, "__SERVICE_NAME__", n.serviceName, -1)
-	//
-	//// Update the NGINX configuration file
-	//if err = n.config.Update(configStr); err != nil {
-	//	log.WithField("err", err).Error("Could not update NGINX configuration file")
-	//	return err
-	//}
-	//
-	//// Determine if NGINX is running
-	//running, err := n.service.Running()
-	//if err != nil {
-	//	log.WithField("err", err).Error("Could not get status of NGINX service")
-	//	return err
-	//}
-	//
-	//var nginxErr error
-	//if running {
-	//	// NGINX is already running; attempt to reload NGINX
-	//	nginxErr = n.reloadNginx()
-	//} else {
-	//	// NGINX is not running; attempt to start NGINX
-	//	nginxErr = n.startNginx()
-	//}
-	//
-	//// log the failed nginx config
-	//if nginxErr != nil {
-	//	log.WithField("config", string(data)).Error("Failed NGINX config")
-	//	return nginxErr
-	//}
-
 	return nil
 }
 

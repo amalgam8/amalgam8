@@ -34,7 +34,7 @@ var _ = Describe("Checker", func() {
 		db        database.Tenant
 		cache     *notification.MockTenantProducerCache
 		n         *nginx.MockGenerator
-		factory   *MockRegistyFactory
+		factory   *MockRegistryFactory
 		regClient *MockRegistryClient
 	)
 
@@ -42,7 +42,7 @@ var _ = Describe("Checker", func() {
 
 		BeforeEach(func() {
 			regClient = &MockRegistryClient{}
-			factory = &MockRegistyFactory{
+			factory = &MockRegistryFactory{
 				RegClient: regClient,
 			}
 			db = database.NewTenant(database.NewMemoryCloudantDB())

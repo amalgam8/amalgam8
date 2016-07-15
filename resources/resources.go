@@ -215,3 +215,40 @@ type ServiceTemplate struct {
 	VersionSelectors string               `json:"selectors"`
 	Rules            []Rule               `json:"rules"`
 }
+
+// NGINXJson TODO
+type NGINXJson struct {
+	Upstreams map[string]NGINXUpstream `json:"upstreams"`
+	Services  map[string]NGINXService  `json:"services"`
+	Faults    []NGINXFault             `json:"faults,omitempty"`
+}
+
+// NGINXService TODO
+type NGINXService struct {
+	Default   string `json:"default"`
+	Selectors string `json:"selectors,omitempty"`
+	Type      string `json:"type"`
+}
+
+// NGINXUpstream TODO
+type NGINXUpstream struct {
+	Upstreams []NGINXEndpoint `json:"servers"`
+}
+
+// NGINXEndpoint TODO
+type NGINXEndpoint struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+// NGINXFault TODO
+type NGINXFault struct {
+	Source           string  `json:"source"`
+	Destination      string  `json:"destination"`
+	Header           string  `json:"header"`
+	Pattern          string  `json:"pattern"`
+	Delay            float64 `json:"delay"`
+	DelayProbability float64 `json:"delay_probability"`
+	AbortProbability float64 `json:"abort_probability"`
+	AbortCode        int     `json:"return_code"`
+}

@@ -15,7 +15,6 @@
 package nginx
 
 import (
-	"io"
 	"time"
 
 	"github.com/amalgam8/controller/resources"
@@ -25,16 +24,15 @@ import (
 type MockGenerator struct {
 	GenerateString      string
 	GenerateError       error
-	ConfigTemplateValue resources.ConfigTemplate
+	ConfigTemplateValue resources.NGINXJson
 }
 
 // Generate mocks method
-func (m *MockGenerator) Generate(w io.Writer, id string, lastUpdate *time.Time) error {
-	w.Write([]byte(m.GenerateString))
-	return m.GenerateError
+func (m *MockGenerator) Generate(id string, lastUpdate *time.Time) (*resources.NGINXJson, error) {
+	return &m.ConfigTemplateValue, m.GenerateError
 }
 
 // TemplateConfig mocks method
-func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
+func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.NGINXJson {
 	return m.ConfigTemplateValue
 }

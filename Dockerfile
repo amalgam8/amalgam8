@@ -20,6 +20,5 @@ EXPOSE 6379
 
 WORKDIR /opt/a8controller
 COPY /bin/a8controller /opt/a8controller/a8controller
-COPY /nginx/nginx.conf.tmpl /opt/a8controller/nginx/nginx.conf.tmpl
 
 ENTRYPOINT ["/opt/a8controller/a8controller"]

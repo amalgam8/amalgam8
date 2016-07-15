@@ -3,12 +3,12 @@ package checker
 import "github.com/amalgam8/registry/client"
 
 // MockRegistryFactory mocks RegistryFactory interface
-type MockRegistyFactory struct {
+type MockRegistryFactory struct {
 	RegClient *MockRegistryClient
 }
 
 // NewRegistryClient mocks interface
-func (r *MockRegistyFactory) NewRegistryClient(token, url string) (client.Client, error) {
+func (r *MockRegistryFactory) NewRegistryClient(token, url string) (client.Client, error) {
 	return r.RegClient, nil
 }
 

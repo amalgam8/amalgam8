@@ -89,6 +89,7 @@ var _ = Describe("Config", func() {
 				ServiceName:  "mock",
 				EndpointHost: "mockhost",
 				EndpointPort: 9090,
+				EndpointType: "http",
 			}
 		})
 

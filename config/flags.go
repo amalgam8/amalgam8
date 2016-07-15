@@ -45,6 +45,7 @@ const (
 	tenantHeartbeat = "tenant_heartbeat"
 	endpointHost    = "endpoint_host"
 	endpointPort    = "endpoint_port"
+	endpointType    = "endpoint_type"
 	serviceName     = "service"
 	serviceVersion  = "service_version"
 	logLevel        = "log_level"
@@ -86,6 +87,12 @@ var TenantFlags = []cli.Flag{
 		Name:   endpointPort,
 		EnvVar: envVar(endpointPort),
 		Usage:  "Service endpoint port",
+	},
+	cli.StringFlag{
+		Name:   endpointType,
+		EnvVar: envVar(endpointType),
+		Usage:  "Service endpoint type",
+		Value:  "http",
 	},
 
 	cli.BoolTFlag{

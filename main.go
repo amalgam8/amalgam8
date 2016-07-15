@@ -121,7 +121,7 @@ func sidecarMain(conf config.Config) error {
 		serviceInstance := &client.ServiceInstance{
 			ServiceName: conf.ServiceName,
 			Endpoint: client.ServiceEndpoint{
-				Type:  "http",
+				Type:  conf.EndpointType,
 				Value: address,
 			},
 			TTL: 60,

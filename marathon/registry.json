@@ -3,7 +3,7 @@
     "container": {
 	"type": "DOCKER",
 	"docker": {
-	    "image": "amalgam8/a8-registry:0.1",
+	    "image": "amalgam8/a8-registry:0.2",
 	    "network": "BRIDGE",
 	    "portMappings": [
 		{

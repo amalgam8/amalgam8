@@ -39,7 +39,7 @@ spec:
         - name: A8_SERVICE_VERSION
           value: v1
       - name: servicereg
-        image: amalgam8/a8-sidecar:0.1
+        image: amalgam8/a8-sidecar:0.2-alpine
         imagePullPolicy: IfNotPresent
         args:
           - --proxy=false
@@ -90,7 +90,7 @@ spec:
         - name: A8_SERVICE_VERSION
           value: v2
       - name: servicereg
-        image: amalgam8/a8-sidecar:0.1
+        image: amalgam8/a8-sidecar:0.2-alpine
         imagePullPolicy: IfNotPresent
         args:
           - --proxy=false

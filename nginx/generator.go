@@ -133,9 +133,9 @@ func (g *generator) TemplateConfig(catalog resources.ServiceCatalog, conf resour
 			version := endpoint.Metadata.Version
 			upstreamName := service.Name
 			if version != "" {
-				upstreamName += "_" + version
+				upstreamName += ":" + version
 			} else {
-				upstreamName += "_" + "UNVERSIONED"
+				upstreamName += ":" + "UNVERSIONED"
 			}
 
 			types[service.Name] = endpoint.Type

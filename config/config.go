@@ -185,7 +185,7 @@ func (c *Config) Validate(validateCreds bool) error {
 			IsNotEmpty("Service Name", c.ServiceName),
 			IsInRange("NGINX port", c.Nginx.Port, 1, 65535),
 			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
-			IsNotEmpty("Service Endpoint Type", c.EndpointType),
+			IsInSet("Service Endpoint Type", c.EndpointType, []string{"http", "https", "tcp", "udp", "user"}),
 			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 		)

@@ -74,6 +74,19 @@ func IsInRange(name string, value, min, max int) ValidatorFunc {
 	}
 }
 
+// IsInSet ensures that the value is a member of the set
+func IsInSet(name, value string, set []string) ValidatorFunc {
+	return func() error {
+		for _, item := range set {
+			if value == item {
+				return nil
+			}
+		}
+
+		return fmt.Errorf("%v is not a member of the set %v", name, set)
+	}
+}
+
 // IsInRangeDuration ensures the time value is between the given min and max times
 func IsInRangeDuration(name string, value, min, max time.Duration) ValidatorFunc {
 	return func() error {

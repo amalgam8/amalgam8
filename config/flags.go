@@ -91,7 +91,7 @@ var TenantFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   endpointType,
 		EnvVar: envVar(endpointType),
-		Usage:  "Service endpoint type",
+		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
 		Value:  "http",
 	},
 

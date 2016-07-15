@@ -107,20 +107,20 @@ func New(context *cli.Context) *Config {
 		}
 	}
 
-	var serviceName string
-	var serviceVersion string
+	var name string
+	var version string
 
 	i := strings.Index(context.String(serviceName), ":")
 	if i == -1 {
-		serviceName = context.String(serviceName)
+		name = context.String(serviceName)
 	} else {
-		serviceName = context.String(serviceName)[:i]
-		serviceVersion = context.String(serviceName)[i+1:]
+		name = context.String(serviceName)[:i]
+		version = context.String(serviceName)[i+1:]
 	}
 
 	return &Config{
-		ServiceName:    serviceName,
-		ServiceVersion: serviceVersion,
+		ServiceName:    name,
+		ServiceVersion: version,
 		EndpointHost:   endpointHost,
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),

@@ -90,10 +90,7 @@ func (n *nginx) Update(data []byte) error {
 	}
 
 	var nginxErr error
-	if running {
-		// NGINX is already running; attempt to reload NGINX
-		nginxErr = n.reloadNginx()
-	} else {
+	if !running {
 		// NGINX is not running; attempt to start NGINX
 		nginxErr = n.startNginx()
 	}

@@ -216,7 +216,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*resources.NGINXJson, e
 		return nil, err
 	}
 
-	return &templateConf, err
+	return &templateConf, nil
 }
 
 func (c *controller) GetCredentials() (TenantCredentials, error) {

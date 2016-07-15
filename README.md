@@ -39,6 +39,7 @@ line flags.
 | A8_SERVICE_VERSION | --service_version | service version to register with. Service is UNVERSIONED by default |  | needed if you wish to register different versions under same name |
 | A8_ENDPOINT_HOST | --endpoint_host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
 | A8_ENDPOINT_PORT | --endpoint_port | service endpoint port |  | yes |
+| A8_ENDPOINT_TYPE | --endpoint_type | service endpoint type (http, https, udp, tcp, user) | http | yes |
 | A8_REGISTER | --register | enable automatic service registration and heartbeat | true | See note above |
 | A8_PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
 | A8_LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
@@ -95,7 +96,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## Contributing
 
-Contributions and feedback are welcome! 
+Contributions and feedback are welcome!
 Proposals and pull requests will be considered. Please see the
 [CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
 file for more information.

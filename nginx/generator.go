@@ -29,7 +29,7 @@ import (
 // Generator produces NGINX configurations for tenants
 type Generator interface {
 	Generate(id string, lastUpdate *time.Time) (*resources.NGINXJson, error)
-	TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate
+	TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.NGINXJson
 }
 
 type generator struct {
@@ -64,101 +64,7 @@ func (g *generator) Generate(id string, lastUpdate *time.Time) (*resources.NGINX
 		return nil, nil
 	}
 
-	// Generate the struct for the template
-	//templateConf := g.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-
-	retval := resources.NGINXJson{
-		Upstreams: make(map[string]resources.NGINXUpstream, 0),
-		Services:  make(map[string]resources.NGINXService, 0),
-	}
-	faults := []resources.NGINXFault{}
-	for _, rule := range entry.ProxyConfig.Filters.Rules {
-		fault := resources.NGINXFault{
-			Delay:            rule.Delay,
-			DelayProbability: rule.DelayProbability,
-			AbortProbability: rule.AbortProbability,
-			AbortCode:        rule.ReturnCode,
-			Source:           rule.Source,
-			Destination:      rule.Destination,
-			Header:           rule.Header,
-			Pattern:          rule.Pattern,
-		}
-		faults = append(faults, fault)
-	}
-	retval.Faults = faults
-
-	types := map[string]string{}
-	for _, service := range entry.ServiceCatalog.Services {
-		upstreams := map[string][]resources.NGINXEndpoint{}
-		for _, endpoint := range service.Endpoints {
-			version := endpoint.Metadata.Version
-			upstreamName := service.Name
-			if version != "" {
-				upstreamName += "_" + version
-			} else {
-				upstreamName += "_" + "UNVERSIONED"
-			}
-
-			types[service.Name] = endpoint.Type
-
-			vals := strings.Split(endpoint.Value, ":")
-			if len(vals) != 2 {
-				logrus.WithFields(logrus.Fields{
-					"endpoint": endpoint,
-					"values":   vals,
-				}).Error("could not parse host and port from service endpoint")
-			}
-			host := vals[0]
-			port, err := strconv.Atoi(vals[1])
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":  err,
-					"port": vals[1],
-				}).Error("port not a valid int")
-			}
-
-
-			versionUpstreams := upstreams[upstreamName]
-			nginxEndpoint := resources.NGINXEndpoint{
-				Host: host,
-				Port: port,
-			}
-			if versionUpstreams == nil {
-				versionUpstreams = []resources.NGINXEndpoint{nginxEndpoint}
-			} else {
-				versionUpstreams = append(versionUpstreams, nginxEndpoint)
-			}
-			upstreams[upstreamName] = versionUpstreams
-		}
-
-		for k, v := range upstreams {
-			retval.Upstreams[k] = resources.NGINXUpstream{
-				Upstreams: v,
-			}
-		}
-	}
-
-	versions := map[string]resources.Version{}
-	for _, version := range entry.ProxyConfig.Filters.Versions {
-		versions[version.Service] = version
-	}
-
-	for k, v := range types {
-		if version, ok := versions[k]; ok {
-			retval.Services[k] = resources.NGINXService{
-				Default:   version.Default,
-				Selectors: version.Selectors,
-				Type:      v,
-			}
-		} else {
-			retval.Services[k] = resources.NGINXService{
-				Type: v,
-			}
-		}
-	}
-
-	//data, _ := json.MarshalIndent(&retval, "", "     ")
-	//fmt.Println(string(data))
+	retval := g.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
 
 	return &retval, nil
 }
@@ -198,79 +104,96 @@ Rules are independent of Services except (maybe) when they are initially created
 
 // templateConfig generates the structure expected by the template file which is used to generate NGINX. It also filters
 // out non-HTTP endpoints.
-func (g *generator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
-	rules := map[string][]resources.Rule{}
+func (g *generator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.NGINXJson {
+
+	retval := resources.NGINXJson{
+		Upstreams: make(map[string]resources.NGINXUpstream, 0),
+		Services:  make(map[string]resources.NGINXService, 0),
+	}
+	faults := []resources.NGINXFault{}
 	for _, rule := range conf.Filters.Rules {
-		rules[rule.Destination] = append(rules[rule.Destination], rule)
-	}
-
-	unversionedVersionFilter := resources.Version{
-		Default:   "UNVERSIONED",
-		Selectors: "nil",
-	}
-	versionFilters := map[string]resources.Version{}
-	for _, version := range conf.Filters.Versions {
-		if version.Default == "" {
-			version.Default = unversionedVersionFilter.Default
+		fault := resources.NGINXFault{
+			Delay:            rule.Delay,
+			DelayProbability: rule.DelayProbability,
+			AbortProbability: rule.AbortProbability,
+			AbortCode:        rule.ReturnCode,
+			Source:           rule.Source,
+			Destination:      rule.Destination,
+			Header:           rule.Header,
+			Pattern:          rule.Pattern,
 		}
-		if version.Selectors == "" {
-			version.Selectors = unversionedVersionFilter.Selectors
-		}
-		versionFilters[version.Service] = version
+		faults = append(faults, fault)
 	}
+	retval.Faults = faults
 
-	proxies := make([]resources.ServiceTemplate, 0, len(catalog.Services))
+	types := map[string]string{}
 	for _, service := range catalog.Services {
-
-		if _, ok := versionFilters[service.Name]; !ok {
-			versionFilters[service.Name] = unversionedVersionFilter
-		}
-
-		upstreams := map[string][]string{}
+		upstreams := map[string][]resources.NGINXEndpoint{}
 		for _, endpoint := range service.Endpoints {
 			version := endpoint.Metadata.Version
 			upstreamName := service.Name
 			if version != "" {
 				upstreamName += "_" + version
 			} else {
-				upstreamName += "_" + unversionedVersionFilter.Default
+				upstreamName += "_" + "UNVERSIONED"
+			}
+
+			types[service.Name] = endpoint.Type
+
+			vals := strings.Split(endpoint.Value, ":")
+			if len(vals) != 2 {
+				logrus.WithFields(logrus.Fields{
+					"endpoint": endpoint,
+					"values":   vals,
+				}).Error("could not parse host and port from service endpoint")
+			}
+			host := vals[0]
+			port, err := strconv.Atoi(vals[1])
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err,
+					"port": vals[1],
+				}).Error("port not a valid int")
 			}
 
 			versionUpstreams := upstreams[upstreamName]
+			nginxEndpoint := resources.NGINXEndpoint{
+				Host: host,
+				Port: port,
+			}
 			if versionUpstreams == nil {
-				versionUpstreams = []string{endpoint.Value}
+				versionUpstreams = []resources.NGINXEndpoint{nginxEndpoint}
 			} else {
-				versionUpstreams = append(versionUpstreams, endpoint.Value)
+				versionUpstreams = append(versionUpstreams, nginxEndpoint)
 			}
 			upstreams[upstreamName] = versionUpstreams
 		}
 
-		// Only generate a proxy configuration if we have endpoints
-		if len(upstreams) > 0 {
-			versions := []resources.VersionedUpstreams{}
-			for k, v := range upstreams {
-				versions = append(versions, resources.VersionedUpstreams{
-					UpstreamName: k,
-					Upstreams:    v,
-				})
+		for k, v := range upstreams {
+			retval.Upstreams[k] = resources.NGINXUpstream{
+				Upstreams: v,
 			}
-			proxies = append(proxies, resources.ServiceTemplate{
-				ServiceName:      service.Name,
-				Versions:         versions,
-				VersionDefault:   versionFilters[service.Name].Default,
-				VersionSelectors: versionFilters[service.Name].Selectors,
-				Rules:            rules[service.Name],
-			})
 		}
 	}
 
-	// Create the struct expected by the template
-	templateConf := resources.ConfigTemplate{
-		Port:                 conf.Port,
-		ReqTrackingHeader:    conf.ReqTrackingHeader,
-		LogReqTrackingHeader: strings.Replace(strings.ToLower(conf.ReqTrackingHeader), "-", "_", -1),
-		Proxies:              proxies,
+	versions := map[string]resources.Version{}
+	for _, version := range conf.Filters.Versions {
+		versions[version.Service] = version
 	}
 
-	return templateConf
+	for k, v := range types {
+		if version, ok := versions[k]; ok {
+			retval.Services[k] = resources.NGINXService{
+				Default:   version.Default,
+				Selectors: version.Selectors,
+				Type:      v,
+			}
+		} else {
+			retval.Services[k] = resources.NGINXService{
+				Type: v,
+			}
+		}
+	}
+
+	return retval
 }

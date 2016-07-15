@@ -26,7 +26,7 @@ import (
 
 // Producer interface
 type Producer interface {
-	SendEvent(topic, key string, value resources.ConfigTemplate) error
+	SendEvent(topic, key string, value resources.NGINXJson) error
 	Close() error
 }
 
@@ -74,7 +74,7 @@ func NewProducer(conf ProducerConfig) (Producer, error) {
 }
 
 // SendEvent produces an event on the topic.
-func (p *producer) SendEvent(topic, key string, value resources.ConfigTemplate) error {
+func (p *producer) SendEvent(topic, key string, value resources.NGINXJson) error {
 
 	data, err := json.Marshal(&value)
 	if err != nil {

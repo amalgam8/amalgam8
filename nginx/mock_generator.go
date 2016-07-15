@@ -22,18 +22,17 @@ import (
 
 // MockGenerator implements interface
 type MockGenerator struct {
-	GenerateString       string
-	GenerateError        error
-	ConfigTemplateValue2 resources.NGINXJson
-	ConfigTemplateValue  resources.ConfigTemplate
+	GenerateString      string
+	GenerateError       error
+	ConfigTemplateValue resources.NGINXJson
 }
 
 // Generate mocks method
 func (m *MockGenerator) Generate(id string, lastUpdate *time.Time) (*resources.NGINXJson, error) {
-	return &m.ConfigTemplateValue2, m.GenerateError
+	return &m.ConfigTemplateValue, m.GenerateError
 }
 
 // TemplateConfig mocks method
-func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.ConfigTemplate {
+func (m *MockGenerator) TemplateConfig(catalog resources.ServiceCatalog, conf resources.ProxyConfig) resources.NGINXJson {
 	return m.ConfigTemplateValue
 }

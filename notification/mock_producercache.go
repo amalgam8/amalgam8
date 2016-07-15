@@ -25,7 +25,7 @@ type MockTenantProducerCache struct {
 func (m *MockTenantProducerCache) StartGC() {}
 
 // SendEvent mocks method
-func (m *MockTenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka, templ resources.ConfigTemplate) error {
+func (m *MockTenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka, templ resources.NGINXJson) error {
 	return m.SendEventError
 }
 

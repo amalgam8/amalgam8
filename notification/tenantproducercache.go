@@ -27,7 +27,7 @@ const TopicName = "A8_NewRules"
 // TenantProducerCache maintains a lazy-initialized list of producers for tenant spaces.
 type TenantProducerCache interface {
 	StartGC()
-	SendEvent(tenantID string, kafka resources.Kafka, templ resources.ConfigTemplate) error
+	SendEvent(tenantID string, kafka resources.Kafka, templ resources.NGINXJson) error
 	Delete(tenantID string)
 }
 
@@ -93,7 +93,7 @@ func (c *tenantProducerCache) garbageCollection() {
 }
 
 // SendEvent TODO
-func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka, templ resources.ConfigTemplate) error {
+func (c *tenantProducerCache) SendEvent(tenantID string, kafka resources.Kafka, templ resources.NGINXJson) error {
 	var err error
 	var expiredEntry *producerCacheEntry
 

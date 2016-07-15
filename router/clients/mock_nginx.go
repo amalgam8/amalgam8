@@ -1,11 +1,11 @@
 package clients
 
-import "github.com/amalgam8/controller/resources"
-
+// MockNginx mocks NGINX client interface
 type MockNginx struct {
-	UpdateHttpError error
+	UpdateHTTPError error
 }
 
-func (m *MockNginx) UpdateHttpUpstreams(conf resources.NGINXJson) error {
-	return m.UpdateHttpError
+// UpdateHTTPUpstreams mocks interface
+func (m *MockNginx) UpdateHTTPUpstreams(conf NGINXJson) error {
+	return m.UpdateHTTPError
 }

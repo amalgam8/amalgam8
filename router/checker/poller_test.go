@@ -18,7 +18,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
@@ -48,7 +47,7 @@ var _ = Describe("Tenant Poller", func() {
 		updateCount = 0
 
 		rc = &clients.MockController{
-			ConfigTemplate: resources.NGINXJson{},
+			ConfigTemplate: clients.NGINXJson{},
 		}
 		n = &mockNginx{
 			UpdateFunc: func(data []byte) error {

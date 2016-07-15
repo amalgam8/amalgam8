@@ -183,7 +183,7 @@ func startProxy(conf *config.Config) error {
 	nc := clients.NewNGINXClient("http://localhost:5813")
 
 	nginx, err := nginx.NewNginx(
-		nginx.NGINXConf{
+		nginx.Conf{
 			ServiceName: conf.ServiceName,
 			Service:     nginx.NewService(),
 			Config:      nginx.NewConfig(),

@@ -7,11 +7,48 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
 )
 
+// NGINX client interface for updates to lua
 type NGINX interface {
-	UpdateHttpUpstreams(conf resources.NGINXJson) error
+	UpdateHTTPUpstreams(conf NGINXJson) error
+}
+
+// NGINXJson sent to update http/https endpoints
+type NGINXJson struct {
+	Upstreams map[string]NGINXUpstream `json:"upstreams"`
+	Services  map[string]NGINXService  `json:"services"`
+	Faults    []NGINXFault             `json:"faults,omitempty"`
+}
+
+// NGINXService version info for lua
+type NGINXService struct {
+	Default   string `json:"default"`
+	Selectors string `json:"selectors,omitempty"`
+	Type      string `json:"type"`
+}
+
+// NGINXUpstream server info for lua
+type NGINXUpstream struct {
+	Upstreams []NGINXEndpoint `json:"servers"`
+}
+
+// NGINXEndpoint for lua
+type NGINXEndpoint struct {
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+// NGINXFault for representing fault injection for lua
+type NGINXFault struct {
+	Source           string  `json:"source"`
+	Destination      string  `json:"destination"`
+	Header           string  `json:"header"`
+	Pattern          string  `json:"pattern"`
+	Delay            float64 `json:"delay"`
+	DelayProbability float64 `json:"delay_probability"`
+	AbortProbability float64 `json:"abort_probability"`
+	AbortCode        int     `json:"return_code"`
 }
 
 type nginx struct {
@@ -19,6 +56,7 @@ type nginx struct {
 	url        string
 }
 
+// NewNGINXClient return new NGINX client
 func NewNGINXClient(url string) NGINX {
 	return &nginx{
 		httpClient: &http.Client{},
@@ -26,7 +64,8 @@ func NewNGINXClient(url string) NGINX {
 	}
 }
 
-func (n *nginx) UpdateHttpUpstreams(conf resources.NGINXJson) error {
+// UpdateHTTPUpstreams updates http upstreams in lua dynamically
+func (n *nginx) UpdateHTTPUpstreams(conf NGINXJson) error {
 
 	data, err := json.Marshal(&conf)
 	if err != nil {

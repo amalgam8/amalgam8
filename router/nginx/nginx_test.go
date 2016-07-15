@@ -19,7 +19,6 @@ import (
 
 	"encoding/json"
 
-	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -59,12 +58,11 @@ func (m *serviceMock) Running() (bool, error) {
 var _ = Describe("NGINX", func() {
 
 	var (
-		c     *configMock
-		s     *serviceMock
-		n     Nginx
-		r     []byte
-		templ resources.ConfigTemplate
-		nc    clients.MockNginx
+		c  *configMock
+		s  *serviceMock
+		n  Nginx
+		r  []byte
+		nc clients.MockNginx
 	)
 
 	BeforeEach(func() {
@@ -86,7 +84,7 @@ var _ = Describe("NGINX", func() {
 		}
 
 		n, err = NewNginx(
-			NGINXConf{
+			Conf{
 				Config:      c,
 				Service:     s,
 				ServiceName: "NAME",
@@ -96,49 +94,51 @@ var _ = Describe("NGINX", func() {
 		)
 		Expect(err).ToNot(HaveOccurred())
 
-		templ = resources.ConfigTemplate{
-			Proxies: []resources.ServiceTemplate{
-				resources.ServiceTemplate{
-					ServiceName: "ServiceA",
-					Versions: []resources.VersionedUpstreams{
-						resources.VersionedUpstreams{
-							UpstreamName: "ServiceA_v1",
-							Upstreams:    []string{"127.0.0.1"},
-						},
-						resources.VersionedUpstreams{
-							UpstreamName: "ServiceA_v2",
-							Upstreams:    []string{"127.0.0.5"},
-						},
-					},
-					VersionDefault:   "v1",
-					VersionSelectors: "{v2={weight=0.25}}",
-					Rules: []resources.Rule{
-						resources.Rule{
-							Source:           "source",
-							Destination:      "ServiceA",
-							Delay:            0.3,
-							DelayProbability: 0.9,
-							ReturnCode:       501,
-							AbortProbability: 0.1,
-							Pattern:          "header_value",
-							Header:           "header_name",
-						},
-					},
-				},
-				resources.ServiceTemplate{
-					ServiceName: "ServiceC",
-					Versions: []resources.VersionedUpstreams{
-						resources.VersionedUpstreams{
-							UpstreamName: "ServiceC_UNVERSIONED",
-							Upstreams:    []string{"127.0.0.1"},
-						},
-					},
-					VersionDefault:   "",
-					VersionSelectors: "",
-					Rules:            []resources.Rule{},
-				},
-			},
-		}
+		//templ = resources.ConfigTemplate{
+		//	Proxies: []resources.ServiceTemplate{
+		//		resources.ServiceTemplate{
+		//			ServiceName: "ServiceA",
+		//			Versions: []resources.VersionedUpstreams{
+		//				resources.VersionedUpstreams{
+		//					UpstreamName: "ServiceA_v1",
+		//					Upstreams:    []string{"127.0.0.1"},
+		//				},
+		//				resources.VersionedUpstreams{
+		//					UpstreamName: "ServiceA_v2",
+		//					Upstreams:    []string{"127.0.0.5"},
+		//				},
+		//			},
+		//			VersionDefault:   "v1",
+		//			VersionSelectors: "{v2={weight=0.25}}",
+		//			Rules: []resources.Rule{
+		//				resources.Rule{
+		//					Source:           "source",
+		//					Destination:      "ServiceA",
+		//					Delay:            0.3,
+		//					DelayProbability: 0.9,
+		//					ReturnCode:       501,
+		//					AbortProbability: 0.1,
+		//					Pattern:          "header_value",
+		//					Header:           "header_name",
+		//				},
+		//			},
+		//		},
+		//		resources.ServiceTemplate{
+		//			ServiceName: "ServiceC",
+		//			Versions: []resources.VersionedUpstreams{
+		//				resources.VersionedUpstreams{
+		//					UpstreamName: "ServiceC_UNVERSIONED",
+		//					Upstreams:    []string{"127.0.0.1"},
+		//				},
+		//			},
+		//			VersionDefault:   "",
+		//			VersionSelectors: "",
+		//			Rules:            []resources.Rule{},
+		//		},
+		//	},
+		//}
+
+		templ := clients.NGINXJson{}
 		r, err = json.Marshal(&templ)
 		Expect(err).ToNot(HaveOccurred())
 	})

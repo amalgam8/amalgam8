@@ -21,6 +21,8 @@ import (
 
 	"net"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 )
@@ -105,9 +107,20 @@ func New(context *cli.Context) *Config {
 		}
 	}
 
+	var serviceName string
+	var serviceVersion string
+
+	i := strings.Index(context.String(serviceName), ":")
+	if i == -1 {
+		serviceName = context.String(serviceName)
+	} else {
+		serviceName = context.String(serviceName)[:i]
+		serviceVersion = context.String(serviceName)[i+1:]
+	}
+
 	return &Config{
-		ServiceName:    context.String(serviceName),
-		ServiceVersion: context.String(serviceVersion),
+		ServiceName:    serviceName,
+		ServiceVersion: serviceVersion,
 		EndpointHost:   endpointHost,
 		EndpointPort:   context.Int(endpointPort),
 		LogstashServer: context.String(logstashServer),

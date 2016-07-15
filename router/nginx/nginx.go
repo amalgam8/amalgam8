@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/router/clients"
 )
 
@@ -44,7 +43,8 @@ type nginx struct {
 	nginxClient clients.NGINX
 }
 
-type NGINXConf struct {
+// Conf for creating new NGINX interface
+type Conf struct {
 	Config      Config
 	Service     Service
 	ServiceName string
@@ -53,7 +53,7 @@ type NGINXConf struct {
 }
 
 // NewNginx creates new Nginx instance
-func NewNginx(conf NGINXConf) (Nginx, error) {
+func NewNginx(conf Conf) (Nginx, error) {
 	t, err := template.ParseFiles(conf.Path)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (n *nginx) Update(data []byte) error {
 	defer n.mutex.Unlock()
 
 	var err error
-	templateConf := resources.NGINXJson{}
+	templateConf := clients.NGINXJson{}
 	if err = json.Unmarshal(data, &templateConf); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"err":   err,
@@ -101,7 +101,7 @@ func (n *nginx) Update(data []byte) error {
 		return nginxErr
 	}
 
-	if err = n.nginxClient.UpdateHttpUpstreams(templateConf); err != nil {
+	if err = n.nginxClient.UpdateHTTPUpstreams(templateConf); err != nil {
 		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
 		return err
 	}

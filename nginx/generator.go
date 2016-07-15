@@ -137,11 +137,22 @@ func (g *generator) Generate(id string, lastUpdate *time.Time) (*resources.NGINX
 		}
 	}
 
+	versions := map[string]resources.Version{}
 	for _, version := range entry.ProxyConfig.Filters.Versions {
-		retval.Services[version.Service] = resources.NGINXService{
-			Default:   version.Default,
-			Selectors: version.Selectors,
-			Type:      types[version.Service],
+		versions[version.Service] = version
+	}
+
+	for k, v := range types {
+		if version, ok := versions[k]; ok {
+			retval.Services[k] = resources.NGINXService{
+				Default:   version.Default,
+				Selectors: version.Selectors,
+				Type:      v,
+			}
+		} else {
+			retval.Services[k] = resources.NGINXService{
+				Type: v,
+			}
 		}
 	}
 

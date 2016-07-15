@@ -9,57 +9,120 @@ local Amalgam8 = { _VERSION = '0.2.0',
 	     services_dict = {}
 }
 
-local function decodeJson(input)
+local function isValidString(input)
+   if input and type(input) == 'string' and input ~= '' then
+      return true
+   else
+      return false
+   end
+end
+
+local function isValidNumber(input)
+   if input and type(input) == 'number' then
+      return true
+   else
+      return false
+   end
+end
+
+function Amalgam8:decodeJson(input)
    local upstreams = {}
    local services = {}
    local faults = {}
 
    if input.upstreams then
       for name, upstream in pairs(input.upstreams) do
-         upstreams[name] = {
-            servers = {},
-         }
+         if upstream.servers then
+            upstreams[name] = {
+               servers = {},
+            }
 
-         for _, server in ipairs(upstream.servers) do
-            table.insert(upstreams[name].servers, {
-                            host   = server.host,
-                            port   = server.port,
-            })
-         end
-      end
-   end
-
-   if input.services then
-      for name, version_selector in pairs(input.services) do
-         services[name] = {
-            default = version_selector.default,
-            selectors = version_selector.selectors
-         }
-      end
-   end
-
-   if input.faults then
-      if not ngx.var.server_name then
-         ngx.log(ngx.WARNING, "Server_name variable is empty! Cannot generate fault injection rules")
-      else
-         for i, fault in ipairs(input.faults) do
-            if fault.source == ngx.var.source_service then
-               table.insert(faults, {
-                               source = fault.source,
-                               destination = fault.destination,
-                               header =  fault.header,
-                               pattern = fault.pattern,
-                               delay = fault.delay,
-                               delay_probability = fault.delay_probability,
-                               abort_probability = fault.abort_probability,
-                               return_code = fault.return_code
-               })
+            for _, server in ipairs(upstream.servers) do
+               if isValidString(server.host) and isValidNumber(server.port) and server.port > 0 then
+                  table.insert(upstreams[name].servers, {
+                                  host   = server.host,
+                                  port   = server.port,
+                  })
+               else
+                  return nil, nil, nil, "invalid data format for upstream server host or port"
+               end
             end
          end
       end
    end
+   
+   if input.services then
+      for name, metadata in pairs(input.services) do
+         if isValidString(metadata.default) then
+            if not isValidString(metadata.service_type) then
+               metadata.service_type = 'http'
+            end
+            if metadata.service_type == 'http' or metadata.service_type == 'https' then
+               services[name] = {
+                  default = metadata.default,
+                  service_type = metadata.service_type,
+                  selectors = metadata.selectors
+               }
+            else
+               return nil, nil, nil, "invalid service_type. Only http|https is allowed"
+            end
+         else
+            return nil, nil, nil, "invalid/empty value for default service version"
+         end
+      end
+   end
 
-   return upstreams, services, faults
+   if input.faults then
+      for i, fault in ipairs(input.faults) do
+         if isValidString(fault.source) and isValidString(fault.destination) and isValidString(fault.header) and isValidString(fault.pattern) then
+            if fault.source == self.source_service then
+               if not isValidNumber(fault.delay) then
+                  fault.delay = 0.0
+               end
+               if not isValidNumber(fault.return_code) then
+                  fault.return_code = nil
+               end
+               if not isValidNumber(fault.abort_probability) then
+                  fault.abort_probability = 0.0
+               end
+               if not isValidNumber(fault.delay_probability) then
+                  fault.delay_probability = 0.0
+               end
+               if (fault.abort_probability > 0.0 and fault.return_code ) or (fault.delay_probability > 0.0 and fault.delay > 0.0) then
+                  table.insert(faults, {
+                                  source = fault.source,
+                                  destination = fault.destination,
+                                  header =  fault.header,
+                                  pattern = fault.pattern,
+                                  delay = fault.delay,
+                                  delay_probability = fault.delay_probability,
+                                  abort_probability = fault.abort_probability,
+                                  return_code = fault.return_code
+                  })
+               else
+                  return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
+               end
+            end
+         end
+      end
+   end
+   return upstreams, services, faults, nil
+end
+
+local function getMyName()
+   local service_name = os.getenv("A8_SERVICE")
+--   local service_version = os.getenv("A8_SERVICE_VERSION")
+
+   if not isValidString(service_name) then
+      return nil, "A8_SERVICE environment variable is either empty or not set"
+   end
+
+   return service_name, nil
+   -- if isValidString(service_version) then
+   --    return service_name .. "_" .. service_version, nil
+   -- else
+   --    return service_name, nil
+   -- end
 end
 
 function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
@@ -82,9 +145,15 @@ function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
       return "faults dictionary " .. faults_dict .. " not found"
    end
 
+   local source_service, err = getMyName()
+   if err then
+      return err
+   end
+ 
    self.upstreams_dict = upstreams
    self.services_dict = services
    self.faults_dict = faults
+   self.source_service = source_service
    return o
 end
 
@@ -121,25 +190,25 @@ function Amalgam8:updateUpstream(name, upstream)
    return nil
 end
 
-function Amalgam8:updateService(name, version_selector)
+function Amalgam8:updateService(name, metadata)
 
    local current = {
       name         = name,
-      version_selector   = version_selector,
+      metadata   = metadata,
    }
 
-   if not version_selector.default then
+   if not isValidString(metadata.default) then
       return "null entry for default version"
    end
 
-   if version_selector.selectors then
+   if metadata.selectors then
       -- convert the selectors field from string to lua table
-      local selectors_fn, err = loadstring( "return " .. version_selector.selectors)
+      local selectors_fn, err = loadstring( "return " .. metadata.selectors)
       if err then
          ngx.log(ngx.ERR, "failed to compile selector", err)
          return err
       end
-      current.version_selector.selectors = selectors_fn()
+      current.metadata.selectors = selectors_fn()
    end
 
    local current_serialized, err = json.encode(current)
@@ -184,13 +253,17 @@ function Amalgam8:updateFault(i, fault)
 end
 
 function Amalgam8:updateProxy(input)
-   local upstreams, services, faults = decodeJson(input)
+   local upstreams, services, faults, err = self:decodeJson(input)
+
+   if err then
+      return err
+   end
 
    for name, upstream in pairs(upstreams) do
       err = self:updateUpstream(name, upstream)
       if err then
          err = "error updating upstream " .. name .. ": " .. err
-	 break
+         break
       end
    end
 
@@ -198,11 +271,11 @@ function Amalgam8:updateProxy(input)
       return err
    end
 
-   for name, version_selector in pairs(services) do
-      err = self:updateService(name, version_selector)
+   for name, metadata in pairs(services) do
+      err = self:updateService(name, metadata)
       if err then
          err = "error updating service " .. name .. ": " .. err
-	 break
+         break
       end
    end
 
@@ -214,7 +287,7 @@ function Amalgam8:updateProxy(input)
       err = self:updateFault(i, fault)
       if err then
          err = "error updating fault " .. fault.destination .. ": " .. err
-	 break
+         break
       end
    end
 
@@ -239,6 +312,13 @@ function Amalgam8:getService(name)
    end
 end
 
+function Amalgam8:getFault(index)
+   local serialized = self.faults_dict:get(index)
+   if serialized then
+      return json.decode(serialized)
+   end
+end
+
 --- FIXME
 function Amalgam8:resetState()
    self.upstreams_dict:flush_all()
@@ -257,7 +337,8 @@ function Amalgam8:updateConfig()
       local input, err = json.decode(ngx.req.get_body_data())
       if err then
          ngx.log(ngx.ERR, "error decoding input json: " .. err)
-         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+         ngx.say("error decoding input json: " .. err)
+         ngx.exit(ngx.HTTP_BAD_REQUEST)
       end
 
       -- TODO: FIXME. There is no concept of locking so far.
@@ -265,8 +346,42 @@ function Amalgam8:updateConfig()
       err = self:updateProxy(input)
       if err then
          ngx.log(ngx.ERR, "error updating proxy: " .. err)
+         ngx.say("error updating internal state: " .. err)
          ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
       end
+   elseif ngx.req.get_method() == "GET" then
+      local state = {
+         services = {},
+         upstreams = {},
+         faults = {}
+      }
+
+      -- TODO: This fetches utmost 1024 keys only
+      local services = self.services_dict:get_keys()
+      local upstreams = self.upstreams_dict:get_keys()
+      local faults = self.faults_dict:get_keys()
+
+      for _,name in ipairs(services) do
+         state.services[name] = self:getService(name)
+      end
+
+      for _,name in ipairs(upstreams) do
+         state.upstreams[name] = self:getUpstream(name)
+      end
+      local len = self.faults_dict:get("len")
+      for i=1,len do
+         table.insert(state.faults, self:getFault(i))
+      end
+
+      local output, err = json.encode(state)
+      if err then
+         ngx.say("error encoding state as JSON:" .. err)
+         ngx.log(ngx.ERR, "error encoding state as JSON:" .. err)
+         nex.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+      end
+      ngx.header["content-type"] = "application/json"
+      ngx.say(output)
+      ngx.exit(ngx.HTTP_OK)
    else
       return ngx.exit(ngx.HTTP_BAD_REQUEST)
    end
@@ -278,7 +393,7 @@ function Amalgam8:balance()
       ngx.log(ngx.ERR, "$a8proxy_upstream is not specified")
       return
    end
-
+   
    local upstream, err = self:getUpstream(name)
    if err then
       ngx.log(ngx.ERR, "error getting upstream " .. name .. ": " .. err)
@@ -301,25 +416,29 @@ function Amalgam8:balance()
    end
 end
 
-function Amalgam8:get_version_rules()
+function Amalgam8:get_service_metadata()
    local name = ngx.var.service_name
    if not name then
       ngx.log(ngx.ERR, "$service_name is not specified")
-      return nil, nil
+      return nil, nil, nil
    end
-
+   
    local service, err = self:getService(name)
    if err then
       ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
-      return nil, nil
+      return nil, nil, nil
    end
-
-   if not service or not service.version_selector then
-      ngx.log(ngx.ERR, "service " .. name .. " or version_selector is not known")
-      return nil, nil
+   
+   if not service or not service.metadata then
+      ngx.log(ngx.ERR, "service " .. name .. " or metadata is not known")
+      return nil, nil, nil
    end
+   
+   return service.metadata.service_type, service.metadata.default, service.metadata.selectors
+end
 
-   return service.version_selector.default, service.version_selector.selectors
+function Amalgam8:get_source_service()
+   return self.source_service
 end
 
 return Amalgam8

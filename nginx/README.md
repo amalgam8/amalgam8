@@ -9,7 +9,7 @@ Then
 
 ```bash
 docker build -f docker/Dockerfile.ubuntu -t nginx_trial .
-docker run -it -e A8_SERVICE=source -e A8_SERVICE_VERSION=v1 --entrypoint /bin/bash -v `pwd`/nginx/lua:/opt/a8_lualib -v `pwd`/nginx/old:/opt/old nginx_trial
+docker run -it -e A8_SERVICE=source:v1 --entrypoint /bin/bash -v `pwd`/nginx/lua:/opt/a8_lualib -v `pwd`/nginx/old:/opt/old nginx_trial
 ```
 
 Once you are inside the container, start the main nginx server and the

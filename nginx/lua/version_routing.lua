@@ -7,7 +7,7 @@ function get_target(service, default_version, version_selectors)
     -- ngx.log(ngx.DEBUG, "version is " .. version)
     -- local path = string.sub(ngx.var.request_uri, string.len(service)+2)
     -- return service .. "_" .. version .. path
-    return service .. "_" .. version
+    return service .. ":" .. version
 end
 
 function get_version(service, default_version, version_selectors)

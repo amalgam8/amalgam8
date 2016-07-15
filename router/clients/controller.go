@@ -30,7 +30,7 @@ import (
 // Controller TODO
 type Controller interface {
 	Register() error
-	GetNGINXConfig(version *time.Time) (string, error)
+	GetNGINXConfig(version *time.Time) (*NGINXJson, error)
 	GetCredentials() (TenantCredentials, error)
 }
 
@@ -151,11 +151,11 @@ func (c *controller) Register() error {
 	return nil
 }
 
-func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
+func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
 
 	url, err := url.Parse(c.config.Controller.URL + "/v1/nginx")
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if version != nil {
 		query := url.Query()
@@ -169,7 +169,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 			"err": err,
 			//			"request_id": reqID,
 		}).Warn("Error building request to get rules from controller")
-		return "", err
+		return nil, err
 	}
 	//TODO set auth header
 	req.Header.Set("Authorization", c.config.Tenant.Token)
@@ -180,13 +180,13 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 			"err": err,
 			//			"request_id": reqID,
 		}).Warn("Failed to retrieve rules from controller")
-		return "", err
+		return nil, err
 	}
 
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNoContent {
 		logrus.Debug("No new rules received")
-		return "", nil
+		return nil, nil
 	} else if resp.StatusCode != http.StatusOK {
 		respBytes, _ := ioutil.ReadAll(resp.Body)
 		logrus.WithFields(logrus.Fields{
@@ -194,7 +194,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 			//			"request_id": reqID,
 			"body": string(respBytes),
 		}).Warn("Controller returned bad response code")
-		return "", errors.New("Controller returned bad response code") // FIXME: custom error?
+		return nil, errors.New("Controller returned bad response code") // FIXME: custom error?
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
@@ -203,10 +203,19 @@ func (c *controller) GetNGINXConfig(version *time.Time) (string, error) {
 			"err": err,
 			//			"request_id": reqID,
 		}).Warn("Error reading rules JSON from controller")
-		return "", err
+		return nil, err
 	}
 
-	return string(body), err
+	templateConf := NGINXJson{}
+	if err = json.Unmarshal(body, &templateConf); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err": err,
+			//			"request_id": reqID,
+		}).Warn("Error reading rules JSON from controller")
+		return nil, err
+	}
+
+	return &templateConf, nil
 }
 
 func (c *controller) GetCredentials() (TenantCredentials, error) {

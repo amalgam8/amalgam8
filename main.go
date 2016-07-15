@@ -160,9 +160,42 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	rc := clients.NewController(conf)
+	configBytes, err := ioutil.ReadFile("/etc/nginx/amalgam8.conf")
+	if err != nil {
+		logrus.WithError(err).Error("Missing /etc/nginx/amalgam8.conf")
+		return err
+	}
 
-	nginx := nginx.NewNginx(conf.ServiceName)
+	configStr := string(configBytes)
+	configStr = strings.Replace(configStr, "__SERVICE_NAME__", conf.ServiceName, -1)
+
+	output, err := os.OpenFile("/etc/nginx/amalgam8.conf", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	if err != nil {
+		logrus.WithError(err).Error("Couldn't open /etc/nginx/amalgam8.conf file for editing")
+		return err
+	}
+
+	// Write the config
+	fmt.Fprintf(output, configStr)
+	output.Close()
+
+	rc := clients.NewController(conf)
+	nc := clients.NewNGINXClient("http://localhost:5813")
+
+	nginx, err := nginx.NewNginx(
+		nginx.Conf{
+			ServiceName: conf.ServiceName,
+			Service:     nginx.NewService(),
+			Config:      nginx.NewConfig(),
+			Path:        "/usr/bin/nginx.conf.tmpl",
+			NGINXClient: nc,
+		},
+	)
+
+	if err != nil {
+		logrus.WithError(err).Error("Failed to initialize NGINX object")
+		return err
+	}
 
 	err = checkIn(rc, conf)
 	if err != nil {

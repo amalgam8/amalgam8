@@ -16,7 +16,6 @@ package checker
 
 import (
 	"errors"
-	"io"
 	"time"
 
 	"github.com/amalgam8/sidecar/config"
@@ -26,11 +25,11 @@ import (
 )
 
 type mockNginx struct {
-	UpdateFunc func(io.Reader) error
+	UpdateFunc func([]byte) error
 }
 
-func (m *mockNginx) Update(reader io.Reader) error {
-	return m.UpdateFunc(reader)
+func (m *mockNginx) Update(data []byte) error {
+	return m.UpdateFunc(data)
 }
 
 var _ = Describe("Tenant Poller", func() {
@@ -48,10 +47,10 @@ var _ = Describe("Tenant Poller", func() {
 		updateCount = 0
 
 		rc = &clients.MockController{
-			ConfigString: "non-empty-config",
+			ConfigTemplate: clients.NGINXJson{},
 		}
 		n = &mockNginx{
-			UpdateFunc: func(reader io.Reader) error {
+			UpdateFunc: func(data []byte) error {
 				updateCount++
 				return nil
 			},
@@ -98,7 +97,7 @@ var _ = Describe("Tenant Poller", func() {
 	})
 
 	It("reports NGINX update failure", func() {
-		n.UpdateFunc = func(reader io.Reader) error {
+		n.UpdateFunc = func(data []byte) error {
 			return errors.New("Update NGINX failed")
 		}
 

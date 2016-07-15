@@ -14,15 +14,17 @@
 
 package clients
 
-import "time"
+import (
+	"time"
+)
 
 // MockController mocks the Controller interface
 type MockController struct {
-	RegisterError error
-	ConfigError   error
-	ConfigString  string
-	GetCredsError error
-	GetCredsVal   TenantCredentials
+	RegisterError  error
+	ConfigError    error
+	ConfigTemplate NGINXJson
+	GetCredsError  error
+	GetCredsVal    TenantCredentials
 }
 
 // Register mocks interface
@@ -31,8 +33,8 @@ func (m *MockController) Register() error {
 }
 
 // GetNGINXConfig mocks interface
-func (m *MockController) GetNGINXConfig(version *time.Time) (string, error) {
-	return m.ConfigString, m.ConfigError
+func (m *MockController) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
+	return &m.ConfigTemplate, m.ConfigError
 }
 
 // GetCredentials mocks interface

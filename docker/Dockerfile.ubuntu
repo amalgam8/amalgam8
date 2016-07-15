@@ -20,29 +20,31 @@ RUN apt-get -y update && apt-get -y install libreadline-dev libncurses5-dev libp
     libssl-dev perl make build-essential curl wget
 
 RUN mkdir /var/log/nginx
+RUN mkdir /opt/a8_lualib
 
-RUN wget https://openresty.org/download/ngx_openresty-1.9.7.1.tar.gz
+RUN wget https://openresty.org/download/openresty-1.9.15.1.tar.gz
 
 RUN \
-tar -xzvf ngx_openresty-*.tar.gz && \
-  rm -f ngx_openresty-*.tar.gz && \
-  cd ngx_openresty-* && \
-  ./configure --with-pcre-jit --with-ipv6 --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --user=nginx && \
+tar -xzvf openresty-*.tar.gz && \
+  rm -f openresty-*.tar.gz && \
+  cd openresty-* && \
+  ./configure --with-pcre-jit --with-cc-opt='-O3' --with-luajit-xcflags='-O3' --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --user=nginx && \
   make && \
   make install && \
   make clean && \
   cd .. && \
-  rm -rf ngx_openresty-* && \
+  rm -rf openresty-* && \
   ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
   ldconfig
 
-#ENV LOG_LOCATIONS /var/log/serviceproxy.log,/var/log/nginx/access.log,/var/log/nginx/error.log
 RUN \
     curl -L -O https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb && \
     dpkg -i filebeat_1.2.2_amd64.deb
 
-ADD docker/splib.lua /lua/splib.lua
+ADD nginx/lua /opt/a8_lualib
+ADD nginx/conf /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/nginx.conf.tmpl /usr/bin/nginx.conf.tmpl
 
 ADD /bin/a8sidecar /usr/bin/a8sidecar
 #COPY /locale /locale

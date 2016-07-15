@@ -54,6 +54,8 @@ ARG RESTY_CONFIG_OPTIONS="\
     --conf-path=/etc/nginx/nginx.conf \
     --pid-path=/var/run/nginx.pid \
     --user=nginx \
+    --with-cc-opt='-O3' \
+    --with-luajit-xcflags='-O3' \
     "
 
 # These are not intended to be user-specified
@@ -123,8 +125,10 @@ RUN set -ex \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2 \
     && apk del .build-dependencies
 
-ADD docker/splib.lua /lua/splib.lua
+ADD nginx/lua /opt/a8_lualib
+ADD nginx/conf /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/nginx.conf.tmpl /usr/bin/nginx.conf.tmpl
 
 ADD /bin/a8sidecar /usr/bin/a8sidecar
 

@@ -47,7 +47,6 @@ const (
 	endpointPort    = "endpoint_port"
 	endpointType    = "endpoint_type"
 	serviceName     = "service"
-	serviceVersion  = "service_version"
 	logLevel        = "log_level"
 	logstashServer  = "logstash_server"
 	forceUpdate     = "force_update"
@@ -72,11 +71,6 @@ var TenantFlags = []cli.Flag{
 		Name:   serviceName,
 		EnvVar: envVar(serviceName),
 		Usage:  "Service name to register with",
-	},
-	cli.StringFlag{
-		Name:   serviceVersion,
-		EnvVar: envVar(serviceVersion),
-		Usage:  "Service version to register with",
 	},
 	cli.StringFlag{
 		Name:   endpointHost,

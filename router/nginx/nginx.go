@@ -15,12 +15,13 @@
 package nginx
 
 import (
-	"io"
-	"io/ioutil"
-	"strings"
 	"sync"
+	"text/template"
+
+	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/sidecar/router/clients"
 )
 
 var log = logrus.WithFields(logrus.Fields{
@@ -30,43 +31,54 @@ var log = logrus.WithFields(logrus.Fields{
 // Nginx manages updates to NGINX configuration
 type Nginx interface {
 	// Update NGINX to run with the provided configuration
-	Update(reader io.Reader) error
+	Update(data []byte) error
 }
 
 type nginx struct {
 	config      Config
 	service     Service
 	serviceName string
+	template    *template.Template
 	mutex       sync.Mutex
+	nginxClient clients.NGINX
+}
+
+// Conf for creating new NGINX interface
+type Conf struct {
+	Config      Config
+	Service     Service
+	ServiceName string
+	Path        string
+	NGINXClient clients.NGINX
 }
 
 // NewNginx creates new Nginx instance
-func NewNginx(serviceName string) Nginx {
-	return &nginx{
-		config:      NewConfig(),
-		service:     NewService(),
-		serviceName: serviceName,
+func NewNginx(conf Conf) (Nginx, error) {
+	t, err := template.ParseFiles(conf.Path)
+	if err != nil {
+		return nil, err
 	}
+	return &nginx{
+		config:      conf.Config,      //NewConfig(),
+		service:     conf.Service,     //NewService(),
+		serviceName: conf.ServiceName, //serviceName,
+		template:    t,
+		nginxClient: conf.NGINXClient,
+	}, nil
 }
 
 // Update NGINX to run with the provided configuration
-func (n *nginx) Update(reader io.Reader) error {
+func (n *nginx) Update(data []byte) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	configBytes, err := ioutil.ReadAll(reader)
-	if err != nil {
-		log.WithField("err", err).Error("Could not read config")
-		return err
-	}
-
-	// Replace service name
-	configStr := string(configBytes)
-	configStr = strings.Replace(configStr, "__SERVICE_NAME__", n.serviceName, -1)
-
-	// Update the NGINX configuration file
-	if err = n.config.Update(configStr); err != nil {
-		log.WithField("err", err).Error("Could not update NGINX configuration file")
+	var err error
+	templateConf := clients.NGINXJson{}
+	if err = json.Unmarshal(data, &templateConf); err != nil {
+		logrus.WithFields(logrus.Fields{
+			"err":   err,
+			"value": string(data),
+		}).Error("Could not unmarshal object")
 		return err
 	}
 
@@ -78,18 +90,20 @@ func (n *nginx) Update(reader io.Reader) error {
 	}
 
 	var nginxErr error
-	if running {
-		// NGINX is already running; attempt to reload NGINX
-		nginxErr = n.reloadNginx()
-	} else {
+	if !running {
 		// NGINX is not running; attempt to start NGINX
 		nginxErr = n.startNginx()
 	}
 
 	// log the failed nginx config
 	if nginxErr != nil {
-		log.WithField("config", string(configBytes)).Error("Failed NGINX config")
+		log.WithField("config", string(data)).Error("Failed NGINX config")
 		return nginxErr
+	}
+
+	if err = n.nginxClient.UpdateHTTPUpstreams(templateConf); err != nil {
+		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
+		return err
 	}
 
 	return nil

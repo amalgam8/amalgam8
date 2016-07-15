@@ -15,8 +15,9 @@
 package checker
 
 import (
-	"bytes"
 	"time"
+
+	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/config"
@@ -85,15 +86,15 @@ func (p *poller) poll() error {
 		return err
 	}
 
-	if conf == "" {
+	if conf == nil {
 		//TODO no new rules to update, do we need to do anything else?
 		return nil
 	}
 
-	reader := bytes.NewBufferString(conf)
+	confBytes, err := json.Marshal(conf)
 
 	// Update our existing NGINX config
-	if err := p.nginx.Update(reader); err != nil {
+	if err := p.nginx.Update(confBytes); err != nil {
 		logrus.WithError(err).Error("Could not update NGINX config")
 		return err
 	}

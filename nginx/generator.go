@@ -111,11 +111,12 @@ func (g *generator) Generate(id string, lastUpdate *time.Time) (*resources.NGINX
 			host := vals[0]
 			port, err := strconv.Atoi(vals[1])
 			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err,
+					"port": vals[1],
+				}).Error("port not a valid int")
 			}
-			logrus.WithFields(logrus.Fields{
-				"err":  err,
-				"port": vals[1],
-			}).Error("port not a valid int")
+
 
 			versionUpstreams := upstreams[upstreamName]
 			nginxEndpoint := resources.NGINXEndpoint{

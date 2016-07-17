@@ -8,15 +8,10 @@ services:
 # Go versions to build with
 go:
     - 1.6
-    - 1.5
 
 env:
-    global:
-        # Required for Go 1.5 build
-        - GO15VENDOREXPERIMENT=1
-    matrix:
-        # Platforms to build for
-        - PLATFORM=linux/amd64
+    # Platforms to build for
+    - PLATFORM=linux/amd64
 
 script:
     # Need to set explicitly, as these are unset by 'gimme'
@@ -39,11 +34,10 @@ deploy:
         file_glob: true
         file: release/*
 
-        # Trigger only when building a tagged commit, on the origin repo, and with Go 1.6
+        # Trigger only when building a tagged commit, on the origin repo
         on:
             tags: true
             repo: amalgam8/registry
-            go: 1.6
 
     # Push images to Docker Hub
     -   provider: script
@@ -52,11 +46,10 @@ deploy:
         # Keep artifacts produced during the build
         skip_cleanup: true
             
-        # Trigger only when building a version-tagged commit, on Go 1.6
+        # Trigger only when building a version-tagged commit, on the origin repo
         on:
             tags: true
             repo: amalgam8/registry
-            go: 1.6
             condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
 
 # Configure notifications

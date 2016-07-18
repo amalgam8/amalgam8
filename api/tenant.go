@@ -242,11 +242,10 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	tenantInfo := resources.TenantInfo{
-		Credentials:       entry.ProxyConfig.Credentials,
-		LoadBalance:       entry.ProxyConfig.LoadBalance,
-		Port:              entry.ProxyConfig.Port,
-		ReqTrackingHeader: entry.ProxyConfig.ReqTrackingHeader,
-		Filters:           entry.ProxyConfig.Filters,
+		Credentials: entry.ProxyConfig.Credentials,
+		LoadBalance: entry.ProxyConfig.LoadBalance,
+		Port:        entry.ProxyConfig.Port,
+		Filters:     entry.ProxyConfig.Filters,
 	}
 
 	w.WriteHeader(http.StatusOK)

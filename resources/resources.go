@@ -151,11 +151,10 @@ type TenantEntry struct {
 
 // ProxyConfig TODO
 type ProxyConfig struct {
-	LoadBalance       string      `json:"load_balance"`
-	Port              int         `json:"port"`
-	ReqTrackingHeader string      `json:"req_tracking_header"` // TODO: name?
-	Filters           Filters     `json:"filters"`
-	Credentials       Credentials `json:"credentials"`
+	LoadBalance string      `json:"load_balance"`
+	Port        int         `json:"port"`
+	Filters     Filters     `json:"filters"`
+	Credentials Credentials `json:"credentials"`
 }
 
 // Filters TODO
@@ -186,34 +185,16 @@ type Version struct {
 
 // TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
-	Credentials       Credentials `json:"credentials"`
-	LoadBalance       string      `json:"load_balance"`
-	Port              int         `json:"port"`
-	ReqTrackingHeader string      `json:"req_tracking_header"`
-	Filters           Filters     `json:"filters"`
-}
-
-// ConfigTemplate is used by the template file to generate the NGINX config
-type ConfigTemplate struct {
-	Port                 int               `json:"port"`
-	ReqTrackingHeader    string            `json:"req_tracking_header"`
-	LogReqTrackingHeader string            `json:"log_req_tracking_header"`
-	Proxies              []ServiceTemplate `json:"proxies"`
+	Credentials Credentials `json:"credentials"`
+	LoadBalance string      `json:"load_balance"`
+	Port        int         `json:"port"`
+	Filters     Filters     `json:"filters"`
 }
 
 // VersionedUpstreams contains upstreams by version
 type VersionedUpstreams struct {
 	UpstreamName string   `json:"name"`
 	Upstreams    []string `json:"upstreams"`
-}
-
-// ServiceTemplate is used by the template file to generate service configurations in the NGINX config
-type ServiceTemplate struct {
-	ServiceName      string               `json:"service_name"`
-	Versions         []VersionedUpstreams `json:"versions"`
-	VersionDefault   string               `json:"version_default"`
-	VersionSelectors string               `json:"selectors"`
-	Rules            []Rule               `json:"rules"`
 }
 
 // NGINXJson TODO

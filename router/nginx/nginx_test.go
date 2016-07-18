@@ -88,7 +88,6 @@ var _ = Describe("NGINX", func() {
 				Config:      c,
 				Service:     s,
 				ServiceName: "NAME",
-				Path:        "../../docker/nginx.conf.tmpl",
 				NGINXClient: &nc,
 			},
 		)

@@ -15,10 +15,8 @@
 package nginx
 
 import (
-	"sync"
-	"text/template"
-
 	"encoding/json"
+	"sync"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/router/clients"
@@ -38,7 +36,6 @@ type nginx struct {
 	config      Config
 	service     Service
 	serviceName string
-	template    *template.Template
 	mutex       sync.Mutex
 	nginxClient clients.NGINX
 }
@@ -48,21 +45,16 @@ type Conf struct {
 	Config      Config
 	Service     Service
 	ServiceName string
-	Path        string
 	NGINXClient clients.NGINX
 }
 
 // NewNginx creates new Nginx instance
 func NewNginx(conf Conf) (Nginx, error) {
-	t, err := template.ParseFiles(conf.Path)
-	if err != nil {
-		return nil, err
-	}
+
 	return &nginx{
 		config:      conf.Config,      //NewConfig(),
 		service:     conf.Service,     //NewService(),
 		serviceName: conf.ServiceName, //serviceName,
-		template:    t,
 		nginxClient: conf.NGINXClient,
 	}, nil
 }

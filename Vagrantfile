@@ -142,6 +142,8 @@ Vagrant.configure('2') do |config|
   end
 
   # Port mappings for various services inside the VM
+  ####A8 Console
+  config.vm.network "forwarded_port", guest: 31000, host: 31000
   ####Controller
   config.vm.network "forwarded_port", guest: 31200, host: 31200
   ####Registry

@@ -2,8 +2,8 @@
    "gremlins" : [
        {
             "scenario" : "delay_requests",
-            "source" : "reviews",
-            "dest" : "ratings",
+            "source" : "reviews:v2",
+            "dest" : "ratings:v1",
             "delaytime" : "7s"
        }
    ]

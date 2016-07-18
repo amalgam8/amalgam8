@@ -21,7 +21,7 @@ import (
 	"testing"
 )
 
-func TestStethoscope(t *testing.T) {
+func TestAPI(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "API Suite")
 }

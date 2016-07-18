@@ -77,9 +77,7 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 		},
 		TenantToken: token,
 		ProxyConfig: resources.ProxyConfig{
-			LoadBalance:       tenantInfo.LoadBalance,
-			Port:              tenantInfo.Port,
-			ReqTrackingHeader: tenantInfo.ReqTrackingHeader,
+			LoadBalance: tenantInfo.LoadBalance,
 			Credentials: resources.Credentials{
 				Kafka:    tenantInfo.Credentials.Kafka,
 				Registry: tenantInfo.Credentials.Registry,
@@ -105,14 +103,6 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 	// Set defaults if necessary
 	if entry.ProxyConfig.LoadBalance == "" {
 		entry.ProxyConfig.LoadBalance = "round_robin" // FIXME: common location for this?
-	}
-
-	if entry.ProxyConfig.Port == 0 {
-		entry.ProxyConfig.Port = 6379 // FIXME
-	}
-
-	if entry.ProxyConfig.ReqTrackingHeader == "" {
-		entry.ProxyConfig.ReqTrackingHeader = "X-Request-ID" // FIXME: common location for this?
 	}
 
 	for _, rule := range entry.ProxyConfig.Filters.Rules {
@@ -245,14 +235,6 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 
 	if tenantInfo.LoadBalance != "" {
 		entry.ProxyConfig.LoadBalance = tenantInfo.LoadBalance
-	}
-
-	if tenantInfo.Port > 0 {
-		entry.ProxyConfig.Port = tenantInfo.Port
-	}
-
-	if tenantInfo.ReqTrackingHeader != "" {
-		entry.ProxyConfig.ReqTrackingHeader = tenantInfo.ReqTrackingHeader
 	}
 
 	if tenantInfo.Filters.Rules != nil {
@@ -407,41 +389,56 @@ func (m *manager) GetVersion(id, service string) (resources.Version, error) {
 	}
 
 	logrus.Error(fmt.Sprintf("No registered service(s) for %v matching service name %v", id, service))
-	return resources.Version{}, &RuleNotFoundError{Reason: "No registered service(s) matching name", ErrorMessage: "invalid_service"}
 
+	return resources.Version{}, &RuleNotFoundError{Reason: "No registered service(s) matching name", ErrorMessage: "invalid_service"}
 }
 
 func validateRule(rule resources.Rule) error {
+	// Validate source
+	if rule.Source == "" {
+		return &InvalidRuleError{Reason: "invalid source", ErrorMessage: "invalid_source"}
+	}
+
+	// Validate destination
 	if rule.Destination == "" {
 		return &InvalidRuleError{Reason: "invalid destination", ErrorMessage: "invalid_destination"}
 	}
 
+	// Validate abort
 	if rule.AbortProbability < 0.0 || rule.AbortProbability > 1.0 {
 		return &InvalidRuleError{Reason: "invalid abort probability", ErrorMessage: "invalid_abort_probability"}
 	}
 
-	if rule.ReturnCode < 0 || rule.ReturnCode >= 600 {
+	if rule.AbortProbability > 0.0 && (rule.ReturnCode < -1 || rule.ReturnCode == 0 || rule.ReturnCode >= 600) {
 		return &InvalidRuleError{Reason: "invalid return code", ErrorMessage: "invalid_return_code"}
 	}
 
+	// Validate delay
 	if rule.DelayProbability < 0.0 || rule.DelayProbability > 1.0 {
-		return &InvalidRuleError{Reason: "invalid probability", ErrorMessage: "invalid_delay_probability"}
+		return &InvalidRuleError{Reason: "invalid delay probability", ErrorMessage: "invalid_delay_probability"}
 	}
 
 	if rule.Delay < 0 || rule.Delay > 600 {
 		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
 	}
 
-	if (rule.DelayProbability != 0.0 && rule.Delay == 0.0) || (rule.DelayProbability == 0.0 && rule.Delay != 0.0) {
+	if rule.DelayProbability > 0.0 && rule.Delay <= 0.0 {
 		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
 	}
 
-	// if filter.Header == "" {
-	// 	filter.Header = "X-Filter-Header"
-	// }
+	// Ensure abort or delay is set
+	if rule.DelayProbability == 0.0 && rule.AbortProbability == 0.0 {
+		return &InvalidRuleError{Reason: "invalid rule", ErrorMessage: "invalid_rule"}
+	}
 
+	// Validate header
+	if rule.Header == "" {
+		return &InvalidRuleError{Reason: "invalid header", ErrorMessage: "invalid_header"}
+	}
+
+	// Validate header value
 	if rule.Pattern == "" {
-		rule.Pattern = "*"
+		return &InvalidRuleError{Reason: "invalid header pattern", ErrorMessage: "invalid_header_pattern"}
 	}
 
 	return nil

@@ -48,7 +48,6 @@ var _ = Describe("NGINX", func() {
 						Rules:    []resources.Rule{},
 						Versions: []resources.Version{},
 					},
-					Port:        6379,
 					LoadBalance: "round_robin",
 				},
 				BasicEntry: resources.BasicEntry{

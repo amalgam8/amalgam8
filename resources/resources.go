@@ -152,7 +152,6 @@ type TenantEntry struct {
 // ProxyConfig TODO
 type ProxyConfig struct {
 	LoadBalance string      `json:"load_balance"`
-	Port        int         `json:"port"`
 	Filters     Filters     `json:"filters"`
 	Credentials Credentials `json:"credentials"`
 }
@@ -187,7 +186,6 @@ type Version struct {
 type TenantInfo struct {
 	Credentials Credentials `json:"credentials"`
 	LoadBalance string      `json:"load_balance"`
-	Port        int         `json:"port"`
 	Filters     Filters     `json:"filters"`
 }
 

@@ -52,7 +52,6 @@ var _ = Describe("Manager", func() {
 			id = "abcdef"
 			token = "12345"
 			tenantInfo = resources.TenantInfo{
-				Port:        6379,
 				LoadBalance: "round_robin",
 				Filters: resources.Filters{
 					Rules:    []resources.Rule{},
@@ -101,7 +100,6 @@ var _ = Describe("Manager", func() {
 				entryFromDB, err := manager.Get(id)
 				Expect(err).ToNot(HaveOccurred())
 
-				Expect(entryFromDB.ProxyConfig.Port).To(Equal(tenantInfo.Port))
 				Expect(entryFromDB.ProxyConfig.Filters.Rules).ToNot(BeNil())
 				Expect(entryFromDB.ProxyConfig.Filters.Rules).To(HaveLen(0))
 
@@ -159,7 +157,6 @@ var _ = Describe("Manager", func() {
 					configFromDB, err := manager.Get(id)
 					Expect(err).ToNot(HaveOccurred())
 					Expect(configFromDB.ID).To(Equal(id))
-					Expect(configFromDB.ProxyConfig.Port).To(Equal(tenantInfo.Port))
 					Expect(configFromDB.ProxyConfig.Filters.Rules).ToNot(BeNil())
 					Expect(configFromDB.ProxyConfig.Filters.Rules).To(HaveLen(len(tenantInfo.Filters.Rules)))
 					for i := range configFromDB.ProxyConfig.Filters.Rules {

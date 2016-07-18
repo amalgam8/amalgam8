@@ -122,7 +122,6 @@ echo "Setting up a new controller tenant named 'local'"
 read -d '' tenant << EOF
 {
     "id": "${CONTROLLER_TENANT_ID}",
-    "req_tracking_header" : "X-Request-ID",
     "credentials": {
         "registry": {
             "url": "${REGISTRY_URL}",

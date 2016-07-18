@@ -152,7 +152,7 @@ delay in all requests with an HTTP Cookie header value for the user
 "jason".
 
 ```bash
-a8ctl rule-set --source reviews --destination ratings --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
+a8ctl rule-set --source reviews:v2 --destination ratings:v1 --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
 ```
 
 Verify the rule has been set by running this command:
@@ -164,11 +164,11 @@ a8ctl rule-list
 You should see the following output:
 
 ```
-+---------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
-| Source  | Destination | Header | Header Pattern | Delay Probability | Delay | Abort Probability | Abort Code |
-+---------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
-| reviews | ratings     | Cookie | .*?user=jason  | 1                 | 7     | 0                 | 0          |
-+---------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
++------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
+| Source     | Destination | Header | Header Pattern | Delay Probability | Delay | Abort Probability | Abort Code |
++------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
+| reviews:v2 | ratings:v1  | Cookie | .*?user=jason  | 1                 | 7     | 0                 | 0          |
++------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
 ```
 
 * Lets see the fault injection in action. Ideally the frontpage of the
@@ -227,14 +227,14 @@ where the above command was run.
 Expected output:
 
 ```
-+-----------------------+-------------+-------------+--------+-----------------------+
-| AssertionName         | Source      | Destination | Result | ErrorMsg              |
-+-----------------------+-------------+-------------+--------+-----------------------+
-| bounded_response_time | gateway     | productpage | PASS   |                       |
-| http_status           | gateway     | productpage | PASS   |                       |
-| http_status           | productpage | reviews     | FAIL   | unexpected status 499 |
-| http_status           | reviews     | ratings     | PASS   |                       |
-+-----------------------+-------------+-------------+--------+-----------------------+
++-----------------------+----------------+----------------+--------+-----------------------------------+
+| AssertionName         | Source         | Destination    | Result | ErrorMsg                          |
++-----------------------+----------------+----------------+--------+-----------------------------------+
+| bounded_response_time | gateway        | productpage:v1 | PASS   |                                   |
+| http_status           | gateway        | productpage:v1 | PASS   |                                   |
+| http_status           | productpage:v1 | reviews:v2     | FAIL   | unexpected connection termination |
+| http_status           | reviews:v2     | ratings:v1     | PASS   |                                   |
++-----------------------+----------------+----------------+--------+-----------------------------------+
 Cleared fault injection rules from all microservices
 ```
 
@@ -245,9 +245,19 @@ re-run the above command (`a8ctl recipe-run ...`) and wait for a longer
 time before hitting the Enter key. We are working on a cleaner fix to
 address the log propagation delay problem.
 
-**Understanding the output:** The above output indicates that the
+**Understanding the output:** We set a 7s delay between `reviews` (v2) and
+`ratings:v1` service. Since the `reviews` service had a 10s timeout, it
+successfully completed the API call to the `ratings` service despite the
+network delay. We also see that the `productpage` service returned a HTTP
+200 to the `gateway` service within the 7s response time limit we had
+set. While these checks seem to succeed, the webpage output still does not
+match our expectation. Why?
+
+The answer lies in the failing check between `productpage` and `reviews`
+service. The above output indicates that the
 productpage microservice timed out on its API call to the reviews
-service. This indication is from status code HTTP 499, which is Nginx's
+service (via sidecar) and subsequently closed the connection. This 
+is inferred by the status code HTTP 499, which is Nginx's
 code to indicate that the caller closed its TCP connection
 prematurely. However, we also see that the call from reviews to ratings
 service was successful! This behavior suggests that the *productpage service

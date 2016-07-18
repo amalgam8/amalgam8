@@ -102,9 +102,15 @@ function Amalgam8:decodeJson(input)
                else
                   return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
                end
+            else
+               ngx.log(ngx.DEBUG, "Ignoring fault entry " .. fault.source .. " as it does not match source_service " .. self.source_service)
             end
+         else
+            return nil, nil, nil, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern
          end
       end
+   else
+      ngx.log(ngx.DEBUG, "NOTE: No fault entries specified")
    end
    return upstreams, services, faults, nil
 end

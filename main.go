@@ -187,7 +187,6 @@ func startProxy(conf *config.Config) error {
 			ServiceName: conf.ServiceName,
 			Service:     nginx.NewService(),
 			Config:      nginx.NewConfig(),
-			Path:        "/usr/bin/nginx.conf.tmpl",
 			NGINXClient: nc,
 		},
 	)

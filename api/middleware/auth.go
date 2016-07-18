@@ -61,6 +61,8 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 			i18n.Error(request, writer, http.StatusUnauthorized, i18n.ErrorAuthorizationMissingHeader)
 		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
 			i18n.Error(request, writer, http.StatusUnauthorized, i18n.ErrorAuthorizationNotAuthorized)
+		case auth.ErrCommunicationError:
+			i18n.Error(request, writer, http.StatusServiceUnavailable, i18n.ErrorAuthorizationTokenValidationFailed)
 		default:
 			i18n.Error(request, writer, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		}

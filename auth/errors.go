@@ -20,9 +20,13 @@ var (
 	// ErrUnrecognizedToken is returned when a token has been provided to an authenticator which does not recognize it
 	ErrUnrecognizedToken = errors.New("unrecognized token")
 
-	// ErrUnauthorized is returned when the token is not valid.
+	// ErrUnauthorized is returned when the token is not valid
 	ErrUnauthorized = errors.New("unauthorized")
 
 	// ErrEmptyToken is returned when an empty token has been provided to an authenticator which does not support it
 	ErrEmptyToken = errors.New("empty token")
+
+	// ErrCommunicationError is returned when an authenticator is unable to communicate with the token issuer,
+	// and hence unavailable to authorize (or unauthorize) a token.
+	ErrCommunicationError = errors.New("communication error")
 )

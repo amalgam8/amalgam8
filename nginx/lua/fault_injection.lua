@@ -34,18 +34,17 @@ function inject_faults(destination, faults_dict)
          if fault then
             if fault.destination == destination then
                -- ngx.log(ngx.NOTICE, "matched destination " .. destination)
-               local header = ngx.req.get_headers()[fault.header]
-               if header then
-                  -- ngx.log(ngx.NOTICE, "matched header " .. fault.header .. "val:" .. header)
-                  local m, err = ngx.re.match(header, fault.pattern, "o")
+               local value = ngx.req.get_headers()[fault.header]
+               if value then
+                  -- ngx.log(ngx.NOTICE, "matched header " .. fault.header .. "val:" .. value)
+                  local m, err = ngx.re.match(value, fault.pattern, "o")
                   if m then
                      -- ngx.log(ngx.NOTICE, "pattern match successful " .. fault.pattern)
-                     --TODO: Need to figure out whether header and value should be logged irrespective of destination, in terms of gremlin assertions.
                      ngx.var.gremlin_header_name = fault.header
-                     ngx.var.gremlin_header_val = header
+                     ngx.var.gremlin_header_val = value
 
                      -- DELAYS
-                     if fault.delay_probability > 0.0 then
+                     if fault.delay_probability > 0.0 and fault.delay > 0.0 then
                         if fault.delay_probability < 1.0 then
                            if math.random() < fault.delay_probability then
                               ngx.sleep(fault.delay)
@@ -56,7 +55,7 @@ function inject_faults(destination, faults_dict)
                      end
 
                      -- ABORTS
-                     if fault.abort_probability > 0.0 then
+                     if fault.abort_probability > 0.0 and fault.return_code then
                         if fault.abort_probability < 1.0 then
                            if math.random() < fault.abort_probability then
                               return ngx.exit(fault.return_code)

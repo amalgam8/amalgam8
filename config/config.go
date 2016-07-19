@@ -45,6 +45,8 @@ type Values struct {
 
 	K8sURL   string
 	K8sToken string
+
+	FSCatalog string
 }
 
 // NewValuesFromContext creates a Config instance from the given CLI context
@@ -73,5 +75,7 @@ func NewValuesFromContext(context *cli.Context) *Values {
 
 		K8sURL:   context.String(K8sURLFlag),
 		K8sToken: context.String(K8sTokenFlag),
+
+		FSCatalog: context.String(FSCatalogFlag),
 	}
 }

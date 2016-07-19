@@ -27,6 +27,7 @@ import (
 	"github.com/amalgam8/registry/config"
 	"github.com/amalgam8/registry/replication"
 	"github.com/amalgam8/registry/store"
+	"github.com/amalgam8/registry/store/filesystem"
 	"github.com/amalgam8/registry/store/kubernetes"
 	"github.com/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/registry/utils/logging"
@@ -146,6 +147,15 @@ func registryMain(conf *config.Values) error {
 			return err
 		}
 		catalogsExt = append(catalogsExt, k8sFactory)
+	}
+
+	// See whether FileSystem catalog is enabled
+	if conf.FSCatalog != "" {
+		fsFactory, err := filesystem.New(&filesystem.Config{Dir: conf.FSCatalog})
+		if err != nil {
+			return err
+		}
+		catalogsExt = append(catalogsExt, fsFactory)
 	}
 
 	cmConfig := &store.Config{

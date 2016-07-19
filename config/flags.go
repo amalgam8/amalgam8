@@ -48,6 +48,8 @@ const (
 
 	K8sURLFlag   = "k8s_url"
 	K8sTokenFlag = "k8s_token"
+
+	FSCatalogFlag = "fs_catalog"
 )
 
 // Flags represents the set of supported flags
@@ -164,6 +166,12 @@ var Flags = []cli.Flag{
 		Name:   K8sTokenFlag,
 		EnvVar: envVarFromFlag(K8sTokenFlag),
 		Usage:  "Kubernetes token API",
+	},
+
+	cli.StringFlag{
+		Name:   FSCatalogFlag,
+		EnvVar: envVarFromFlag(FSCatalogFlag),
+		Usage:  "Enable FileSystem catalog and specify the name of the data file",
 	},
 }
 

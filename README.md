@@ -135,13 +135,14 @@ Alternative discovery mechanisms are being explored.
 #### Catalog Extensions
 
 The Amalgam8 Service Registry optionally supports read-only catalogs extensions.
-The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, etc) is read by the Amalgam8 Service Registry and
+The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, FileSystem, etc) is read by the Amalgam8 Service Registry and
 returned to the user along with the content of the registry itself.
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
-| `K8S_URL` | `--k8s_url` | Kubernetes API server | (none) |
+| `K8S_URL` | `--k8s_url` | Enable kubernetes catalog and specify the API server | (none) |
 | `K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
+| `FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf` | (none) |
 
 
 ## API

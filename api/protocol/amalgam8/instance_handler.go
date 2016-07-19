@@ -174,6 +174,7 @@ func (routes *Routes) parseInstanceRegistrationRequest(w rest.ResponseWriter, r 
 
 	switch req.Endpoint.Type {
 	case EndpointTypeHTTP:
+	case EndpointTypeHTTPS:
 	case EndpointTypeUDP:
 	case EndpointTypeTCP:
 	case EndpointTypeUser:

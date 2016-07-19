@@ -25,13 +25,15 @@ const (
 	EndpointTypeUDP = "udp"
 	//EndpointTypeHTTP Denotes an HTTP endpoint type
 	EndpointTypeHTTP = "http"
+	//EndpointTypeHTTPS Denotes an HTTPS endpoint type
+	EndpointTypeHTTPS = "https"
 	//EndpointTypeUser Denotes a user-defined endpoint type
 	EndpointTypeUser = "user"
 )
 
 // InstanceAddress encapsulates a service network endpoint
 type InstanceAddress struct {
-	Type  string `json:"type,omitempty"` // possible values: { tcp, udp, http, user}
+	Type  string `json:"type,omitempty"` // possible values: { tcp, udp, http, https, user}
 	Value string `json:"value"`          // can't be empty string, or consists of only spaces
 
 }

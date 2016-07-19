@@ -98,10 +98,14 @@ func handleRuleError(w rest.ResponseWriter, req *rest.Request, err error) {
 
 // PostRules creates filters in bulk
 func (t *Tenant) PostRules(w rest.ResponseWriter, req *rest.Request) error {
-	id := req.PathParam("id")
+	id := GetTenantID(req)
+	if id == "" {
+		RestError(w, req, http.StatusBadRequest, "no_tenant_id")
+		return errors.New("no tenant id")
+	}
 
 	filtersJSON := struct {
-		Filters []resources.Rule `json:"filters"`
+		Filters []resources.Rule `json:"rules"`
 	}{}
 
 	err := req.DecodeJsonPayload(&filtersJSON)
@@ -129,7 +133,11 @@ func (t *Tenant) PutRules(w rest.ResponseWriter, req *rest.Request) error {
 
 // GetRules reads filters in bulk
 func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
-	id := req.PathParam("id")
+	id := GetTenantID(req)
+	if id == "" {
+		RestError(w, req, http.StatusBadRequest, "no_tenant_id")
+		return errors.New("no tenant id")
+	}
 	ruleIDs := getQueryIDs("id", req)
 
 	rules, err := t.manager.ListRules(id, ruleIDs)
@@ -152,7 +160,11 @@ func (t *Tenant) GetRules(w rest.ResponseWriter, req *rest.Request) error {
 
 // DeleteRules deletes filters in bulk
 func (t *Tenant) DeleteRules(w rest.ResponseWriter, req *rest.Request) error {
-	id := req.PathParam("id")
+	id := GetTenantID(req)
+	if id == "" {
+		RestError(w, req, http.StatusBadRequest, "no_tenant_id")
+		return errors.New("no tenant id")
+	}
 	ruleIDs := getQueryIDs("id", req)
 
 	if err := t.manager.DeleteRules(id, ruleIDs); err != nil {

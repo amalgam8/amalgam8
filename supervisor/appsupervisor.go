@@ -97,11 +97,14 @@ func Shutdown(exitCode int) {
 func DoLogManagement(filebeatConf string) {
 	// starting filebeat
 	logcmd := exec.Command("filebeat", "-c", filebeatConf)
+	env := os.Environ()
+	env = append(env, "GODEBUG=netdns=go")
+	logcmd.Env = env
+
 	logcmd.Stdin = os.Stdin
 	logcmd.Stdout = os.Stdout
 	err := logcmd.Run()
 	if err != nil {
-		log.WithError(err).Error("Failed to launch filebeat")
-		Shutdown(1)
+		log.WithError(err).Warn("Filebeat process exited with error")
 	}
 }

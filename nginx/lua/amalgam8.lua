@@ -88,7 +88,7 @@ function Amalgam8:decodeJson(input)
                if not isValidNumber(fault.delay_probability) then
                   fault.delay_probability = 0.0
                end
-               if (fault.abort_probability > 0.0 and fault.return_code ) or (fault.delay_probability > 0.0 and fault.delay > 0.0) then
+               --if (fault.abort_probability > 0.0 and fault.return_code ) or (fault.delay_probability > 0.0 and fault.delay > 0.0) then
                   table.insert(faults, {
                                   source = fault.source,
                                   destination = fault.destination,
@@ -99,9 +99,9 @@ function Amalgam8:decodeJson(input)
                                   abort_probability = fault.abort_probability,
                                   return_code = fault.return_code
                   })
-               else
-                  return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
-               end
+               --else
+               --   return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
+               -- end
             else
                ngx.log(ngx.DEBUG, "Ignoring fault entry " .. fault.source .. " as it does not match source_service " .. self.source_service)
             end

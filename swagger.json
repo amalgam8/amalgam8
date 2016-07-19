@@ -43,11 +43,27 @@
       }
     },
     "/v1/tenants" : {
+      "parameters" : [
+        {
+          "name": "token",
+          "in": "header",
+          "description": "Tenant token",
+          "type": string,
+          "required": true
+        }
+      ],
       "post" : {
         "tags" : [ ],
         "summary" : "Register a tenant",
         "description" : "Registers a tenant with the controller",
         "parameters" : [
+          {
+            "name": "token",
+            "in": "header",
+            "description": "Tenant token",
+            "type": string,
+            "required": true
+          },
           {
             "name": "tenant",
             "in": "body",
@@ -72,18 +88,7 @@
             "description" : "Error communicating with database"
           }
         }
-      }
-    },
-    "/v1/tenants/{id}" : {
-      "parameters" : [
-        {
-          "name": "id",
-          "in": "path",
-          "description": "Tenant ID",
-          "type": "string",
-          "required": true
-        }
-      ],
+      },
       "get" : {
         "tags" : [ ],
         "summary" : "Credentials and configuration of a tenant",
@@ -151,13 +156,13 @@
         }
       }
     },
-    "/v1/tenants/{id}/nginx" : {
+    "/v1/nginx" : {
       "parameters" : [
         {
-          "name": "id",
-          "in": "path",
-          "description": "Tenant ID",
-          "type": "string",
+          "name": "token",
+          "in": "header",
+          "description": "Tenant token",
+          "type": string,
           "required": true
         }
       ],
@@ -186,13 +191,13 @@
         }
       }
     },
-    "/v1/tenants/{tenant_id}/filters" : {
+    "/v1/rules" : {
       "parameters" : [
         {
-          "name": "tenant_id",
-          "in": "path",
-          "description": "Tenant ID",
-          "type": "string",
+          "name": "token",
+          "in": "header",
+          "description": "Tenant token",
+          "type": string,
           "required": true
         }
       ],
@@ -286,13 +291,13 @@
       }
     },
 
-    "/v1/tenants/{id}/versions/{service}" : {
+    "/v1/versions/{service}" : {
       "parameters" : [
         {
-          "name": "id",
-          "in": "path",
-          "description": "Tenant ID",
-          "type": "string",
+          "name": "token",
+          "in": "header",
+          "description": "Tenant token",
+          "type": string,
           "required": true
         },
         {

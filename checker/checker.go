@@ -61,17 +61,16 @@ func New(conf Config) Checker {
 	}
 }
 
-// TODO: make this asynch
-// TODO: If ids == nil or len(ids) == 0, assume we want to check all IDs
 // Check registered tenants for Registry catalog changes. Each registered tenant's catalog is retrieved from
 // the database and compared against the current Registry catalog for that tenant. If a difference exists
 // between the two, the database is updated with the most recent version of the catalog and any listeners are notified
 // of the change.
 //
 // ids must be a subset of registered tenant IDs or nil or empty. If ids is nil or empty all registered IDs are checked.
+//
+// TODO: make this asynch
 func (c *checker) Check(ids []string) error {
 	// Get registered tenant catalogs
-	//catalogs, err := c.getStoredCatalogs(ids)
 	entries, err := c.db.List(ids)
 	if err != nil {
 		// log failure
@@ -79,17 +78,12 @@ func (c *checker) Check(ids []string) error {
 	}
 
 	for _, entry := range entries {
-
-		// Get Registry credentials from auth
 		creds := entry.ProxyConfig.Credentials
 
 		// Get newest catalog from Registry
 		latestCatalog, err := c.getLatestCatalog(creds.Registry)
 		if err != nil {
-			// log failure
-
-			//TODO get new token from auth and try again on 401's
-			logrus.WithError(err).Warn("Could not get latest from Registry")
+			logrus.WithError(err).Warn("Could not get latest catalog from registry")
 
 			continue
 		}
@@ -105,13 +99,12 @@ func (c *checker) Check(ids []string) error {
 				continue
 			}
 
-			// Notify tenant
+			// Notify tenants
 			templ := c.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
 			if err = c.producerCache.SendEvent(entry.TenantToken, creds.Kafka, templ); err != nil {
 				logrus.WithFields(logrus.Fields{
 					"err":       err,
 					"tenant_id": entry.ID,
-					// TODO request ID logging??
 				}).Error("Failed to notify tenant of rules change")
 			}
 
@@ -144,7 +137,6 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 
 	instances, err := registry.ListInstances(client.InstanceFilter{})
 	if err != nil {
-		// log err
 		return catalog, err
 	}
 
@@ -174,7 +166,7 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 		catalog.Services = append(catalog.Services, *service)
 	}
 
-	// Sort
+	// Sort for comparisons since registry does not guarantee any ordering
 	sort.Sort(resources.ByService(catalog.Services))
 	for _, service := range catalog.Services {
 		sort.Sort(resources.ByEndpoint(service.Endpoints))
@@ -183,6 +175,8 @@ func (c *checker) getLatestCatalog(sd resources.Registry) (resources.ServiceCata
 	return catalog, nil
 }
 
+// updateCatalog updates the stored catalog. If there is a database conflict (I.E., the entry has changed between being
+// read and being written) we attempt to re-read the entry and update the catalog.
 func (c *checker) updateCatalog(entry resources.TenantEntry) error {
 	var err error
 	if err = c.db.Update(entry); err != nil {
@@ -226,5 +220,4 @@ func (c *checker) updateCatalog(entry resources.TenantEntry) error {
 	}
 
 	return nil
-
 }

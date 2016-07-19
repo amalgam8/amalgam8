@@ -426,11 +426,6 @@ func validateRule(rule resources.Rule) error {
 		return &InvalidRuleError{Reason: "invalid delay", ErrorMessage: "invalid_delay"}
 	}
 
-	// Ensure abort or delay is set
-	if rule.DelayProbability == 0.0 && rule.AbortProbability == 0.0 {
-		return &InvalidRuleError{Reason: "invalid rule", ErrorMessage: "invalid_rule"}
-	}
-
 	// Validate header
 	if rule.Header == "" {
 		return &InvalidRuleError{Reason: "invalid header", ErrorMessage: "invalid_header"}

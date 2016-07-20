@@ -419,7 +419,7 @@ function Amalgam8:balance()
    end
 
    if not upstream or table.getn(upstream.upstream.servers) == 0 then
-      ngx.status = 404
+      ngx.status = ngx.HTTP_NOT_FOUND
       ngx.log(ngx.ERR, "upstream " .. name .. " is not known or has no known instances")
       ngx.exit(ngx.status)
       return

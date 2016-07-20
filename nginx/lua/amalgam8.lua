@@ -51,17 +51,17 @@ function Amalgam8:decodeJson(input)
          end
       end
    end
-   
+
    if input.services then
       for name, metadata in pairs(input.services) do
          if isValidString(metadata.default) then
-            if not isValidString(metadata.service_type) then
-               metadata.service_type = 'http'
+            if not isValidString(metadata.type) then
+               metadata.type = 'http'
             end
-            if metadata.service_type == 'http' or metadata.service_type == 'https' then
+            if metadata.type == 'http' or metadata.type == 'https' then
                services[name] = {
                   default = metadata.default,
-                  service_type = metadata.service_type,
+                  service_type = metadata.type,
                   selectors = metadata.selectors
                }
             else
@@ -159,7 +159,7 @@ function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
    if err then
       return err
    end
- 
+
    self.upstreams_dict = upstreams
    self.services_dict = services
    self.faults_dict = faults
@@ -409,7 +409,7 @@ function Amalgam8:balance()
       ngx.exit(ngx.status)
       return
    end
-   
+
    local upstream, err = self:getUpstream(name)
    if err then
       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
@@ -450,7 +450,7 @@ function Amalgam8:get_service_metadata()
       ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
       return nil, nil, nil
    end
-   
+
    if not service or not service.metadata then
       ngx.log(ngx.ERR, "service " .. name .. " or metadata is not known")
       return nil, nil, nil

@@ -103,19 +103,5 @@ fi
 echo "works!"
 
 #######Gremlin
-# echo "Testing gremlin recipe.."
-# a8ctl recipe-run --topology apps/bookinfo/topology.json --scenarios apps/bookinfo/gremlins.json --checks apps/bookinfo/checklist.json --header 'Cookie' --pattern='user=jason'
-# sleep 2
-# curl -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.html
-# diff productpage_v1.html /tmp/productpage_no_rulematch.html
-# if [ $? -gt 0 ]; then
-#     echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in gremlin test phase"
-#     exit 1
-# fi
-# curl -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.html
-# diff productpage_rulematch.html /tmp/productpage_rulematch.html
-# if [ $? -gt 0 ]; then
-#     echo "Productpage does not match productpage_rulematch.html after injecting fault rule for user=jason in gremlin test phase"
-#     exit 1
-# fi
-# sleep 5
+echo "Testing gremlin recipe.."
+a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason'

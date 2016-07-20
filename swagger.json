@@ -403,10 +403,6 @@
           "type" : "string",
           "description" : "Load balancing algorithm for tenant"
         },
-        "req_tracking_header" : {
-          "type" : "string",
-          "description" : "Tracking header for tenant"
-        },
         "credentials" : {
           "$ref" : "#/definitions/credentials"
         },
@@ -557,6 +553,10 @@
         "destination" : {
           "type" : "string",
           "description" : "Service name of request destination"
+        },
+        "header" : {
+          "type" : "string",
+          "description" : "Header name"
         },
         "pattern" : {
           "type" : "string",

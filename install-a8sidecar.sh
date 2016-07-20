@@ -1,39 +1,53 @@
 #!/bin/bash
-if [ "$GOPATH" == "" ]; then
-    echo "Error: GOPATH needs to be set. amalgam8/sidecar needs to be installed in Gopath as well."
-    exit(1)
-fi
+#
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
-SIDECAR_PATH=${GOPATH}/src/github.com/amalgam8/sidecar
+set -x
+set -e
 
-adduser --disabled-password --gecos "" nginx
+A8SIDECAR_RELEASE=0.2.0-alpha1
+OPENRESTY_RELEASE=1.9.15.1
+FILEBEAT_RELEASE=1.2.2
 
 apt-get -y update && apt-get -y install libreadline-dev libncurses5-dev libpcre3-dev \
     libssl-dev perl make build-essential curl wget
 
+wget -O /tmp/ https://openresty.org/download/openresty-${OPENRESTY_RELEASE}.tar.gz
+wget -O /tmp/ https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+wget -O /tmp/ https://github.com/amalgam8/sidecar/releases/download/v${A8SIDECAR_RELEASE}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+
+##Install OpenResty
+adduser --disabled-password --gecos "" nginx
 mkdir /var/log/nginx
-mkdir /opt/a8_lualib
-
-wget -O /tmp/ https://openresty.org/download/openresty-1.9.15.1.tar.gz
-
 cd /tmp && \
-    tar -xzvf /tmp/openresty-*.tar.gz && \
-    rm -f /tmp/openresty-*.tar.gz && \
-    cd /tmp/openresty-* && \
+    tar -xzf /tmp/openresty-${OPENRESTY_RELEASE}.tar.gz && \
+    cd /tmp/openresty-${OPENRESTY_RELEASE} && \
     ./configure --with-pcre-jit --with-cc-opt='-O3' --with-luajit-xcflags='-O3' --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --user=nginx && \
     make && \
     make install && \
-    make clean && \
-    cd .. && \
-    rm -rf openresty-* && \
     ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     ldconfig
 
-curl -L -O https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb && \
-    dpkg -i filebeat_1.2.2_amd64.deb
+#Install Filebeat
+dpkg -i /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
 
-cp ${SIDECAR_PATH}/nginx/lua/*.lua /opt/a8_lualib/
-cp ${SIDECAR_PATH}/nginx/conf/*.conf /etc/nginx/
-cp ${SIDECAR_PATH}/docker/filebeat.yml /etc/filebeat/filebeat.yml
+#Install Sidecar -- This should be in the end, as it overwrites nginx.conf, filebeat.yml
+tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C /
 
-cp ${SIDECAR_PATH}/bin/a8sidecar /usr/bin/a8sidecar
+#Cleanup
+rm -rf /tmp/openresty-${OPENRESTY_RELEASE}
+rm /tmp/openresty-${OPENRESTY_RELEASE}.tar.gz
+rm /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+rm /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz

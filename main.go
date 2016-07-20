@@ -44,7 +44,7 @@ func main() {
 
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
-	app.Version = "0.1"
+	app.Version = "0.2.0"
 	app.Flags = config.TenantFlags
 	app.Action = sidecarCommand
 

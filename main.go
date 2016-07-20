@@ -40,7 +40,7 @@ func main() {
 
 	app.Name = "controller"
 	app.Usage = "Amalgam8 Controller"
-	app.Version = "0.1"
+	app.Version = "0.2.0"
 	app.Flags = config.Flags
 	app.Action = controllerCommand
 

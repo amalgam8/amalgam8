@@ -152,17 +152,13 @@ The Amalgam8 Service Registry [API documentation](https://amalgam8.io/registry) 
 ## Contributing
 
 Contributions and feedback are welcome! 
-Proposals and Pull Requests will be considered and responded to. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/registry/blob/master/CONTRIBUTING.md)
-file for more information.
+If you have a change or new feature in mind, please suggest it by creating an issue and tag it with "feature proposal".
+Proposals and Pull Requests will be considered and responded to. 
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
 
 ### Contributing Changes
 
-Go code contributed to Amalgam8 Service Registry must use default Go formatting and pass: 
-
-* [golint](https://github.com/golang/lint)
-* Go vet
-
+Go code contributed to Amalgam8 Service Registry must use default Go formatting and pass static analysis tools.
 These actions are run for you by invoking
 ```sh
 make precommit

@@ -153,6 +153,7 @@ release:
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(APP_NAME)
 	@cp $(BINDIR)/$(APP_NAME) $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^./::' .
+	@cp install-a8sidecar.sh $(RELEASEDIR)/
 
 #---------------
 #-- tools

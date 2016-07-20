@@ -14,20 +14,30 @@
 
 DOCKER_IMAGE="amalgam8/a8-sidecar"
 
+# Semantic version regular expression (simplified):
+SEMVER_REGEX="^v([0-9]+)\.([0-9]+)\.([0-9]+)(-([0-9a-zA-Z.-]+))?$"
+
+echo "Checking for semantic version tag for the current git commit"
 tag=$(git describe --exact-match)
 if [ $? -ne 0 ]; then
-    echo "Cannot push to Docker Hub because the current commit is not tagged"
+    echo "Skipping deployment to Docker Hub: no git tag found"
     exit 1
-elif [[ ! $tag =~ v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-    echo "Cannot push to Docker Hub because the current commit is not tagged in a semantic version"
+fi
+echo "Found git tag '$tag'"
+if [[ ! $tag =~ $SEMVER_REGEX ]]; then
+    echo "Skipping deployment to Docker Hub: git tag is not a semantic version"
     exit 1
 fi
 
-patch=$(echo $tag | sed -r 's/v([0-9]+)\.([0-9]+)\.([0-9]+)/\3/')
-minor=$(echo $tag | sed -r 's/v([0-9]+)\.([0-9]+)\.([0-9]+)/\2/')
-major=$(echo $tag | sed -r 's/v([0-9]+)\.([0-9]+)\.([0-9]+)/\1/')
+patch=$(echo $tag | sed -r "s/$SEMVER_REGEX/\3/")
+minor=$(echo $tag | sed -r "s/$SEMVER_REGEX/\2/")
+major=$(echo $tag | sed -r "s/$SEMVER_REGEX/\1/")
+label=$(echo $tag | sed -r "s/$SEMVER_REGEX/\5/")
 
-echo "Found version tag '$tag' (MAJOR: $major, MINOR: $minor, PATCH: $patch)"
+if [ ! -z "$label" ]; then
+    echo "Skipping deployment to Docker Hub: found a prerelease label ('$label')"
+    exit 1
+fi
 
 patch_tag="$major.$minor.$patch"
 minor_tag="$major.$minor"

@@ -556,3 +556,9 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     section under the [local Kubernetes installation](#local-k8s) instructions. Remember to replace the IP address `localhost`
     with the public IP address of the node where the gateway service is
     running on the Google Cloud Platform.
+
+## Contributing
+
+Contributions and feedback are welcome!
+Proposals and pull requests will be considered. 
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.

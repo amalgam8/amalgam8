@@ -82,7 +82,7 @@ es:
     - "30200:9200"
 logstash:
   image: logstash
-  command: logstash --verbose -e "input { beats {codec=>'json' port=>8092 type=>'nginx'}} output {elasticsearch {hosts =>'es:9200' codec=>'json' index=>'nginx'} stdout { codec => rubydebug }}"
+  command: logstash --verbose -e "input { beats {codec=>'json' port=>8092}} output {elasticsearch {hosts =>'es:9200' codec=>'json'} }"
   ports:
     - "8092:8092"
   links:

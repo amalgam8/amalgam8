@@ -36,8 +36,8 @@ Configuration options can be set through environment variables or command line f
 | DATABASE_PASSWORD | --database_password | database password | |
 | DATABASE_HOST | --database_host | database host | |
 | LOG_LEVEL | --log_level | logging level (debug, info, warn, error, fatal, panic) | info |
-| | --help, -h | | show help | |
-| | --version, -v	|	| print the version | |
+| | --help, -h | show help | |
+| | --version, -v | print the version | |
 
 
 
@@ -99,6 +99,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 ## Contributing
 
 Contributions and feedback are welcome! 
-Proposals and pull requests will be considered. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/controller/blob/master/CONTRIBUTING.md)
-file for more information.
+Proposals and pull requests will be considered. 
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
+

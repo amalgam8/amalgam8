@@ -38,64 +38,62 @@ var Flags = []cli.Flag{
 
 	cli.IntFlag{
 		Name:   apiPort,
-		EnvVar: strings.ToUpper(apiPort),
+		EnvVar: envVar(apiPort),
 		Value:  6379,
 		Usage:  "API port",
 	},
 
 	cli.StringFlag{
-		Name:  statsdHost,
-		Value: "127.0.0.1:8125",
-		Usage: "statsd host",
-	},
-
-	cli.StringFlag{
 		Name:   controlToken,
 		Value:  "ABCDEFGHIJKLMNOP",
-		EnvVar: strings.ToUpper(controlToken),
+		EnvVar: envVar(controlToken),
 		Usage:  "controller API authentication token",
 	},
 
 	cli.StringFlag{
 		Name:   secretKey,
 		Value:  "abcdefghijklmnop",
-		EnvVar: strings.ToUpper(secretKey),
+		EnvVar: envVar(secretKey),
 		Usage:  "secret key",
 	},
 
 	cli.DurationFlag{
 		Name:   pollInterval,
-		EnvVar: strings.ToUpper(pollInterval),
+		EnvVar: envVar(pollInterval),
 		Usage:  "poll interval",
 	},
 
 	// Database
 	cli.StringFlag{
 		Name:   dbType,
-		EnvVar: strings.ToUpper(dbType),
+		EnvVar: envVar(dbType),
 		Value:  "memory",
 		Usage:  "database type",
 	},
 	cli.StringFlag{
 		Name:   dbUser,
-		EnvVar: strings.ToUpper(dbUser),
+		EnvVar: envVar(dbUser),
 		Usage:  "database username",
 	},
 	cli.StringFlag{
 		Name:   dbPassword,
-		EnvVar: strings.ToUpper(dbPassword),
+		EnvVar: envVar(dbPassword),
 		Usage:  "database password",
 	},
 	cli.StringFlag{
 		Name:   dbHost,
-		EnvVar: strings.ToUpper(dbHost),
+		EnvVar: envVar(dbHost),
 		Usage:  "database host",
 	},
 
 	cli.StringFlag{
 		Name:   logLevel,
-		EnvVar: strings.ToUpper(logLevel),
+		EnvVar: envVar(logLevel),
 		Value:  "info",
 		Usage:  "logging level (debug, info, warn, error, fatal, panic)",
 	},
+}
+
+func envVar(name string) string {
+	return "A8_" + strings.ToUpper(name)
 }

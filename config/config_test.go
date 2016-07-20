@@ -45,7 +45,6 @@ var _ = Describe("Config", func() {
 			// Expected defaults specified in documentation
 			Expect(c.APIPort).To(Equal(6379))
 			Expect(c.Database.Type).To(Equal("memory"))
-			Expect(c.StatsdHost).To(Equal("127.0.0.1:8125"))
 		})
 
 	})
@@ -58,7 +57,6 @@ var _ = Describe("Config", func() {
 				APIPort:      6379,
 				ControlToken: "abcdefghijklmnop",
 				SecretKey:    "ABCEDFGHIJKLMNOP",
-				StatsdHost:   "127.0.0.1:8125",
 				Database: Database{
 					Type: "memory",
 				},
@@ -83,11 +81,6 @@ var _ = Describe("Config", func() {
 			c.SecretKey = "abcd"
 			Expect(c.Validate()).To(HaveOccurred())
 			c.SecretKey = "abcdefghijklmnopq"
-			Expect(c.Validate()).To(HaveOccurred())
-		})
-
-		It("does not accept empty statsd host", func() {
-			c.StatsdHost = ""
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 

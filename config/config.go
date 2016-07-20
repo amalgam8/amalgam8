@@ -38,7 +38,6 @@ type Config struct {
 	APIPort      int
 	ControlToken string
 	SecretKey    string
-	StatsdHost   string
 	PollInterval time.Duration
 	LogLevel     logrus.Level
 }
@@ -66,7 +65,6 @@ func New(context *cli.Context) *Config {
 		APIPort:      context.Int(apiPort),
 		ControlToken: context.String(controlToken),
 		SecretKey:    context.String(secretKey),
-		StatsdHost:   context.String(statsdHost),
 		PollInterval: context.Duration(pollInterval),
 		LogLevel:     loggingLevel,
 	}
@@ -80,7 +78,6 @@ func (c *Config) Validate() error {
 		util.IsInRange("API port", c.APIPort, 1, 65535),
 		util.IsNotEmpty("Control token", c.ControlToken),
 		util.IsNotEmpty("Secret key", c.SecretKey),
-		util.IsNotEmpty("Statsd host", c.StatsdHost),
 	}
 
 	if c.Database.Type == "cloudant" {

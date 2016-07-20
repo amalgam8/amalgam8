@@ -24,9 +24,9 @@ FILEBEAT_RELEASE=1.2.2
 apt-get -y update && apt-get -y install libreadline-dev libncurses5-dev libpcre3-dev \
     libssl-dev perl make build-essential curl wget
 
-wget -O /tmp/ https://openresty.org/download/openresty-${OPENRESTY_RELEASE}.tar.gz
-wget -O /tmp/ https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
-wget -O /tmp/ https://github.com/amalgam8/sidecar/releases/download/v${A8SIDECAR_RELEASE}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+wget -O /tmp/openresty-${OPENRESTY_RELEASE}.tar.gz https://openresty.org/download/openresty-${OPENRESTY_RELEASE}.tar.gz
+wget -O /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+wget -O /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz https://github.com/amalgam8/sidecar/releases/download/v${A8SIDECAR_RELEASE}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 
 ##Install OpenResty
 adduser --disabled-password --gecos "" nginx

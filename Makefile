@@ -20,11 +20,11 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8sidecar
-APP_VER		:= 0.1
+APP_VER		:= 0.2-alpha1
 DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin
 RELEASEDIR  := release
-
+BUILDDIR    := build
 GO			:= GO15VENDOREXPERIMENT=1 go
 
 ifndef GOOS
@@ -146,8 +146,13 @@ docker:
 	
 release:
 	@echo "--> packaging release"
-	@mkdir -p $(RELEASEDIR) 
-	@tar -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(APP_NAME) README.md LICENSE
+	@mkdir -p $(RELEASEDIR) $(BUILDDIR) $(BUILDDIR)/opt/a8_lualib $(BUILDDIR)/etc/filebeat $(BUILDDIR)/etc/nginx $(BUILDDIR)/usr/bin $(BUILDDIR)/usr/share/$(APP_NAME)
+	@cp nginx/conf/*.conf $(BUILDDIR)/etc/nginx/
+	@cp nginx/lua/*.lua $(BUILDDIR)/opt/a8_lualib/
+	@cp docker/filebeat.yml $(BUILDDIR)/etc/filebeat/
+	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(APP_NAME)
+	@cp $(BINDIR)/$(APP_NAME) $(BUILDDIR)/usr/bin/
+	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^./::' .
 
 #---------------
 #-- tools

@@ -33,8 +33,8 @@ bluemix ic group-create --name amalgam8_controller \
   --min 1 --max 2 --desired 1 \
   --hostname $CONTROLLER_HOSTNAME \
   --domain $ROUTES_DOMAIN \
-  --env POLL_INTERVAL=5s \
-  --env LOG_LEVEL=debug \
+  --env A8_POLL_INTERVAL=5s \
+  --env A8_LOG_LEVEL=debug \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${CONTROLLER_IMAGE}
 
 #################################################################################
@@ -56,7 +56,7 @@ if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
     else
         echo "Found existing Service Discovery credentials"
     fi
-    
+
     SDKEY=$(cf service-key sd sdkey | tail -n +3)
     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
     REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
@@ -85,7 +85,7 @@ if [ "$ENABLE_MESSAGEHUB" = true ]; then
     else
         echo "Found existing Message Hub credentials"
     fi
-    
+
     MHKEY=$(cf service-key mh mhkey | tail -n +3)
     KAFKA_API_KEY=$(echo "$MHKEY" | jq -r '.api_key')
     KAFKA_ADMIN_URL=$(echo "$MHKEY" | jq -r '.kafka_admin_url')
@@ -108,7 +108,7 @@ while true; do
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
     fi
-    
+
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
         echo "Timeout waiting for controller route..."

@@ -15,8 +15,8 @@
 	}
     },
     "env": {
-	"POLL_INTERVAL":"5s",
-	"LOG_LEVEL":"info"
+	"A8_POLL_INTERVAL":"5s",
+	"A8_LOG_LEVEL":"info"
     },
     "instances": 1,
     "cpus": 0.1,

@@ -51,9 +51,9 @@ spec:
         image: amalgam8/a8-controller:0.2
         imagePullPolicy: IfNotPresent
         env:
-        - name: POLL_INTERVAL
+        - name: A8_POLL_INTERVAL
           value: "5s"
-        - name: LOG_LEVEL
+        - name: A8_LOG_LEVEL
           value: debug
         ports:
         - containerPort: 6379

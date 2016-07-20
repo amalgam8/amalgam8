@@ -11,19 +11,19 @@ type RegistryFactory interface {
 	NewRegistryClient(token, url string) (client.Client, error)
 }
 
-type registyFactory struct {
+type registryFactory struct {
 	httpClient *http.Client
 }
 
 // NewRegistryFactory creates new RegistryFactory interface
 func NewRegistryFactory() RegistryFactory {
-	return &registyFactory{
+	return &registryFactory{
 		httpClient: &http.Client{},
 	}
 }
 
 // NewRegistryClient creates new Registry Client
-func (r *registyFactory) NewRegistryClient(token, url string) (client.Client, error) {
+func (r *registryFactory) NewRegistryClient(token, url string) (client.Client, error) {
 
 	registry, err := client.New(client.Config{
 		AuthToken:  token,

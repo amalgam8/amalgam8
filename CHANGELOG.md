@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.1 (July 21, 2016)
+
+- Fixed bug where controller did not send rule updates to sidecar in
+  polling mode.
+
 ## 0.2.0 (July 20, 2016)
 
 - The controller no longer generates Nginx config files in response to

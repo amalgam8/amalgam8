@@ -149,31 +149,52 @@ returned to the user along with the content of the registry itself.
 
 The Amalgam8 Service Registry [API documentation](https://amalgam8.io/registry) is available in Swagger format.
 
+## Release Workflow
+
+This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
+
+### Creating a release
+
+1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
+   
+    ```bash
+    export VERSION=v0.1.0
+    ```
+
+1.  Update the APP_VER variable in the Makefile such that it matches with
+    the VERSION variable above.
+
+1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
+   
+    ```bash
+    git tag -a -m "Release $VERSION" $VERSION [commit id]
+    ```
+
+    The `[commit id]` argument is optional. If not specified, HEAD is used.
+   
+1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
+
+    ```bash
+    git push upstream $VERSION
+    ```
+   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
+   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
+
+1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
+
+1.  Edit the [GitHub release object](https://github.com/amalgam8/registry/releases), and add a title and description (according to `CHANGELOG.md`).
+
+## License
+Copyright 2016 IBM Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
 ## Contributing
 
 Contributions and feedback are welcome! 
-If you have a change or new feature in mind, please suggest it by creating an issue and tag it with "feature proposal".
-Proposals and Pull Requests will be considered and responded to. 
+Proposals and pull requests will be considered. 
 Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
-
-### Contributing Changes
-
-Go code contributed to Amalgam8 Service Registry must use default Go formatting and pass static analysis tools.
-These actions are run for you by invoking
-```sh
-make precommit
-```
-
-You can install a git-hook into the local `.git/hooks/` directory, as a pre-commit ot pre-push hook.  
-
-## License
-
-Copyright 2016 IBM Corporation
- 
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance 
-with the License. You may obtain a copy of the License at
-http://www.apache.org/licenses/LICENSE-2.0  
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed 
-on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-See the License for the specific language governing permissions and limitations under the License.

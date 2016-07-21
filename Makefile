@@ -20,7 +20,7 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8registry
-APP_VER		:= 0.1
+APP_VER		:= v0.2.0
 BINDIR		:= bin
 RELEASEDIR  := release
 

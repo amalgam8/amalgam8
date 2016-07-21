@@ -52,9 +52,9 @@ type Conf struct {
 func NewNginx(conf Conf) (Nginx, error) {
 
 	return &nginx{
-		config:      conf.Config,      //NewConfig(),
-		service:     conf.Service,     //NewService(),
-		serviceName: conf.ServiceName, //serviceName,
+		config:      conf.Config,
+		service:     conf.Service,
+		serviceName: conf.ServiceName,
 		nginxClient: conf.NGINXClient,
 	}, nil
 }
@@ -77,20 +77,16 @@ func (n *nginx) Update(data []byte) error {
 	// Determine if NGINX is running
 	running, err := n.service.Running()
 	if err != nil {
-		log.WithField("err", err).Error("Could not get status of NGINX service")
+		log.WithError(err).Error("Could not get status of NGINX service")
 		return err
 	}
 
-	var nginxErr error
 	if !running {
 		// NGINX is not running; attempt to start NGINX
-		nginxErr = n.startNginx()
-	}
-
-	// log the failed nginx config
-	if nginxErr != nil {
-		log.WithField("config", string(data)).Error("Failed NGINX config")
-		return nginxErr
+		if err := n.startNginx(); err != nil {
+			log.WithError(err).WithField("config", string(data)).Error("Failed NGINX config")
+			return err
+		}
 	}
 
 	if err = n.nginxClient.UpdateHTTPUpstreams(templateConf); err != nil {
@@ -106,17 +102,6 @@ func (n *nginx) startNginx() error {
 	log.Debug("Starting NGINX with new configuration")
 	if err := n.service.Start(); err != nil {
 		log.WithField("err", err).Error("Could not start NGINX service")
-		// if revertErr := n.config.Revert(); revertErr != nil {
-		// 	log.WithError(revertErr).Error("Reverting to backup NGINX configuration failed")
-		// 	return revertErr
-		// }
-
-		// if startErr := n.service.Start(); startErr != nil {
-		// 	log.WithField("err", startErr).Error("Could not start NGINX with backup configuration")
-		// 	return startErr
-		// }
-
-		// log.Warn("Reverted to old NGINX configuration")
 		return err
 	}
 
@@ -127,9 +112,9 @@ func (n *nginx) startNginx() error {
 func (n *nginx) reloadNginx() error {
 	log.Debug("Reloading NGINX with new configuration")
 	if err := n.service.Reload(); err != nil {
-		log.WithField("err", err).Error("Could not reload NGINX with new configuration")
+		log.WithError(err).Error("Could not reload NGINX with new configuration")
 		if revertErr := n.config.Revert(); revertErr != nil {
-			log.WithField("err", revertErr).Error("Failed to revert NGINX configuration to backup")
+			log.WithError(revertErr).Error("Failed to revert NGINX configuration to backup")
 			return revertErr
 		}
 

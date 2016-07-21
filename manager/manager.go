@@ -441,7 +441,7 @@ func validateRule(rule resources.Rule) error {
 
 func (m *manager) updateProxyConfig(entry resources.TenantEntry) error {
 
-	if err := m.db.Update(entry); err != nil {
+	if err := m.updateTenant(entry); err != nil {
 		if ce, ok := err.(*database.DBError); ok {
 			if ce.StatusCode == http.StatusConflict {
 				newerEntry, err := m.db.Read(entry.ID)
@@ -455,7 +455,7 @@ func (m *manager) updateProxyConfig(entry resources.TenantEntry) error {
 
 				newerEntry.ProxyConfig = entry.ProxyConfig
 
-				if err = m.db.Update(entry); err != nil {
+				if err = m.updateTenant(entry); err != nil {
 					logrus.WithFields(logrus.Fields{
 						"err": err,
 						"id":  entry.ID,
@@ -544,7 +544,7 @@ func (m *manager) AddRules(id string, filters []resources.Rule) error {
 	entry.ProxyConfig.Filters.Rules = append(entry.ProxyConfig.Filters.Rules, filters...)
 
 	// Write the results
-	if err = m.db.Update(entry); err != nil {
+	if err = m.updateTenant(entry); err != nil {
 		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
 		return err
 	}
@@ -641,7 +641,7 @@ func (m *manager) DeleteRules(id string, filterIDs []string) error {
 	}
 
 	// Write the results
-	if err = m.db.Update(entry); err != nil {
+	if err = m.updateTenant(entry); err != nil {
 		// TODO: handle database conflict errors by re-reading the document and re-attempting the operation?
 		return err
 	}
@@ -653,4 +653,10 @@ func (m *manager) DeleteRules(id string, filterIDs []string) error {
 	}
 
 	return nil
+}
+
+func (m *manager) updateTenant(tenant resources.TenantEntry) error {
+	// Update last update time
+	tenant.ServiceCatalog.LastUpdate = time.Now()
+	return m.db.Update(tenant)
 }

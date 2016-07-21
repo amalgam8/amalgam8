@@ -26,16 +26,15 @@ Configuration options can be set through environment variables or command line f
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
-| API_PORT | --api_port | API port | 6379 |
-| | --statsd_host | Statsd host |127.0.0.1:8125 |
-| CONTROL_TOKEN | --control_token | controller API authentication token | ABCDEFGHIJKLMNOP |
-| ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
-| POLL_INTERVAL | --poll_interval | poll interval | 0 |
-| DATABASE_TYPE |  --database_type |	database type | memory |
-| DATABASE_USERNAME | --database_username | database username | |
-| DATABASE_PASSWORD | --database_password | database password | |
-| DATABASE_HOST | --database_host | database host | |
-| LOG_LEVEL | --log_level | logging level (debug, info, warn, error, fatal, panic) | info |
+| A8_API_PORT | --api_port | API port | 6379 |
+| A8_CONTROL_TOKEN | --control_token | controller API authentication token | ABCDEFGHIJKLMNOP |
+| A8_ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
+| A8_POLL_INTERVAL | --poll_interval | poll interval | 0 |
+| A8_DATABASE_TYPE |  --database_type |	database type | memory |
+| A8_DATABASE_USERNAME | --database_username | database username | |
+| A8_DATABASE_PASSWORD | --database_password | database password | |
+| A8_DATABASE_HOST | --database_host | database host | |
+| A8_LOG_LEVEL | --log_level | logging level (debug, info, warn, error, fatal, panic) | info |
 | | --help, -h | show help | |
 | | --version, -v | print the version | |
 

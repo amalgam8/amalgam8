@@ -49,7 +49,6 @@ const (
 	serviceName     = "service"
 	logLevel        = "log_level"
 	logstashServer  = "logstash_server"
-	forceUpdate     = "force_update"
 )
 
 // TenantFlags defines all expected args for Tenant
@@ -59,12 +58,6 @@ var TenantFlags = []cli.Flag{
 		EnvVar: envVar(logLevel),
 		Value:  "info",
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
-	},
-
-	cli.BoolFlag{
-		Name:   forceUpdate,
-		EnvVar: envVar(forceUpdate),
-		Usage:  "Update Registry and Kafka credentials on startup",
 	},
 
 	cli.StringFlag{

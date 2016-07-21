@@ -245,7 +245,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-		}).Warn("Failed to retrieve creds from Controller")
+		}).Error("Failed to retrieve credentials from Controller")
 		return respJSON.Credentials, &ConnectionError{Message: err.Error()}
 	}
 
@@ -256,7 +256,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 			"status_code": resp.StatusCode,
 			//			"request_id": reqID,
 			"body": string(respBytes),
-		}).Warn("Controller returned bad response code")
+		}).Error("Controller returned bad response code when retrieving credentials")
 
 		if resp.Header.Get("request-id") == "" {
 			return respJSON.Credentials, &NetworkError{Response: resp}
@@ -270,7 +270,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 			return respJSON.Credentials, &ServiceUnavailable{}
 
 		default:
-			return respJSON.Credentials, errors.New("Controller returned bad response code") // FIXME: custom error?
+			return respJSON.Credentials, errors.New("Controller returned bad response code when retrieving credentials") // FIXME: custom error?
 		}
 
 	}
@@ -280,7 +280,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
-		}).Warn("Error reading rules JSON from Controller")
+		}).Warn("Error reading creds JSON from Controller")
 		return respJSON.Credentials, err
 	}
 

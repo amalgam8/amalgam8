@@ -81,7 +81,6 @@ type Config struct {
 	Nginx          Nginx
 	LogLevel       logrus.Level
 	AppArgs        []string
-	ForceUpdate    bool
 }
 
 // New TODO
@@ -154,9 +153,8 @@ func New(context *cli.Context) *Config {
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),
 		},
-		LogLevel:    loggingLevel,
-		AppArgs:     context.Args(),
-		ForceUpdate: context.Bool(forceUpdate),
+		LogLevel: loggingLevel,
+		AppArgs:  context.Args(),
 	}
 }
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 (July 20, 2016)
+## 0.2.0 (July 21, 2016)
 
 - Nginx configuration is no longer managed by the centralized
 controller. It is possible to customize the Nginx proxy configuration

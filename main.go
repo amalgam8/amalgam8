@@ -290,31 +290,9 @@ func checkIn(controller clients.Controller, conf *config.Config) error {
 
 	creds, err := getCredentials(controller)
 	if err != nil {
-		// // if id not found error
-		// if _, ok := err.(*clients.TenantNotFoundError); ok {
-		// 	logrus.Info("ID not found, registering with controller")
-		// 	err = registerWithProxy(controller, confNotValidErr)
-		// 	if err != nil {
-		// 		// tenant already exists, possible race condition in container group
-		// 		if _, ok = err.(*clients.ConflictError); ok {
-		// 			logrus.Warn("Possible race condition occurred during register")
-		// 			return nil
-		// 		}
-		// 		// unrecoverable error occurred registering with controller
-		// 		logrus.WithError(err).Error("Could not register with Controller")
-		// 		return err
-		// 	}
-
-		// 	// register succeeded
-		// 	return nil
-		// }
-		// // unrecoverable error occurred getting credentials from controller
+		// unrecoverable error occurred getting credentials from controller
 		logrus.WithError(err).Error("Could not retrieve credentials")
 		return err
-	}
-
-	if conf.ForceUpdate {
-		// TODO
 	}
 
 	// if sidecar already has valid config do not need to set anything

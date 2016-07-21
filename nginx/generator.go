@@ -60,7 +60,7 @@ func (g *generator) Generate(id string, lastUpdate *time.Time) (*resources.NGINX
 		return nil, err
 	}
 
-	if lastUpdate != nil && entry.ServiceCatalog.LastUpdate.After(*lastUpdate) {
+	if lastUpdate != nil && lastUpdate.After(entry.ServiceCatalog.LastUpdate) {
 		return nil, nil
 	}
 

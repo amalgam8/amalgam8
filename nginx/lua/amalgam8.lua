@@ -44,30 +44,33 @@ function Amalgam8:decodeJson(input)
                                   port   = server.port,
                   })
                else
-                  return nil, nil, nil, "invalid data format for upstream server host or port"
+                  ngx.log(ngx.WARN, "ignoring invalid upstream " .. name .. ":invalid data format for host and port")
+               --   return nil, nil, nil, "invalid data format for upstream server host or port"
                end
             end
          end
       end
    end
-   
+
    if input.services then
       for name, metadata in pairs(input.services) do
          if isValidString(metadata.default) then
-            if not isValidString(metadata.service_type) then
-               metadata.service_type = 'http'
+            if not isValidString(metadata.type) then
+               metadata.type = 'http'
             end
-            if metadata.service_type == 'http' or metadata.service_type == 'https' then
+            if metadata.type == 'http' or metadata.type == 'https' then
                services[name] = {
                   default = metadata.default,
-                  service_type = metadata.service_type,
+                  service_type = metadata.type,
                   selectors = metadata.selectors
                }
             else
-               return nil, nil, nil, "invalid service_type. Only http|https is allowed"
+               ngx.log(ngx.WARN, "ignoring service " .. name .. ":invalid service_type. Only http|https is allowed")
+               -- return nil, nil, nil, "invalid service_type. Only http|https is allowed"
             end
          else
-            return nil, nil, nil, "invalid/empty value for default service version"
+            ngx.log(ngx.WARN, "ignoring service " .. name .. ":invalid/empty value for default service version")
+            --   return nil, nil, nil, "invalid/empty value for default service version"
          end
       end
    end
@@ -103,10 +106,11 @@ function Amalgam8:decodeJson(input)
                --   return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
                -- end
             else
-               ngx.log(ngx.DEBUG, "Ignoring fault entry " .. fault.source .. " as it does not match source_service " .. self.source_service)
+               ngx.log(ngx.WARN, "Ignoring fault entry " .. fault.source .. " as it does not match source_service " .. self.source_service)
             end
          else
-            return nil, nil, nil, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern
+            ngx.log(ngx.WARN, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern)
+            -- return nil, nil, nil, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern
          end
       end
    else
@@ -155,7 +159,7 @@ function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
    if err then
       return err
    end
- 
+
    self.upstreams_dict = upstreams
    self.services_dict = services
    self.faults_dict = faults
@@ -342,19 +346,22 @@ function Amalgam8:updateConfig()
 
       local input, err = json.decode(ngx.req.get_body_data())
       if err then
+         ngx.status = ngx.HTTP_BAD_REQUEST
          ngx.log(ngx.ERR, "error decoding input json: " .. err)
          ngx.say("error decoding input json: " .. err)
-         ngx.exit(ngx.HTTP_BAD_REQUEST)
+         ngx.exit(ngx.status)
       end
 
       -- TODO: FIXME. There is no concept of locking so far.
       self:resetState()
       err = self:updateProxy(input)
       if err then
+         ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
          ngx.log(ngx.ERR, "error updating proxy: " .. err)
          ngx.say("error updating internal state: " .. err)
-         ngx.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+         ngx.exit(ngx.status)
       end
+      ngx.exit(ngx.HTTP_OK)
    elseif ngx.req.get_method() == "GET" then
       local state = {
          services = {},
@@ -381,9 +388,10 @@ function Amalgam8:updateConfig()
 
       local output, err = json.encode(state)
       if err then
+         ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
          ngx.say("error encoding state as JSON:" .. err)
          ngx.log(ngx.ERR, "error encoding state as JSON:" .. err)
-         nex.exit(ngx.HTTP_INTERNAL_SERVER_ERROR)
+         nex.exit(ngx.status)
       end
       ngx.header["content-type"] = "application/json"
       ngx.say(output)
@@ -396,18 +404,24 @@ end
 function Amalgam8:balance()
    local name = ngx.var.a8proxy_upstream
    if not name then
+      ngx.status = ngx.HTTP_BAD_GATEWAY
       ngx.log(ngx.ERR, "$a8proxy_upstream is not specified")
+      ngx.exit(ngx.status)
       return
    end
-   
+
    local upstream, err = self:getUpstream(name)
    if err then
+      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
       ngx.log(ngx.ERR, "error getting upstream " .. name .. ": " .. err)
+      ngx.exit(ngx.status)
       return
    end
 
    if not upstream or table.getn(upstream.upstream.servers) == 0 then
+      ngx.status = ngx.HTTP_NOT_FOUND
       ngx.log(ngx.ERR, "upstream " .. name .. " is not known or has no known instances")
+      ngx.exit(ngx.status)
       return
    end
 
@@ -417,7 +431,9 @@ function Amalgam8:balance()
 
    local _, err = balancer.set_current_peer(upstream.host, upstream.port)
    if err then
+      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
       ngx.log(ngx.ERR, "failed to set current peer for upstream " .. name .. ": " .. err)
+      ngx.exit(ngx.status)
       return
    end
 end
@@ -428,18 +444,18 @@ function Amalgam8:get_service_metadata()
       ngx.log(ngx.ERR, "$service_name is not specified")
       return nil, nil, nil
    end
-   
+
    local service, err = self:getService(name)
    if err then
       ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
       return nil, nil, nil
    end
-   
+
    if not service or not service.metadata then
       ngx.log(ngx.ERR, "service " .. name .. " or metadata is not known")
       return nil, nil, nil
    end
-   
+
    return service.metadata.service_type, service.metadata.default, service.metadata.selectors
 end
 

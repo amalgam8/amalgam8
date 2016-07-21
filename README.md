@@ -87,6 +87,41 @@ make build
 ./bin/controller
 ```
 
+## Release Workflow
+
+This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
+
+### Creating a release
+
+1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
+   
+    ```bash
+    export VERSION=v0.1.0
+    ```
+
+1.  Update the APP_VER variable in the Makefile such that it matches with
+    the VERSION variable above.
+
+1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
+   
+    ```bash
+    git tag -a -m "Release $VERSION" $VERSION [commit id]
+    ```
+
+    The `[commit id]` argument is optional. If not specified, HEAD is used.
+   
+1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
+
+    ```bash
+    git push upstream $VERSION
+    ```
+   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
+   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
+
+1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
+
+1.  Edit the [GitHub release object](https://github.com/amalgam8/controller/releases), and add a title and description (according to `CHANGELOG.md`).
+
 ## License
 Copyright 2016 IBM Corporation
 
@@ -101,4 +136,3 @@ Unless required by applicable law or agreed to in writing, software distributed 
 Contributions and feedback are welcome! 
 Proposals and pull requests will be considered. 
 Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
-

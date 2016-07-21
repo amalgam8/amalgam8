@@ -105,18 +105,18 @@ func (n *nginx) Update(data []byte) error {
 func (n *nginx) startNginx() error {
 	log.Debug("Starting NGINX with new configuration")
 	if err := n.service.Start(); err != nil {
-		log.WithField("err", err).Error("Could not start NGINX service with new configuration")
-		if revertErr := n.config.Revert(); revertErr != nil {
-			log.WithError(revertErr).Error("Reverting to backup NGINX configuration failed")
-			return revertErr
-		}
+		log.WithField("err", err).Error("Could not start NGINX service")
+		// if revertErr := n.config.Revert(); revertErr != nil {
+		// 	log.WithError(revertErr).Error("Reverting to backup NGINX configuration failed")
+		// 	return revertErr
+		// }
 
-		if startErr := n.service.Start(); startErr != nil {
-			log.WithField("err", startErr).Error("Could not start NGINX with backup configuration")
-			return startErr
-		}
+		// if startErr := n.service.Start(); startErr != nil {
+		// 	log.WithField("err", startErr).Error("Could not start NGINX with backup configuration")
+		// 	return startErr
+		// }
 
-		log.Warn("Reverted to old NGINX configuration")
+		// log.Warn("Reverted to old NGINX configuration")
 		return err
 	}
 

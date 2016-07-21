@@ -160,24 +160,24 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	configBytes, err := ioutil.ReadFile("/etc/nginx/amalgam8.conf")
-	if err != nil {
-		logrus.WithError(err).Error("Missing /etc/nginx/amalgam8.conf")
-		return err
-	}
+	// configBytes, err := ioutil.ReadFile("/etc/nginx/amalgam8.conf")
+	// if err != nil {
+	// 	logrus.WithError(err).Error("Missing /etc/nginx/amalgam8.conf")
+	// 	return err
+	// }
 
-	configStr := string(configBytes)
-	configStr = strings.Replace(configStr, "__SERVICE_NAME__", conf.ServiceName, -1)
+	// configStr := string(configBytes)
+	// configStr = strings.Replace(configStr, "__SERVICE_NAME__", conf.ServiceName, -1)
 
-	output, err := os.OpenFile("/etc/nginx/amalgam8.conf", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	if err != nil {
-		logrus.WithError(err).Error("Couldn't open /etc/nginx/amalgam8.conf file for editing")
-		return err
-	}
+	// output, err := os.OpenFile("/etc/nginx/amalgam8.conf", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+	// if err != nil {
+	// 	logrus.WithError(err).Error("Couldn't open /etc/nginx/amalgam8.conf file for editing")
+	// 	return err
+	// }
 
-	// Write the config
-	fmt.Fprintf(output, configStr)
-	output.Close()
+	// // Write the config
+	// fmt.Fprintf(output, configStr)
+	// output.Close()
 
 	rc := clients.NewController(conf)
 	nc := clients.NewNGINXClient("http://localhost:5813")

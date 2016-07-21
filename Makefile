@@ -20,7 +20,7 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8sidecar
-APP_VER		:= 0.2.0-alpha1
+APP_VER		:= v0.2.0-alpha2
 DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin
 RELEASEDIR  := release

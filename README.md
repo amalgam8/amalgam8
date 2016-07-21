@@ -430,7 +430,7 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     ```cf create-route myspace mybluemix.net -n myamalgam8-controller```  
     ```cf create-route myspace mybluemix.net -n myamalgam8-bookinfo```
     
-1. Configure the [.bluemixrc file](bluemix/.bluemixrc) to your environment variable values
+1. Configure the [examples/bluemix/.bluemixrc](bluemix/.bluemixrc) file to your environment variable values
     * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```bluemix ic namespace-get```
     * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
     * CONTROLLER_HOSTNAME should be the (globally unique) Bluemix route to be mapped to the controller
@@ -446,7 +446,7 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     Verify that the controller is running by ```bluemix ic groups``` and checking if the ```amalgam8_controller``` group is running.
 
 1. Configure the Amalgam8 CLI according to the routes defined in
-   [.bluemixrc file](bluemix/.bluemixrc). For example
+   `.bluemixrc`. For example
 
     ```
     export A8_CONTROLLER_URL=https://mya8controller.mybluemix.net

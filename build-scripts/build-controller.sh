@@ -20,7 +20,7 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 MAKEDIR=$SCRIPTDIR/../../controller/
 
-make -C $MAKEDIR build
+make -C $MAKEDIR build GOOS=linux GOARCH=amd64
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: make failed for controller.\n***********\n"

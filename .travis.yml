@@ -15,7 +15,7 @@ env:
 
 before_install:
     - sudo apt-get update -qq
-    - sudo apt-get install -qq docker-engine
+    - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
 
 script:
     # Need to set explicitly, as these are unset by 'gimme'

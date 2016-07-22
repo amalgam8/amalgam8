@@ -48,7 +48,8 @@ docker run \
 #docker restart kubelet
 
 # Install kubernetes CLI
-sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
+curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /tmp/kubectl
+sudo mv /tmp/kubectl /usr/local/bin
 sudo chmod +x /usr/local/bin/kubectl
 echo "Waiting for K8S to initialize.."
 sleep 30

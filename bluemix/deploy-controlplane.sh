@@ -24,7 +24,7 @@ for image in ${REQUIRED_IMAGES[@]}; do
 done
 
 #################################################################################
-# Start a local controller
+# Start a controller and registry
 #################################################################################
 
 echo "Starting controller"
@@ -61,9 +61,13 @@ if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
     REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
 else
-    # TODO: Deploy registry containers
-    echo "Not not implemented"
-    exit 1
+    echo "Starting registry"
+    bluemix ic group-create --name amalgam8_registry \
+            --publish 8080 --memory 256 --auto \
+            --min 1 --max 2 --desired 1 \
+            --hostname $REGISTRY_HOSTNAME \
+            --domain $ROUTES_DOMAIN \
+            ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE} -- /opt/a8registry/a8registry -auth_mode=trusted
 fi
 
 #################################################################################
@@ -103,7 +107,7 @@ fi
 echo "Waiting for controller route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" -H "Authorization: ABCEDEFGHIJKLMNOP" "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
@@ -112,7 +116,26 @@ while true; do
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
         echo "Timeout waiting for controller route..."
-        echo "Deploying the controlplane has failed"
+        echo "Deploying the controlplane has failed.  /health return HTTP ${code}"
+        exit 1
+    fi
+    sleep 10s
+done
+
+# Wait for registry route to set up
+echo "Waiting for registry route to set up"
+attempt=0
+while true; do
+    code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+    if [ "$code" = "200" ]; then
+        echo "Registry route is set to '$REGISTRY_URL'"
+        break
+    fi
+
+    attempt=$((attempt + 1))
+    if [ "$attempt" -gt 10 ]; then
+        echo "Timeout waiting for registry route..."
+        echo "Deploying the controlplane has failed.  /uptime return HTTP ${code}"
         exit 1
     fi
     sleep 10s
@@ -121,7 +144,6 @@ done
 echo "Setting up a new controller tenant named 'local'"
 read -d '' tenant << EOF
 {
-    "id": "${CONTROLLER_TENANT_ID}",
     "credentials": {
         "registry": {
             "url": "${REGISTRY_URL}",

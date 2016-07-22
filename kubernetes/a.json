@@ -1,0 +1,11 @@
+{
+  "size": 100,
+  "query": {
+    "bool": {
+       "must": [
+             {"match": {"gremlin_header_name": "Cookie"}}
+         ]
+     },
+    "wildcard": {"gremlin_header_val": "*er=jas*"}
+  }
+}

@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 helloworld-v1:
-  image: amalgam8/a8-examples-helloworld-sidecar:v1
+  image: amalgam8/a8-examples-helloworld-sidecar:v1-alpine
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_REGISTRY_TOKEN=local
@@ -25,7 +25,7 @@ helloworld-v1:
     - registry
 
 helloworld-v2:
-  image: amalgam8/a8-examples-helloworld-sidecar:v2
+  image: amalgam8/a8-examples-helloworld-sidecar:v2-alpine
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_REGISTRY_TOKEN=local

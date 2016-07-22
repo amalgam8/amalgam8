@@ -22,17 +22,17 @@ The following samples are available for Amalgam8:
 
 Before running the samples, you need to setup the requisite environment.
 
-* **Vagrant sandbox**: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
+* *Vagrant sandbox*: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
 
-* **Custom setup**: If you are not using the vagrant environment, then install the following pre-requisites:
-  * Amalgam8 python CLI 0.2.2 or higher
+* *Custom setup*: If you are not using the vagrant environment, then install the following pre-requisites:
+  * Amalgam8 python CLI
    ```bash
    sudo pip install git+https://github.com/amalgam8/a8ctl
    ```
   * [Docker 1.10 or later](https://docs.docker.com/engine/installation/)
   * [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/)
 
-**Development Mode**: If you'd like to also be able to change and compile the code, or build the images,
+* *Development Mode*: If you'd like to also be able to change and compile the code, or build the images,
 refer the [Developer Instructions](https://github.com/amalgam8/examples/blob/master/development.md).
 
 ### Deployment Options

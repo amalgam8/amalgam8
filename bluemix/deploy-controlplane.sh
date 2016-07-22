@@ -107,7 +107,7 @@ fi
 echo "Waiting for controller route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" -H "Authorization: ABCEDEFGHIJKLMNOP" "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
@@ -116,7 +116,7 @@ while true; do
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
         echo "Timeout waiting for controller route..."
-        echo "Deploying the controlplane has failed"
+        echo "Deploying the controlplane has failed.  /health return HTTP ${code}"
         exit 1
     fi
     sleep 10s
@@ -126,7 +126,7 @@ done
 echo "Waiting for registry route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" "${REGISTRY_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Registry route is set to '$REGISTRY_URL'"
         break
@@ -135,7 +135,7 @@ while true; do
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
         echo "Timeout waiting for registry route..."
-        echo "Deploying the controlplane has failed"
+        echo "Deploying the controlplane has failed.  /uptime return HTTP ${code}"
         exit 1
     fi
     sleep 10s

@@ -114,14 +114,14 @@ fi
 
 passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l)
 if [ "$passes" != "3" ]; then
-    echo "failed"
-    echo "Gremlin recipe rusult does not have the expected number of passing assertions"
+    echo "Gremlin tests failed: result does not have the expected number of passing assertions"
+    cat /tmp/gremlin_results.txt
     exit 1
 fi
 failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l)
 if [ "$failures" != "1" ]; then
-    echo "failed"
-    echo "Gremlin recipe rusult does not have the expected number of failing assertions"
+    echo "Gremlin tests failed: result does not have the expected number of failing assertions"
+    cat /tmp/gremlin_results.txt
     exit 1
 fi
-echo "Gremlin tests successful.."
+echo "Gremlin tests were successful.."

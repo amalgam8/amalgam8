@@ -57,54 +57,8 @@ chown vagrant:vagrant /home/vagrant/sandbox /home/vagrant/sandbox/src /home/vagr
 sudo curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-## Install kubernetes
-#export K8S_VERSION="v1.2.3"
-#export ARCH=amd64
-#docker run \
-#    --volume=/:/rootfs:ro \
-#    --volume=/sys:/sys:ro \
-#    --volume=/var/lib/docker/:/var/lib/docker:rw \
-#    --volume=/var/lib/kubelet/:/var/lib/kubelet:rw \
-#    --volume=/var/run:/var/run:rw \
-#    --net=host \
-#    --pid=host \
-#    --privileged=true \
-#    --name=kubelet \
-#    -d \
-#    gcr.io/google_containers/hyperkube-${ARCH}:${K8S_VERSION} \
-#    /hyperkube kubelet \
-#        --containerized \
-#        --hostname-override="127.0.0.1" \
-#        --address="0.0.0.0" \
-#        --api-servers=http://0.0.0.0:8080 \
-#        --config=/etc/kubernetes/manifests \
-#        --allow-privileged=true --v=2 \
-#  	    --cluster-dns=10.0.0.10 \
-#        --cluster-domain=cluster.local
-## ##Make API server accessible on host OS
-#sleep 10
-#docker exec kubelet perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json
-#docker restart kubelet
-
-## Install kubernetes CLI
-#sudo curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /usr/local/bin/kubectl
-#sudo chmod +x /usr/local/bin/kubectl
-
-##Make API server accessible outside vagrant. Enable if you wish to 
-#sleep 5
-#docker exec tmp_master_1 perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json
-#docker restart tmp_master_1
-
 # Install Amalgam8 CLI
-pip install a8ctl==0.1.8
-
-## Installing Weave Scope
-#sudo wget -O /usr/local/bin/scope https://git.io/scope
-#sudo chmod a+x /usr/local/bin/scope
-###Don't launch it yet.
-##sudo scope launch
-
-#echo 'export A8_CONTROLLER_URL=http://192.168.33.33:31200' >> /home/vagrant/.profile
+sudo pip install git+https://github.com/amalgam8/a8ctl
 
 SCRIPT
 

@@ -27,14 +27,14 @@ if [ $STATUS -ne 0 ]; then
     exit $STATUS
 fi
 
-make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:0.2 DOCKERFILE=./docker/Dockerfile.ubuntu
+make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:latest DOCKERFILE=./docker/Dockerfile.ubuntu
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for sidecar (ubuntu version)\n***********\n"
     exit $STATUS
 fi
 
-make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:0.2-alpine DOCKERFILE=./docker/Dockerfile.alpine
+make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:alpine DOCKERFILE=./docker/Dockerfile.alpine
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"

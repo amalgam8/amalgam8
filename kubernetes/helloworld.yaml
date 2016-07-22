@@ -37,7 +37,7 @@ spec:
         - name: A8_SERVICE
           value: helloworld:v1
       - name: servicereg
-        image: amalgam8/a8-sidecar:0.2-alpine
+        image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
         args:
           - --proxy=false
@@ -84,7 +84,7 @@ spec:
         - name: A8_SERVICE
           value: helloworld:v2
       - name: servicereg
-        image: amalgam8/a8-sidecar:0.2-alpine
+        image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
         args:
           - --proxy=false

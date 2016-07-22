@@ -53,14 +53,14 @@ kibana:
 #######Service Registry###########
 
 registry:
-  image: amalgam8/a8-registry:0.2
+  image: amalgam8/a8-registry
   ports:
     - "31300:8080"
   command: -auth_mode=trusted
   container_name: registry
 
 controller:
-  image: amalgam8/a8-controller:0.2
+  image: amalgam8/a8-controller
   ports:
     - "31200:6379"
   environment:

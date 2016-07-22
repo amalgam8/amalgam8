@@ -105,3 +105,4 @@ echo "works!"
 #######Gremlin
 echo "Testing gremlin recipe.."
 a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason'
+echo "Gremlin tests successful.."

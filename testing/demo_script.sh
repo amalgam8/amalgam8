@@ -104,5 +104,17 @@ echo "works!"
 
 #######Gremlin
 echo "Testing gremlin recipe.."
-a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason'
+a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
+passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l)
+if [ "$passes" != "3" ]; then
+    echo "failed"
+    echo "Gremlin recipe rusult does not have the expected number of passing assertions"
+    exit 1
+fi
+failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l)
+if [ "$failures" != "1" ]; then
+    echo "failed"
+    echo "Gremlin recipe rusult does not have the expected number of failing assertions"
+    exit 1
+fi
 echo "Gremlin tests successful.."

@@ -1,0 +1,28 @@
+<svg width="594" height="132" xmlns="http://www.w3.org/2000/svg" style="vector-effect: non-scaling-stroke;" stroke="null">
+ <!-- Created with Method Draw - http://github.com/duopixel/Method-Draw/ -->
+ <g stroke="null">
+  <title stroke="null">background</title>
+  <rect stroke="null" fill="none" id="canvas_background" height="134" width="596" y="-1" x="-1"/>
+  <g style="vector-effect: non-scaling-stroke;" stroke="null" display="none" overflow="visible" y="0" x="0" height="100%" width="100%" id="canvasGrid">
+   <rect fill="url(#gridpattern)" stroke-width="0" y="0" x="0" height="100%" width="100%"/>
+  </g>
+ </g>
+ <g stroke="null">
+  <title stroke="null">Layer 1</title>
+  <rect rx="10" stroke-dasharray="5,5" id="svg_17" height="112" width="348" y="19" x="0.5" stroke="#000000" fill="#e5e5e5"/>
+  <rect stroke="#000" rx="10" id="svg_1" height="47.000001" width="75.999997" y="51" x="8.5" fill="#ffffff"/>
+  <rect stroke="#000" style="vector-effect: non-scaling-stroke;" rx="10" id="svg_4" height="47.000001" width="76" y="51" x="517.500002" fill="#e5e5e5"/>
+  <rect stroke="#000" rx="10" id="svg_5" height="47.000001" width="69.999999" y="51" x="262.500001" fill="#ffffff"/>
+  <text stroke="#000" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_6" y="80" x="25.5" stroke-opacity="null" stroke-width="0" fill="#000000">svcA</text>
+  <text stroke="#000" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="18" id="svg_7" y="80.5" x="267.5" stroke-opacity="null" stroke-width="0" fill="#000000">sidecar</text>
+  <text stroke="#000" font-weight="normal" xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="20" id="svg_8" y="80.5" x="533.5" stroke-opacity="null" stroke-width="0" fill="#000000">svcB</text>
+  <line stroke="#eda3a3" stroke-width="2" stroke-linecap="null" stroke-linejoin="null" id="svg_9" y2="73" x2="247.499992" y1="73" x1="86.499999" fill="none"/>
+  <line stroke="#eda3a3" stroke-width="2" stroke-linecap="null" stroke-linejoin="null" id="svg_10" y2="73" x2="503.500005" y1="73" x1="334.500001" fill="none"/>
+  <path id="svg_12" d="m247.932002,78.260849l6.532227,-5.089894l-6.532227,-5.08993l3.733498,-2.908834l10.266517,7.998765l-10.266517,8.001246" stroke-width="null" fill="#eda3a3"/>
+  <path id="svg_13" d="m501.932,78.26085l6.53223,-5.08989l-6.53223,-5.08994l3.7335,-2.90883l10.26652,7.99877l-10.26652,8.00124" stroke-width="null" fill="#eda3a3"/>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="11" id="svg_14" y="89" x="95.5" stroke-width="0" stroke="#000000" fill="#000000">http://localhost:6379/svcB/api</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="12" id="svg_15" y="68" x="156.5" stroke-width="0" stroke="#000000" fill="#000000">HTTP</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="12" id="svg_16" y="68" x="355.5" stroke-width="0" stroke="#000000" fill="#000000">HTTP/HTTPS/Websocket</text>
+  <text xml:space="preserve" text-anchor="start" font-family="Helvetica, Arial, sans-serif" font-size="16" id="svg_18" y="15" x="118.5" stroke-width="0" stroke="#000000" fill="#000000">Container/Pod</text>
+ </g>
+</svg>

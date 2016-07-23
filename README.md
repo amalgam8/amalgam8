@@ -186,7 +186,7 @@ The sidecar is independent of your application process. The communication
 model between a microservice, its sidecar and the target microservice is
 shown below:
 
-![Communication between app and sidecar](communication-model.svg)
+![Communication between app and sidecar](http://cdn.rawgit.com/amalgam8/sidecar/master/communication-model.svg)
 
 When you want to make API calls to other microservices from your
 application, you should call the sidecar at localhost:6379. 

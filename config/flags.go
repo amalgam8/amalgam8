@@ -17,6 +17,8 @@ package config
 import (
 	"strings"
 
+	"time"
+
 	"github.com/codegangsta/cli"
 )
 
@@ -59,7 +61,7 @@ var Flags = []cli.Flag{
 
 	cli.DurationFlag{
 		Name:   pollInterval,
-		Value:  "10s",
+		Value:  10 * time.Second,
 		EnvVar: envVar(pollInterval),
 		Usage:  "poll interval",
 	},

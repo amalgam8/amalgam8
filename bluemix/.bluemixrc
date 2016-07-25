@@ -17,9 +17,9 @@ REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-alpine
 REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-alpine
 REVIEWS_V3_IMAGE=a8-examples-bookinfo-reviews-sidecar:v3-alpine
 
-GATEWAY_IMAGE=a8-sidecar
-CONTROLLER_IMAGE=a8-controller
-REGISTRY_IMAGE=a8-registry
+GATEWAY_IMAGE=a8-sidecar:latest
+CONTROLLER_IMAGE=a8-controller:latest
+REGISTRY_IMAGE=a8-registry:latest
 
 #################################################################################
 # Image registries

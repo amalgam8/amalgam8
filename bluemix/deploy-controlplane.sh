@@ -16,7 +16,7 @@ REQUIRED_IMAGES=(
 )
 
 for image in ${REQUIRED_IMAGES[@]}; do
-    echo $BLUEMIX_IMAGES | grep $image > /dev/null
+    echo "$BLUEMIX_IMAGES" | grep "$image" > /dev/null
     if [ $? -ne 0 ]; then
         echo "Pulling ${DOCKERHUB_NAMESPACE}/$image from Dockerhub"
         bluemix ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
@@ -67,7 +67,8 @@ else
             --min 1 --max 2 --desired 1 \
             --hostname $REGISTRY_HOSTNAME \
             --domain $ROUTES_DOMAIN \
-            ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE} -- /opt/a8registry/a8registry -auth_mode=trusted
+            --env AUTH_MODE=trusted \
+            ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE}
 fi
 
 #################################################################################
@@ -107,7 +108,7 @@ fi
 echo "Waiting for controller route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" -H "Authorization: ABCEDEFGHIJKLMNOP" "${CONTROLLER_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" -H "Authorization: local" "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
@@ -115,8 +116,8 @@ while true; do
 
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
-        echo "Timeout waiting for controller route..."
-        echo "Deploying the controlplane has failed.  /health return HTTP ${code}"
+        echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+        echo "Deploying the controlplane has failed"
         exit 1
     fi
     sleep 10s
@@ -134,8 +135,8 @@ while true; do
 
     attempt=$((attempt + 1))
     if [ "$attempt" -gt 10 ]; then
-        echo "Timeout waiting for registry route..."
-        echo "Deploying the controlplane has failed.  /uptime return HTTP ${code}"
+        echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+        echo "Deploying the controlplane has failed"
         exit 1
     fi
     sleep 10s
@@ -172,4 +173,21 @@ EOF
     tenant=$(jq -s '.[0] * .[1]' <(echo $tenant) <(echo $kafka))
 fi
 
-echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
+attempt=0
+while true; do
+    code=$(echo $tenant | curl -w "%{http_code}" -H "Authorization: local" -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants")
+    if [ "$code" = "201" ]; then
+        echo "Controller tenant is set up"
+        break
+    fi
+
+    attempt=$((attempt + 1))
+    if [ "$attempt" -gt 10 ]; then
+        echo "Failed setting up controller tenant: controller returned HTTP ${code}"
+        echo "Deploying the controlplane has failed"
+        exit 1
+    fi
+    sleep 10s
+done
+
+echo "Controlplane has been deployed successfully"

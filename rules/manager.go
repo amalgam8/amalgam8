@@ -2,10 +2,6 @@ package rules
 
 import "errors"
 
-type Filter interface {
-	Match(rule Rule) bool
-}
-
 type Manager interface {
 	AddRules(tenantID string, rules []Rule) error
 	GetRules(tenantID string, ruleIDs []string) ([]Rule, error)

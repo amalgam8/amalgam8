@@ -59,6 +59,7 @@ var Flags = []cli.Flag{
 
 	cli.DurationFlag{
 		Name:   pollInterval,
+		Value:  "10s",
 		EnvVar: envVar(pollInterval),
 		Usage:  "poll interval",
 	},

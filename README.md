@@ -22,14 +22,14 @@ Provide [configuration options](https://github.com/amalgam8/controller/blob/mast
 ```docker run amalgam8/a8-controller -e poll_interval=60s```
 
 ### Configuration options
-Configuration options can be set through environment variables or command line flags. 
+Configuration options can be set through environment variables or command line flags.
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
 | A8_API_PORT | --api_port | API port | 6379 |
 | A8_CONTROL_TOKEN | --control_token | controller API authentication token | ABCDEFGHIJKLMNOP |
 | A8_ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
-| A8_POLL_INTERVAL | --poll_interval | poll interval | 0 |
+| A8_POLL_INTERVAL | --poll_interval | poll interval | 10s |
 | A8_DATABASE_TYPE |  --database_type |	database type | memory |
 | A8_DATABASE_USERNAME | --database_username | database username | |
 | A8_DATABASE_PASSWORD | --database_password | database password | |
@@ -93,7 +93,7 @@ This section includes instructions for working with releases, and is intended fo
 ### Creating a release
 
 1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
-   
+
     ```bash
     export VERSION=v0.1.0
     ```
@@ -102,13 +102,13 @@ This section includes instructions for working with releases, and is intended fo
     the VERSION variable above.
 
 1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
-   
+
     ```bash
     git tag -a -m "Release $VERSION" $VERSION [commit id]
     ```
 
     The `[commit id]` argument is optional. If not specified, HEAD is used.
-   
+
 1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
 
     ```bash
@@ -132,6 +132,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 ## Contributing
 
-Contributions and feedback are welcome! 
-Proposals and pull requests will be considered. 
+Contributions and feedback are welcome!
+Proposals and pull requests will be considered.
 Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+a8ctl rule-clear
+sleep 2
 ######Version Routing##############
 echo "testing version routing.."
 a8ctl route-set --default v1 productpage
@@ -105,16 +107,21 @@ echo "works!"
 #######Gremlin
 echo "Testing gremlin recipe.."
 a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
+if [ $? -gt 0 ]; then
+    echo "a8ctl recipe-run exited with non-zero status. Either load injection failed or there was an error in a8ctl"
+    exit 1
+fi
+
 passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l)
 if [ "$passes" != "3" ]; then
-    echo "failed"
-    echo "Gremlin recipe rusult does not have the expected number of passing assertions"
+    echo "Gremlin tests failed: result does not have the expected number of passing assertions"
+    cat /tmp/gremlin_results.txt
     exit 1
 fi
 failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l)
 if [ "$failures" != "1" ]; then
-    echo "failed"
-    echo "Gremlin recipe rusult does not have the expected number of failing assertions"
+    echo "Gremlin tests failed: result does not have the expected number of failing assertions"
+    cat /tmp/gremlin_results.txt
     exit 1
 fi
-echo "Gremlin tests successful.."
+echo "Gremlin tests were successful.."

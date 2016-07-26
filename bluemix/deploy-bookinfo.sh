@@ -21,7 +21,7 @@ REQUIRED_IMAGES=(
 )
 
 for image in ${REQUIRED_IMAGES[@]}; do
-    echo $BLUEMIX_IMAGES | grep $image > /dev/null
+    echo "$BLUEMIX_IMAGES" | grep "$image" > /dev/null
     if [ $? -ne 0 ]; then
         echo "Pulling ${DOCKERHUB_NAMESPACE}/$image from Dockerhub"
         bluemix ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
@@ -50,9 +50,9 @@ bluemix ic group-create --name bookinfo_productpage \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
-  --env A8_REGISTRY_TOKEN=$REGISTRY_TENANT_TOKEN \
+  --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
+  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -103,9 +103,9 @@ bluemix ic group-create --name bookinfo_reviews1 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
-  --env A8_REGISTRY_TOKEN=$REGISTRY_TENANT_TOKEN \
+  --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
+  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -118,9 +118,9 @@ bluemix ic group-create --name bookinfo_reviews2 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
-  --env A8_REGISTRY_TOKEN=$REGISTRY_TENANT_TOKEN \
+  --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
+  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -133,9 +133,9 @@ bluemix ic group-create --name bookinfo_reviews3 \
   --publish 9080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
-  --env A8_REGISTRY_TOKEN=$REGISTRY_TENANT_TOKEN \
+  --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
+  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -154,9 +154,11 @@ bluemix ic group-create --name bookinfo_gateway \
   --hostname $BOOKINFO_HOSTNAME \
   --domain $ROUTES_DOMAIN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TENANT_TOKEN \
+  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_LOG=false \
   --env A8_REGISTER=false \
   --env A8_SERVICE=gateway \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
+
+echo "Bookinfo app has been deployed successfully"

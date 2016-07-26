@@ -17,9 +17,9 @@ REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-alpine
 REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-alpine
 REVIEWS_V3_IMAGE=a8-examples-bookinfo-reviews-sidecar:v3-alpine
 
-GATEWAY_IMAGE=a8-sidecar
-CONTROLLER_IMAGE=a8-controller
-REGISTRY_IMAGE=a8-registry
+GATEWAY_IMAGE=a8-sidecar:latest
+CONTROLLER_IMAGE=a8-controller:latest
+REGISTRY_IMAGE=a8-registry:latest
 
 #################################################################################
 # Image registries
@@ -52,5 +52,5 @@ BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
 ### Note: when overiding these values, set the A8_CONTROLLER_TOKEN/A8_REGISTRY_TOKEN environment variables,
 ### or set the --a8-token/--a8-registry-token flags for the a8ctl utility.
 # CONTROLLER_TENANT_ID=local ##Do not use for 0.2.0
-CONTROLLER_TENANT_TOKEN=local
-REGISTRY_TENANT_TOKEN=local
+CONTROLLER_TOKEN=local
+REGISTRY_TOKEN=local

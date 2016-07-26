@@ -20,9 +20,10 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8controller
-APP_VER		:= v0.2.1
+APP_VER		:= latest
 BINDIR		:= bin
 RELEASEDIR  := release
+IMAGE_NAME  := a8-controller:latest
 
 GO			:= GO15VENDOREXPERIMENT=1 go
 
@@ -38,7 +39,6 @@ GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
 GODIRS		= $(shell $(GO) list -f '{{.Dir}}' ./... | grep -vxFf <($(GO) list -f '{{.Dir}}' ./vendor/...))
 GOPKGS		= $(shell $(GO) list ./... | grep -vxFf <($(GO) list ./vendor/...))
 
-IMAGE_NAME   := $(APP_NAME):$(APP_VER)
 RELEASE_NAME := $(APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
  
 # build flags to create a statically linked binary (required for scratch-based image)

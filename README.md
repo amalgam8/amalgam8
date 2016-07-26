@@ -7,27 +7,45 @@
 [Travis]: https://travis-ci.org/amalgam8/controller
 [Travis Widget]: https://travis-ci.org/amalgam8/controller.svg?branch=master
 
-The Amalgam8 controller is software developed for managing load balancing and failure injection in applications built using a microservice based architecture.
+The Amalgam8 Controller serves as a central configuration service in the Amalgam8
+platform that allows one to setup rules for routing traffic across
+different microservice versions, rules for injecting faults into
+microservice API calls, etc., based on various request-level attributes.
 
-An overview of the Amalgam8 project is available here: http://amalgam8.io/
+In addition to route management, the Amalgam8 Controller automatically synchronizes
+service instance information from the
+[Amalgam8 Registry](https://github.com/amalgam8/registry) and updates the
+[Amalgam8 Sidecars](https://github.com/amalgam8/sidecar) attached to each
+microservice.
+
+By default, the Amalgam8 Controller operates without any authentication. It also
+supports two authentication mechanisms: a trusted auth mode for local
+testing and development, and a JWT auth mode for production deployments.
+
+See https://www.amalgam8.io for an overview of the Amalgam8 project
+and https://www.amalgam8.io/docs for detailed documentation.
 
 ## Usage
 
-A prebuilt Docker image is available. Install Docker 1.8 or 1.9 and run the following command:
+To get started, use the current stable version of the Amalgam8 Controller from Docker
+Hub.
 
-```docker pull amalgam8/a8-controller```
+```bash
+docker run amalgam8/a8-controller:latest
+```
 
-Provide [configuration options](https://github.com/amalgam8/controller/blob/master/README.md#configuration-options) as environment variables. For example:
+### Command Line Flags and Environment Variables
 
-```docker run amalgam8/a8-controller -e poll_interval=60s```
+The Amalgam8 Controller supports a number of configuration options, most of
+which are set through environment variables. The environment variables can
+be set via command line flags as well.
 
-### Configuration options
-Configuration options can be set through environment variables or command line flags.
+The following environment variables are available. All of them are optional.
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
 | A8_API_PORT | --api_port | API port | 6379 |
-| A8_CONTROL_TOKEN | --control_token | controller API authentication token | ABCDEFGHIJKLMNOP |
+| A8_CONTROL_TOKEN | --control_token | Controller API authentication token | ABCDEFGHIJKLMNOP |
 | A8_ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
 | A8_POLL_INTERVAL | --poll_interval | poll interval | 10s |
 | A8_DATABASE_TYPE |  --database_type |	database type | memory |
@@ -39,52 +57,65 @@ Configuration options can be set through environment variables or command line f
 | | --version, -v | print the version | |
 
 
+## REST API
 
-### REST API
+The documentation for
+[Amalgam8 Controller's REST API](https://amalgam8.io/controller) is
+available in Swagger format.
 
-Documentation is available [here](http://amalgam8.io/controller/#/default).
+## Building from source
 
-## Build from source
-The follow section describes options for building the controller from source. Instructions on using a prebuilt Docker image are available [here](https://github.com/amalgam8/controller#usage).
+To build from source, clone this repository, and follow the instructions below.
 
-### Prerequisites
-* Docker 1.8 or 1.9
-* Go 1.6
+### Pre-requisites
 
-### Clone
+* Docker engine >=1.10
+* Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
 
-Clone the repository manually, or use `go get`:
 
-```go get github.com/amalgam8/controller```
+### Building a Docker Image
 
-### Make targets
-The following targets are available. Each may be run with `make <target>`.
+To build the docker image for the Amalgam8 Controller service, run the
+following commands:
 
-| Make Target      | Description |
-|:-----------------|:------------|
-| `release`        | *(Default)* `release` builds the controller within a docker container and packages it into a image |
-| `test`           | `test` runs all tests using `go test` |
-| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
+```bash
+cd $GOPATH/src/github.com/amalgam8/controller
+make build docker
+```
 
-### Build Docker image
-Docker must be configured and running to build a Docker image.
+You should now have a docker image tagged `a8-controller:latest`.
+
+### Building an Executable
+
+The Amalgam8 Controller can also be run outside of a docker container as a Go
+binary.  This is not recommended for production, but it can be useful for
+development or easier integration with your local Go tools.
+
+The following commands will build and run it as a Go binary:
+
 ```
 cd $GOPATH/src/github.com/amalgam8/controller
 make build
-make docker IMAGE=controller
-```
-
-This will produce an image tagged `controller:latest`.
-
-### Build executable
-The Docker image is the recommended way of deploying the controller. However, manually building the executable may be useful for testing.
-
-The following commands will build and run the controller:
-
-```target
-make build
 ./bin/controller
 ```
+
+### Makefile Targets
+
+The following Makefile targets are available.
+
+| Make Target      | Description |
+|:-----------------|:------------|
+| `build`          | *(Default)* `build` builds the Controller binary in the ./bin directory |
+| `precommit`      | `precommit` should be run by developers before committing code changes. It runs code formatting and checks. |
+| `test`           | `test` runs (short duration) tests using `go test`. You may also `make test.all` to include long running tests. |
+| `docker`         | `docker` packages the binary in a docker container |
+| `release`        | `release` builds a tarball with the Controller binary |
+| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
+
+
+### Continuous Integration with Travis CI
+
+Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
 
 ## Release Workflow
 
@@ -92,7 +123,9 @@ This section includes instructions for working with releases, and is intended fo
 
 ### Creating a release
 
-1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
+1.  Set a version for the release, by incrementing the current version
+    according to the [semantic versioning](https://semver.org/)
+    guidelines. For example,
 
     ```bash
     export VERSION=v0.1.0

@@ -1,4 +1,4 @@
-# Amalgam8 Service Registry
+# Amalgam8 Registry
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
@@ -7,28 +7,38 @@
 [Travis]: https://travis-ci.org/amalgam8/registry
 [Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
 
-The Amalgam8 Service Registry is software that was developed to register and locate instances in applications 
-that are built using a microservice-based architecture. The registry can be used to provide multi-tenant registration and 
-discovery namespaces (i.e., isolation between different tenant scopes), a unified discovery for service
-instances registered using different backends (e.g., Kubernetes, Eureka), and different authentication and authorization
-backends. 
+Amalgam8 Registry is a multi-tenant, highly-available service for service
+registration and service discovery in microservice applications.  For high
+availability, run the registry in clustered mode. In clustered mode, the
+registry provides eventual consistency for data synchronization across
+registry instances.
 
-**Note**: The Amalgam8 Service Registry is currently in alpha. This means that the API will change, features will be added/removed, 
-and that there will be bugs. 
+The registry is built using a flexible adapter model that can be used to
+synchronize the Amalgam8 registry with any other service registry such as
+Kubernetes, Consul, etc. In addition, the registry can be used as a drop-in
+replacement for [Netflix Eureka](https://github.com/Netflix/eureka) with
+full API compatibility. Eureka compatibility enables the registry to be
+used with Java clients using
+[Netflix Ribbon](https://github.com/Netflix/ribbon).
 
-## Building and Running
+By default, the registry operates without any authentication. It also
+supports two authentication mechanisms: a trusted auth mode for local
+testing and development, and a JWT auth mode for production deployments.
 
-A recent prebuilt Amalgam8 Service Registry image can be found in docker.io/amalgam8/a8-registry:0.1.
-```sh
-$ docker pull amalgam8/a8-registry:0.1
+To get started, use the current stable version of the registry from Docker
+Hub.
+
+```bash
+docker run amalgam8/a8-registry:latest -auth_mode=trusted
 ```
 
-If you wish to build the Amalgam8 Service Registry from source, clone this repository, and follow the instructions below.
+If you wish to build from source, clone this repository, and follow the instructions below.
+
+## Building from source
 
 ### Preprequisites
-A developer-tested development environment requires the following technologies:
-* Linux host (tested with Ubuntu 16.04 LTS).
-* Docker (tested with 1.10).
+
+* Docker engine >=1.10
 * Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
 
 

@@ -1,5 +1,4 @@
 {
-    "log_server" : "localhost:30200",
     "checks" : [
 	    {
 	        "name" : "bounded_response_time",

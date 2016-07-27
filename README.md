@@ -7,84 +7,42 @@
 [Travis]: https://travis-ci.org/amalgam8/registry
 [Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
 
-Amalgam8 Registry is a multi-tenant, highly-available service for service
+The Amalgam8 Registry is a multi-tenant, highly-available service for service
 registration and service discovery in microservice applications.  For high
-availability, run the registry in clustered mode. In clustered mode, the
-registry provides eventual consistency for data synchronization across
-registry instances.
+availability, run the Registry in clustered mode. In clustered mode, the
+Registry provides eventual consistency for data synchronization across
+Registry instances.
 
-The registry is built using a flexible adapter model that can be used to
-synchronize the Amalgam8 registry with any other service registry such as
-Kubernetes, Consul, etc. In addition, the registry can be used as a drop-in
-replacement for [Netflix Eureka](https://github.com/Netflix/eureka) with
-full API compatibility. Eureka compatibility enables the registry to be
-used with Java clients using
-[Netflix Ribbon](https://github.com/Netflix/ribbon).
+The Registry is built using an extensible catalog model that allows the user
+to update the Amalgam8 Registry with information stored in other service
+registries such as Kubernetes, Consul, etc. In addition, the Registry can
+be used as a drop-in replacement for
+[Netflix Eureka](https://github.com/Netflix/eureka) with full API
+compatibility. Eureka compatibility enables the Registry to be used with
+Java clients using [Netflix Ribbon](https://github.com/Netflix/ribbon).
 
-By default, the registry operates without any authentication. It also
+By default, the Registry operates without any authentication. It also
 supports two authentication mechanisms: a trusted auth mode for local
 testing and development, and a JWT auth mode for production deployments.
 
-To get started, use the current stable version of the registry from Docker
+See https://www.amalgam8.io for an overview of the Amalgam8 project
+and https://www.amalgam8.io/docs for detailed documentation.
+
+
+## Usage
+
+To get started, use the current stable version of the Registry from Docker
 Hub.
 
 ```bash
 docker run amalgam8/a8-registry:latest -auth_mode=trusted
 ```
 
-If you wish to build from source, clone this repository, and follow the instructions below.
-
-## Building from source
-
-### Preprequisites
-
-* Docker engine >=1.10
-* Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
-
-
-### Building a Docker Image
-
-The Amalgam8 Service Registry can be built by simply typing `make build docker` with the [Docker
-daemon](https://docs.docker.com/installation/) (v1.10.x) running.
-
-This produces an image tagged `registry:0.1` that you can run.
-
-### Standalone
-
-The Amalgam8 Service Registry can also be run outside of a docker container as a Go binary. 
-This is not recommended for production, but it can be useful for development or easier integration with 
-your local Go tools.
-
-The following commands will build and run it outside of Docker:
-
-```
-make build
-./bin/registry
-```
-
-### Make Targets
-
-The following targets are available. Each may be run with `make <target>`.
-
-| Make Target      | Description |
-|:-----------------|:------------|
-| `build`          | *(Default)* `build` builds the registry binary in the ./bin directory |
-| `precommit`      | `precommit` should be run by developers before committing code changes. It runs code formatting and checks. |
-| `docker`         | `docker` packages the binary in a docker container |
-| `test`           | `test` runs (short duration) tests using `go test`. You may also `make test.all` to include long running tests. |
-| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
-
-### Continuous Integration with Travis CI
-
-Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
-
-## Usage
-
-The Amalgam8 Service Registry supports a number of configuration options, most of which are set through environment variables.
-
-The environment variables can be set via command line flags as well. 
-
 ### Command Line Flags and Environment Variables
+
+The Amalgam8 Registry supports a number of configuration options,
+most of which are set through environment variables. The environment
+variables can be set via command line flags as well.
 
 The following environment variables are available. All of them are optional.
 
@@ -103,7 +61,7 @@ The following environment variables are available. All of them are optional.
 
 #### Authentication and Authorization
 
-The Amalgam8 Service Registry optionally supports multi-tenancy by isolating each tenant into a separate namespace.
+The Amalgam8 Registry supports multi-tenancy by isolating each tenant into a separate namespace.
 A namespace is defined by an opaque string carried in the HTTP `Authorization` header of API requests. The following
 namespace authorization methods are supported and controlled via the `AUTH_MODE` environment variable (or `--auth_mode`
 flag):
@@ -121,18 +79,20 @@ environment (e.g., single tenant with multiple applications or environments).
 If `jwt` is specified, `JWT_SECRET` (or `--jwt_secret`) must be set as well to allow encryption and decryption.
 Namespace value encoding must be present in every API call using HTTP Bearer Authorization:
 
-```sh
+```bash
 Authorization: Bearer jwt.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...wifQ.Gbz4G_O...NqdY`
 ```
 
 #### Clustering
 
-Amalgam8 Service Registry uses a memory only storage solution, without persistency (although different storage 
-backends can be implemented). To provide HA and scale, the registry can be run in a cluster and supports replication
+Amalgam8 Registry uses a memory only storage solution, without persistency (although different storage 
+backends can be implemented). To provide HA and scale, the Registry can be run in a cluster and supports replication
 between cluster members.
 
-Peer discovery currently uses a shared volume between all members. The volume must be mounted RW into each container.
-Alternative discovery mechanisms are being explored.
+Peer discovery currently uses a shared volume between all members. The
+volume must be mounted RW into each container.  We are exploring
+alternative discovery mechanisms.
+
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
@@ -144,9 +104,9 @@ Alternative discovery mechanisms are being explored.
 
 #### Catalog Extensions
 
-The Amalgam8 Service Registry optionally supports read-only catalogs extensions.
-The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, FileSystem, etc) is read by the Amalgam8 Service Registry and
-returned to the user along with the content of the registry itself.
+The Amalgam8 Registry supports read-only catalogs extensions. 
+The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, FileSystem, etc) is read by the Registry and
+returned to the user along with the content of the Registry itself.
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
@@ -155,9 +115,66 @@ returned to the user along with the content of the registry itself.
 | `FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf` | (none) |
 
 
-## API
+## REST API
 
-The Amalgam8 Service Registry [API documentation](https://amalgam8.io/registry) is available in Swagger format.
+The documentation for
+[Amalgam8 Controller's REST API](https://amalgam8.io/controller) is
+available in Swagger format.
+The Amalgam8 Registry [API documentation](https://amalgam8.io/registry) is
+available in Swagger format.
+
+## Building from source
+
+To build from source, clone this repository, and follow the instructions below.
+
+### Pre-requisites
+
+* Docker engine >=1.10
+* Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
+
+
+### Building a Docker Image
+
+To build the docker image for the Amalgam8 Registry service, run the
+following commands:
+
+```bash
+cd $GOPATH/src/github.com/amalgam8/registry
+make build docker
+```
+
+You should now have a docker image tagged `a8-registry:latest`.
+
+### Building an Executable
+
+The Amalgam8 Registry can also be run outside of a docker container as a Go
+binary.  This is not recommended for production, but it can be useful for
+development or easier integration with your local Go tools.
+
+The following commands will build and run it as a Go binary:
+
+```
+cd $GOPATH/src/github.com/amalgam8/registry
+make build
+./bin/registry
+```
+
+### Makefile Targets
+
+The following Makefile targets are available.
+
+| Make Target      | Description |
+|:-----------------|:------------|
+| `build`          | *(Default)* `build` builds the Registry binary in the ./bin directory |
+| `precommit`      | `precommit` should be run by developers before committing code changes. It runs code formatting and checks. |
+| `test`           | `test` runs (short duration) tests using `go test`. You may also `make test.all` to include long running tests. |
+| `docker`         | `docker` packages the binary in a docker container |
+| `release`        | `release` builds a tarball with the Registry binary |
+| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
+
+### Continuous Integration with Travis CI
+
+Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
 
 ## Release Workflow
 
@@ -165,8 +182,10 @@ This section includes instructions for working with releases, and is intended fo
 
 ### Creating a release
 
-1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
-   
+1.  Set a version for the release, by incrementing the current version
+    according to the [semantic versioning](https://semver.org/)
+    guidelines. For example,
+
     ```bash
     export VERSION=v0.1.0
     ```

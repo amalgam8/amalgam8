@@ -20,7 +20,7 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8controller
-APP_VER		:= latest
+APP_VER		:= v0.2.1
 BINDIR		:= bin
 RELEASEDIR  := release
 IMAGE_NAME  := a8-controller:latest

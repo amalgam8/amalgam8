@@ -17,7 +17,7 @@
 set -x
 set -e
 
-A8SIDECAR_RELEASE=v0.2.0-alpha2
+A8SIDECAR_RELEASE=v0.2.0
 OPENRESTY_RELEASE=1.9.15.1
 FILEBEAT_RELEASE=1.2.2
 DOWNLOAD_URL=https://github.com/amalgam8/sidecar/releases/download/${A8SIDECAR_RELEASE}

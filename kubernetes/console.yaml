@@ -59,5 +59,9 @@ spec:
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_REGISTRY_TOKEN
           value: local
+        - name: A8_LOG_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):$(LOGSERVER_SERVICE_PORT_ES1)
+        - name: PYTHONUNBUFFERED
+          value: "0"
         ports:
         - containerPort: 5000

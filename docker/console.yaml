@@ -20,6 +20,8 @@ console:
     - A8_TENANT_TOKEN=local
     - A8_REGISTRY_URL=http://registry:8080
     - A8_REGISTRY_TOKEN=local
+    - A8_LOG_SERVER=elasticsearch:9200
+    - PYTHONUNBUFFERED=0
   ports:
     - "31000:5000"
   external_links:

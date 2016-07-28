@@ -58,10 +58,10 @@ func (t *Tenant) Routes() []*rest.Route {
 		rest.Get("/v1/versions/#service", reportMetric(t.reporter, t.GetServiceVersions, "versions_read")),
 		rest.Delete("/v1/versions/#service", reportMetric(t.reporter, t.DeleteServiceVersions, "versions_delete")),
 
-		rest.Get("/v1/rules", reportMetric(t.reporter, t.GetRules, "rules_read")),
-		rest.Delete("/v1/rules", reportMetric(t.reporter, t.DeleteRules, "rules_delete")),
-		rest.Post("/v1/rules", reportMetric(t.reporter, t.PostRules, "rules_create")),
-		rest.Put("/v1/rules", reportMetric(t.reporter, t.PutRules, "rules_update")),
+		//rest.Get("/v1/rules", reportMetric(t.reporter, t.GetRules, "rules_read")),
+		//rest.Delete("/v1/rules", reportMetric(t.reporter, t.DeleteRules, "rules_delete")),
+		//rest.Post("/v1/rules", reportMetric(t.reporter, t.PostRules, "rules_create")),
+		//rest.Put("/v1/rules", reportMetric(t.reporter, t.PutRules, "rules_update")),
 	}
 }
 

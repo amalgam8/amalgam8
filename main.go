@@ -26,11 +26,11 @@ import (
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
-	"github.com/amalgam8/controller/manager"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/nginx"
 	"github.com/amalgam8/controller/notification"
+	"github.com/amalgam8/controller/rules"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -109,11 +109,11 @@ func controllerMain(conf config.Config) error {
 		return err
 	}
 
-	r := manager.NewManager(manager.Config{
-		Database:      tenantDB,
-		ProducerCache: tpc,
-		Generator:     g,
-	})
+	//r := manager.NewManager(manager.Config{
+	//	Database:      tenantDB,
+	//	ProducerCache: tpc,
+	//	Generator:     g,
+	//})
 
 	factory := checker.NewRegistryFactory()
 
@@ -128,12 +128,15 @@ func controllerMain(conf config.Config) error {
 		Reporter:  reporter,
 		Generator: g,
 	})
-	t := api.NewTenant(api.TenantConfig{
-		Reporter: reporter,
-		Manager:  r,
-	})
+	//t := api.NewTenant(api.TenantConfig{
+	//	Reporter: reporter,
+	//	Manager:  r,
+	//})
 	p := api.NewPoll(reporter, c)
 	h := api.NewHealth(reporter)
+
+	ruleManager := rules.NewMemoryManager()
+	rulesAPI := api.NewRule(ruleManager)
 
 	a := rest.NewApi()
 	a.Use(
@@ -152,9 +155,10 @@ func controllerMain(conf config.Config) error {
 	)
 
 	routes := n.Routes()
-	routes = append(routes, t.Routes()...)
+	//routes = append(routes, t.Routes()...)
 	routes = append(routes, h.Routes()...)
 	routes = append(routes, p.Routes()...)
+	routes = append(routes, rulesAPI.Routes()...)
 
 	router, err := rest.MakeRouter(
 		routes...,

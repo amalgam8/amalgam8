@@ -24,7 +24,7 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
 * Install the sidecar in your Dockerized microservice.
 
     ```Dockerfile
-    RUN curl -sSL https://github.com/amalgam8/sidecar/releases/download/${VERSION}/install-a8sidecar.sh | sh
+    RUN curl -sSL https://git.io/a8sidecar.sh | sh
     ```
 
 * Launch your app via the sidecar

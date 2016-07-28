@@ -108,7 +108,7 @@ provided.
     export A8_REGISTRY_URL=`docker-machine ip`
     ```
 
-1.  Confirm everything is working with the following command:
+1. Confirm everything is working with the following command:
 
     ```bash
     a8ctl service-list
@@ -123,6 +123,16 @@ provided.
     +---------+-----------+
     +---------+-----------+
     ```
+
+1. Instead of using the `a8ctl` CLI commands, you can optionally use the Amalgam8 prototype console UI to view and/or manage services. 
+   To start the console server, run the following command:
+
+    ```bash
+    docker-compose -f docker/console.yaml up -d
+    ```
+    
+    To access the UI, point your browser to http://localhost:31000/.
+    Same as `a8ctl service-list` in the previous step, you should currently see an empty list of services.
 
 1. Deploy the API gateway
 
@@ -262,6 +272,16 @@ The following setup has been tested with Kubernetes v1.2.3.
     (outside the Vagrant box), and the controller at http://localhost:31200 .
     To access the control plane details of tenant *local*, access
     http://localhost:31200/v1/tenants/local from your browser.
+
+1. Instead of using the `a8ctl` CLI commands, you can optionally use the Amalgam8 prototype console UI to view and/or manage services. 
+   To start the console server, run the following command:
+
+    ```bash
+    kubectl create -f kubernetes/console.yaml
+    ```
+    
+    To access the UI, point your browser to http://localhost:31000/.
+    Same as `a8ctl service-list` in the previous step, you should currently see an empty list of services.
 
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
 

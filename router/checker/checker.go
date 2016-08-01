@@ -35,26 +35,26 @@ type Checker interface {
 }
 
 type checker struct {
-	conf          *config.Config
-	registyClient client.Discovery
-	cachedCatalog resources.ServiceCatalog
-	listener      Listener
-	ticker        *time.Ticker
+	config         *config.Config
+	registryClient client.Discovery
+	cachedCatalog  resources.ServiceCatalog
+	listener       Listener
+	ticker         *time.Ticker
 }
 
 // Config options
 type Config struct {
-	Conf          *config.Config
-	RegistyClient client.Discovery
-	Listener      Listener
+	Conf           *config.Config
+	RegistryClient client.Discovery
+	Listener       Listener
 }
 
 // New instantiates new instance
 func New(conf Config) Checker {
 	return &checker{
-		listener:      conf.Listener,
-		registyClient: conf.RegistyClient,
-		conf:          conf.Conf,
+		listener:       conf.Listener,
+		registryClient: conf.RegistryClient,
+		config:         conf.Conf,
 	}
 }
 
@@ -67,9 +67,9 @@ func (c *checker) Start() error {
 		}
 	}
 
-	// TODO make Regsitry polling interval configurable
+	// TODO make Registry polling interval configurable
 	// Create new ticker
-	c.ticker = time.NewTicker(c.conf.Controller.Poll)
+	c.ticker = time.NewTicker(c.config.Controller.Poll)
 
 	// Do initial poll
 	if err := c.check(); err != nil {
@@ -77,7 +77,7 @@ func (c *checker) Start() error {
 	}
 
 	// Start periodic poll
-	for _ = range c.ticker.C {
+	for range c.ticker.C {
 		if err := c.check(); err != nil {
 			logrus.WithError(err).Error("Catalog check failed")
 		}
@@ -86,23 +86,11 @@ func (c *checker) Start() error {
 	return nil
 }
 
-// Check registered tenants for Registry catalog changes. Each registered tenant's catalog is retrieved from
-// the database and compared against the current Registry catalog for that tenant. If a difference exists
-// between the two, the database is updated with the most recent version of the catalog and any listeners are notified
-// of the change.
-//
-// ids must be a subset of registered tenant IDs or nil or empty. If ids is nil or empty all registered IDs are checked.
-//
-// TODO: make this asynch
 func (c *checker) check() error {
-
-	creds := c.conf.Registry
-
 	// Get newest catalog from Registry
-	latestCatalog, err := c.getLatestCatalog(creds)
+	latestCatalog, err := c.getLatestCatalog(c.config.Registry)
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
-
 		return err
 	}
 
@@ -132,10 +120,11 @@ func (c *checker) catalogsEqual(a, b resources.ServiceCatalog) bool {
 }
 
 // getLatestCatalog
+// FIXME: is this conversion still necessary?
 func (c *checker) getLatestCatalog(sd config.Registry) (resources.ServiceCatalog, error) {
 	catalog := resources.ServiceCatalog{}
 
-	instances, err := c.registyClient.ListInstances(client.InstanceFilter{})
+	instances, err := c.registryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
 		return catalog, err
 	}

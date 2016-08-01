@@ -35,8 +35,8 @@ import (
 )
 
 func main() {
-	// Initial logging until we parse the user provided log_level arg
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.ErrorKey = "error"
+	logrus.SetLevel(logrus.DebugLevel) // Initial logging until we parse the user provided log level argument
 	logrus.SetOutput(os.Stderr)
 
 	app := cli.NewApp()
@@ -160,13 +160,10 @@ func startProxy(conf *config.Config) error {
 
 	n, err := nginx.NewNginx(
 		nginx.Conf{
-			ServiceName: conf.ServiceName,
 			Service:     nginx.NewService(),
-			Config:      nginx.NewConfig(),
 			NGINXClient: nc,
 		},
 	)
-
 	if err != nil {
 		logrus.WithError(err).Error("Failed to initialize NGINX object")
 		return err
@@ -186,18 +183,18 @@ func startProxy(conf *config.Config) error {
 	poller := checker.NewPoller(conf, rc, listener)
 	go func() {
 		if err = poller.Start(); err != nil {
-			logrus.WithError(err).Error("Could not poll Controller")
+			logrus.WithError(err).Error("Controller poll failed")
 		}
 	}()
 
 	checker := checker.New(checker.Config{
-		Listener:      listener,
-		RegistyClient: registryClient,
-		Conf:          conf,
+		Listener:       listener,
+		RegistryClient: registryClient,
+		Conf:           conf,
 	})
 	go func() {
 		if err = checker.Start(); err != nil {
-			logrus.WithError(err).Error("Could not poll Registry")
+			logrus.WithError(err).Error("Registry poll failed")
 		}
 	}()
 

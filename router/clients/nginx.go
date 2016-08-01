@@ -1,3 +1,17 @@
+// Copyright 2016 IBM Corporation
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
 package clients
 
 import (
@@ -76,16 +90,14 @@ func (n *nginx) UpdateHTTPUpstreams(conf NGINXJson) error {
 
 	data, err := json.Marshal(&conf)
 	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-		}).Error("Could not marshal request body")
+		logrus.WithError(err).Error("Could not marshal request body")
 		return err
 	}
 
 	reader := bytes.NewReader(data)
 	req, err := http.NewRequest("POST", n.url+"/a8-admin", reader)
 	if err != nil {
-		logrus.WithError(err).Error("Failed building request to NGINX server")
+		logrus.WithError(err).Error("Building request for NGINX server failed")
 		return err
 	}
 
@@ -100,11 +112,10 @@ func (n *nginx) UpdateHTTPUpstreams(conf NGINXJson) error {
 	if resp.StatusCode != http.StatusOK {
 		data, _ := ioutil.ReadAll(resp.Body)
 
-		logrus.WithFields(logrus.Fields{
-			"err":         err,
+		logrus.WithError(err).WithFields(logrus.Fields{
 			"body":        string(data),
 			"status_code": resp.StatusCode,
-		}).Error("POST to NGINX server return failure")
+		}).Error("POST to NGINX server failed")
 		return err
 	}
 

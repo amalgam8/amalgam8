@@ -16,8 +16,6 @@ package checker
 
 import (
 	"github.com/amalgam8/controller/database"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/registry/client"
 	. "github.com/onsi/ginkgo"
 	//	. "github.com/onsi/gomega"
@@ -29,8 +27,6 @@ var _ = Describe("Checker", func() {
 		checker   Checker
 		id        string
 		db        database.Tenant
-		cache     *notification.MockTenantProducerCache
-		n         *nginx.MockGenerator
 		factory   *MockRegistryFactory
 		regClient *MockRegistryClient
 	)
@@ -43,8 +39,6 @@ var _ = Describe("Checker", func() {
 				RegClient: regClient,
 			}
 			db = database.NewTenant(database.NewMemoryCloudantDB())
-			cache = new(notification.MockTenantProducerCache)
-			n = &nginx.MockGenerator{}
 			checker = New(Config{})
 
 			id = "abcdef"

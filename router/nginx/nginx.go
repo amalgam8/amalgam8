@@ -32,7 +32,6 @@ type Nginx interface {
 }
 
 type nginx struct {
-	config      Config
 	service     Service
 	serviceName string
 	mutex       sync.Mutex
@@ -41,19 +40,14 @@ type nginx struct {
 
 // Conf for creating new NGINX interface
 type Conf struct {
-	Config      Config
 	Service     Service
-	ServiceName string
 	NGINXClient clients.NGINX
 }
 
 // NewNginx creates new Nginx instance
 func NewNginx(conf Conf) (Nginx, error) {
-
 	return &nginx{
-		config:      conf.Config,
 		service:     conf.Service,
-		serviceName: conf.ServiceName,
 		nginxClient: conf.NGINXClient,
 	}, nil
 }
@@ -90,26 +84,9 @@ func (n *nginx) Update(templateConf clients.NGINXJson) error {
 
 // startNginx attempts to start the NGINX service. On a failure attempt to start NGINX with the backup configuration.
 func (n *nginx) startNginx() error {
-	log.Debug("Starting NGINX with new configuration")
+	log.Debug("Starting NGINX")
 	if err := n.service.Start(); err != nil {
 		log.WithField("err", err).Error("Could not start NGINX service")
-		return err
-	}
-
-	return nil
-}
-
-// reloadNginx attempts to reload the NGINX service. On failure revert to the backup NGINX configuration.
-func (n *nginx) reloadNginx() error {
-	log.Debug("Reloading NGINX with new configuration")
-	if err := n.service.Reload(); err != nil {
-		log.WithError(err).Error("Could not reload NGINX with new configuration")
-		if revertErr := n.config.Revert(); revertErr != nil {
-			log.WithError(revertErr).Error("Failed to revert NGINX configuration to backup")
-			return revertErr
-		}
-
-		log.Warn("Reverted to old NGINX configuration")
 		return err
 	}
 

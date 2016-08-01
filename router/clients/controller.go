@@ -45,6 +45,7 @@ func NewController(conf *config.Config) Controller {
 	}
 }
 
+// GetProxyConfig retrieves the proxy configuration from the A8 Controller
 func (c *controller) GetProxyConfig(version *time.Time) (*resources.ProxyConfig, error) {
 	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants")
 	if err != nil {

@@ -57,7 +57,7 @@ func (s *service) Reload() error {
 	return nil
 }
 
-// Running returns whether the NGINX service is currently running
+// Running returns whether or not the NGINX service is currently running
 func (s *service) Running() (bool, error) {
 	pidBytes, err := ioutil.ReadFile("/var/run/nginx.pid")
 	if err != nil {
@@ -88,7 +88,7 @@ func (s *service) Running() (bool, error) {
 		return false, err
 	}
 
-	// On error there is output
+	// Output also indicates an error, even if the return code is 0
 	if len(out) != 0 {
 		return false, errors.New(string(out))
 	}

@@ -22,7 +22,7 @@ import (
 	"github.com/amalgam8/sidecar/router/clients"
 )
 
-// Poller performs a periodic poll on Controller for changes to the NGINX config
+// Poller performs a periodic poll on Controller for changes
 type Poller interface {
 	Start() error
 	Stop() error
@@ -64,7 +64,7 @@ func (p *poller) Start() error {
 	}
 
 	// Start periodic poll
-	for _ = range p.ticker.C {
+	for range p.ticker.C {
 		if err := p.poll(); err != nil {
 			logrus.WithError(err).Error("Poll failed")
 		}
@@ -83,13 +83,11 @@ func (p *poller) poll() error {
 		return err
 	}
 
-	if conf == nil {
-		//TODO no new rules to update, do we need to do anything else?
+	if conf == nil { // Nothing to update
 		return nil
 	}
 
-	// Update our existing NGINX config
-
+	// Notify listeners of change
 	if err := p.listener.RulesChange(*conf); err != nil {
 		logrus.WithError(err).Error("Listener failed")
 		return err

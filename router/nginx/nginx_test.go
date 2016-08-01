@@ -83,9 +83,7 @@ var _ = Describe("NGINX", func() {
 
 		n, err = NewNginx(
 			Conf{
-				Config:      c,
 				Service:     s,
-				ServiceName: "NAME",
 				NGINXClient: &nc,
 			},
 		)

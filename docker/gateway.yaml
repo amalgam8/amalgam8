@@ -18,7 +18,8 @@ gateway:
   environment:
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_TENANT_TOKEN=local
-    - A8_KAFKA_BROKER=kafka:9092
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_REGISTRY_TOKEN=local
     - A8_REGISTER=false
     - A8_SERVICE=gateway
     - A8_LOGSTASH_SERVER='logstash:8092'
@@ -29,4 +30,5 @@ gateway:
     - kafka
     - logstash
     - controller
+    - registry
   container_name: gateway

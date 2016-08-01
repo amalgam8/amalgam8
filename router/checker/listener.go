@@ -70,7 +70,7 @@ func (l *listener) listenForUpdate() error {
 			return err
 		}
 
-		if key == l.config.Tenant.Token {
+		if key == l.config.Controller.Token {
 
 			logrus.WithFields(logrus.Fields{
 				"key":   key,

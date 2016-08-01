@@ -28,7 +28,6 @@ const (
 	proxy           = "proxy"
 	log             = "log"
 	supervise       = "supervise"
-	tenantToken     = "tenant_token"
 	kafkaToken      = "kafka_token"
 	kafkaUsername   = "kafka_user"
 	kafkaPassword   = "kafka_pass"
@@ -41,6 +40,7 @@ const (
 	nginxPort       = "nginx_port"
 	controllerURL   = "controller_url"
 	controllerPoll  = "controller_poll"
+	controllerToken = "controller_token"
 	tenantTTL       = "tenant_ttl"
 	tenantHeartbeat = "tenant_heartbeat"
 	endpointHost    = "endpoint_host"
@@ -107,11 +107,6 @@ var TenantFlags = []cli.Flag{
 	},
 
 	// Tenant
-	cli.StringFlag{
-		Name:   tenantToken,
-		EnvVar: envVar(tenantToken),
-		Usage:  "Token for Service Proxy instance",
-	},
 	cli.DurationFlag{
 		Name:   tenantTTL,
 		EnvVar: envVar(tenantTTL),
@@ -156,6 +151,11 @@ var TenantFlags = []cli.Flag{
 		EnvVar: envVar(controllerPoll),
 		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
+	},
+	cli.StringFlag{
+		Name:   controllerToken,
+		EnvVar: envVar(controllerToken),
+		Usage:  "Amalgam8 controller token",
 	},
 
 	// Logserver

@@ -23,6 +23,8 @@ import (
 	"net/url"
 	"time"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/config"
 )
@@ -109,8 +111,7 @@ func (c *controller) Register() error {
 
 	req, err := http.NewRequest("POST", c.config.Controller.URL+"/v1/tenants", reader)
 	req.Header.Set("Content-type", "application/json")
-	// TODO set Authorization header
-	req.Header.Set("Authorization", c.config.Tenant.Token)
+	c.setAuthHeader(req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -171,8 +172,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
 		}).Warn("Error building request to get rules from controller")
 		return nil, err
 	}
-	//TODO set auth header
-	req.Header.Set("Authorization", c.config.Tenant.Token)
+	c.setAuthHeader(req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -237,8 +237,7 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 		}).Warn("Error building request to get creds from Controller")
 		return respJSON.Credentials, err
 	}
-	//TODO set auth header
-	req.Header.Set("Authorization", c.config.Tenant.Token)
+	c.setAuthHeader(req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -294,4 +293,12 @@ func (c *controller) GetCredentials() (TenantCredentials, error) {
 	}
 
 	return respJSON.Credentials, nil
+}
+
+func (c *controller) setAuthHeader(req *http.Request) {
+	// if token value is empty, assumes global auth is enabled on controller and does
+	// not add the Authorization header
+	if c.config.Controller.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", c.config.Controller.Token))
+	}
 }

@@ -18,8 +18,6 @@ import (
 	"net/http"
 
 	"github.com/amalgam8/controller/database"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -33,20 +31,14 @@ var _ = Describe("Manager", func() {
 		id         string
 		token      string
 		db         database.Tenant
-		cache      *notification.MockTenantProducerCache
-		n          *nginx.MockGenerator
 	)
 
 	Context("Manager", func() {
 
 		BeforeEach(func() {
-			n = &nginx.MockGenerator{}
 			db = database.NewTenant(database.NewMemoryCloudantDB())
-			cache = new(notification.MockTenantProducerCache)
 			manager = NewManager(Config{
-				Database:      db,
-				ProducerCache: cache,
-				Generator:     n,
+				Database: db,
 			})
 
 			id = "abcdef"
@@ -56,12 +48,6 @@ var _ = Describe("Manager", func() {
 				Filters: resources.Filters{
 					Rules:    []resources.Rule{},
 					Versions: []resources.Version{},
-				},
-				Credentials: resources.Credentials{
-					Registry: resources.Registry{
-						URL:   "http://localhost",
-						Token: "12345",
-					},
 				},
 			}
 		})

@@ -254,7 +254,6 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	tenantInfo := resources.TenantInfo{
-		Credentials: entry.ProxyConfig.Credentials,
 		LoadBalance: entry.ProxyConfig.LoadBalance,
 		Filters:     entry.ProxyConfig.Filters,
 	}

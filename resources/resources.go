@@ -135,12 +135,6 @@ type Kafka struct {
 	SASL     bool     `json:"sasl"`
 }
 
-// Credentials TODO
-type Credentials struct {
-	Kafka    Kafka    `json:"kafka"`
-	Registry Registry `json:"registry"`
-}
-
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry
@@ -151,9 +145,8 @@ type TenantEntry struct {
 
 // ProxyConfig TODO
 type ProxyConfig struct {
-	LoadBalance string      `json:"load_balance"`
-	Filters     Filters     `json:"filters"`
-	Credentials Credentials `json:"credentials"`
+	LoadBalance string  `json:"load_balance"`
+	Filters     Filters `json:"filters"`
 }
 
 // Filters TODO
@@ -184,9 +177,8 @@ type Version struct {
 
 // TenantInfo JSON object for credentials and metadata of a tenant
 type TenantInfo struct {
-	Credentials Credentials `json:"credentials"`
-	LoadBalance string      `json:"load_balance"`
-	Filters     Filters     `json:"filters"`
+	LoadBalance string  `json:"load_balance"`
+	Filters     Filters `json:"filters"`
 }
 
 // VersionedUpstreams contains upstreams by version

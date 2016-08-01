@@ -27,4 +27,5 @@ console:
   external_links:
     - controller
     - registry
+    - elasticsearch
   container_name: console

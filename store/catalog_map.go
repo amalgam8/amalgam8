@@ -64,7 +64,7 @@ func New(conf *Config) CatalogMap {
 		maximumTTL:        conf.MaximumTTL,
 		namespaceCapacity: conf.NamespaceCapacity,
 	}
-	inmemFactory := newInmemFactory(inmemConfig)
+	inmemFactory := newInMemoryFactory(inmemConfig)
 	factory = inmemFactory
 
 	if conf.Replication != nil {
@@ -74,7 +74,9 @@ func New(conf *Config) CatalogMap {
 			catalogMap:   cmap,
 			localFactory: inmemFactory,
 		}
-		factory = newReplicatedFactory(repConfig)
+		repFactory := newReplicatedFactory(repConfig)
+		defer repFactory.activate()
+		factory = repFactory
 	}
 
 	if len(conf.Extensions) > 0 {

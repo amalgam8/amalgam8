@@ -30,7 +30,7 @@ type multiFactory struct {
 	conf *multiConfig
 }
 
-func newMultiFactory(conf *multiConfig) CatalogFactory {
+func newMultiFactory(conf *multiConfig) *multiFactory {
 	return &multiFactory{conf: conf}
 }
 
@@ -44,11 +44,7 @@ type multiCatalog struct {
 	catalogs []Catalog
 }
 
-func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (Catalog, error) {
-	if len(conf.factories) == 1 {
-		return conf.factories[rwCatalogIndex].CreateCatalog(namespace)
-	}
-
+func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (*multiCatalog, error) {
 	catalogs := make([]Catalog, len(conf.factories))
 	for i, factory := range conf.factories {
 		catalog, err := factory.CreateCatalog(namespace)

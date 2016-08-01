@@ -80,7 +80,7 @@ func (mc *mockCatalog) ListServices(predicate Predicate) []*Service {
 
 func TestNewMultiCatalog(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	conf := &multiConfig{[]CatalogFactory{inmemF, inmemF}}
 	factory := newMultiFactory(conf)
 	catalog, err := factory.CreateCatalog(auth.NamespaceFrom("ns1"))
@@ -91,7 +91,7 @@ func TestNewMultiCatalog(t *testing.T) {
 
 func TestMultiCatalogListServicesNoContent(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	nServices := 0
 	conf := &multiConfig{[]CatalogFactory{inmemF, &mockCatalog{nServices, 0}}}
 	factory := newMultiFactory(conf)
@@ -107,7 +107,7 @@ func TestMultiCatalogListServicesNoContent(t *testing.T) {
 
 func TestMultiCatalogListServicesWithContent(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	nServices := 5
 	conf := &multiConfig{[]CatalogFactory{inmemF, &mockCatalog{nServices, 0}}}
 	factory := newMultiFactory(conf)
@@ -123,7 +123,7 @@ func TestMultiCatalogListServicesWithContent(t *testing.T) {
 
 func TestMultiCatalogListNoContent(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	nInstances := 0
 	conf := &multiConfig{[]CatalogFactory{inmemF, &mockCatalog{0, nInstances}}}
 	factory := newMultiFactory(conf)
@@ -139,7 +139,7 @@ func TestMultiCatalogListNoContent(t *testing.T) {
 
 func TestMultiCatalogListWithContent(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	nInstances := 5
 	conf := &multiConfig{[]CatalogFactory{inmemF, &mockCatalog{0, nInstances}}}
 	factory := newMultiFactory(conf)
@@ -156,7 +156,7 @@ func TestMultiCatalogListWithContent(t *testing.T) {
 
 func TestMultiCatalogRegister(t *testing.T) {
 
-	inmemF := newInmemFactory(nil)
+	inmemF := newInMemoryFactory(nil)
 	nServices := 3
 	nInstances := 5
 	conf := &multiConfig{[]CatalogFactory{inmemF, &mockCatalog{nServices, nInstances}}}

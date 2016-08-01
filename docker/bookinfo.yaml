@@ -55,7 +55,7 @@ reviews-v2:
     - A8_REGISTRY_TOKEN=local
     - A8_SERVICE=reviews:v2
     - A8_ENDPOINT_PORT=9080
-    - A8_TENANT_TOKEN=local
+    - A8_CONTROLLER_TOKEN=local
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s
@@ -73,7 +73,7 @@ reviews-v3:
     - A8_REGISTRY_TOKEN=local
     - A8_SERVICE=reviews:v3
     - A8_ENDPOINT_PORT=9080
-    - A8_TENANT_TOKEN=local
+    - A8_CONTROLLER_TOKEN=local
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s
@@ -91,7 +91,7 @@ productpage-v1:
     - A8_REGISTRY_TOKEN=local
     - A8_SERVICE=productpage:v1
     - A8_ENDPOINT_PORT=9080
-    - A8_TENANT_TOKEN=local
+    - A8_CONTROLLER_TOKEN=local
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s

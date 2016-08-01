@@ -108,7 +108,7 @@ fi
 echo "Waiting for controller route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" -H "Authorization: local" "${CONTROLLER_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
@@ -175,7 +175,7 @@ fi
 
 attempt=0
 while true; do
-    code=$(echo $tenant | curl -w "%{http_code}" -H "Authorization: local" -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants")
+    code=$(echo $tenant | curl -w "%{http_code}" -H "Authorization: Bearer local" -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants")
     if [ "$code" = "201" ]; then
         echo "Controller tenant is set up"
         break

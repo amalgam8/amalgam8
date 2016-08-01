@@ -17,7 +17,7 @@
     "cmd" : "a8sidecar --register=false --supervise=false",
     "env": {
 		"A8_SERVICE" : "gateway",
-		"A8_TENANT_TOKEN":"local",
+		"A8_CONTROLLER_TOKEN":"local",
         "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		"A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
 		"A8_CONTROLLER_POLL" : "15s",

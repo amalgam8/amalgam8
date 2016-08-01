@@ -55,5 +55,7 @@ spec:
           value: "5s"
         - name: A8_LOG_LEVEL
           value: debug
+        - name: A8_AUTH_MODE
+          value: trusted
         ports:
         - containerPort: 6379

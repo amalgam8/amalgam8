@@ -129,7 +129,7 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
+        - name: A8_CONTROLLER_TOKEN
           value: local
         - name: A8_SERVICE
           value: reviews:v1
@@ -171,7 +171,7 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
+        - name: A8_CONTROLLER_TOKEN
           value: local
         - name: A8_SERVICE
           value: reviews:v2
@@ -213,7 +213,7 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
+        - name: A8_CONTROLLER_TOKEN
           value: local
         - name: A8_SERVICE
           value: reviews:v3
@@ -255,7 +255,7 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
+        - name: A8_CONTROLLER_TOKEN
           value: local
         - name: A8_SERVICE
           value: productpage:v1

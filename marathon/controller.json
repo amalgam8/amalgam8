@@ -16,7 +16,8 @@
     },
     "env": {
 	"A8_POLL_INTERVAL":"5s",
-	"A8_LOG_LEVEL":"info"
+	"A8_LOG_LEVEL":"info",
+	"A8_AUTH_MODE":"trusted"
     },
     "instances": 1,
     "cpus": 0.1,

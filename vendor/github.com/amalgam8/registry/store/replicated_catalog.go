@@ -16,6 +16,7 @@ package store
 
 import (
 	"encoding/json"
+	"time"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -24,6 +25,32 @@ import (
 	"github.com/amalgam8/registry/utils/channels"
 	"github.com/amalgam8/registry/utils/logging"
 )
+
+type replicatedConfig struct {
+	syncWaitTime time.Duration
+	catalogMap   CatalogMap
+	rep          replication.Replication
+	localFactory CatalogFactory
+}
+
+type replicatedFactory struct {
+	conf       *replicatedConfig
+	repHandler *replicationHandler
+}
+
+func newReplicatedFactory(conf *replicatedConfig) CatalogFactory {
+	rh := newReplicationHandler(conf)
+	return &replicatedFactory{conf: conf, repHandler: rh}
+}
+
+func (f *replicatedFactory) CreateCatalog(namespace auth.Namespace) (Catalog, error) {
+	repCatalog, err := newReplicatedCatalog(namespace, f.conf)
+	if err != nil {
+		return nil, err
+	}
+	f.repHandler.addCatalog(namespace, repCatalog)
+	return repCatalog, nil
+}
 
 type replicatedCatalog struct {
 	replicator    replication.Replicator
@@ -66,28 +93,29 @@ func (t replicationType) String() string {
 	return replicationActionTypes[t]
 }
 
-func newReplicatedCatalog(namespace auth.Namespace, conf *Config, replicator replication.Replicator) Catalog {
+func newReplicatedCatalog(namespace auth.Namespace, conf *replicatedConfig) (*replicatedCatalog, error) {
 	logger := logging.GetLogger(module).WithFields(log.Fields{"namespace": namespace})
 
-	if conf == nil {
-		conf = DefaultConfig
+	lc, err := conf.localFactory.CreateCatalog(namespace)
+	if err != nil {
+		return nil, err
 	}
 
-	localMemberCatalog := newInMemoryCatalog(conf)
-	if replicator == nil {
-		return localMemberCatalog
+	replicator, err := conf.rep.GetReplicator(namespace)
+	if err != nil {
+		return nil, err
 	}
 
 	rpc := &replicatedCatalog{
-		local:         localMemberCatalog,
+		local:         lc,
 		replicator:    replicator,
 		notifyChannel: channels.NewChannelTimeout(256),
 		logger:        logger,
 	}
-	go rpc.handleMsgs()
+	go rpc.handleIncomingMsgs()
 
 	rpc.logger.Infof("Replicated-Catalog creation done")
-	return rpc
+	return rpc, nil
 }
 
 func (rpc *replicatedCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
@@ -113,10 +141,10 @@ func (rpc *replicatedCatalog) Register(si *ServiceInstance) (*ServiceInstance, e
 	return result, nil
 }
 
-func (rpc *replicatedCatalog) Deregister(instanceID string) error {
-	err := rpc.local.Deregister(instanceID)
+func (rpc *replicatedCatalog) Deregister(instanceID string) (*ServiceInstance, error) {
+	instance, err := rpc.local.Deregister(instanceID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg, err := json.Marshal(&replicatedMsg{RepType: DEREGISTER, Payload: []byte(instanceID)})
@@ -132,13 +160,13 @@ func (rpc *replicatedCatalog) Deregister(instanceID string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
-func (rpc *replicatedCatalog) Renew(instanceID string) error {
-	err := rpc.local.Renew(instanceID)
+func (rpc *replicatedCatalog) Renew(instanceID string) (*ServiceInstance, error) {
+	instance, err := rpc.local.Renew(instanceID)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	msg, err := json.Marshal(&replicatedMsg{RepType: RENEW, Payload: []byte(instanceID)})
@@ -154,13 +182,13 @@ func (rpc *replicatedCatalog) Renew(instanceID string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
-func (rpc *replicatedCatalog) SetStatus(instanceID, status string) error {
-	err := rpc.local.SetStatus(instanceID, status)
+func (rpc *replicatedCatalog) SetStatus(instanceID, status string) (*ServiceInstance, error) {
+	instance, err := rpc.local.SetStatus(instanceID, status)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	payload, _ := json.Marshal(&replicatedStatus{instanceID, status})
@@ -177,7 +205,7 @@ func (rpc *replicatedCatalog) SetStatus(instanceID, status string) error {
 		}
 	}
 
-	return nil
+	return instance, nil
 }
 
 func (rpc *replicatedCatalog) Instance(instanceID string) (*ServiceInstance, error) {
@@ -192,7 +220,7 @@ func (rpc *replicatedCatalog) ListServices(predicate Predicate) []*Service {
 	return rpc.local.ListServices(predicate)
 }
 
-func (rpc *replicatedCatalog) handleMsgs() {
+func (rpc *replicatedCatalog) handleIncomingMsgs() {
 	var data replicatedMsg
 
 	for msg := range rpc.notifyChannel.Channel() {
@@ -223,7 +251,7 @@ func (rpc *replicatedCatalog) handleMsgs() {
 			break
 		case DEREGISTER:
 			instanceID := string(data.Payload)
-			err := rpc.local.Deregister(instanceID)
+			_, err := rpc.local.Deregister(instanceID)
 			if err != nil {
 				rpc.logger.WithFields(log.Fields{
 					"error": err,
@@ -232,7 +260,7 @@ func (rpc *replicatedCatalog) handleMsgs() {
 			break
 		case RENEW:
 			instanceID := string(data.Payload)
-			err := rpc.local.Renew(instanceID)
+			_, err := rpc.local.Renew(instanceID)
 			if err != nil {
 				msg, err := json.Marshal(&replicatedMsg{RepType: READREPAIR, Payload: data.Payload})
 				if err != nil {
@@ -252,7 +280,7 @@ func (rpc *replicatedCatalog) handleMsgs() {
 				}).Errorf("Failed to unmarshal replicated instance status. data: %s", string(data.Payload))
 				break
 			}
-			err = rpc.local.SetStatus(repStatus.InstanceID, repStatus.Status)
+			_, err = rpc.local.SetStatus(repStatus.InstanceID, repStatus.Status)
 			if err != nil {
 				rpc.logger.WithFields(log.Fields{
 					"error": err,
@@ -277,25 +305,6 @@ func (rpc *replicatedCatalog) handleMsgs() {
 			}
 			rpc.replicator.Send(inMsg.MemberID, msg)
 			break
-		}
-	}
-}
-
-func (rpc *replicatedCatalog) doSyncRequset(namespace auth.Namespace, reqChannel chan<- []byte) {
-	services := rpc.local.ListServices(nil)
-
-	for _, srv := range services {
-		if instances, err := rpc.local.List(srv.ServiceName, nil); err != nil {
-			rpc.logger.WithFields(log.Fields{
-				"error": err,
-			}).Errorf("Sync Request with no instances for service %s", srv.ServiceName)
-		} else {
-			for _, inst := range instances {
-				payload, _ := json.Marshal(inst)
-				msg, _ := json.Marshal(&replicatedMsg{RepType: REGISTER, Payload: payload})
-				out, _ := json.Marshal(map[string]interface{}{"Namespace": namespace, "Data": msg})
-				reqChannel <- out
-			}
 		}
 	}
 }

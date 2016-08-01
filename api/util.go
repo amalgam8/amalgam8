@@ -20,9 +20,10 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
-	"github.com/amalgam8/controller/middleware"
+	"github.com/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nicksnyder/go-i18n/i18n"
 )
@@ -126,10 +127,10 @@ type ErrorList struct {
 
 // GetTenantID obtains the tenant ID
 func GetTenantID(req *rest.Request) string {
-	tenantID := req.Env[middleware.AuthEnv]
+	tenantID := req.Env[util.Namespace]
 
-	if id, ok := tenantID.(string); ok {
-		return id
+	if namespace, ok := tenantID.(auth.Namespace); ok {
+		return namespace.String()
 	}
 
 	return ""

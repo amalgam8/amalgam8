@@ -23,6 +23,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/api"
+	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
@@ -92,6 +93,8 @@ func controllerMain(conf config.Config) error {
 
 		db := database.NewMemoryCloudantDB()
 		tenantDB = database.NewTenant(db)
+	} else if conf.Database.Type == "cloudant" {
+
 	} else {
 		err = errors.New("unsupported database type")
 		setupHandler.SetError(err)
@@ -124,16 +127,41 @@ func controllerMain(conf config.Config) error {
 		Factory:       factory,
 	})
 
-	n := api.NewNGINX(api.NGINXConfig{
+	nginxAPI := api.NewNGINX(api.NGINXConfig{
 		Reporter:  reporter,
 		Generator: g,
 	})
-	t := api.NewTenant(api.TenantConfig{
+	tenantAPI := api.NewTenant(api.TenantConfig{
 		Reporter: reporter,
 		Manager:  r,
 	})
-	p := api.NewPoll(reporter, c)
-	h := api.NewHealth(reporter)
+	pollAPI := api.NewPoll(reporter, c)
+	healthAPI := api.NewHealth(reporter)
+
+	var authenticator auth.Authenticator
+	if len(conf.AuthModes) > 0 {
+		auths := make([]auth.Authenticator, len(conf.AuthModes))
+		for i, mode := range conf.AuthModes {
+			switch mode {
+			case "trusted":
+				auths[i] = auth.NewTrustedAuthenticator()
+			case "jwt":
+				jwtAuth, err := auth.NewJWTAuthenticator([]byte(conf.JWTSecret))
+				if err != nil {
+					return fmt.Errorf("Failed to create the authentication module: %s", err)
+				}
+				auths[i] = jwtAuth
+			default:
+				return fmt.Errorf("Failed to create the authentication module: unrecognized authentication mode '%s'", err)
+			}
+		}
+		authenticator, err = auth.NewChainAuthenticator(auths)
+		if err != nil {
+			return err
+		}
+	} else {
+		authenticator = auth.DefaultAuthenticator()
+	}
 
 	a := rest.NewApi()
 	a.Use(
@@ -144,17 +172,19 @@ func controllerMain(conf config.Config) error {
 		},
 		&rest.ContentTypeCheckerMiddleware{},
 		&middleware.RequestIDMiddleware{},
-		&middleware.AuthMiddleware{
-			Auth: &middleware.LocalAuth{},
-			Key:  conf.ControlToken,
-		},
 		&middleware.LoggingMiddleware{},
+		middleware.NewRequireHTTPS(middleware.CheckRequest{
+			IsSecure: middleware.IsUsingSecureConnection,
+			Disabled: !conf.RequireHTTPS,
+		}),
 	)
 
-	routes := n.Routes()
-	routes = append(routes, t.Routes()...)
-	routes = append(routes, h.Routes()...)
-	routes = append(routes, p.Routes()...)
+	authMw := &middleware.AuthMiddleware{Authenticator: authenticator}
+
+	routes := nginxAPI.Routes(authMw)
+	routes = append(routes, tenantAPI.Routes(authMw)...)
+	routes = append(routes, healthAPI.Routes()...)
+	routes = append(routes, pollAPI.Routes(authMw)...)
 
 	router, err := rest.MakeRouter(
 		routes...,

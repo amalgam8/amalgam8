@@ -36,10 +36,12 @@ type Database struct {
 type Config struct {
 	Database     Database
 	APIPort      int
-	ControlToken string
 	SecretKey    string
 	PollInterval time.Duration
 	LogLevel     logrus.Level
+	AuthModes    []string
+	JWTSecret    string
+	RequireHTTPS bool
 }
 
 // New config instance
@@ -63,10 +65,12 @@ func New(context *cli.Context) *Config {
 			Host:     "https://" + context.String(dbHost), // FIXME: conditionally add HTTPS
 		},
 		APIPort:      context.Int(apiPort),
-		ControlToken: context.String(controlToken),
 		SecretKey:    context.String(secretKey),
 		PollInterval: context.Duration(pollInterval),
 		LogLevel:     loggingLevel,
+		AuthModes:    context.StringSlice(authModeFlag),
+		JWTSecret:    context.String(jwtSecretFlag),
+		RequireHTTPS: context.Bool(requireHTTPSFlag),
 	}
 }
 
@@ -76,7 +80,6 @@ func (c *Config) Validate() error {
 	validators := []util.ValidatorFunc{
 		util.IsNotEmpty("Database type", c.Database.Type),
 		util.IsInRange("API port", c.APIPort, 1, 65535),
-		util.IsNotEmpty("Control token", c.ControlToken),
 		util.IsNotEmpty("Secret key", c.SecretKey),
 	}
 

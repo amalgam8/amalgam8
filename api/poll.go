@@ -37,10 +37,14 @@ func NewPoll(reporter metrics.Reporter, checker checker.Checker) *Poll {
 }
 
 // Routes for poll API
-func (p *Poll) Routes() []*rest.Route {
-	return []*rest.Route{
+func (p *Poll) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	routes := []*rest.Route{
 		rest.Post("/v1/poll", reportMetric(p.reporter, p.Poll, "poll")),
 	}
+	for _, route := range routes {
+		route.Func = rest.WrapMiddlewares(middlewares, route.Func)
+	}
+	return routes
 }
 
 // Poll Registry for latest changes

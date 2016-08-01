@@ -45,10 +45,15 @@ func NewNGINX(nc NGINXConfig) *NGINX {
 }
 
 // Routes for NGINX API calls
-func (n *NGINX) Routes() []*rest.Route {
-	return []*rest.Route{
+func (n *NGINX) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	routes := []*rest.Route{
 		rest.Get("/v1/nginx", reportMetric(n.reporter, n.GetNGINX, "tenants_nginx")),
 	}
+
+	for _, route := range routes {
+		route.Func = rest.WrapMiddlewares(middlewares, route.Func)
+	}
+	return routes
 }
 
 // GetNGINX returns the NGINX configuration for a given tenant

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/utils/logging"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -38,25 +39,25 @@ func (mw *MetricsMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc
 }
 
 func (mw *MetricsMiddleware) collectMetrics(w rest.ResponseWriter, r *rest.Request) {
-	proto, ok := r.Env[protocol.ProtocolKey].(protocol.Type)
+	proto, ok := r.Env[env.APIProtocol].(protocol.Type)
 	if !ok {
 		return
 	}
 
-	operation, ok := r.Env[protocol.OperationKey].(protocol.Operation)
+	operation, ok := r.Env[env.APIOperation].(protocol.Operation)
 	if !ok {
 		return
 	}
 
 	// Injected by TimerMiddleware
-	latency, ok := r.Env["ELAPSED_TIME"].(*time.Duration)
+	latency, ok := r.Env[env.ElapsedTime].(*time.Duration)
 	if !ok {
 		logging.GetLogger(module).Error("could not find 'ELAPSED_TIME' parameter in HTTP request context")
 		return
 	}
 
 	// Injected by RecorderMiddleware
-	status, ok := r.Env["STATUS_CODE"].(int)
+	status, ok := r.Env[env.StatusCode].(int)
 	if !ok {
 		logging.GetLogger(module).Error("could not find 'STATUS_CODE' parameter in HTTP request context")
 		return

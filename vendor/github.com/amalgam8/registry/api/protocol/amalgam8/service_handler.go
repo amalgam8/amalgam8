@@ -20,6 +20,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/utils/i18n"
 )
 
@@ -27,7 +28,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 	sname := r.PathParam(RouteParamServiceName)
 	if sname == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "service name is required",
 		}).Warn("Failed to lookup service")
 
@@ -38,7 +39,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to lookup service %s", sname)
 		// error is set in routes.catalog()
@@ -47,7 +48,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 
 	if instances, err := catalog.List(sname, nil); err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Errorf("Failed to lookup service %s", sname)
 
@@ -55,7 +56,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 		return
 	} else if instances == nil || len(instances) == 0 {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "no such service name",
 		}).Warnf("Failed to lookup service %s", sname)
 
@@ -67,7 +68,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 			inst, err := copyInstanceWithFilter(sname, si, nil)
 			if err != nil {
 				routes.logger.WithFields(log.Fields{
-					"namespace": r.Env["REMOTE_USER"],
+					"namespace": r.Env[env.Namespace],
 					"error":     err,
 				}).Warnf("Failed to lookup service %s", sname)
 
@@ -79,7 +80,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 
 		if err := w.WriteJson(&InstanceList{ServiceName: sname, Instances: insts}); err != nil {
 			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env["REMOTE_USER"],
+				"namespace": r.Env[env.Namespace],
 				"error":     err,
 			}).Warnf("Failed to encode lookup response for %s", sname)
 
@@ -88,7 +89,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 		}
 
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 		}).Infof("Lookup service %s (%d)", sname, len(insts))
 	}
 }
@@ -97,7 +98,7 @@ func (routes *Routes) listServices(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Error("Failed to list services")
 		// error to user is already set in route.catalog()
@@ -107,7 +108,7 @@ func (routes *Routes) listServices(w rest.ResponseWriter, r *rest.Request) {
 	services := catalog.ListServices(nil)
 	if services == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "services list is nil",
 		}).Error("Failed to list services")
 
@@ -123,7 +124,7 @@ func (routes *Routes) listServices(w rest.ResponseWriter, r *rest.Request) {
 	err := w.WriteJson(listRes)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode services list")
 
@@ -132,6 +133,6 @@ func (routes *Routes) listServices(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("List services (%d)", len(listRes.Services))
 }

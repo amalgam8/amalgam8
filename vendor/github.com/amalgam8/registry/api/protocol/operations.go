@@ -16,6 +16,8 @@ package protocol
 
 import (
 	"github.com/ant0ine/go-json-rest/rest"
+
+	"github.com/amalgam8/registry/api/env"
 )
 
 // Operation represents an operation exposed by the Service Discovery API.
@@ -44,19 +46,13 @@ func (op Operation) String() string {
 	return string(op)
 }
 
-// Keys used in the HTTP request context (r.Env) to store API information
-const (
-	ProtocolKey  = "APIProtocol"
-	OperationKey = "APIOperation"
-)
-
 // APIHandler returns a wrapper HandlerFunc that injects API information into the HTTP request's context (r.Env),
 // before calling the provided HandlerFunc.
-// The given protocol is injected as the ProtocolKey, and the given operation as the OperationKey.
+// The given protocol is injected as the env.APIProtocol, and the given operation as the env.APIOperation.
 func APIHandler(handler rest.HandlerFunc, protocol Type, operation Operation) rest.HandlerFunc {
 	return func(w rest.ResponseWriter, r *rest.Request) {
-		r.Env[ProtocolKey] = protocol
-		r.Env[OperationKey] = operation
+		r.Env[env.APIProtocol] = protocol
+		r.Env[env.APIOperation] = operation
 		handler(w, r)
 	}
 }

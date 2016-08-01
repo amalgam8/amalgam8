@@ -26,6 +26,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/amalgam8/registry/api/protocol/amalgam8"
@@ -61,7 +62,7 @@ type mockCatalog struct {
 	services  []*store.Service
 }
 
-func createCatalog() store.Registry {
+func createCatalogMap() store.CatalogMap {
 	mc := mockCatalog{
 		instances: make(map[string]*store.ServiceInstance),
 		services:  []*store.Service{},
@@ -109,30 +110,30 @@ func (mc *mockCatalog) Register(si *store.ServiceInstance) (*store.ServiceInstan
 	return i, nil
 }
 
-func (mc *mockCatalog) Deregister(iid string) error {
-	_, ok := mc.instances[iid]
+func (mc *mockCatalog) Deregister(iid string) (*store.ServiceInstance, error) {
+	instance, ok := mc.instances[iid]
 	if ok {
 		delete(mc.instances, iid)
-		return nil
+		return instance, nil
 	}
-	return store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
+	return nil, store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
 }
 
-func (mc *mockCatalog) Renew(iid string) error {
+func (mc *mockCatalog) Renew(iid string) (*store.ServiceInstance, error) {
 	_, ok := mc.instances[iid]
 	if ok { // TODO update the ttl?
-		return nil
+		return nil, nil
 	}
-	return store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
+	return nil, store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
 }
 
-func (mc *mockCatalog) SetStatus(iid, status string) error {
+func (mc *mockCatalog) SetStatus(iid, status string) (*store.ServiceInstance, error) {
 	inst, ok := mc.instances[iid]
 	if ok {
 		inst.Status = status
-		return nil
+		return inst, nil
 	}
-	return store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
+	return nil, store.NewError(store.ErrorNoSuchServiceInstance, "unable to locate instance", iid)
 }
 
 func (mc *mockCatalog) List(sn string, predicate store.Predicate) ([]*store.ServiceInstance, error) {
@@ -172,7 +173,7 @@ func (mc *mockCatalog) ListServices(predicate store.Predicate) []*store.Service 
 func defaultServerConfig() *Config {
 	return &Config{
 		HTTPAddressSpec: ":" + port,
-		Registry:        createCatalog(),
+		CatalogMap:      createCatalogMap(),
 	}
 }
 
@@ -244,4 +245,36 @@ func TestUptime(t *testing.T) {
 
 	err = json.Unmarshal(recorder.Body.Bytes(), &hc)
 	assert.Nil(t, err)
+}
+
+//-----------
+// middleware
+//-----------
+
+type testMw struct {
+	count int
+}
+
+func (mw *testMw) MiddlewareFunc(handler rest.HandlerFunc) rest.HandlerFunc {
+	return func(w rest.ResponseWriter, r *rest.Request) {
+		handler(w, r)
+		mw.count++
+	}
+}
+
+func TestExtMiddleware(t *testing.T) {
+	tmw := &testMw{}
+	url := serverURL + uptime.URL()
+	c := defaultServerConfig()
+	c.Middlewares = []rest.Middleware{tmw}
+
+	handler, err := setupServer(c)
+	assert.Nil(t, err)
+	recorder := httptest.NewRecorder()
+
+	req, err := http.NewRequest("GET", url, nil)
+	assert.Nil(t, err)
+	handler.ServeHTTP(recorder, req)
+	assert.Equal(t, recorder.Code, http.StatusOK)
+	assert.EqualValues(t, 1, tmw.count)
 }

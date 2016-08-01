@@ -20,7 +20,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/api/middleware"
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/store"
@@ -34,13 +34,13 @@ const (
 
 // Routes encapsulates information needed for the aykesd protocol routes
 type Routes struct {
-	registry store.Registry
-	logger   *log.Entry
+	catalogMap store.CatalogMap
+	logger     *log.Entry
 }
 
 // New creates a Routes object for the amalgam8 protocol routes
-func New(registry store.Registry) *Routes {
-	return &Routes{registry, logging.GetLogger(module)}
+func New(catalogMap store.CatalogMap) *Routes {
+	return &Routes{catalogMap, logging.GetLogger(module)}
 }
 
 // RouteHandlers returns an array of route handlers
@@ -100,12 +100,12 @@ func (routes *Routes) RouteHandlers(middlewares ...rest.Middleware) []*rest.Rout
 }
 
 func (routes *Routes) catalog(w rest.ResponseWriter, r *rest.Request) store.Catalog {
-	if r.Env[middleware.NamespaceKey] == nil {
+	if r.Env[env.Namespace] == nil {
 		i18n.Error(r, w, http.StatusUnauthorized, i18n.ErrorNamespaceNotFound)
 		return nil
 	}
-	namespace := r.Env[middleware.NamespaceKey].(auth.Namespace)
-	if catalog, err := routes.registry.GetCatalog(namespace); err != nil {
+	namespace := r.Env[env.Namespace].(auth.Namespace)
+	if catalog, err := routes.catalogMap.GetCatalog(namespace); err != nil {
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		return nil
 	} else if catalog == nil {

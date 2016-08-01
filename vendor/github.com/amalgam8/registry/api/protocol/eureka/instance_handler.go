@@ -25,7 +25,7 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/registry/api/protocol"
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/store"
 	"github.com/amalgam8/registry/utils/i18n"
 )
@@ -37,7 +37,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to register instance")
 
@@ -48,7 +48,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	if err = r.DecodeJsonPayload(&reg); err != nil {
 
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to register instance")
 
@@ -63,7 +63,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	if inst.HostName == "" || inst.Application == "" || inst.VIPAddr == "" || inst.IPAddr == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "hostname, application, vipaddress and IPaddress are required",
 		}).Warnf("Failed to register instance %+v", inst)
 
@@ -79,7 +79,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	if !metadataValid {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "metadata is not valid",
 		}).Warnf("Failed to register instance %+v", inst)
 
@@ -101,7 +101,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
@@ -110,7 +110,6 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	si := &store.ServiceInstance{
 		ID:          buildUniqueInstanceID(appid, iid),
-		Protocol:    protocol.Eureka,
 		ServiceName: inst.Application,
 		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
 		Status:      inst.Status,
@@ -122,7 +121,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	if sir, err = catalog.Register(si); err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to register instance %+v", inst)
 
@@ -130,7 +129,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance is nil",
 		}).Warnf("Failed to register instance %+v", inst)
 
@@ -138,7 +137,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	} else if sir.ID == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is empty",
 		}).Warnf("Failed to register instance %s", sir)
 
@@ -147,9 +146,10 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Instance %s registered", sir)
 
+	r.Env[env.ServiceInstance] = sir
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -162,7 +162,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to deregister instance")
 
@@ -173,7 +173,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to deregister instance")
 
@@ -184,7 +184,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to deregister instance %s", iid)
 
@@ -192,9 +192,10 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	}
 
 	uid := buildUniqueInstanceID(appid, iid)
-	if err := catalog.Deregister(uid); err != nil {
+	si, err := catalog.Deregister(uid)
+	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to deregister instance %s", uid)
 
@@ -203,9 +204,10 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Instance id %s deregistered", uid)
 
+	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -213,7 +215,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to renew instance")
 
@@ -224,7 +226,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to renew instance")
 
@@ -236,22 +238,25 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", iid)
 
 		return
 	}
 
-	if err := catalog.Renew(uid); err != nil {
+	si, err := catalog.Renew(uid)
+	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to renew instance %s", uid)
 
 		i18n.Error(r, w, http.StatusGone, i18n.ErrorInstanceNotFound)
 		return
 	}
+
+	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -259,7 +264,7 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to query instancee")
 
@@ -270,7 +275,7 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to query instance")
 
@@ -282,7 +287,7 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", iid)
 
@@ -292,7 +297,7 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	si, err := catalog.Instance(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to query instance %s", uid)
 
@@ -300,11 +305,12 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
+	r.Env[env.ServiceInstance] = si
 	inst := buildInstanceFromRegistry(si)
 	err = w.WriteJson(&InstanceWrapper{inst})
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode instance")
 
@@ -317,7 +323,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to set instances status")
 
@@ -328,7 +334,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "instance id is required",
 		}).Warn("Failed to set instances status")
 
@@ -340,7 +346,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	status := r.URL.Query().Get("value")
 	if status == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "status value is required",
 		}).Warn("Failed to set instances status")
 
@@ -351,7 +357,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to set instance %s status", uid)
 
@@ -361,7 +367,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	si, err := catalog.Instance(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to set instance %s status", uid)
 
@@ -371,7 +377,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 
 	if si.ServiceName != appid {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "Application id does not match",
 		}).Warnf("Failed to set instance %s status. service_name: %s", uid, si.ServiceName)
 
@@ -379,10 +385,10 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	err = catalog.SetStatus(uid, status)
+	si, err = catalog.SetStatus(uid, status)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warnf("Failed to set instance %s status", uid)
 
@@ -391,9 +397,10 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("Instance %s status was changed. old: %s, new: %s", uid, si.Status, status)
 
+	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
 }
 

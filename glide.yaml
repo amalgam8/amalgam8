@@ -42,6 +42,9 @@ import:
   subpackages:
   - i18n
 
+- package: github.com/dgrijalva/jwt-go
+  version: 2.3.0
+
 - package: github.com/pborman/uuid
   version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 
@@ -50,3 +53,6 @@ import:
 
 - package: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+
+- package: github.com/stretchr/testify
+  version: 9f9027faeb0dad515336ed2f28317f9f8f527ab4

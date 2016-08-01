@@ -18,11 +18,13 @@ import (
 	"errors"
 	"net/http"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/manager"
 	"github.com/amalgam8/controller/metrics"
-	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/resources"
+	"github.com/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -47,8 +49,8 @@ func NewTenant(conf TenantConfig) *Tenant {
 }
 
 // Routes for tenant API calls
-func (t *Tenant) Routes() []*rest.Route {
-	return []*rest.Route{
+func (t *Tenant) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	routes := []*rest.Route{
 		rest.Post("/v1/tenants", reportMetric(t.reporter, t.PostTenant, "tenants_create")),
 		rest.Put("/v1/tenants", reportMetric(t.reporter, t.PutTenant, "tenants_update")),
 		rest.Get("/v1/tenants", reportMetric(t.reporter, t.GetTenant, "tenants_read")),
@@ -63,6 +65,12 @@ func (t *Tenant) Routes() []*rest.Route {
 		rest.Post("/v1/rules", reportMetric(t.reporter, t.PostRules, "rules_create")),
 		rest.Put("/v1/rules", reportMetric(t.reporter, t.PutRules, "rules_update")),
 	}
+
+	for _, route := range routes {
+		route.Func = rest.WrapMiddlewares(middlewares, route.Func)
+	}
+
+	return routes
 }
 
 func handleRuleError(w rest.ResponseWriter, req *rest.Request, err error) {
@@ -182,23 +190,18 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 	tenantID := GetTenantID(req)
 	if tenantID == "" {
-		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
-		return errors.New("special error")
+		RestError(w, req, http.StatusBadRequest, "tenant_id_not_provided")
+		return errors.New("tenant_id_not_provided")
 	}
 
 	tenantInfo := resources.TenantInfo{}
 
-	tenantToken := req.Header.Get(middleware.AuthHeader)
+	tenantToken := req.Header.Get(util.AuthHeader)
+	tenantToken = strings.Replace(tenantToken, "Bearer ", "", -1)
 
 	if err = req.DecodeJsonPayload(&tenantInfo); err != nil {
 		RestError(w, req, http.StatusBadRequest, "json_error")
 		return err
-	}
-
-	// Validate input
-	if tenantID == "" {
-		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
-		return errors.New("special error")
 	}
 
 	if err = t.manager.Create(tenantID, tenantToken, tenantInfo); err != nil {
@@ -266,7 +269,7 @@ func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 // GetServiceVersions returns versioning info for a service of a tenant
 func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
-	reqID := req.Header.Get(middleware.RequestIDHeader)
+	reqID := req.Header.Get(util.RequestIDHeader)
 
 	tenantID := GetTenantID(req)
 	if tenantID == "" {
@@ -296,7 +299,7 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 
 // PutServiceVersions adds versioning info for a service of a tenant
 func (t *Tenant) PutServiceVersions(w rest.ResponseWriter, req *rest.Request) error {
-	reqID := req.Header.Get(middleware.RequestIDHeader)
+	reqID := req.Header.Get(util.RequestIDHeader)
 
 	tenantID := GetTenantID(req)
 	if tenantID == "" {
@@ -372,7 +375,7 @@ func (t *Tenant) DeleteTenant(w rest.ResponseWriter, req *rest.Request) error {
 func processError(w rest.ResponseWriter, req *rest.Request, err error) {
 	if err != nil {
 		tenantID := GetTenantID(req)
-		requestID := req.Header.Get(middleware.RequestIDHeader)
+		requestID := req.Header.Get(util.RequestIDHeader)
 
 		log := logrus.WithFields(logrus.Fields{
 			"err":        err,

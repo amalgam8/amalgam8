@@ -15,7 +15,6 @@
 package nginx
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/Sirupsen/logrus"
@@ -29,7 +28,7 @@ var log = logrus.WithFields(logrus.Fields{
 // Nginx manages updates to NGINX configuration
 type Nginx interface {
 	// Update NGINX to run with the provided configuration
-	Update(data []byte) error
+	Update(templateConf clients.NGINXJson) error
 }
 
 type nginx struct {
@@ -60,19 +59,11 @@ func NewNginx(conf Conf) (Nginx, error) {
 }
 
 // Update NGINX to run with the provided configuration
-func (n *nginx) Update(data []byte) error {
+func (n *nginx) Update(templateConf clients.NGINXJson) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
 	var err error
-	templateConf := clients.NGINXJson{}
-	if err = json.Unmarshal(data, &templateConf); err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err":   err,
-			"value": string(data),
-		}).Error("Could not unmarshal object")
-		return err
-	}
 
 	// Determine if NGINX is running
 	running, err := n.service.Running()
@@ -84,7 +75,7 @@ func (n *nginx) Update(data []byte) error {
 	if !running {
 		// NGINX is not running; attempt to start NGINX
 		if err := n.startNginx(); err != nil {
-			log.WithError(err).WithField("config", string(data)).Error("Failed NGINX config")
+			log.WithError(err).Error("Failed to start NGINX")
 			return err
 		}
 	}

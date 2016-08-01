@@ -1,95 +1,154 @@
-// Copyright 2016 IBM Corporation
-//
-//   Licensed under the Apache License, Version 2.0 (the "License");
-//   you may not use this file except in compliance with the License.
-//   You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-//   Unless required by applicable law or agreed to in writing, software
-//   distributed under the License is distributed on an "AS IS" BASIS,
-//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//   See the License for the specific language governing permissions and
-//   limitations under the License.
-
 package checker
 
 import (
+	"strconv"
+	"strings"
+	"sync"
+
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/config"
+	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/router/clients"
 	"github.com/amalgam8/sidecar/router/nginx"
 )
 
-// Listener listens for events from Message Hub and updates NGINX
 type Listener interface {
-	Start() error
-	Stop() error
+	CatalogChange(catalog resources.ServiceCatalog) error
+	RulesChange(proxyConfig resources.ProxyConfig) error
 }
 
 type listener struct {
-	config     *config.Config
-	consumer   Consumer
-	nginx      nginx.Nginx
-	controller clients.Controller
+	catalog     resources.ServiceCatalog
+	proxyConfig resources.ProxyConfig
+	nginx       nginx.Nginx
+	mutex       sync.Mutex
 }
 
-// NewListener new Listener implementation
-func NewListener(config *config.Config, consumer Consumer, c clients.Controller, nginx nginx.Nginx) Listener {
+func NewListener(nginxClient nginx.Nginx) Listener {
 	return &listener{
-		config:     config,
-		consumer:   consumer,
-		nginx:      nginx,
-		controller: c,
+		proxyConfig: resources.ProxyConfig{
+			LoadBalance: "round_robin",
+			Filters: resources.Filters{
+				Versions: []resources.Version{},
+				Rules:    []resources.Rule{},
+			},
+		},
+		nginx: nginxClient,
 	}
 }
 
-// Start listens messages to arrive
-func (l *listener) Start() error {
-	logrus.Info("Listening for messages")
-	for {
-		err := l.listenForUpdate()
-		if err != nil {
-			logrus.WithError(err).Error("Update failed")
-		}
-	}
+func (l *listener) CatalogChange(catalog resources.ServiceCatalog) error {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.catalog = catalog
+	return l.updateNGINX()
 }
 
-// ListenForUpdate sleeps until an event indicating that the rules for this tenant have
-// changed. Once the event occurs we attempt to update our configuration.
-func (l *listener) listenForUpdate() error {
+func (l *listener) RulesChange(proxyConfig resources.ProxyConfig) error {
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
 
-	var msgBytes []byte
-
-	// Sleep until we receive an event indicating that the our rules have changed
-	for {
-		key, value, err := l.consumer.ReceiveEvent()
-		msgBytes = value
-		if err != nil {
-			logrus.WithError(err).Error("Couldn't read from Kafka bus")
-			return err
-		}
-
-		if key == l.config.Tenant.Token {
-
-			logrus.WithFields(logrus.Fields{
-				"key":   key,
-				"value": string(msgBytes),
-			}).Info("Tenant event received")
-			break
-		}
-	}
-
-	// Update our existing NGINX config
-	if err := l.nginx.Update(msgBytes); err != nil {
-		logrus.WithError(err).Error("Could not update NGINX config")
-		return err
-	}
-
-	return nil
+	l.proxyConfig = proxyConfig
+	return l.updateNGINX()
 }
 
-// Stop do any necessary cleanup
-func (l *listener) Stop() error {
-	return nil
+func (l *listener) updateNGINX() error {
+	nginxJSON := l.buildConfig()
+
+	return l.nginx.Update(nginxJSON)
+
+}
+
+func (l *listener) buildConfig() clients.NGINXJson {
+
+	retval := clients.NGINXJson{
+		Upstreams: make(map[string]clients.NGINXUpstream, 0),
+		Services:  make(map[string]clients.NGINXService, 0),
+	}
+	faults := []clients.NGINXFault{}
+	for _, rule := range l.proxyConfig.Filters.Rules {
+		fault := clients.NGINXFault{
+			Delay:            rule.Delay,
+			DelayProbability: rule.DelayProbability,
+			AbortProbability: rule.AbortProbability,
+			AbortCode:        rule.ReturnCode,
+			Source:           rule.Source,
+			Destination:      rule.Destination,
+			Header:           rule.Header,
+			Pattern:          rule.Pattern,
+		}
+		faults = append(faults, fault)
+	}
+	retval.Faults = faults
+
+	types := map[string]string{}
+	for _, service := range l.catalog.Services {
+		upstreams := map[string][]clients.NGINXEndpoint{}
+		for _, endpoint := range service.Endpoints {
+			version := endpoint.Metadata.Version
+			upstreamName := service.Name
+			if version != "" {
+				upstreamName += ":" + version
+			} else {
+				upstreamName += ":" + "UNVERSIONED"
+			}
+
+			types[service.Name] = endpoint.Type
+
+			vals := strings.Split(endpoint.Value, ":")
+			if len(vals) != 2 {
+				logrus.WithFields(logrus.Fields{
+					"endpoint": endpoint,
+					"values":   vals,
+				}).Error("could not parse host and port from service endpoint")
+			}
+			host := vals[0]
+			port, err := strconv.Atoi(vals[1])
+			if err != nil {
+				logrus.WithFields(logrus.Fields{
+					"err":  err,
+					"port": vals[1],
+				}).Error("port not a valid int")
+			}
+
+			versionUpstreams := upstreams[upstreamName]
+			nginxEndpoint := clients.NGINXEndpoint{
+				Host: host,
+				Port: port,
+			}
+			if versionUpstreams == nil {
+				versionUpstreams = []clients.NGINXEndpoint{nginxEndpoint}
+			} else {
+				versionUpstreams = append(versionUpstreams, nginxEndpoint)
+			}
+			upstreams[upstreamName] = versionUpstreams
+		}
+
+		for k, v := range upstreams {
+			retval.Upstreams[k] = clients.NGINXUpstream{
+				Upstreams: v,
+			}
+		}
+	}
+
+	versions := map[string]resources.Version{}
+	for _, version := range l.proxyConfig.Filters.Versions {
+		versions[version.Service] = version
+	}
+
+	for k, v := range types {
+		if version, ok := versions[k]; ok {
+			retval.Services[k] = clients.NGINXService{
+				Default:   version.Default,
+				Selectors: version.Selectors,
+				Type:      v,
+			}
+		} else {
+			retval.Services[k] = clients.NGINXService{
+				Type: v,
+			}
+		}
+	}
+
+	return retval
 }

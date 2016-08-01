@@ -39,6 +39,13 @@ type NGINXEndpoint struct {
 	Port int    `json:"port"`
 }
 
+// Version TODO
+type NGINXVersion struct {
+	Service   string `json:"service"`
+	Default   string `json:"default"`
+	Selectors string `json:"selectors"`
+}
+
 // NGINXFault for representing fault injection for lua
 type NGINXFault struct {
 	Source           string  `json:"source"`

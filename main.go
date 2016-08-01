@@ -18,7 +18,6 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-	"time"
 
 	"fmt"
 
@@ -66,7 +65,7 @@ func sidecarMain(conf config.Config) error {
 
 	logrus.SetLevel(conf.LogLevel)
 
-	if err = conf.Validate(false); err != nil {
+	if err = conf.Validate(); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
 		return err
 	}
@@ -102,10 +101,6 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Register {
-		if err = conf.Validate(true); err != nil {
-			logrus.WithError(err).Error("Validation of config failed")
-			return err
-		}
 		logrus.Info("Registering")
 
 		registryClient, err := client.New(client.Config{
@@ -160,29 +155,10 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	// configBytes, err := ioutil.ReadFile("/etc/nginx/amalgam8.conf")
-	// if err != nil {
-	// 	logrus.WithError(err).Error("Missing /etc/nginx/amalgam8.conf")
-	// 	return err
-	// }
-
-	// configStr := string(configBytes)
-	// configStr = strings.Replace(configStr, "__SERVICE_NAME__", conf.ServiceName, -1)
-
-	// output, err := os.OpenFile("/etc/nginx/amalgam8.conf", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
-	// if err != nil {
-	// 	logrus.WithError(err).Error("Couldn't open /etc/nginx/amalgam8.conf file for editing")
-	// 	return err
-	// }
-
-	// // Write the config
-	// fmt.Fprintf(output, configStr)
-	// output.Close()
-
 	rc := clients.NewController(conf)
 	nc := clients.NewNGINXClient("http://localhost:5813")
 
-	nginx, err := nginx.NewNginx(
+	n, err := nginx.NewNginx(
 		nginx.Conf{
 			ServiceName: conf.ServiceName,
 			Service:     nginx.NewService(),
@@ -196,121 +172,39 @@ func startProxy(conf *config.Config) error {
 		return err
 	}
 
-	err = checkIn(rc, conf)
+	registryClient, err := client.New(client.Config{
+		URL:       conf.Registry.URL,
+		AuthToken: conf.Registry.Token,
+	})
 	if err != nil {
-		logrus.WithError(err).Error("Check in failed")
+		logrus.WithError(err).Error("Could not create registry client")
 		return err
 	}
 
-	// for Kafka enabled tenants we should do both polling and listening
-	if len(conf.Kafka.Brokers) != 0 {
-		go func() {
-			time.Sleep(time.Second * 10)
-			logrus.Info("Attempting to connect to Kafka")
-			var consumer checker.Consumer
-			for {
-				consumer, err = checker.NewConsumer(checker.ConsumerConfig{
-					Brokers:     conf.Kafka.Brokers,
-					Username:    conf.Kafka.Username,
-					Password:    conf.Kafka.Password,
-					ClientID:    conf.Kafka.APIKey,
-					Topic:       "A8_NewRules",
-					SASLEnabled: conf.Kafka.SASL,
-				})
-				if err != nil {
-					logrus.WithError(err).Error("Could not connect to Kafka, trying again . . .")
-					time.Sleep(time.Second * 5) // TODO: exponential falloff?
-				} else {
-					break
-				}
-			}
-			logrus.Info("Successfully connected to Kafka")
+	listener := checker.NewListener(n)
 
-			listener := checker.NewListener(conf, consumer, rc, nginx)
-
-			// listen to Kafka indefinitely
-			if err := listener.Start(); err != nil {
-				logrus.WithError(err).Error("Could not listen to Kafka")
-			}
-		}()
-	}
-
-	poller := checker.NewPoller(conf, rc, nginx)
+	poller := checker.NewPoller(conf, rc, listener)
 	go func() {
 		if err = poller.Start(); err != nil {
 			logrus.WithError(err).Error("Could not poll Controller")
 		}
 	}()
 
+	checker := checker.New(checker.Config{
+		Listener:      listener,
+		RegistyClient: registryClient,
+		Conf:          conf,
+	})
+	go func() {
+		if err = checker.Start(); err != nil {
+			logrus.WithError(err).Error("Could not poll Registry")
+		}
+	}()
+
 	return nil
 }
 
-func getCredentials(controller clients.Controller) (clients.TenantCredentials, error) {
-
-	for {
-		creds, err := controller.GetCredentials()
-		if err != nil {
-			if isRetryable(err) {
-				time.Sleep(time.Second * 5)
-				continue
-			} else {
-				return creds, err
-			}
-		}
-
-		return creds, err
-	}
-}
-
-func registerWithProxy(controller clients.Controller, confNotValidErr error) error {
-	if confNotValidErr != nil {
-		// Config not valid, can't register
-		logrus.WithError(confNotValidErr).Error("Validation of config failed")
-		return confNotValidErr
-	}
-
-	for {
-		err := controller.Register()
-		if err != nil {
-			if isRetryable(err) {
-				time.Sleep(time.Second * 5)
-				continue
-			} else {
-				return err
-			}
-		}
-
-		return err
-	}
-}
-
-func checkIn(controller clients.Controller, conf *config.Config) error {
-
-	confNotValidErr := conf.Validate(true)
-
-	creds, err := getCredentials(controller)
-	if err != nil {
-		// unrecoverable error occurred getting credentials from controller
-		logrus.WithError(err).Error("Could not retrieve credentials")
-		return err
-	}
-
-	// if sidecar already has valid config do not need to set anything
-	if confNotValidErr != nil {
-		logrus.Info("Updating credentials with those from controller")
-		conf.Kafka.APIKey = creds.Kafka.APIKey
-		conf.Kafka.Brokers = creds.Kafka.Brokers
-		conf.Kafka.Password = creds.Kafka.Password
-		conf.Kafka.RestURL = creds.Kafka.RestURL
-		conf.Kafka.SASL = creds.Kafka.SASL
-		conf.Kafka.Username = creds.Kafka.User
-
-		conf.Registry.Token = creds.Registry.Token
-		conf.Registry.URL = creds.Registry.URL
-	}
-	return nil
-}
-
+// TODO move this to controller client?
 func isRetryable(err error) bool {
 
 	if _, ok := err.(*clients.ConnectionError); ok {

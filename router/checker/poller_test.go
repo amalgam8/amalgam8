@@ -18,6 +18,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
@@ -25,20 +26,21 @@ import (
 )
 
 type mockNginx struct {
-	UpdateFunc func([]byte) error
+	UpdateFunc func(clients.NGINXJson) error
 }
 
-func (m *mockNginx) Update(data []byte) error {
-	return m.UpdateFunc(data)
+func (m *mockNginx) Update(nginxJson clients.NGINXJson) error {
+	return m.UpdateFunc(nginxJson)
 }
 
 var _ = Describe("Tenant Poller", func() {
 
 	var (
-		rc *clients.MockController
-		n  *mockNginx
-		c  *config.Config
-		p  *poller
+		rc       *clients.MockController
+		n        *mockNginx
+		c        *config.Config
+		p        *poller
+		listener *MockListener
 
 		updateCount int
 	)
@@ -46,15 +48,20 @@ var _ = Describe("Tenant Poller", func() {
 	BeforeEach(func() {
 		updateCount = 0
 
-		rc = &clients.MockController{
-			ConfigTemplate: clients.NGINXJson{},
-		}
 		n = &mockNginx{
-			UpdateFunc: func(data []byte) error {
+			UpdateFunc: func(nginxJson clients.NGINXJson) error {
 				updateCount++
 				return nil
 			},
 		}
+		listener = &MockListener{
+			mockNginx: n,
+		}
+
+		rc = &clients.MockController{
+			ConfigTemplate: resources.ProxyConfig{},
+		}
+
 		c = &config.Config{
 			Tenant: config.Tenant{
 				Token:     "token",
@@ -62,17 +69,8 @@ var _ = Describe("Tenant Poller", func() {
 				Heartbeat: 30 * time.Second,
 			},
 			Registry: config.Registry{
-				URL:   "http://regsitry",
+				URL:   "http://registry",
 				Token: "sd_token",
-			},
-			Kafka: config.Kafka{
-				Brokers: []string{
-					"http://broker1",
-					"http://broker2",
-					"http://broker3",
-				},
-				Username: "username",
-				Password: "password",
 			},
 			Nginx: config.Nginx{
 				Port:    6379,
@@ -86,8 +84,8 @@ var _ = Describe("Tenant Poller", func() {
 
 		p = &poller{
 			controller: rc,
-			nginx:      n,
 			config:     c,
+			listener:   listener,
 		}
 	})
 
@@ -97,7 +95,7 @@ var _ = Describe("Tenant Poller", func() {
 	})
 
 	It("reports NGINX update failure", func() {
-		n.UpdateFunc = func(data []byte) error {
+		n.UpdateFunc = func(nginxJson clients.NGINXJson) error {
 			return errors.New("Update NGINX failed")
 		}
 

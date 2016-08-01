@@ -29,13 +29,6 @@ const (
 	log             = "log"
 	supervise       = "supervise"
 	tenantToken     = "tenant_token"
-	kafkaToken      = "kafka_token"
-	kafkaUsername   = "kafka_user"
-	kafkaPassword   = "kafka_pass"
-	kafkaBrokers    = "kafka_broker"
-	kafkaRestURL    = "kafka_rest_url"
-	kafkaAdminURL   = "kafka_admin_url"
-	kafkaSASL       = "kafka_sasl"
 	registryToken   = "registry_token"
 	registryURL     = "registry_url"
 	nginxPort       = "nginx_port"
@@ -163,43 +156,6 @@ var TenantFlags = []cli.Flag{
 		Name:   logstashServer,
 		EnvVar: envVar(logstashServer),
 		Usage:  "Logstash target for nginx logs",
-	},
-
-	// Kafka
-	cli.StringFlag{
-		Name:   kafkaUsername,
-		EnvVar: envVar(kafkaUsername),
-		Usage:  "Username for Kafka service",
-	},
-	cli.StringFlag{
-		Name:   kafkaPassword,
-		EnvVar: envVar(kafkaPassword),
-		Usage:  "Password for Kafka service",
-	},
-	cli.StringFlag{
-		Name:   kafkaToken,
-		EnvVar: envVar(kafkaToken),
-		Usage:  "Token for Kafka service",
-	},
-	cli.StringFlag{
-		Name:   kafkaAdminURL,
-		EnvVar: envVar(kafkaAdminURL),
-		Usage:  "Admin URL for Kafka service",
-	},
-	cli.StringFlag{
-		Name:   kafkaRestURL,
-		EnvVar: envVar(kafkaRestURL),
-		Usage:  "REST URL for Kafka service",
-	},
-	cli.BoolFlag{
-		Name:   kafkaSASL,
-		EnvVar: envVar(kafkaSASL),
-		Usage:  "Use SASL/PLAIN authentication for Kafka",
-	},
-	cli.StringSliceFlag{
-		Name:   kafkaBrokers,
-		EnvVar: envVar(kafkaBrokers),
-		Usage:  "Kafka broker",
 	},
 }
 

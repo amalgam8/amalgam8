@@ -17,12 +17,9 @@ package checker
 import (
 	"time"
 
-	"encoding/json"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/router/clients"
-	"github.com/amalgam8/sidecar/router/nginx"
 )
 
 // Poller performs a periodic poll on Controller for changes to the NGINX config
@@ -34,17 +31,17 @@ type Poller interface {
 type poller struct {
 	ticker     *time.Ticker
 	controller clients.Controller
-	nginx      nginx.Nginx
 	config     *config.Config
 	version    *time.Time
+	listener   Listener
 }
 
 // NewPoller creates instance
-func NewPoller(config *config.Config, rc clients.Controller, nginx nginx.Nginx) Poller {
+func NewPoller(config *config.Config, rc clients.Controller, listener Listener) Poller {
 	return &poller{
 		controller: rc,
 		config:     config,
-		nginx:      nginx,
+		listener:   listener,
 	}
 }
 
@@ -80,7 +77,7 @@ func (p *poller) Start() error {
 func (p *poller) poll() error {
 
 	// Get latest config from Controller
-	conf, err := p.controller.GetNGINXConfig(p.version)
+	conf, err := p.controller.GetProxyConfig(p.version)
 	if err != nil {
 		logrus.WithError(err).Error("Call to Controller failed")
 		return err
@@ -91,11 +88,10 @@ func (p *poller) poll() error {
 		return nil
 	}
 
-	confBytes, err := json.Marshal(conf)
-
 	// Update our existing NGINX config
-	if err := p.nginx.Update(confBytes); err != nil {
-		logrus.WithError(err).Error("Could not update NGINX config")
+
+	if err := p.listener.RulesChange(*conf); err != nil {
+		logrus.WithError(err).Error("Listener failed")
 		return err
 	}
 

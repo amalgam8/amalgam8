@@ -15,7 +15,6 @@
 package clients
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -24,42 +23,13 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
 )
 
 // Controller TODO
 type Controller interface {
-	Register() error
-	GetNGINXConfig(version *time.Time) (*NGINXJson, error)
-	GetCredentials() (TenantCredentials, error)
-}
-
-// Registry TODO
-type Registry struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
-}
-
-// Kafka TODO
-type Kafka struct {
-	APIKey   string   `json:"api_key"`
-	AdminURL string   `json:"admin_url"`
-	RestURL  string   `json:"rest_url"`
-	Brokers  []string `json:"brokers"`
-	User     string   `json:"user"`
-	Password string   `json:"password"`
-	SASL     bool     `json:"sasl"`
-}
-
-type tenantInfo struct {
-	Credentials TenantCredentials `json:"credentials"`
-	Port        int               `json:"port"`
-}
-
-// TenantCredentials credentials
-type TenantCredentials struct {
-	Kafka    Kafka    `json:"kafka"`
-	Registry Registry `json:"registry"`
+	GetProxyConfig(version *time.Time) (*resources.ProxyConfig, error)
 }
 
 type controller struct {
@@ -75,85 +45,8 @@ func NewController(conf *config.Config) Controller {
 	}
 }
 
-// Register TODO
-func (c *controller) Register() error {
-
-	bodyJSON := tenantInfo{
-		Credentials: TenantCredentials{
-			Kafka: Kafka{
-				APIKey:   c.config.Kafka.APIKey,
-				User:     c.config.Kafka.Username,
-				Password: c.config.Kafka.Password,
-				Brokers:  c.config.Kafka.Brokers,
-				RestURL:  c.config.Kafka.RestURL,
-				AdminURL: c.config.Kafka.RestURL,
-			},
-			Registry: Registry{
-				URL:   c.config.Registry.URL,
-				Token: c.config.Registry.Token,
-			},
-		},
-		Port: c.config.Nginx.Port,
-	}
-
-	bodyBytes, err := json.Marshal(bodyJSON)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err":    err,
-			"url":    c.config.Controller.URL + "/v1/tenants",
-			"method": "POST",
-		}).Warn("Error marshalling JSON body")
-		return err
-	}
-	reader := bytes.NewReader(bodyBytes)
-
-	req, err := http.NewRequest("POST", c.config.Controller.URL+"/v1/tenants", reader)
-	req.Header.Set("Content-type", "application/json")
-	// TODO set Authorization header
-	req.Header.Set("Authorization", c.config.Tenant.Token)
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-			//			"request_id": reqID,
-		}).Warn("Failed to register with Controller")
-		return &ConnectionError{Message: err.Error()}
-	}
-
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBytes, _ := ioutil.ReadAll(resp.Body)
-		logrus.WithFields(logrus.Fields{
-			"status_code": resp.StatusCode,
-			//			"request_id": reqID,
-			"body": string(respBytes),
-		}).Warn("Controller returned bad response code")
-
-		if resp.Header.Get("request-id") == "" {
-			return &NetworkError{Response: resp}
-		}
-
-		switch resp.StatusCode {
-		case http.StatusNotFound:
-			return &TenantNotFoundError{}
-
-		case http.StatusServiceUnavailable:
-			return &ServiceUnavailable{}
-		case http.StatusConflict:
-			return &ConflictError{}
-		default:
-			return errors.New("Controller returned bad response code") // FIXME: custom error?
-		}
-
-	}
-
-	return nil
-}
-
-func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
-
-	url, err := url.Parse(c.config.Controller.URL + "/v1/nginx")
+func (c *controller) GetProxyConfig(version *time.Time) (*resources.ProxyConfig, error) {
+	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants")
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +64,7 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
 		}).Warn("Error building request to get rules from controller")
 		return nil, err
 	}
-	//TODO set auth header
+	//TODO handle global auth
 	req.Header.Set("Authorization", c.config.Tenant.Token)
 
 	resp, err := c.client.Do(req)
@@ -206,8 +99,8 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
 		return nil, err
 	}
 
-	templateConf := NGINXJson{}
-	if err = json.Unmarshal(body, &templateConf); err != nil {
+	respJSON := &resources.ProxyConfig{}
+	if err = json.Unmarshal(body, respJSON); err != nil {
 		logrus.WithFields(logrus.Fields{
 			"err": err,
 			//			"request_id": reqID,
@@ -215,83 +108,5 @@ func (c *controller) GetNGINXConfig(version *time.Time) (*NGINXJson, error) {
 		return nil, err
 	}
 
-	return &templateConf, nil
-}
-
-func (c *controller) GetCredentials() (TenantCredentials, error) {
-
-	respJSON := struct {
-		Credentials TenantCredentials `json:"credentials"`
-	}{}
-
-	url, err := url.Parse(c.config.Controller.URL + "/v1/tenants")
-	if err != nil {
-		return respJSON.Credentials, err
-	}
-
-	req, err := http.NewRequest("GET", url.String(), nil)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-			//			"request_id": reqID,
-		}).Warn("Error building request to get creds from Controller")
-		return respJSON.Credentials, err
-	}
-	//TODO set auth header
-	req.Header.Set("Authorization", c.config.Tenant.Token)
-
-	resp, err := c.client.Do(req)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-			//			"request_id": reqID,
-		}).Error("Failed to retrieve credentials from Controller")
-		return respJSON.Credentials, &ConnectionError{Message: err.Error()}
-	}
-
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBytes, _ := ioutil.ReadAll(resp.Body)
-		logrus.WithFields(logrus.Fields{
-			"status_code": resp.StatusCode,
-			//			"request_id": reqID,
-			"body": string(respBytes),
-		}).Error("Controller returned bad response code when retrieving credentials")
-
-		if resp.Header.Get("request-id") == "" {
-			return respJSON.Credentials, &NetworkError{Response: resp}
-		}
-
-		switch resp.StatusCode {
-		case http.StatusNotFound:
-			return respJSON.Credentials, &TenantNotFoundError{}
-
-		case http.StatusServiceUnavailable:
-			return respJSON.Credentials, &ServiceUnavailable{}
-
-		default:
-			return respJSON.Credentials, errors.New("Controller returned bad response code when retrieving credentials") // FIXME: custom error?
-		}
-
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-			//			"request_id": reqID,
-		}).Warn("Error reading creds JSON from Controller")
-		return respJSON.Credentials, err
-	}
-
-	err = json.Unmarshal(body, &respJSON)
-	if err != nil {
-		logrus.WithFields(logrus.Fields{
-			"err": err,
-			//			"request_id": reqID,
-		}).Warn("Error reading creds JSON from Controller")
-		return respJSON.Credentials, err
-	}
-
-	return respJSON.Credentials, nil
+	return respJSON, nil
 }

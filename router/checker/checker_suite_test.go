@@ -14,20 +14,14 @@
 
 package checker
 
-// MockConsumer mocks interface
-type MockConsumer struct {
-	CloseError        error
-	ReceiveEventError error
-	ReceiveEventKey   string
-	ReceiveEventValue []byte
-}
+import (
+	"testing"
 
-// ReceiveEvent mocks method
-func (c *MockConsumer) ReceiveEvent() (string, []byte, error) {
-	return c.ReceiveEventKey, c.ReceiveEventValue, c.ReceiveEventError
-}
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+)
 
-// Close mocks method
-func (c *MockConsumer) Close() error {
-	return c.CloseError
+func TestConfig(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Checker Suite")
 }

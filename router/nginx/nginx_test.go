@@ -17,8 +17,6 @@ package nginx
 import (
 	"errors"
 
-	"encoding/json"
-
 	"github.com/amalgam8/sidecar/router/clients"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -61,7 +59,7 @@ var _ = Describe("NGINX", func() {
 		c  *configMock
 		s  *serviceMock
 		n  Nginx
-		r  []byte
+		r  clients.NGINXJson
 		nc clients.MockNginx
 	)
 
@@ -137,9 +135,6 @@ var _ = Describe("NGINX", func() {
 		//	},
 		//}
 
-		templ := clients.NGINXJson{}
-		r, err = json.Marshal(&templ)
-		Expect(err).ToNot(HaveOccurred())
 	})
 
 	Context("NGINX is not running", func() {

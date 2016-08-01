@@ -40,8 +40,10 @@ CONTROLLER_HOSTNAME=myamalgam8-controller
 REGISTRY_HOSTNAME=myamalgam8-registry
 BOOKINFO_HOSTNAME=myamalgam8-bookinfo
 
-CONTROLLER_URL=https://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
-REGISTRY_URL=https://${REGISTRY_HOSTNAME}.${ROUTES_DOMAIN}
+###NOTE: Use HTTP and not HTTPS for the controller and registry URLs.
+CONTROLLER_URL=http://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
+REGISTRY_URL=http://${REGISTRY_HOSTNAME}.${ROUTES_DOMAIN}
+
 BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
 
 #################################################################################

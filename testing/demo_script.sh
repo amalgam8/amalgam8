@@ -1,5 +1,6 @@
 #!/bin/bash
-
+a8ctl service-list
+sleep 2
 a8ctl rule-clear
 sleep 2
 ######Version Routing##############
@@ -112,13 +113,13 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 
-passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l)
+passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
 if [ "$passes" != "3" ]; then
     echo "Gremlin tests failed: result does not have the expected number of passing assertions"
     cat /tmp/gremlin_results.txt
     exit 1
 fi
-failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l)
+failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
 if [ "$failures" != "1" ]; then
     echo "Gremlin tests failed: result does not have the expected number of failing assertions"
     cat /tmp/gremlin_results.txt

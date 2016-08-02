@@ -128,7 +128,7 @@ var TenantFlags = []cli.Flag{
 	cli.DurationFlag{
 		Name:   registryPoll,
 		EnvVar: envVar(registryPoll),
-		Value:  time.Duration(8 * time.Second),
+		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
 
@@ -149,7 +149,7 @@ var TenantFlags = []cli.Flag{
 	cli.DurationFlag{
 		Name:   controllerPoll,
 		EnvVar: envVar(controllerPoll),
-		Value:  time.Duration(8 * time.Second),
+		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
 	cli.StringFlag{

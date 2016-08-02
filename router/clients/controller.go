@@ -22,10 +22,11 @@ import (
 	"net/url"
 	"time"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
-	"fmt"
 )
 
 // Controller TODO

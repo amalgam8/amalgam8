@@ -37,7 +37,7 @@ type Tenant struct {
 type Registry struct {
 	URL   string
 	Token string
-	Poll time.Duration
+	Poll  time.Duration
 }
 
 // Nginx stores NGINX configuration
@@ -168,7 +168,8 @@ func (c *Config) Validate() error {
 		)
 	}
 
-	validators = append(validators, IsNotEmpty("Registry token", c.Registry.Token), IsValidURL("Registry URL", c.Registry.URL))
+	// Registry URL is needed for both proxying and registering.  Registry token is not required in all auth cases
+	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))
 
 	if c.Register {
 		validators = append(validators,

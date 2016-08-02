@@ -31,6 +31,7 @@ const (
 	tenantToken     = "tenant_token"
 	registryToken   = "registry_token"
 	registryURL     = "registry_url"
+	registryPoll    = "registry_poll"
 	nginxPort       = "nginx_port"
 	controllerURL   = "controller_url"
 	controllerPoll  = "controller_poll"
@@ -129,6 +130,12 @@ var TenantFlags = []cli.Flag{
 		EnvVar: envVar(registryToken),
 		Usage:  "API token for Regsitry",
 	},
+	cli.DurationFlag{
+		Name:   registryPoll,
+		EnvVar: envVar(registryPoll),
+		Value:  time.Duration(8 * time.Second),
+		Usage:  "Interval for polling Controller",
+	},
 
 	// NGINX
 	cli.IntFlag{
@@ -147,7 +154,7 @@ var TenantFlags = []cli.Flag{
 	cli.DurationFlag{
 		Name:   controllerPoll,
 		EnvVar: envVar(controllerPoll),
-		Value:  time.Duration(15 * time.Second),
+		Value:  time.Duration(8 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
 

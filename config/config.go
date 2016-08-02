@@ -38,6 +38,7 @@ type Tenant struct {
 type Registry struct {
 	URL   string
 	Token string
+	Poll time.Duration
 }
 
 // Nginx stores NGINX configuration
@@ -130,6 +131,7 @@ func New(context *cli.Context) *Config {
 		Registry: Registry{
 			URL:   context.String(registryURL),
 			Token: context.String(registryToken),
+			Poll:  context.Duration(registryPoll),
 		},
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),

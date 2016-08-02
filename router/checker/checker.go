@@ -69,7 +69,7 @@ func (c *checker) Start() error {
 
 	// TODO make Registry polling interval configurable
 	// Create new ticker
-	c.ticker = time.NewTicker(c.config.Controller.Poll)
+	c.ticker = time.NewTicker(c.config.Registry.Poll)
 
 	// Do initial poll
 	if err := c.check(); err != nil {

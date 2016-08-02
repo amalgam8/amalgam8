@@ -16,7 +16,6 @@ helloworld-v1:
   image: amalgam8/a8-examples-helloworld-sidecar:v1-alpine
   environment:
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_REGISTRY_TOKEN=local
     - A8_SERVICE=helloworld:v1
     - A8_LOG=false
     - A8_PROXY=false
@@ -28,7 +27,6 @@ helloworld-v2:
   image: amalgam8/a8-examples-helloworld-sidecar:v2-alpine
   environment:
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_REGISTRY_TOKEN=local
     - A8_SERVICE=helloworld:v2
     - A8_LOG=false
     - A8_PROXY=false

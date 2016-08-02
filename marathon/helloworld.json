@@ -23,7 +23,6 @@
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
-			    "A8_REGISTRY_TOKEN" : "local",
 			    "A8_SERVICE" : "helloworld:v1"
 		    },
 		    "instances": 2,
@@ -49,7 +48,6 @@
 		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
-			    "A8_REGISTRY_TOKEN" : "local",
 			    "A8_SERVICE" : "helloworld:v2"
 		    },
 		    "instances": 2,

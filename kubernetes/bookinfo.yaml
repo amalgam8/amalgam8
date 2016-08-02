@@ -47,8 +47,6 @@ spec:
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_REGISTRY_TOKEN
-          value: local
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -91,8 +89,6 @@ spec:
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_REGISTRY_TOKEN
-          value: local
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -129,8 +125,12 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
-          value: local
+        - name: A8_CONTROLLER_POLL
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_SERVICE
           value: reviews:v1
         - name: A8_LOGSTASH_SERVER
@@ -171,8 +171,12 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
-          value: local
+        - name: A8_CONTROLLER_POLL
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_SERVICE
           value: reviews:v2
         - name: A8_LOGSTASH_SERVER
@@ -213,8 +217,12 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
-          value: local
+        - name: A8_CONTROLLER_POLL
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_SERVICE
           value: reviews:v3
         - name: A8_LOGSTASH_SERVER
@@ -255,8 +263,12 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
-          value: local
+        - name: A8_CONTROLLER_POLL
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_SERVICE
           value: productpage:v1
         - name: A8_LOGSTASH_SERVER

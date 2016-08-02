@@ -74,7 +74,7 @@ if [ "$1" == "start" ]; then
     "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: Bearer local" -d @- "http://${CONTROLLER_URL}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     docker-compose -f $SCRIPTDIR/controlplane.yaml kill

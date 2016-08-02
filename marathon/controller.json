@@ -15,7 +15,6 @@
 	}
     },
     "env": {
-	"A8_POLL_INTERVAL":"5s",
 	"A8_LOG_LEVEL":"info"
     },
     "instances": 1,

@@ -14,9 +14,7 @@
 	    ]
 	}
     },
-    "args" : [
-	"-auth_mode", "trusted"
-    ],
+    "args" : [],
     "instances": 1,
     "cpus": 0.1,
     "mem": 128

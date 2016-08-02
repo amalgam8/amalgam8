@@ -50,8 +50,6 @@ spec:
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_REGISTRY_TOKEN
-          value: local
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -97,8 +95,6 @@ spec:
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_REGISTRY_TOKEN
-          value: local
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:

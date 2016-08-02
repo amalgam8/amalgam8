@@ -34,16 +34,54 @@ if [ "$1" == "start" ]; then
     cat $SCRIPTDIR/controller.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Waiting for controller to initialize..."
     sleep 20
-    AR="${MYIP}:31300"
-    AC="${MYIP}:31200"
-    KA="${MYIP}:9092"
+    REGISTRY_URL="${MYIP}:31300"
+    CONTROLLER_URL="${MYIP}:31200"
+
+    # Wait for controller route to set up
+    echo "Waiting for controller route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Controller route is set to '$CONTROLLER_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+    # Wait for registry route to set up
+    echo "Waiting for registry route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Registry route is set to '$REGISTRY_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
     "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: local" -d @- "http://${AC}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+a8ctl service-list
+sleep 2
 a8ctl rule-clear
 sleep 2
 ######Version Routing##############
@@ -13,7 +17,7 @@ sleep 10
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
 curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v1.html
 
-diff -u productpage_v1.html /tmp/productpage_v1.html
+diff -u $SCRIPTDIR/productpage_v1.html /tmp/productpage_v1.html
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
@@ -24,7 +28,7 @@ echo "works!"
 echo -n "injecting traffic for user=jason, expecting productpage_v2.."
 curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.html
 
-diff -u productpage_v2.html /tmp/productpage_v2.html
+diff -u $SCRIPTDIR/productpage_v2.html /tmp/productpage_v2.html
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
@@ -50,7 +54,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-diff -u productpage_v1.html /tmp/productpage_no_rulematch.html
+diff -u $SCRIPTDIR/productpage_v1.html /tmp/productpage_no_rulematch.html
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
@@ -71,7 +75,7 @@ if [ $delta -gt 8 -o $delta -lt 5 ]; then
     exit 1
 fi
 
-diff -u productpage_rulematch.html /tmp/productpage_rulematch.html
+diff -u $SCRIPTDIR/productpage_rulematch.html /tmp/productpage_rulematch.html
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_rulematch.html after injecting fault rule for user=jason in fault injection test phase"
@@ -96,7 +100,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-diff -u productpage_v2.html /tmp/productpage_v2.html
+diff -u $SCRIPTDIR/productpage_v2.html /tmp/productpage_v2.html
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2.html after clearing fault rules for user=jason in fault injection test phase"
@@ -106,19 +110,19 @@ echo "works!"
 
 #######Gremlin
 echo "Testing gremlin recipe.."
-a8ctl recipe-run --topology ../apps/bookinfo/topology.json --scenarios ../apps/bookinfo/gremlins.json --checks ../apps/bookinfo/checklist.json --run-load-script ./inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
+a8ctl recipe-run --topology $SCRIPTDIR/../apps/bookinfo/topology.json --scenarios $SCRIPTDIR/../apps/bookinfo/gremlins.json --checks $SCRIPTDIR/../apps/bookinfo/checklist.json --run-load-script $SCRIPTDIR/inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
 if [ $? -gt 0 ]; then
     echo "a8ctl recipe-run exited with non-zero status. Either load injection failed or there was an error in a8ctl"
     exit 1
 fi
 
-passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l)
+passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
 if [ "$passes" != "3" ]; then
     echo "Gremlin tests failed: result does not have the expected number of passing assertions"
     cat /tmp/gremlin_results.txt
     exit 1
 fi
-failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l)
+failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
 if [ "$failures" != "1" ]; then
     echo "Gremlin tests failed: result does not have the expected number of failing assertions"
     cat /tmp/gremlin_results.txt

@@ -52,7 +52,7 @@ bluemix ic group-create --name bookinfo_productpage \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
+  --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -105,7 +105,7 @@ bluemix ic group-create --name bookinfo_reviews1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
+  --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -120,7 +120,7 @@ bluemix ic group-create --name bookinfo_reviews2 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
+  --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -135,7 +135,7 @@ bluemix ic group-create --name bookinfo_reviews3 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
+  --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
   --env A8_LOG=false \
@@ -154,7 +154,7 @@ bluemix ic group-create --name bookinfo_gateway \
   --hostname $BOOKINFO_HOSTNAME \
   --domain $ROUTES_DOMAIN \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
-  --env A8_TENANT_TOKEN=$CONTROLLER_TOKEN \
+  --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_LOG=false \
   --env A8_REGISTER=false \

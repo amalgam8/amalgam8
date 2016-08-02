@@ -17,13 +17,12 @@
     "cmd" : "a8sidecar --register=false --supervise=false",
     "env": {
 		"A8_SERVICE" : "gateway",
-		"A8_TENANT_TOKEN":"local",
 		"A8_REGISTRY_URL": "http://__REPLACEME__:31300",
-		"A8_REGISTRY_TOKEN" : "local",
+		"A8_REGISTRY_POLL" : "5s",
         "A8_LOGSTASH_SERVER" : "'__REPLACEME__:8092'",
 		"A8_CONTROLLER_URL":"http://__REPLACEME__:31200",
-		"A8_CONTROLLER_POLL" : "15s",
-    },
+		"A8_CONTROLLER_POLL" : "5s"
+	},
     "instances": 1,
     "cpus": 0.1,
     "mem": 256

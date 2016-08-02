@@ -50,6 +50,5 @@ spec:
       - name: registry
         image: amalgam8/a8-registry
         imagePullPolicy: IfNotPresent
-        args: ["-auth_mode=trusted"]
         ports:
         - containerPort: 8080

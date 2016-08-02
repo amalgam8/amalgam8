@@ -31,9 +31,48 @@ if [ "$1" == "start" ]; then
     echo "Starting multi-tenant controller"
     kubectl create -f $SCRIPTDIR/$cfile
     echo "Waiting for controller to initialize..."
-    sleep 60
-    AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    AC=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    sleep 5
+    REGISTRY_URL=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    CONTROLLER_URL=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+
+        # Wait for controller route to set up
+    echo "Waiting for controller route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Controller route is set to '$CONTROLLER_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+    # Wait for registry route to set up
+    echo "Waiting for registry route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Registry route is set to '$REGISTRY_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {

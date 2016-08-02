@@ -43,7 +43,6 @@ registry:
   image: amalgam8/a8-registry
   ports:
     - "31300:8080"
-  command: -auth_mode=trusted
   container_name: registry
 
 controller:

@@ -56,7 +56,6 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 			c = &Config{
 				Tenant: Tenant{
-					Token:     "token",
 					TTL:       60 * time.Second,
 					Heartbeat: 30 * time.Second,
 				},
@@ -69,8 +68,9 @@ var _ = Describe("Config", func() {
 					Logging: false,
 				},
 				Controller: Controller{
-					URL:  "http://controller",
-					Poll: 60 * time.Second,
+					Token: "token",
+					URL:   "http://controller",
+					Poll:  60 * time.Second,
 				},
 				Proxy:        true,
 				Register:     true,

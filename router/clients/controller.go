@@ -25,6 +25,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/config"
+	"fmt"
 )
 
 // Controller TODO
@@ -65,8 +66,7 @@ func (c *controller) GetProxyConfig(version *time.Time) (*resources.ProxyConfig,
 		}).Warn("Error building request to get rules from controller")
 		return nil, err
 	}
-	//TODO handle global auth
-	req.Header.Set("Authorization", c.config.Tenant.Token)
+	c.setAuthHeader(req)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -110,4 +110,12 @@ func (c *controller) GetProxyConfig(version *time.Time) (*resources.ProxyConfig,
 	}
 
 	return respJSON, nil
+}
+
+func (c *controller) setAuthHeader(req *http.Request) {
+	// if token value is empty, assumes global auth is enabled on controller and does
+	// not add the Authorization header
+	if c.config.Controller.Token != "" {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", c.config.Controller.Token))
+	}
 }

@@ -137,7 +137,7 @@ A8_ENDPOINT_TYPE=http|https|tcp|udp|user
 A8_PROXY=true
 A8_LOG=false
 A8_CONTROLLER_URL=http://a8controllerURL
-A8_TENANT_TOKEN=a8controller_auth_token
+A8_CONTROLLER_TOKEN=a8controller_auth_token
 A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
 ```
 
@@ -227,7 +227,7 @@ line flags.
 | A8_PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
 | A8_LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
 | A8_SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
-| A8_TENANT_TOKEN | --tenant_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
+| A8_CONTROLLER_TOKEN | --controller_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
 | A8_TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
 | A8_TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
 | A8_REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |

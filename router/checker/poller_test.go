@@ -64,7 +64,6 @@ var _ = Describe("Tenant Poller", func() {
 
 		c = &config.Config{
 			Tenant: config.Tenant{
-				Token:     "token",
 				TTL:       60 * time.Second,
 				Heartbeat: 30 * time.Second,
 			},
@@ -77,8 +76,9 @@ var _ = Describe("Tenant Poller", func() {
 				Logging: false,
 			},
 			Controller: config.Controller{
-				URL:  "http://controller",
-				Poll: 60 * time.Second,
+				Token: "token",
+				URL:   "http://controller",
+				Poll:  60 * time.Second,
 			},
 		}
 

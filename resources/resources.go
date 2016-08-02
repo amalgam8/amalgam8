@@ -124,17 +124,6 @@ type Registry struct {
 	Token string `json:"token"`
 }
 
-// Kafka TODO
-type Kafka struct {
-	APIKey   string   `json:"api_key"`
-	AdminURL string   `json:"admin_url"`
-	RestURL  string   `json:"rest_url"`
-	Brokers  []string `json:"brokers"`
-	User     string   `json:"user"`
-	Password string   `json:"password"`
-	SASL     bool     `json:"sasl"`
-}
-
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry

@@ -12,22 +12,16 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package checker
+package clients
 
 import (
-	"github.com/amalgam8/controller/resources"
-	"github.com/amalgam8/sidecar/router/clients"
-	"github.com/amalgam8/sidecar/router/nginx"
+	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-type MockListener struct {
-	mockNginx nginx.Nginx
-}
-
-func (m *MockListener) CatalogChange(catalog resources.ServiceCatalog) error {
-	return m.mockNginx.Update(clients.NGINXJson{})
-}
-
-func (m *MockListener) RulesChange(proxyConfig resources.ProxyConfig) error {
-	return m.mockNginx.Update(clients.NGINXJson{})
+func TestPackage(t *testing.T) {
+	RegisterFailHandler(Fail)
+	RunSpecs(t, "Poll Suite")
 }

@@ -22,7 +22,7 @@ import (
 	"syscall"
 )
 
-// Service provides management operations for NGINX service
+// Service provides management operations for the NGINX service
 type Service interface {
 	Start() error
 	Reload() error
@@ -57,7 +57,7 @@ func (s *service) Reload() error {
 	return nil
 }
 
-// Running returns whether or not the NGINX service is currently running
+// Running indicates whether or not the NGINX service is currently running
 func (s *service) Running() (bool, error) {
 	pidBytes, err := ioutil.ReadFile("/var/run/nginx.pid")
 	if err != nil {

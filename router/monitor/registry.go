@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package checker
+package monitor
 
 import (
 	"reflect"
@@ -25,40 +25,37 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/registry/client"
-	"github.com/amalgam8/sidecar/config"
 )
 
-// Checker client
-type Checker interface {
-	Start() error
-	Stop() error
+type RegistryListener interface {
+	CatalogChange(catalog resources.ServiceCatalog) error
 }
 
-type checker struct {
-	config         *config.Config
+type registryMonitor struct {
+	pollInterval   time.Duration
 	registryClient client.Discovery
 	cachedCatalog  resources.ServiceCatalog
-	listener       Listener
+	listener       RegistryListener
 	ticker         *time.Ticker
 }
 
 // Config options
-type Config struct {
-	Conf           *config.Config
+type RegistryConfig struct {
+	PollInterval   time.Duration
 	RegistryClient client.Discovery
-	Listener       Listener
+	Listener       RegistryListener
 }
 
 // New instantiates new instance
-func New(conf Config) Checker {
-	return &checker{
+func NewRegistry(conf RegistryConfig) Monitor {
+	return &registryMonitor{
 		listener:       conf.Listener,
 		registryClient: conf.RegistryClient,
-		config:         conf.Conf,
+		pollInterval:   conf.PollInterval,
 	}
 }
 
-func (c *checker) Start() error {
+func (c *registryMonitor) Start() error {
 	// Stop existing ticker if necessary
 	if c.ticker != nil {
 		if err := c.Stop(); err != nil {
@@ -67,9 +64,8 @@ func (c *checker) Start() error {
 		}
 	}
 
-	// TODO make Registry polling interval configurable
 	// Create new ticker
-	c.ticker = time.NewTicker(c.config.Registry.Poll)
+	c.ticker = time.NewTicker(c.pollInterval)
 
 	// Do initial poll
 	if err := c.check(); err != nil {
@@ -86,9 +82,9 @@ func (c *checker) Start() error {
 	return nil
 }
 
-func (c *checker) check() error {
+func (c *registryMonitor) check() error {
 	// Get newest catalog from Registry
-	latestCatalog, err := c.getLatestCatalog(c.config.Registry)
+	latestCatalog, err := c.getLatestCatalog()
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
@@ -109,7 +105,7 @@ func (c *checker) check() error {
 }
 
 // catalogsEqual
-func (c *checker) catalogsEqual(a, b resources.ServiceCatalog) bool {
+func (c *registryMonitor) catalogsEqual(a, b resources.ServiceCatalog) bool {
 	equal := reflect.DeepEqual(a.Services, b.Services)
 	logrus.WithFields(logrus.Fields{
 		"a":     a,
@@ -121,7 +117,7 @@ func (c *checker) catalogsEqual(a, b resources.ServiceCatalog) bool {
 
 // getLatestCatalog
 // FIXME: is this conversion still necessary?
-func (c *checker) getLatestCatalog(sd config.Registry) (resources.ServiceCatalog, error) {
+func (c *registryMonitor) getLatestCatalog() (resources.ServiceCatalog, error) {
 	catalog := resources.ServiceCatalog{}
 
 	instances, err := c.registryClient.ListInstances(client.InstanceFilter{})
@@ -164,8 +160,8 @@ func (c *checker) getLatestCatalog(sd config.Registry) (resources.ServiceCatalog
 	return catalog, nil
 }
 
-// Stop halts the periodic poll of Controller
-func (c *checker) Stop() error {
+// Stop halts the periodic poll of the registry
+func (c *registryMonitor) Stop() error {
 	// Stop ticker if necessary
 	if c.ticker != nil {
 		c.ticker.Stop()

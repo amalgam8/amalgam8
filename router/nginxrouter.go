@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package checker
+package router
 
 import (
 	"strconv"
@@ -22,23 +22,24 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/router/clients"
+	"github.com/amalgam8/sidecar/router/monitor"
 	"github.com/amalgam8/sidecar/router/nginx"
 )
 
-type Listener interface {
-	CatalogChange(catalog resources.ServiceCatalog) error
-	RulesChange(proxyConfig resources.ProxyConfig) error
+type NGINXRouter interface {
+	monitor.ControllerListener
+	monitor.RegistryListener
 }
 
-type listener struct {
+type nginxRouter struct {
 	catalog     resources.ServiceCatalog
 	proxyConfig resources.ProxyConfig
 	nginx       nginx.Nginx
 	mutex       sync.Mutex
 }
 
-func NewListener(nginxClient nginx.Nginx) Listener {
-	return &listener{
+func NewNGINXRouter(nginxClient nginx.Nginx) NGINXRouter {
+	return &nginxRouter{
 		proxyConfig: resources.ProxyConfig{
 			LoadBalance: "round_robin",
 			Filters: resources.Filters{
@@ -50,7 +51,7 @@ func NewListener(nginxClient nginx.Nginx) Listener {
 	}
 }
 
-func (l *listener) CatalogChange(catalog resources.ServiceCatalog) error {
+func (l *nginxRouter) CatalogChange(catalog resources.ServiceCatalog) error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
@@ -58,7 +59,7 @@ func (l *listener) CatalogChange(catalog resources.ServiceCatalog) error {
 	return l.updateNGINX()
 }
 
-func (l *listener) RulesChange(proxyConfig resources.ProxyConfig) error {
+func (l *nginxRouter) RuleChange(proxyConfig resources.ProxyConfig) error {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
@@ -66,16 +67,13 @@ func (l *listener) RulesChange(proxyConfig resources.ProxyConfig) error {
 	return l.updateNGINX()
 }
 
-func (l *listener) updateNGINX() error {
+func (l *nginxRouter) updateNGINX() error {
 	nginxJSON := l.buildConfig()
-
 	return l.nginx.Update(nginxJSON)
-
 }
 
-func (l *listener) buildConfig() clients.NGINXJson {
-
-	retval := clients.NGINXJson{
+func (l *nginxRouter) buildConfig() clients.NGINXJson {
+	conf := clients.NGINXJson{
 		Upstreams: make(map[string]clients.NGINXUpstream, 0),
 		Services:  make(map[string]clients.NGINXService, 0),
 	}
@@ -93,7 +91,7 @@ func (l *listener) buildConfig() clients.NGINXJson {
 		}
 		faults = append(faults, fault)
 	}
-	retval.Faults = faults
+	conf.Faults = faults
 
 	types := map[string]string{}
 	for _, service := range l.catalog.Services {
@@ -139,7 +137,7 @@ func (l *listener) buildConfig() clients.NGINXJson {
 		}
 
 		for k, v := range upstreams {
-			retval.Upstreams[k] = clients.NGINXUpstream{
+			conf.Upstreams[k] = clients.NGINXUpstream{
 				Upstreams: v,
 			}
 		}
@@ -152,17 +150,17 @@ func (l *listener) buildConfig() clients.NGINXJson {
 
 	for k, v := range types {
 		if version, ok := versions[k]; ok {
-			retval.Services[k] = clients.NGINXService{
+			conf.Services[k] = clients.NGINXService{
 				Default:   version.Default,
 				Selectors: version.Selectors,
 				Type:      v,
 			}
 		} else {
-			retval.Services[k] = clients.NGINXService{
+			conf.Services[k] = clients.NGINXService{
 				Type: v,
 			}
 		}
 	}
 
-	return retval
+	return conf
 }

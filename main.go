@@ -27,8 +27,9 @@ import (
 	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/register"
-	"github.com/amalgam8/sidecar/router/checker"
+	"github.com/amalgam8/sidecar/router"
 	"github.com/amalgam8/sidecar/router/clients"
+	"github.com/amalgam8/sidecar/router/monitor"
 	"github.com/amalgam8/sidecar/router/nginx"
 	"github.com/amalgam8/sidecar/supervisor"
 	"github.com/codegangsta/cli"
@@ -155,13 +156,13 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	rc := clients.NewController(conf)
 	nc := clients.NewNGINXClient("http://localhost:5813")
+	rc := clients.NewController(conf)
 
 	n, err := nginx.NewNginx(
-		nginx.Conf{
-			Service:     nginx.NewService(),
-			NGINXClient: nc,
+		nginx.Config{
+			Service: nginx.NewService(),
+			Client:  nc,
 		},
 	)
 	if err != nil {
@@ -178,43 +179,29 @@ func startProxy(conf *config.Config) error {
 		return err
 	}
 
-	listener := checker.NewListener(n)
+	nginxRouter := router.NewNGINXRouter(n)
 
-	poller := checker.NewPoller(conf, rc, listener)
+	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
+		Client:       rc,
+		Listener:     nginxRouter,
+		PollInterval: conf.Controller.Poll,
+	})
 	go func() {
-		if err = poller.Start(); err != nil {
+		if err = controllerMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Controller poll failed")
 		}
 	}()
 
-	checker := checker.New(checker.Config{
-		Listener:       listener,
+	registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
+		PollInterval:   conf.Registry.Poll,
+		Listener:       nginxRouter,
 		RegistryClient: registryClient,
-		Conf:           conf,
 	})
 	go func() {
-		if err = checker.Start(); err != nil {
+		if err = registryMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Registry poll failed")
 		}
 	}()
 
 	return nil
-}
-
-// TODO move this to controller client?
-func isRetryable(err error) bool {
-
-	if _, ok := err.(*clients.ConnectionError); ok {
-		return true
-	}
-
-	if _, ok := err.(*clients.NetworkError); ok {
-		return true
-	}
-
-	if _, ok := err.(*clients.ServiceUnavailable); ok {
-		return true
-	}
-
-	return false
 }

@@ -35,20 +35,20 @@ type nginx struct {
 	service     Service
 	serviceName string
 	mutex       sync.Mutex
-	nginxClient clients.NGINX
+	client      clients.NGINX
 }
 
-// Conf for creating new NGINX interface
-type Conf struct {
-	Service     Service
-	NGINXClient clients.NGINX
+// Config for creating new NGINX interface
+type Config struct {
+	Service Service
+	Client  clients.NGINX
 }
 
 // NewNginx creates new Nginx instance
-func NewNginx(conf Conf) (Nginx, error) {
+func NewNginx(conf Config) (Nginx, error) {
 	return &nginx{
-		service:     conf.Service,
-		nginxClient: conf.NGINXClient,
+		service: conf.Service,
+		client:  conf.Client,
 	}, nil
 }
 
@@ -74,7 +74,7 @@ func (n *nginx) Update(templateConf clients.NGINXJson) error {
 		}
 	}
 
-	if err = n.nginxClient.UpdateHTTPUpstreams(templateConf); err != nil {
+	if err = n.client.UpdateHTTPUpstreams(templateConf); err != nil {
 		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
 		return err
 	}

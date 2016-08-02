@@ -82,9 +82,9 @@ var _ = Describe("NGINX", func() {
 		}
 
 		n, err = NewNginx(
-			Conf{
-				Service:     s,
-				NGINXClient: &nc,
+			Config{
+				Service: s,
+				Client:  &nc,
 			},
 		)
 		Expect(err).ToNot(HaveOccurred())

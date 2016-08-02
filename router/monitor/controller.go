@@ -12,41 +12,44 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package checker
+package monitor
 
 import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/sidecar/config"
+	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/router/clients"
 )
 
-// Poller performs a periodic poll on Controller for changes
-type Poller interface {
-	Start() error
-	Stop() error
+type ControllerListener interface {
+	RuleChange(proxyConfig resources.ProxyConfig) error
 }
 
-type poller struct {
-	ticker     *time.Ticker
-	controller clients.Controller
-	config     *config.Config
-	version    *time.Time
-	listener   Listener
+type ControllerConfig struct {
+	Client       clients.Controller
+	Listener     ControllerListener
+	PollInterval time.Duration
 }
 
-// NewPoller creates instance
-func NewPoller(config *config.Config, rc clients.Controller, listener Listener) Poller {
-	return &poller{
-		controller: rc,
-		config:     config,
-		listener:   listener,
+type controller struct {
+	ticker       *time.Ticker
+	controller   clients.Controller
+	pollInterval time.Duration
+	version      *time.Time
+	listener     ControllerListener
+}
+
+func NewController(conf ControllerConfig) Monitor {
+	return &controller{
+		controller:   conf.Client,
+		listener:     conf.Listener,
+		pollInterval: conf.PollInterval,
 	}
 }
 
 // Start begins periodic polling of Controller for the latest configuration. This is a blocking operation.
-func (p *poller) Start() error {
+func (p *controller) Start() error {
 	// Stop existing ticker if necessary
 	if p.ticker != nil {
 		if err := p.Stop(); err != nil {
@@ -56,7 +59,7 @@ func (p *poller) Start() error {
 	}
 
 	// Create new ticker
-	p.ticker = time.NewTicker(p.config.Controller.Poll)
+	p.ticker = time.NewTicker(p.pollInterval)
 
 	// Do initial poll
 	if err := p.poll(); err != nil {
@@ -74,7 +77,7 @@ func (p *poller) Start() error {
 }
 
 // poll obtains the latest NGINX config from Controller and updates NGINX to use it
-func (p *poller) poll() error {
+func (p *controller) poll() error {
 
 	// Get latest config from Controller
 	conf, err := p.controller.GetProxyConfig(p.version)
@@ -88,11 +91,13 @@ func (p *poller) poll() error {
 	}
 
 	// Notify listeners of change
-	if err := p.listener.RulesChange(*conf); err != nil {
+	if err := p.listener.RuleChange(*conf); err != nil {
 		logrus.WithError(err).Error("Listener failed")
 		return err
 	}
 
+	// TODO: either time should be obtained from the controller OR time should only be obtained locally, otherwise
+	// there may be issues with clock synchronization.
 	t := time.Now()
 	p.version = &t
 
@@ -100,7 +105,7 @@ func (p *poller) poll() error {
 }
 
 // Stop halts the periodic poll of Controller
-func (p *poller) Stop() error {
+func (p *controller) Stop() error {
 	// Stop ticker if necessary
 	if p.ticker != nil {
 		p.ticker.Stop()

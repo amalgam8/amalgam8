@@ -4,7 +4,6 @@
 
 ### Do not enable for 0.2.0
 ENABLE_SERVICEDISCOVERY=false
-ENABLE_MESSAGEHUB=false
 
 #################################################################################
 # Image names

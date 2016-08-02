@@ -464,9 +464,6 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     * ROUTES_DOMAIN should be the domain used for the Bluemix routes (e.g., mybluemix.net)
     * ENABLE_SERVICEDISCOVERY determines whether to use the Bluemix-provided [Service Discovery](https://console.ng.bluemix.net/docs/services/ServiceDiscovery/index.html)
       instead of the A8 registry. When set to false, you can deploy your own customized A8 registry (not yet implemented).
-    * ENABLE_MESSAGEHUB determines whether to use the Bluemix-provided [Message Hub](https://console.ng.bluemix.net/docs/services/MessageHub/index.html#messagehub).
-      When set to false, the A8 proxies will use a slower polling algorithm to get changes from the A8 Controller.  
-      Note that the Message Hub Bluemix service is not a free service, and using it might incur costs.
 
 1. Deploy the A8 controlplane by running [bluemix/deploy-controlplane.sh](bluemix/deploy-controlplane.sh).
     Verify that the controller is running by ```bluemix ic groups``` and checking if the ```amalgam8_controller``` group is running.

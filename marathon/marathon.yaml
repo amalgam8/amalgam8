@@ -62,18 +62,6 @@ chronos:
    - CHRONOS_ZK_HOSTS=localhost:2181
 
 #########Amalgam8 Control Plane components
-###############Integration Bus############
-kafka:
-  image: rshriram/kafka-nozk-0.9
-  net: host
-  environment:
-    - ADVERTISED_HOST=__REPLACEME__
-    - ADVERTISED_PORT=9092
-    - AUTO_CREATE_TOPICS=true
-    - ZOOKEEPER_HOST=localhost:2181
-  ports:
-    - "9092:9092"
-
 ##########ELK Stack##############
 es:
   image: elasticsearch

@@ -18,20 +18,10 @@ set -x
 
 AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
 AC=localhost:31200
-KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
 echo "Setting up a new tenant named 'local'"
 read -d '' tenant << EOF
 {
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
 echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: local" -d @- "http://${AC}/v1/tenants"

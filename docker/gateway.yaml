@@ -27,7 +27,6 @@ gateway:
   ports:
     - "32000:6379"
   external_links:
-    - kafka
     - logstash
     - controller
     - registry

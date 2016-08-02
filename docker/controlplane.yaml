@@ -12,19 +12,6 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-#########Amalgam8 Control Plane components
-###############Integration Bus############
-kafka:
-  image: rshriram/kafka-0.9
-  environment:
-    - ADVERTISED_HOST=kafka
-    - ADVERTISED_PORT=9092
-    - AUTO_CREATE_TOPICS=true
-  ports:
-    - "9092:9092"
-  hostname: kafka
-  container_name: kafka
-
 ##########ELK Stack##############
 es:
   image: elasticsearch
@@ -67,6 +54,5 @@ controller:
     - A8_POLL_INTERVAL=5s
     - A8_LOG_LEVEL=info
   links:
-    - kafka
     - registry
   container_name: controller

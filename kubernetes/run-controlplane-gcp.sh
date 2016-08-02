@@ -21,12 +21,9 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 rfile="registry.yaml"
 cfile="controller.yaml"
-mhfile="messagehub-gcp.yaml"
 lgfile="logserver.yaml"
 
 if [ "$1" == "start" ]; then
-    echo "Starting integration bus (kafka)"
-    kubectl create -f $SCRIPTDIR/$mhfile
     echo "Starting logging service (ELK)"
     kubectl create -f $SCRIPTDIR/$lgfile
     echo "Starting multi-tenant service registry"
@@ -37,20 +34,10 @@ if [ "$1" == "start" ]; then
     sleep 60
     AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     AC=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
     echo $tenant >/tmp/tenant_details.json
@@ -63,8 +50,6 @@ elif [ "$1" == "stop" ]; then
     kubectl delete -f $SCRIPTDIR/$rfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$lgfile
-    sleep 3
-    kubectl delete -f $SCRIPTDIR/$mhfile
 else
     echo "usage: $0 start|stop"
     exit 1

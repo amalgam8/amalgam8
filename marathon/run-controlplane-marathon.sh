@@ -24,7 +24,7 @@ cp $SCRIPTDIR/marathon.yaml /tmp/marathon.yaml
 sed -i "s/__REPLACEME__/${MYIP}/" /tmp/marathon.yaml
 
 if [ "$1" == "start" ]; then
-    echo "starting Marathon/Mesos cluster with Kafka + ELK stack"
+    echo "starting Marathon/Mesos cluster with ELK stack"
     docker-compose -f /tmp/marathon.yaml up -d
     echo "waiting for the cluster to initialize.."
     sleep 60
@@ -40,16 +40,7 @@ if [ "$1" == "start" ]; then
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
     echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: local" -d @- "http://${AC}/v1/tenants"

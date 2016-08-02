@@ -72,35 +72,6 @@ else
 fi
 
 #################################################################################
-# Provision Message Hub, or fallback to polling
-#################################################################################
-
-if [ "$ENABLE_MESSAGEHUB" = true ]; then
-    cf service mh &> /dev/null
-    if [ $? -ne 0 ]; then
-        echo "Creating a Message Hub instance..."
-        cf create-service messagehub standard mh
-    else
-        echo "Found an existing Message Hub instance"
-    fi
-
-    if [ $(cf service-key mh mhkey | grep -ic "No service key") -gt 0 ]; then
-        echo "Creating Message Hub credentials"
-        cf create-service-key mh mhkey
-    else
-        echo "Found existing Message Hub credentials"
-    fi
-
-    MHKEY=$(cf service-key mh mhkey | tail -n +3)
-    KAFKA_API_KEY=$(echo "$MHKEY" | jq -r '.api_key')
-    KAFKA_ADMIN_URL=$(echo "$MHKEY" | jq -r '.kafka_admin_url')
-    KAFKA_REST_URL=$(echo "$MHKEY" | jq -r '.kafka_rest_url')
-    KAFKA_BROKERS=$(echo "$MHKEY" | jq -r '.kafka_brokers_sasl')
-    KAFKA_USER=$(echo "$MHKEY" | jq -r '.user')
-    KAFKA_PASSWORD=$(echo "$MHKEY" | jq -r '.password')
-fi
-
-#################################################################################
 # Post the local tenant to controller
 #################################################################################
 
@@ -145,33 +116,9 @@ done
 echo "Setting up a new controller tenant named 'local'"
 read -d '' tenant << EOF
 {
-    "credentials": {
-        "registry": {
-            "url": "${REGISTRY_URL}",
-            "token": "${REGISTRY_TOKEN}"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
-
-if [ "$ENABLE_MESSAGEHUB" = true ]; then
-    read -d '' kafka << EOF
-{
-    "credentials": {
-        "kafka": {
-            "api_key": "${KAFKA_API_KEY}",
-            "admin_url": "${KAFKA_ADMIN_URL}",
-            "rest_url": "${KAFKA_REST_URL}",
-            "brokers": ${KAFKA_BROKERS},
-            "user": "${KAFKA_USER}",
-            "password": "${KAFKA_PASSWORD}",
-            "sasl": true
-        }
-    }
-}
-EOF
-    tenant=$(jq -s '.[0] * .[1]' <(echo $tenant) <(echo $kafka))
-fi
 
 attempt=0
 while true; do

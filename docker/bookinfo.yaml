@@ -59,9 +59,7 @@ reviews-v2:
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s
-    - A8_KAFKA_BROKER=kafka:9092
   external_links:
-    - kafka
     - logstash
     - controller
     - registry
@@ -77,9 +75,7 @@ reviews-v3:
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s
-    - A8_KAFKA_BROKER=kafka:9092
   external_links:
-    - kafka
     - logstash
     - controller
     - registry
@@ -95,9 +91,7 @@ productpage-v1:
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_CONTROLLER_POLL=5s
-    - A8_KAFKA_BROKER=kafka:9092
   external_links:
-    - kafka
     - logstash
     - controller
     - registry

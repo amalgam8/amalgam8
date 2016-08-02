@@ -25,7 +25,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/registry/api/protocol"
 	"github.com/amalgam8/registry/api/protocol/eureka"
 	"github.com/amalgam8/registry/store"
 )
@@ -34,10 +33,10 @@ import (
 // instances
 //-----------
 var eurekaInstances = []mockInstance{
-	{data: store.ServiceInstance{ID: "http.http-1", ServiceName: "http", Protocol: protocol.Eureka,
+	{data: store.ServiceInstance{ID: "http.http-1", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1:80", Type: "http"}, Status: "STARTING", TTL: 30 * time.Second, Metadata: metadata,
 		Extension: map[string]interface{}{"HostName": "localhost", "VipAddress": "http-vip", "IPAddr": "192.168.0.1", "Port": &eureka.Port{Enabled: "true", Value: "8080"}, "CountryId": 1}}},
-	{data: store.ServiceInstance{ID: "http.http-2", ServiceName: "http", Protocol: protocol.Eureka,
+	{data: store.ServiceInstance{ID: "http.http-2", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.2:80", Type: "http"}, Status: "STARTING", TTL: 30 * time.Second, Metadata: metadata,
 		Extension: map[string]interface{}{"HostName": "localhost", "VipAddress": "http-vip", "IPAddr": "192.168.0.2", "Port": &eureka.Port{Enabled: "true", Value: "8080"}, "CountryId": 1}}},
 }
@@ -127,7 +126,7 @@ func TestEurekaInstanceDelete(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -162,7 +161,7 @@ func TestEurekaInstanceHeartbeat(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -189,7 +188,7 @@ func TestEurekaInstanceStatus(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 
@@ -232,7 +231,7 @@ func TestEurekaAppInstances(t *testing.T) {
 	}
 
 	c := defaultServerConfig()
-	c.Registry.(*mockCatalog).prepopulateInstances(eurekaInstances)
+	c.CatalogMap.(*mockCatalog).prepopulateInstances(eurekaInstances)
 	handler, err := setupServer(c)
 	assert.Nil(t, err)
 

@@ -61,19 +61,20 @@ func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (
 	assert.NoError(t, err)
 	assert.NotNil(t, rep)
 
-	regConfig := &store.Config{
+	cmConfig := &store.Config{
 		DefaultTTL:        time.Duration(30) * time.Second,
 		MinimumTTL:        time.Duration(10) * time.Second,
 		MaximumTTL:        time.Duration(600) * time.Second,
 		SyncWaitTime:      time.Duration(defaultSyncWaitTime) * time.Second,
 		NamespaceCapacity: 50,
+		Replication:       rep,
 	}
 
-	reg := store.New(regConfig, rep)
+	cm := store.New(cmConfig)
 	server, err = api.NewServer(
 		&api.Config{
 			HTTPAddressSpec: fmt.Sprintf(":%d", rest_port),
-			Registry:        reg,
+			CatalogMap:      cm,
 		},
 	)
 

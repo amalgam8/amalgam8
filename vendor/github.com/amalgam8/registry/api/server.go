@@ -62,8 +62,8 @@ func NewServer(conf *Config) (Server, error) {
 		s.config.HTTPAddressSpec = ":8080"
 	}
 
-	if s.config.Registry == nil {
-		s.config.Registry = store.New(nil, nil)
+	if s.config.CatalogMap == nil {
+		s.config.CatalogMap = store.New(nil)
 	}
 
 	s.logger.Infof("Creating Service Discovery REST API on %s", s.config.HTTPAddressSpec)
@@ -95,7 +95,16 @@ func (s *server) setup() (http.Handler, error) {
 	restAPI.Use(
 		&rest.RecoverMiddleware{},
 		&middleware.AccessLog{},
-		middleware.NewTrace(),
+		middleware.NewTrace())
+
+	// Add the extension middlewares here
+	for _, mw := range s.config.Middlewares {
+		if mw != nil {
+			restAPI.Use(mw)
+		}
+	}
+
+	restAPI.Use(
 		&middleware.MetricsMiddleware{},
 		&rest.TimerMiddleware{},
 		&rest.RecorderMiddleware{},
@@ -112,8 +121,8 @@ func (s *server) setup() (http.Handler, error) {
 	var routes []*rest.Route
 	routes = append(routes, uptime.RouteHandlers()...)
 
-	amalgam8Routes := amalgam8.New(s.config.Registry)
-	eurekaRoutes := eureka.New(s.config.Registry)
+	amalgam8Routes := amalgam8.New(s.config.CatalogMap)
+	eurekaRoutes := eureka.New(s.config.CatalogMap)
 	authMw := &middleware.AuthMiddleware{TokenRouteParam: eureka.RouteParamToken, Authenticator: s.config.Authenticator}
 
 	routes = append(routes, amalgam8Routes.RouteHandlers(secureMw, authMw)...)

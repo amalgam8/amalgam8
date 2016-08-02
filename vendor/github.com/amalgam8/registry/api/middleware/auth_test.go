@@ -19,6 +19,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"fmt"
+
 	"github.com/amalgam8/registry/auth"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,19 +31,46 @@ const (
 )
 
 type mockAuthenticator struct {
-	namespace *auth.Namespace
+	authFunc func(token string) (*auth.Namespace, error)
 }
 
 func (ma *mockAuthenticator) Authenticate(token string) (*auth.Namespace, error) {
-	if token == validToken {
-		return ma.namespace, nil
+	if ma.authFunc != nil {
+		return ma.authFunc(token)
 	}
-	return nil, auth.ErrUnauthorized
+	return nil, fmt.Errorf("internal test error")
 }
 
-func TestNoToken(t *testing.T) {
-	namespace := auth.Namespace(validToken)
-	ma := &mockAuthenticator{namespace: &namespace}
+func TestEmptyTokenSuccess(t *testing.T) {
+	ma := &mockAuthenticator{
+		authFunc: func(token string) (*auth.Namespace, error) {
+			if token == "" {
+				namespace := auth.NamespaceFrom(validToken)
+				return &namespace, nil
+			}
+			return nil, auth.ErrUnauthorized
+		},
+	}
+	authMw := &AuthMiddleware{Authenticator: ma}
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/", nil)
+
+	jrestServer(authMw, "/").ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestEmptyTokenFailure(t *testing.T) {
+	ma := &mockAuthenticator{
+		authFunc: func(token string) (*auth.Namespace, error) {
+			if token != "" {
+				namespace := auth.NamespaceFrom(token)
+				return &namespace, nil
+			}
+			return nil, auth.ErrUnauthorized
+		},
+	}
 	authMw := &AuthMiddleware{Authenticator: ma}
 
 	res := httptest.NewRecorder()
@@ -52,9 +81,16 @@ func TestNoToken(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
-func TestTokenNotValid(t *testing.T) {
-	namespace := auth.Namespace(invalidToken)
-	ma := &mockAuthenticator{namespace: &namespace}
+func TestTokenInvalid(t *testing.T) {
+	ma := &mockAuthenticator{
+		authFunc: func(token string) (*auth.Namespace, error) {
+			if token == invalidToken {
+				return nil, auth.ErrUnauthorized
+			}
+			namespace := auth.NamespaceFrom(token)
+			return &namespace, nil
+		},
+	}
 	authMw := &AuthMiddleware{Authenticator: ma}
 
 	res := httptest.NewRecorder()
@@ -75,4 +111,20 @@ func TestDefaultAuthenticator(t *testing.T) {
 	jrestServer(authMw, "/").ServeHTTP(res, req)
 
 	assert.Equal(t, http.StatusOK, res.Code)
+}
+
+func TestCommunicationError(t *testing.T) {
+	ma := &mockAuthenticator{
+		authFunc: func(token string) (*auth.Namespace, error) {
+			return nil, auth.ErrCommunicationError
+		},
+	}
+	authMw := &AuthMiddleware{Authenticator: ma}
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/", nil)
+
+	jrestServer(authMw, "/").ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusServiceUnavailable, res.Code)
 }

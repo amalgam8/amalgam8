@@ -54,9 +54,8 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 
 			c = &Config{
-				APIPort:      6379,
-				ControlToken: "abcdefghijklmnop",
-				SecretKey:    "ABCEDFGHIJKLMNOP",
+				APIPort:   6379,
+				SecretKey: "ABCEDFGHIJKLMNOP",
 				Database: Database{
 					Type: "memory",
 				},
@@ -67,10 +66,10 @@ var _ = Describe("Config", func() {
 			Expect(c.Validate()).ToNot(HaveOccurred())
 		})
 
-		It("does not accept empty control token", func() {
-			c.ControlToken = ""
-			Expect(c.Validate()).To(HaveOccurred())
-		})
+		//It("does not accept empty control token", func() {
+		//	c.ControlToken = ""
+		//	Expect(c.Validate()).To(HaveOccurred())
+		//})
 
 		It("does not accept empty secret key", func() {
 			c.SecretKey = ""

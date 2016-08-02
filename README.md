@@ -53,6 +53,8 @@ The following environment variables are available. All of them are optional.
 | A8_DATABASE_PASSWORD | --database_password | database password | |
 | A8_DATABASE_HOST | --database_host | database host | |
 | A8_LOG_LEVEL | --log_level | logging level (debug, info, warn, error, fatal, panic) | info |
+| A8_AUTH_MODE | --auth_mode | Authentication modes. Supported values are: 'trusted', 'jwt'" | |
+| A8_JWT_SECRET | --jwt_secret | Secret key for JWT authentication | |
 | | --help, -h | show help | |
 | | --version, -v | print the version | |
 

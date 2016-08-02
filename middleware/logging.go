@@ -18,6 +18,7 @@ import (
 	"net/http"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -33,7 +34,7 @@ func (mw *LoggingMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc
 
 		// log the exiting request
 		logrus.WithFields(logrus.Fields{
-			"request_id":  r.Header.Get(RequestIDHeader),
+			"request_id":  r.Header.Get(util.RequestIDHeader),
 			"method":      r.Method,
 			"url":         r.URL,
 			"status_code": statusWriter.status,

@@ -20,6 +20,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/utils/i18n"
 )
 
@@ -28,7 +29,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 	vip := r.PathParam(RouterParamVip)
 	if vip == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "vip is required",
 		}).Warn("Failed to list vip")
 
@@ -39,7 +40,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to list vip %s", vip)
 
@@ -49,7 +50,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 	services := catalog.ListServices(nil)
 	if services == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "services list is nil",
 		}).Errorf("Failed to list vip %s", vip)
 
@@ -65,7 +66,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 		insts, err := catalog.List(svc.ServiceName, nil)
 		if err != nil {
 			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env["REMOTE_USER"],
+				"namespace": r.Env[env.Namespace],
 				"error":     err,
 			}).Errorf("Failed to list vips %s", vip)
 
@@ -90,7 +91,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 	err := w.WriteJson(listRes)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode vips list")
 
@@ -99,6 +100,6 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("List vips (%d apps, %d insts)", len(apps.Application), instsCount)
 }

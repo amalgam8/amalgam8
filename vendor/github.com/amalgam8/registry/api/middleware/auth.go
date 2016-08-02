@@ -20,13 +20,9 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/utils/i18n"
-)
-
-const (
-	// NamespaceKey defines the name of the namespace key in the Env map
-	NamespaceKey = "namespace"
 )
 
 // AuthMiddleware provides a generic authentication middleware
@@ -65,13 +61,14 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 			i18n.Error(request, writer, http.StatusUnauthorized, i18n.ErrorAuthorizationMissingHeader)
 		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
 			i18n.Error(request, writer, http.StatusUnauthorized, i18n.ErrorAuthorizationNotAuthorized)
+		case auth.ErrCommunicationError:
+			i18n.Error(request, writer, http.StatusServiceUnavailable, i18n.ErrorAuthorizationTokenValidationFailed)
 		default:
 			i18n.Error(request, writer, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		}
 		return
 	}
 
-	request.Env[NamespaceKey] = *nsPtr
-	request.Env["REMOTE_USER"] = nsPtr.String()
+	request.Env[env.Namespace] = *nsPtr
 	h(writer, request)
 }

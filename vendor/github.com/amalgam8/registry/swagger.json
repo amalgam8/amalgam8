@@ -393,7 +393,7 @@
             "properties": {
                 "type": {
                     "type": "string",
-                    "description": "Endpoint type: 'tcp' or 'user'."
+                    "description": "Endpoint type: 'udp', 'tcp', 'http', 'https',  or 'user'."
                 },
                 "value": {
                     "type": "string",

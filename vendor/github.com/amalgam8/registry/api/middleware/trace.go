@@ -24,11 +24,8 @@ import (
 	"time"
 
 	"github.com/ant0ine/go-json-rest/rest"
-)
 
-const ( // Enumerates standardized service discovery headers
-	// SdRequestID holds unique id for each request
-	SdRequestID = "SD-Request-ID"
+	"github.com/amalgam8/registry/api/env"
 )
 
 var globalTraceNameGenerator = NewNameGenerator(defaultDictionary)
@@ -65,7 +62,7 @@ func (mw *Trace) handler(w rest.ResponseWriter, r *rest.Request, h rest.HandlerF
 	index := mw.nextIndex()
 	traceID := fmt.Sprintf("%s_%s_%d", mw.name, strconv.FormatInt(time.Now().UnixNano(), 10), index)
 
-	r.Env[SdRequestID] = traceID
+	r.Env[env.RequestID] = traceID
 
 	for headerName, headerValue := range mw.headers {
 		for _, value := range headerValue {
@@ -73,7 +70,7 @@ func (mw *Trace) handler(w rest.ResponseWriter, r *rest.Request, h rest.HandlerF
 		}
 	}
 
-	w.Header().Set(SdRequestID, traceID)
+	w.Header().Set(env.RequestID, traceID)
 
 	// Important, Need to call next handler last, since following middleware activate Write() to the connection,
 	// requiring us to add the header at the pre stage of middleware chain

@@ -26,10 +26,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
+	"github.com/amalgam8/sidecar/proxy"
+	"github.com/amalgam8/sidecar/proxy/clients"
+	"github.com/amalgam8/sidecar/proxy/monitor"
+	"github.com/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/sidecar/register"
-	"github.com/amalgam8/sidecar/router/checker"
-	"github.com/amalgam8/sidecar/router/clients"
-	"github.com/amalgam8/sidecar/router/nginx"
 	"github.com/amalgam8/sidecar/supervisor"
 	"github.com/codegangsta/cli"
 )
@@ -155,19 +156,15 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	rc := clients.NewController(conf)
-	nc := clients.NewNGINXClient("http://localhost:5813")
+	nginxClient := clients.NewNGINX("http://localhost:5813")
+	controllerClient := clients.NewController(conf)
 
-	n, err := nginx.NewNginx(
-		nginx.Conf{
-			Service:     nginx.NewService(),
-			NGINXClient: nc,
+	nginxManager := nginx.NewManager(
+		nginx.Config{
+			Service: nginx.NewService(),
+			Client:  nginxClient,
 		},
 	)
-	if err != nil {
-		logrus.WithError(err).Error("Failed to initialize NGINX object")
-		return err
-	}
 
 	registryClient, err := client.New(client.Config{
 		URL:       conf.Registry.URL,
@@ -178,43 +175,33 @@ func startProxy(conf *config.Config) error {
 		return err
 	}
 
-	listener := checker.NewListener(n)
+	nginxRouter := proxy.NewNGINXProxy(nginxManager)
 
-	poller := checker.NewPoller(conf, rc, listener)
+	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
+		Client: controllerClient,
+		Listeners: []monitor.ControllerListener{
+			nginxRouter,
+		},
+		PollInterval: conf.Controller.Poll,
+	})
 	go func() {
-		if err = poller.Start(); err != nil {
-			logrus.WithError(err).Error("Controller poll failed")
+		if err = controllerMonitor.Start(); err != nil {
+			logrus.WithError(err).Error("Controller monitor failed")
 		}
 	}()
 
-	checker := checker.New(checker.Config{
-		Listener:       listener,
+	registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
+		PollInterval: conf.Registry.Poll,
+		Listeners: []monitor.RegistryListener{
+			nginxRouter,
+		},
 		RegistryClient: registryClient,
-		Conf:           conf,
 	})
 	go func() {
-		if err = checker.Start(); err != nil {
-			logrus.WithError(err).Error("Registry poll failed")
+		if err = registryMonitor.Start(); err != nil {
+			logrus.WithError(err).Error("Registry monitor failed")
 		}
 	}()
 
 	return nil
-}
-
-// TODO move this to controller client?
-func isRetryable(err error) bool {
-
-	if _, ok := err.(*clients.ConnectionError); ok {
-		return true
-	}
-
-	if _, ok := err.(*clients.NetworkError); ok {
-		return true
-	}
-
-	if _, ok := err.(*clients.ServiceUnavailable); ok {
-		return true
-	}
-
-	return false
 }

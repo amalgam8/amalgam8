@@ -110,7 +110,7 @@ Before you begin, follow the environment set up instructions at https://github.c
 You can look at registration details for a service in the A8 registry, by running the following cURL command:
 
 ```
-curl -X GET -H "Authorization: Bearer local" http://localhost:31300/api/v1/services/helloworld | jq .
+curl -X GET http://localhost:31300/api/v1/services/helloworld | jq .
 ```
 
 **Note**: Replace localhost:31300 above with the appropriate host
@@ -181,7 +181,7 @@ The output should look something like this:
 To list the routes for a service, run the following cURL command:
 
 ```
-curl http://localhost:31200/v1/tenants/local/versions/helloworld | jq .
+curl http://localhost:31200/v1/versions/helloworld | jq .
 ```
 
 **Note**: Replace localhost:31200 above with the appropriate host
@@ -200,5 +200,5 @@ After running the demo, the output should be as follows:
 You can also set routes using the REST API. For example, to send all traffic to v2, run the following curl command:
 
 ```
-curl -X PUT http://localhost:31200/v1/tenants/local/versions/helloworld -d '{"default": "v2"}' -H "Content-Type: application/json"
+curl -X PUT http://localhost:31200/v1/versions/helloworld -d '{"default": "v2"}' -H "Content-Type: application/json"
 ```

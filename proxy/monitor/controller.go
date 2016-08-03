@@ -19,16 +19,18 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
-	"github.com/amalgam8/sidecar/router/clients"
+	"github.com/amalgam8/sidecar/proxy/clients"
 )
 
+// ControllerListener is notified of changes to controller
 type ControllerListener interface {
 	RuleChange(proxyConfig resources.ProxyConfig) error
 }
 
+// ControllerConfig options
 type ControllerConfig struct {
 	Client       clients.Controller
-	Listener     ControllerListener
+	Listeners    []ControllerListener
 	PollInterval time.Duration
 }
 
@@ -37,38 +39,39 @@ type controller struct {
 	controller   clients.Controller
 	pollInterval time.Duration
 	version      *time.Time
-	listener     ControllerListener
+	listeners    []ControllerListener
 }
 
+// NewController instantiates a new instance
 func NewController(conf ControllerConfig) Monitor {
 	return &controller{
 		controller:   conf.Client,
-		listener:     conf.Listener,
+		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
 	}
 }
 
-// Start begins periodic polling of Controller for the latest configuration. This is a blocking operation.
-func (p *controller) Start() error {
+// Start monitoring the A8 controller. This is a blocking operation.
+func (c *controller) Start() error {
 	// Stop existing ticker if necessary
-	if p.ticker != nil {
-		if err := p.Stop(); err != nil {
+	if c.ticker != nil {
+		if err := c.Stop(); err != nil {
 			logrus.WithError(err).Error("Could not stop existing periodic poll")
 			return err
 		}
 	}
 
 	// Create new ticker
-	p.ticker = time.NewTicker(p.pollInterval)
+	c.ticker = time.NewTicker(c.pollInterval)
 
 	// Do initial poll
-	if err := p.poll(); err != nil {
+	if err := c.poll(); err != nil {
 		logrus.WithError(err).Error("Poll failed")
 	}
 
 	// Start periodic poll
-	for range p.ticker.C {
-		if err := p.poll(); err != nil {
+	for range c.ticker.C {
+		if err := c.poll(); err != nil {
 			logrus.WithError(err).Error("Poll failed")
 		}
 	}
@@ -76,13 +79,13 @@ func (p *controller) Start() error {
 	return nil
 }
 
-// poll obtains the latest NGINX config from Controller and updates NGINX to use it
-func (p *controller) poll() error {
+// poll the A8 controller for changes and notify listeners
+func (c *controller) poll() error {
 
-	// Get latest config from Controller
-	conf, err := p.controller.GetProxyConfig(p.version)
+	// Get latest config from the A8 controller
+	conf, err := c.controller.GetProxyConfig(c.version)
 	if err != nil {
-		logrus.WithError(err).Error("Call to Controller failed")
+		logrus.WithError(err).Error("Call to controller failed")
 		return err
 	}
 
@@ -90,26 +93,27 @@ func (p *controller) poll() error {
 		return nil
 	}
 
-	// Notify listeners of change
-	if err := p.listener.RuleChange(*conf); err != nil {
-		logrus.WithError(err).Error("Listener failed")
-		return err
+	// Notify listeners
+	for _, listener := range c.listeners {
+		if err := listener.RuleChange(*conf); err != nil {
+			logrus.WithError(err).Warn("Controller listener failed")
+		}
 	}
 
 	// TODO: either time should be obtained from the controller OR time should only be obtained locally, otherwise
 	// there may be issues with clock synchronization.
 	t := time.Now()
-	p.version = &t
+	c.version = &t
 
 	return nil
 }
 
-// Stop halts the periodic poll of Controller
-func (p *controller) Stop() error {
+// Stop monitoring the A8 controller
+func (c *controller) Stop() error {
 	// Stop ticker if necessary
-	if p.ticker != nil {
-		p.ticker.Stop()
-		p.ticker = nil
+	if c.ticker != nil {
+		c.ticker.Stop()
+		c.ticker = nil
 	}
 
 	return nil

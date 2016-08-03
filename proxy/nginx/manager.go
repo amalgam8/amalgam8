@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package router
+package nginx
 
 import (
 	"strconv"
@@ -21,64 +21,77 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/resources"
-	"github.com/amalgam8/sidecar/router/clients"
-	"github.com/amalgam8/sidecar/router/monitor"
-	"github.com/amalgam8/sidecar/router/nginx"
+	"github.com/amalgam8/sidecar/proxy/clients"
 )
 
-type NGINXRouter interface {
-	monitor.ControllerListener
-	monitor.RegistryListener
+// Manager of updates to NGINX
+type Manager interface {
+	// Update NGINX with the provided configuration
+	Update(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) error
 }
 
-type nginxRouter struct {
-	catalog     resources.ServiceCatalog
-	proxyConfig resources.ProxyConfig
-	nginx       nginx.Nginx
+type manager struct {
+	service     Service
+	serviceName string
 	mutex       sync.Mutex
+	client      clients.NGINX
 }
 
-func NewNGINXRouter(nginxClient nginx.Nginx) NGINXRouter {
-	return &nginxRouter{
-		proxyConfig: resources.ProxyConfig{
-			LoadBalance: "round_robin",
-			Filters: resources.Filters{
-				Versions: []resources.Version{},
-				Rules:    []resources.Rule{},
-			},
-		},
-		nginx: nginxClient,
+// Config options
+type Config struct {
+	Service Service
+	Client  clients.NGINX
+}
+
+// NewManager creates new a instance
+func NewManager(conf Config) Manager {
+	return &manager{
+		service: conf.Service,
+		client:  conf.Client,
 	}
 }
 
-func (l *nginxRouter) CatalogChange(catalog resources.ServiceCatalog) error {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
+// Update NGINX
+func (n *manager) Update(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) error {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
 
-	l.catalog = catalog
-	return l.updateNGINX()
+	var err error
+
+	// Ensure NGINX is running
+	running, err := n.service.Running()
+	if err != nil {
+		logrus.WithError(err).Error("Could not get status of NGINX service")
+		return err
+	}
+
+	if !running {
+		// NGINX is not running; attempt to start NGINX
+		logrus.Info("Starting NGINX")
+		if err := n.service.Start(); err != nil {
+			logrus.WithError(err).Error("Failed to start NGINX service")
+			return err
+		}
+	}
+
+	nginxConf := n.buildConfig(catalog, proxyConfig)
+
+	if err = n.client.UpdateHTTPUpstreams(nginxConf); err != nil {
+		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
+		return err
+	}
+
+	return nil
 }
 
-func (l *nginxRouter) RuleChange(proxyConfig resources.ProxyConfig) error {
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	l.proxyConfig = proxyConfig
-	return l.updateNGINX()
-}
-
-func (l *nginxRouter) updateNGINX() error {
-	nginxJSON := l.buildConfig()
-	return l.nginx.Update(nginxJSON)
-}
-
-func (l *nginxRouter) buildConfig() clients.NGINXJson {
+// buildConfig constructs the request used by the NGINX client
+func (n *manager) buildConfig(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) clients.NGINXJson {
 	conf := clients.NGINXJson{
 		Upstreams: make(map[string]clients.NGINXUpstream, 0),
 		Services:  make(map[string]clients.NGINXService, 0),
 	}
 	faults := []clients.NGINXFault{}
-	for _, rule := range l.proxyConfig.Filters.Rules {
+	for _, rule := range proxyConfig.Filters.Rules {
 		fault := clients.NGINXFault{
 			Delay:            rule.Delay,
 			DelayProbability: rule.DelayProbability,
@@ -94,7 +107,7 @@ func (l *nginxRouter) buildConfig() clients.NGINXJson {
 	conf.Faults = faults
 
 	types := map[string]string{}
-	for _, service := range l.catalog.Services {
+	for _, service := range catalog.Services {
 		upstreams := map[string][]clients.NGINXEndpoint{}
 		for _, endpoint := range service.Endpoints {
 			version := endpoint.Metadata.Version
@@ -144,7 +157,7 @@ func (l *nginxRouter) buildConfig() clients.NGINXJson {
 	}
 
 	versions := map[string]resources.Version{}
-	for _, version := range l.proxyConfig.Filters.Versions {
+	for _, version := range proxyConfig.Filters.Versions {
 		versions[version.Service] = version
 	}
 

@@ -26,7 +26,7 @@ type MockController struct {
 	ConfigTemplate resources.ProxyConfig
 }
 
-// GetNGINXConfig mocks interface
+// GetProxyConfig mocks interface
 func (m *MockController) GetProxyConfig(version *time.Time) (*resources.ProxyConfig, error) {
 	return &m.ConfigTemplate, m.ConfigError
 }

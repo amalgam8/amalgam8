@@ -29,7 +29,7 @@ import (
 	"github.com/amalgam8/sidecar/config"
 )
 
-// Controller TODO
+// Controller client
 type Controller interface {
 	GetProxyConfig(version *time.Time) (*resources.ProxyConfig, error)
 }
@@ -39,7 +39,7 @@ type controller struct {
 	client http.Client
 }
 
-// NewController TODO
+// NewController creates a new client
 func NewController(conf *config.Config) Controller {
 	return &controller{
 		config: conf,
@@ -114,8 +114,8 @@ func (c *controller) GetProxyConfig(version *time.Time) (*resources.ProxyConfig,
 }
 
 func (c *controller) setAuthHeader(req *http.Request) {
-	// if token value is empty, assumes global auth is enabled on controller and does
-	// not add the Authorization header
+	// If token value is empty  we assume global auth is enabled on the controller and do not add the authorization
+	// header
 	if c.config.Controller.Token != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", c.config.Controller.Token))
 	}

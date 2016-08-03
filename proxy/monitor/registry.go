@@ -27,54 +27,56 @@ import (
 	"github.com/amalgam8/registry/client"
 )
 
+// RegistryListener is notified of changes to registry
 type RegistryListener interface {
 	CatalogChange(catalog resources.ServiceCatalog) error
 }
 
-type registryMonitor struct {
+type registry struct {
 	pollInterval   time.Duration
 	registryClient client.Discovery
 	cachedCatalog  resources.ServiceCatalog
-	listener       RegistryListener
+	listeners      []RegistryListener
 	ticker         *time.Ticker
 }
 
-// Config options
+// RegistryConfig options
 type RegistryConfig struct {
 	PollInterval   time.Duration
 	RegistryClient client.Discovery
-	Listener       RegistryListener
+	Listeners      []RegistryListener
 }
 
-// New instantiates new instance
+// NewRegistry instantiates new instance
 func NewRegistry(conf RegistryConfig) Monitor {
-	return &registryMonitor{
-		listener:       conf.Listener,
+	return &registry{
+		listeners:      conf.Listeners,
 		registryClient: conf.RegistryClient,
 		pollInterval:   conf.PollInterval,
 	}
 }
 
-func (c *registryMonitor) Start() error {
+// Start monitoring registry
+func (m *registry) Start() error {
 	// Stop existing ticker if necessary
-	if c.ticker != nil {
-		if err := c.Stop(); err != nil {
+	if m.ticker != nil {
+		if err := m.Stop(); err != nil {
 			logrus.WithError(err).Error("Could not stop existing periodic poll")
 			return err
 		}
 	}
 
 	// Create new ticker
-	c.ticker = time.NewTicker(c.pollInterval)
+	m.ticker = time.NewTicker(m.pollInterval)
 
 	// Do initial poll
-	if err := c.check(); err != nil {
+	if err := m.poll(); err != nil {
 		logrus.WithError(err).Error("Catalog check failed")
 	}
 
 	// Start periodic poll
-	for range c.ticker.C {
-		if err := c.check(); err != nil {
+	for range m.ticker.C {
+		if err := m.poll(); err != nil {
 			logrus.WithError(err).Error("Catalog check failed")
 		}
 	}
@@ -82,22 +84,24 @@ func (c *registryMonitor) Start() error {
 	return nil
 }
 
-func (c *registryMonitor) check() error {
+// poll registry for changes in the catalog
+func (m *registry) poll() error {
 	// Get newest catalog from Registry
-	latestCatalog, err := c.getLatestCatalog()
+	latestCatalog, err := m.getLatestCatalog()
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
 	}
 
 	// Check for differences
-	if !c.catalogsEqual(c.cachedCatalog, latestCatalog) {
+	if !m.catalogsEqual(m.cachedCatalog, latestCatalog) {
 		// Update cached copy of catalog
-		c.cachedCatalog = latestCatalog
+		m.cachedCatalog = latestCatalog
 
-		if err = c.listener.CatalogChange(latestCatalog); err != nil {
-			logrus.WithError(err).Warn("Listener failed")
-			return err
+		for _, listener := range m.listeners {
+			if err = listener.CatalogChange(latestCatalog); err != nil {
+				logrus.WithError(err).Warn("Registry listener failed")
+			}
 		}
 	}
 
@@ -105,7 +109,7 @@ func (c *registryMonitor) check() error {
 }
 
 // catalogsEqual
-func (c *registryMonitor) catalogsEqual(a, b resources.ServiceCatalog) bool {
+func (m *registry) catalogsEqual(a, b resources.ServiceCatalog) bool {
 	equal := reflect.DeepEqual(a.Services, b.Services)
 	logrus.WithFields(logrus.Fields{
 		"a":     a,
@@ -117,10 +121,10 @@ func (c *registryMonitor) catalogsEqual(a, b resources.ServiceCatalog) bool {
 
 // getLatestCatalog
 // FIXME: is this conversion still necessary?
-func (c *registryMonitor) getLatestCatalog() (resources.ServiceCatalog, error) {
+func (m *registry) getLatestCatalog() (resources.ServiceCatalog, error) {
 	catalog := resources.ServiceCatalog{}
 
-	instances, err := c.registryClient.ListInstances(client.InstanceFilter{})
+	instances, err := m.registryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
 		return catalog, err
 	}
@@ -151,7 +155,7 @@ func (c *registryMonitor) getLatestCatalog() (resources.ServiceCatalog, error) {
 		catalog.Services = append(catalog.Services, *service)
 	}
 
-	// Sort for comparisons since registry does not guarantee any ordering
+	// Sort for comparisons (registry does not guarantee any ordering)
 	sort.Sort(resources.ByService(catalog.Services))
 	for _, service := range catalog.Services {
 		sort.Sort(resources.ByEndpoint(service.Endpoints))
@@ -160,12 +164,12 @@ func (c *registryMonitor) getLatestCatalog() (resources.ServiceCatalog, error) {
 	return catalog, nil
 }
 
-// Stop halts the periodic poll of the registry
-func (c *registryMonitor) Stop() error {
+// Stop monitoring registry
+func (m *registry) Stop() error {
 	// Stop ticker if necessary
-	if c.ticker != nil {
-		c.ticker.Stop()
-		c.ticker = nil
+	if m.ticker != nil {
+		m.ticker.Stop()
+		m.ticker = nil
 	}
 
 	return nil

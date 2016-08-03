@@ -23,7 +23,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-// NGINX client interface for updates to lua
+// NGINX client
 type NGINX interface {
 	UpdateHTTPUpstreams(conf NGINXJson) error
 }
@@ -53,7 +53,7 @@ type NGINXEndpoint struct {
 	Port int    `json:"port"`
 }
 
-// Version TODO
+// NGINXVersion for lua
 type NGINXVersion struct {
 	Service   string `json:"service"`
 	Default   string `json:"default"`
@@ -77,8 +77,8 @@ type nginx struct {
 	url        string
 }
 
-// NewNGINXClient return new NGINX client
-func NewNGINXClient(url string) NGINX {
+// NewNGINX return new NGINX client
+func NewNGINX(url string) NGINX {
 	return &nginx{
 		httpClient: &http.Client{},
 		url:        url,

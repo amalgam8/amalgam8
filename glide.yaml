@@ -18,6 +18,8 @@ import:
 
 - package: github.com/amalgam8/registry
 
+- package: github.com/amalgam8/controller
+
 - package: github.com/Sirupsen/logrus
   version: 0.8.7
 

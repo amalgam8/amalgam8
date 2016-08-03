@@ -1,13 +1,12 @@
-hash: a65019a364cffb4a427653d5efe816f68005be4a9c0117bdde0d55ed1e7cfeef
-updated: 2016-08-01T23:22:38.522006884+01:00
+hash: 47f0e934eaf8982d5488d166a7ca4e9b332c04352d772b3044bbd326357c13bf
+updated: 2016-08-03T20:29:00.168379572+01:00
 imports:
 - name: github.com/amalgam8/controller
   version: 61679f9d97de1c9a0f72094ae7edf2244aae77c7
   subpackages:
   - resources
-  - database
 - name: github.com/amalgam8/registry
-  version: 604701f9f619de07b266636e90497da684588a25
+  version: bebdfef8f255e4334f4bee38ae4f655754966439
   subpackages:
   - client
   - api/protocol/amalgam8

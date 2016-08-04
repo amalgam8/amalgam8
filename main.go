@@ -19,19 +19,15 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/auth"
-	"github.com/amalgam8/controller/checker"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/manager"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -94,48 +90,23 @@ func controllerMain(conf config.Config) error {
 		db := database.NewMemoryCloudantDB()
 		tenantDB = database.NewTenant(db)
 	} else if conf.Database.Type == "cloudant" {
-
+		logrus.Warn("Cloudant currently not supported, using in memory storage")
+		db := database.NewMemoryCloudantDB()
+		tenantDB = database.NewTenant(db)
 	} else {
 		err = errors.New("unsupported database type")
 		setupHandler.SetError(err)
 		return err
 	}
 
-	tpc := notification.NewTenantProducerCache()
-
-	g, err := nginx.NewGenerator(nginx.Config{
+	r := manager.NewManager(manager.Config{
 		Database: tenantDB,
 	})
-	if err != nil {
-		logrus.Error(err)
-		setupHandler.SetError(err)
-		return err
-	}
 
-	r := manager.NewManager(manager.Config{
-		Database:      tenantDB,
-		ProducerCache: tpc,
-		Generator:     g,
-	})
-
-	factory := checker.NewRegistryFactory()
-
-	c := checker.New(checker.Config{
-		Database:      tenantDB,
-		ProducerCache: tpc,
-		Generator:     g,
-		Factory:       factory,
-	})
-
-	nginxAPI := api.NewNGINX(api.NGINXConfig{
-		Reporter:  reporter,
-		Generator: g,
-	})
 	tenantAPI := api.NewTenant(api.TenantConfig{
 		Reporter: reporter,
 		Manager:  r,
 	})
-	pollAPI := api.NewPoll(reporter, c)
 	healthAPI := api.NewHealth(reporter)
 
 	var authenticator auth.Authenticator
@@ -181,10 +152,8 @@ func controllerMain(conf config.Config) error {
 
 	authMw := &middleware.AuthMiddleware{Authenticator: authenticator}
 
-	routes := nginxAPI.Routes(authMw)
-	routes = append(routes, tenantAPI.Routes(authMw)...)
+	routes := tenantAPI.Routes(authMw)
 	routes = append(routes, healthAPI.Routes()...)
-	routes = append(routes, pollAPI.Routes(authMw)...)
 
 	router, err := rest.MakeRouter(
 		routes...,
@@ -197,26 +166,10 @@ func controllerMain(conf config.Config) error {
 
 	setupHandler.SetHandler(a.MakeHandler())
 
-	//start garbage collection on kafka producer cache
-	tpc.StartGC()
-
 	// Server is already started
 	logrus.WithFields(logrus.Fields{
 		"port": conf.APIPort,
 	}).Info("Server started")
-	if conf.PollInterval.Seconds() != 0.0 {
-		logrus.Info("Beginning periodic poll...")
-		ticker := time.NewTicker(conf.PollInterval)
-		for {
-			select {
-			case <-ticker.C:
-				logrus.Debug("Polling")
-				if err = c.Check(nil); err != nil {
-					logrus.WithError(err).Error("Periodic poll failed")
-				}
-			}
-		}
-	} else {
-		select {}
-	}
+
+	select {}
 }

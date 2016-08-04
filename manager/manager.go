@@ -23,8 +23,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/database"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 	"github.com/pborman/uuid"
 )
@@ -47,24 +45,18 @@ type Manager interface {
 }
 
 type manager struct {
-	db            database.Tenant
-	producerCache notification.TenantProducerCache
-	generator     nginx.Generator
+	db database.Tenant
 }
 
 // Config options
 type Config struct {
-	Database      database.Tenant
-	ProducerCache notification.TenantProducerCache
-	Generator     nginx.Generator
+	Database database.Tenant
 }
 
 // NewManager creates Manager instance
 func NewManager(conf Config) Manager {
 	return &manager{
-		db:            conf.Database,
-		producerCache: conf.ProducerCache,
-		generator:     conf.Generator,
+		db: conf.Database,
 	}
 }
 
@@ -78,16 +70,9 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 		TenantToken: token,
 		ProxyConfig: resources.ProxyConfig{
 			LoadBalance: tenantInfo.LoadBalance,
-			Credentials: resources.Credentials{
-				Kafka:    tenantInfo.Credentials.Kafka,
-				Registry: tenantInfo.Credentials.Registry,
-			},
-			Filters: tenantInfo.Filters,
+			Filters:     tenantInfo.Filters,
 		},
-		ServiceCatalog: resources.ServiceCatalog{
-			Services:   []resources.Service{},
-			LastUpdate: time.Now(),
-		},
+		LastUpdate: time.Now(),
 	}
 
 	// Copy each element
@@ -120,58 +105,10 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 	}
 	entry.ProxyConfig.Filters.Rules = rules
 
-	// Ensure Registry credentials are provided
-	if entry.ProxyConfig.Credentials.Registry.URL == "" || entry.ProxyConfig.Credentials.Registry.Token == "" {
-		return &InvalidRuleError{Reason: "must provide Registry creds", ErrorMessage: "invalid_registry_creds"}
-	}
-
-	mhCredValid := false
-
-	if !entry.ProxyConfig.Credentials.Kafka.SASL && len(entry.ProxyConfig.Credentials.Kafka.Brokers) != 0 &&
-		entry.ProxyConfig.Credentials.Kafka.APIKey == "" &&
-		entry.ProxyConfig.Credentials.Kafka.AdminURL == "" &&
-		entry.ProxyConfig.Credentials.Kafka.RestURL == "" &&
-		entry.ProxyConfig.Credentials.Kafka.Password == "" &&
-		entry.ProxyConfig.Credentials.Kafka.User == "" {
-
-		// local kafka case
-		mhCredValid = true
-	} else if entry.ProxyConfig.Credentials.Kafka.SASL && entry.ProxyConfig.Credentials.Kafka.APIKey != "" &&
-		entry.ProxyConfig.Credentials.Kafka.AdminURL != "" &&
-		len(entry.ProxyConfig.Credentials.Kafka.Brokers) != 0 &&
-		entry.ProxyConfig.Credentials.Kafka.RestURL != "" &&
-		entry.ProxyConfig.Credentials.Kafka.Password != "" &&
-		entry.ProxyConfig.Credentials.Kafka.User != "" {
-
-		// Bluemix Message Hub case
-		mhCredValid = true
-	} else if !entry.ProxyConfig.Credentials.Kafka.SASL && len(entry.ProxyConfig.Credentials.Kafka.Brokers) == 0 &&
-		entry.ProxyConfig.Credentials.Kafka.APIKey == "" &&
-		entry.ProxyConfig.Credentials.Kafka.AdminURL == "" &&
-		entry.ProxyConfig.Credentials.Kafka.RestURL == "" &&
-		entry.ProxyConfig.Credentials.Kafka.Password == "" &&
-		entry.ProxyConfig.Credentials.Kafka.User == "" {
-
-		// no kafka messaging used
-		mhCredValid = true
-	}
-
-	if !mhCredValid {
-		return &InvalidRuleError{Reason: "must provide all Kafka creds", ErrorMessage: "invalid_kafka_creds"}
-	}
-
-	// TODO: perform a check to ensure that the SD and MH credentials actually work?
-
 	// Add to rules
 	if err = m.db.Create(entry); err != nil {
 		logrus.WithError(err).Error("Failed setting rules")
 		return &ServiceUnavailableError{Reason: "Could not create entry", ErrorMessage: "FIXME", Err: err}
-	}
-
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
 	}
 
 	return nil
@@ -181,56 +118,11 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 	var err error
 
-	setRegistry := false
-	setKafka := false
-
-	if tenantInfo.Credentials.Registry.URL != "" && tenantInfo.Credentials.Registry.Token != "" {
-		setRegistry = true
-	} else if tenantInfo.Credentials.Registry.URL != "" || tenantInfo.Credentials.Registry.Token != "" {
-		return &InvalidRuleError{Reason: "bad Registry credentials", ErrorMessage: "bad_registry_creds"}
-	}
-
-	if tenantInfo.Credentials.Kafka.APIKey != "" &&
-		tenantInfo.Credentials.Kafka.AdminURL != "" &&
-		len(tenantInfo.Credentials.Kafka.Brokers) != 0 &&
-		tenantInfo.Credentials.Kafka.RestURL != "" &&
-		tenantInfo.Credentials.Kafka.Password != "" &&
-		tenantInfo.Credentials.Kafka.User != "" {
-		setKafka = true
-	} else if tenantInfo.Credentials.Kafka.APIKey == "" &&
-		tenantInfo.Credentials.Kafka.AdminURL == "" &&
-		len(tenantInfo.Credentials.Kafka.Brokers) != 0 &&
-		tenantInfo.Credentials.Kafka.RestURL == "" &&
-		tenantInfo.Credentials.Kafka.User == "" &&
-		tenantInfo.Credentials.Kafka.Password == "" &&
-		!tenantInfo.Credentials.Kafka.SASL {
-		setKafka = true
-	} else if tenantInfo.Credentials.Kafka.APIKey != "" ||
-		tenantInfo.Credentials.Kafka.AdminURL != "" ||
-		len(tenantInfo.Credentials.Kafka.Brokers) != 0 ||
-		tenantInfo.Credentials.Kafka.RestURL != "" ||
-		tenantInfo.Credentials.Kafka.Password != "" ||
-		tenantInfo.Credentials.Kafka.User != "" {
-		return &InvalidRuleError{Reason: "bad Kafka credentials", ErrorMessage: "bad_kafka_creds"}
-	}
-
 	// TODO: only read and set proxyconfig if necessary
 	entry, err := m.db.Read(id)
 	if err != nil {
 		//handleDBError(w, req, err)
 		return &DBError{Err: err}
-	}
-
-	if setRegistry || setKafka {
-		// TODO: perform a check to ensure that the Registry and Kafka credentials actually work?
-
-		if setRegistry {
-			entry.ProxyConfig.Credentials.Registry = tenantInfo.Credentials.Registry
-		}
-
-		if setKafka {
-			entry.ProxyConfig.Credentials.Kafka = tenantInfo.Credentials.Kafka
-		}
 	}
 
 	if tenantInfo.LoadBalance != "" {
@@ -266,12 +158,6 @@ func (m *manager) Set(id string, tenantInfo resources.TenantInfo) error {
 			//"request_id": reqID,
 		}).Error("Error updating info for tenant ID")
 		return &ServiceUnavailableError{Reason: "database update failed", ErrorMessage: "database_fail", Err: err}
-	}
-
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
 	}
 
 	return nil
@@ -325,12 +211,6 @@ func (m *manager) SetVersion(id string, newVersion resources.Version) error {
 		return &ServiceUnavailableError{Reason: "database update failed", ErrorMessage: "database_fail", Err: err}
 	}
 
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -364,12 +244,6 @@ func (m *manager) DeleteVersion(id, service string) error {
 			//"request_id": reqID,
 		}).Error("Error updating info for tenant ID")
 		return &ServiceUnavailableError{Reason: "database update failed", ErrorMessage: "database_fail", Err: err}
-	}
-
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
 	}
 
 	return nil
@@ -549,12 +423,6 @@ func (m *manager) AddRules(id string, filters []resources.Rule) error {
 		return err
 	}
 
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -646,17 +514,11 @@ func (m *manager) DeleteRules(id string, filterIDs []string) error {
 		return err
 	}
 
-	// Send Kafka event
-	templ := m.generator.TemplateConfig(entry.ServiceCatalog, entry.ProxyConfig)
-	if err = m.producerCache.SendEvent(entry.TenantToken, entry.ProxyConfig.Credentials.Kafka, templ); err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (m *manager) updateTenant(tenant resources.TenantEntry) error {
 	// Update last update time
-	tenant.ServiceCatalog.LastUpdate = time.Now()
+	tenant.LastUpdate = time.Now()
 	return m.db.Update(tenant)
 }

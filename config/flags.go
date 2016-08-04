@@ -17,8 +17,6 @@ package config
 import (
 	"strings"
 
-	"time"
-
 	"github.com/codegangsta/cli"
 )
 
@@ -29,7 +27,6 @@ const (
 	dbPassword       = "database_password"
 	dbHost           = "database_host"
 	secretKey        = "encryption_key"
-	pollInterval     = "poll_interval"
 	logLevel         = "log_level"
 	authModeFlag     = "auth_mode"
 	jwtSecretFlag    = "jwt_secret"
@@ -51,13 +48,6 @@ var Flags = []cli.Flag{
 		Value:  "abcdefghijklmnop",
 		EnvVar: envVar(secretKey),
 		Usage:  "secret key",
-	},
-
-	cli.DurationFlag{
-		Name:   pollInterval,
-		Value:  10 * time.Second,
-		EnvVar: envVar(pollInterval),
-		Usage:  "poll interval",
 	},
 
 	cli.StringFlag{

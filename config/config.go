@@ -16,7 +16,6 @@ package config
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/util"
@@ -37,7 +36,6 @@ type Config struct {
 	Database     Database
 	APIPort      int
 	SecretKey    string
-	PollInterval time.Duration
 	LogLevel     logrus.Level
 	AuthModes    []string
 	JWTSecret    string
@@ -66,7 +64,6 @@ func New(context *cli.Context) *Config {
 		},
 		APIPort:      context.Int(apiPort),
 		SecretKey:    context.String(secretKey),
-		PollInterval: context.Duration(pollInterval),
 		LogLevel:     loggingLevel,
 		AuthModes:    context.StringSlice(authModeFlag),
 		JWTSecret:    context.String(jwtSecretFlag),

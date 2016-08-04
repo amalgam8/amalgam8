@@ -15,16 +15,14 @@
 package monitor
 
 import (
+	"encoding/json"
 	"reflect"
 	"sort"
-
-	"encoding/json"
-
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/registry/client"
+	"github.com/amalgam8/sidecar/proxy/resources"
 )
 
 // RegistryListener is notified of changes to registry

@@ -18,9 +18,10 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
+	a8controller "github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/sidecar/proxy/nginx"
+	"github.com/amalgam8/sidecar/proxy/resources"
 )
 
 // NGINXProxy updates NGINX to reflect changes in the A8 controller and A8 registry
@@ -31,7 +32,7 @@ type NGINXProxy interface {
 
 type nginxProxy struct {
 	catalog     resources.ServiceCatalog
-	proxyConfig resources.ProxyConfig
+	proxyConfig a8controller.ProxyConfig
 	nginx       nginx.Manager
 	mutex       sync.Mutex
 }
@@ -39,11 +40,11 @@ type nginxProxy struct {
 // NewNGINXProxy instantiates a new instance
 func NewNGINXProxy(nginxClient nginx.Manager) NGINXProxy {
 	return &nginxProxy{
-		proxyConfig: resources.ProxyConfig{
+		proxyConfig: a8controller.ProxyConfig{
 			LoadBalance: "round_robin",
-			Filters: resources.Filters{
-				Versions: []resources.Version{},
-				Rules:    []resources.Rule{},
+			Filters: a8controller.Filters{
+				Versions: []a8controller.Version{},
+				Rules:    []a8controller.Rule{},
 			},
 		},
 		nginx: nginxClient,
@@ -60,7 +61,7 @@ func (n *nginxProxy) CatalogChange(catalog resources.ServiceCatalog) error {
 }
 
 // RuleChange updates NGINX on a change in the proxy configuration
-func (n *nginxProxy) RuleChange(proxyConfig resources.ProxyConfig) error {
+func (n *nginxProxy) RuleChange(proxyConfig a8controller.ProxyConfig) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 

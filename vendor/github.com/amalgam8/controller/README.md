@@ -47,7 +47,6 @@ The following environment variables are available. All of them are optional.
 | A8_API_PORT | --api_port | API port | 6379 |
 | A8_CONTROL_TOKEN | --control_token | Controller API authentication token | ABCDEFGHIJKLMNOP |
 | A8_ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
-| A8_POLL_INTERVAL | --poll_interval | poll interval | 10s |
 | A8_DATABASE_TYPE |  --database_type |	database type | memory |
 | A8_DATABASE_USERNAME | --database_username | database username | |
 | A8_DATABASE_PASSWORD | --database_password | database password | |

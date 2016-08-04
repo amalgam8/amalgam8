@@ -2,7 +2,7 @@
   "swagger" : "2.0",
   "info" : {
     "title" : "Controller API for Amalgam8",
-    "description": "The controller monitors the registry and updates the sidecar configuration accordingly. It provides APIs to the developer for configuring rules for request routing, fault injection, etc. These rules are then translated and sent to the sidecars belonging to the application.",
+    "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc. These rules are then translated and sent to the sidecars belonging to the application.",
     "version" : "0.2"
   },
   "schemes" : [ "https" ],
@@ -21,31 +21,6 @@
           },
           "503": {
             "description" : "Controller is unhealthy"
-          }
-        }
-      }
-    },
-    "/v1/poll" : {
-      "parameters" : [
-        {
-          "name": "token",
-          "in": "header",
-          "description": "Tenant token",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "post" : {
-        "tags" : [ ],
-        "summary" : "Poll for changes in registries",
-        "description" : "Performs a poll of the registry for each registered tenant and checks for changes",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully polled registries for all tenants"
-          },
-          "500" : {
-            "description" : "Failed to poll registries for one or more tenants"
           }
         }
       }
@@ -99,8 +74,8 @@
       },
       "get" : {
         "tags" : [ ],
-        "summary" : "Credentials and configuration of a tenant",
-        "description" : "Returns the credentials and configuration of a tenant",
+        "summary" : "Configuration of a tenant",
+        "description" : "Returns the configuration of a tenant",
         "responses" : {
           "200" : {
             "description" : "Tenant information",
@@ -119,7 +94,7 @@
       "put" : {
         "tags" : [ ],
         "summary" : "Update tenant information",
-        "description" : "Updates the credentials and configuration of a tenant",
+        "description" : "Updates the configuration of a tenant",
         "parameters" : [
           {
             "name": "tenant_info",
@@ -403,68 +378,8 @@
           "type" : "string",
           "description" : "Load balancing algorithm for tenant"
         },
-        "credentials" : {
-          "$ref" : "#/definitions/credentials"
-        },
         "filters" : {
           "$ref" : "#/definitions/filter"
-        }
-      }
-    },
-    "credentials" : {
-      "properties" : {
-        "kafka" : {
-          "$ref" : "#/definitions/kafka"
-        },
-        "registry" : {
-          "$ref" : "#/definitions/registry"
-        }
-      }
-    },
-    "registry" : {
-      "properties" : {
-        "url" : {
-          "type" : "string",
-          "description" : "url for registry"
-        },
-        "token" : {
-          "type" : "string",
-          "description" : "token for registry"
-        }
-      }
-    },
-    "kafka" : {
-      "properties" : {
-        "api_key" : {
-          "type" : "string",
-          "description" : "token for kafka REST API"
-        },
-        "admin_url" : {
-          "type" : "string",
-          "description" : "kafka admin url"
-        },
-        "rest_url" : {
-          "type" : "string",
-          "description" : "kafka REST url"
-        },
-        "brokers" : {
-          "type" : "array",
-          "description" : "kafka brokers",
-          "items" : {
-            "type" : "string"
-          }
-        },
-        "user" : {
-          "type" : "string",
-          "description" : "username for SASL authentication"
-        },
-        "password" : {
-          "type" : "string",
-          "description" : "password for SASL authentication"
-        },
-        "sasl" : {
-          "type" : "boolean",
-          "description" : "enable or disable SASL authentication"
         }
       }
     },

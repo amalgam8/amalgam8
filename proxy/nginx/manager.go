@@ -20,14 +20,15 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
+	a8controller "github.com/amalgam8/controller/resources"
 	"github.com/amalgam8/sidecar/proxy/clients"
+	"github.com/amalgam8/sidecar/proxy/resources"
 )
 
 // Manager of updates to NGINX
 type Manager interface {
 	// Update NGINX with the provided configuration
-	Update(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) error
+	Update(catalog resources.ServiceCatalog, proxyConfig a8controller.ProxyConfig) error
 }
 
 type manager struct {
@@ -52,7 +53,7 @@ func NewManager(conf Config) Manager {
 }
 
 // Update NGINX
-func (n *manager) Update(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) error {
+func (n *manager) Update(catalog resources.ServiceCatalog, proxyConfig a8controller.ProxyConfig) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
@@ -85,7 +86,7 @@ func (n *manager) Update(catalog resources.ServiceCatalog, proxyConfig resources
 }
 
 // buildConfig constructs the request used by the NGINX client
-func (n *manager) buildConfig(catalog resources.ServiceCatalog, proxyConfig resources.ProxyConfig) clients.NGINXJson {
+func (n *manager) buildConfig(catalog resources.ServiceCatalog, proxyConfig a8controller.ProxyConfig) clients.NGINXJson {
 	conf := clients.NGINXJson{
 		Upstreams: make(map[string]clients.NGINXUpstream, 0),
 		Services:  make(map[string]clients.NGINXService, 0),
@@ -156,7 +157,7 @@ func (n *manager) buildConfig(catalog resources.ServiceCatalog, proxyConfig reso
 		}
 	}
 
-	versions := map[string]resources.Version{}
+	versions := map[string]a8controller.Version{}
 	for _, version := range proxyConfig.Filters.Versions {
 		versions[version.Service] = version
 	}

@@ -139,44 +139,6 @@
         }
       }
     },
-    "/v1/nginx" : {
-      "parameters" : [
-        {
-          "name": "token",
-          "in": "header",
-          "description": "Tenant token",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "get" : {
-        "produces" : [ "text/plain" ],
-        "tags" : [ ],
-        "summary" : "Proxy configuration of a tenant",
-        "description" : "Returns the proxy configuration for a given tenant",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Proxy configuration of tenant",
-            "schema" : {
-              "$ref" : "#/definitions/nginx"
-            }
-          },
-          "204" : {
-            "description" : "No configuration changes"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "500" : {
-            "description" : "Error generating configuration"
-          },
-          "503" : {
-            "description" : "Error communicating with external service"
-          }
-        }
-      }
-    },
     "/v1/rules" : {
       "parameters" : [
         {
@@ -508,70 +470,6 @@
         "selector" : {
           "type" : "object",
           "description" : "Version selector"
-        }
-      }
-    },
-    "nginx" : {
-      "properties" : {
-        "upstreams" : {
-          "type" : "array",
-          "description" : "Service upstreams",
-          "items" : {
-            "$ref" : "#/definitions/upstream"
-          }
-        },
-        "services" : {
-          "type" : "array",
-          "description" : "Service version info",
-          "items" : {
-            "$ref" : "#/definitions/service"
-          }
-        },
-        "faults" : {
-          "type" : "array",
-          "description" : "Service faults",
-          "items" : {
-            "$ref" : "#/definitions/rule"
-          }
-        }
-      }
-    },
-    "service" : {
-      "properties" : {
-        "default" : {
-          "type" : "string",
-          "description" : "Default version of service to use"
-        },
-        "selectors" : {
-          "type" : "string",
-          "description" : "Selectors to use for choosing which version of service to use"
-        },
-        "type" : {
-          "type" : "string",
-          "description" : "Endpoint type of service http/https/tcp/udp"
-        }
-      }
-    },
-    "upstream" : {
-      "properties" : {
-        "servers" : {
-          "type" : "array",
-          "description" : "",
-          "items" : {
-            "$ref" : "#/definitions/endpoint"
-          }
-        }
-      }
-    },
-    "endpoint" : {
-      "properties" : {
-        "host" : {
-          "type" : "string",
-          "description" : "Service instance hostname or IP"
-        },
-        "port" : {
-          "type" : "number",
-          "description" : "Service instance port"
         }
       }
     }

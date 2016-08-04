@@ -35,6 +35,7 @@ bluemix ic group-create --name amalgam8_controller \
   --domain $ROUTES_DOMAIN \
   --env A8_POLL_INTERVAL=5s \
   --env A8_LOG_LEVEL=debug \
+  --env A8_AUTH_MODE=trusted \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${CONTROLLER_IMAGE}
 
 #################################################################################

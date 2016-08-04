@@ -175,12 +175,12 @@ func startProxy(conf *config.Config) error {
 		return err
 	}
 
-	nginxRouter := proxy.NewNGINXProxy(nginxManager)
+	nginxProxy := proxy.NewNGINXProxy(nginxManager)
 
 	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
 		Client: controllerClient,
 		Listeners: []monitor.ControllerListener{
-			nginxRouter,
+			nginxProxy,
 		},
 		PollInterval: conf.Controller.Poll,
 	})
@@ -193,7 +193,7 @@ func startProxy(conf *config.Config) error {
 	registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
 		PollInterval: conf.Registry.Poll,
 		Listeners: []monitor.RegistryListener{
-			nginxRouter,
+			nginxProxy,
 		},
 		RegistryClient: registryClient,
 	})

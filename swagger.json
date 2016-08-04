@@ -2,7 +2,7 @@
   "swagger" : "2.0",
   "info" : {
     "title" : "Controller API for Amalgam8",
-    "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc. These rules are then translated and sent to the sidecars belonging to the application.",
+    "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc.",
     "version" : "0.2"
   },
   "schemes" : [ "https" ],

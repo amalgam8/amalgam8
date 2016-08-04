@@ -20,6 +20,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/utils/i18n"
 )
 
@@ -28,7 +29,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Error("Failed to list applications")
 
@@ -38,7 +39,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 	services := catalog.ListServices(nil)
 	if services == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "services list is nil",
 		}).Error("Failed to list applications")
 
@@ -54,7 +55,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 		insts, err := catalog.List(svc.ServiceName, nil)
 		if err != nil {
 			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env["REMOTE_USER"],
+				"namespace": r.Env[env.Namespace],
 				"error":     err,
 			}).Errorf("Failed to lookup application %s", svc.ServiceName)
 
@@ -73,7 +74,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 	err := w.WriteJson(listRes)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode applications list")
 
@@ -82,7 +83,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("List applications (%d apps, %d insts)", len(apps.Application), instsCount)
 }
 
@@ -90,7 +91,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
 		}).Warn("Failed to lookup application")
 
@@ -101,7 +102,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to lookup application %s", appid)
 
@@ -111,7 +112,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 	insts, err := catalog.List(appid, nil)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Errorf("Failed to lookup application %s", appid)
 
@@ -127,7 +128,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 	err = w.WriteJson(map[string]*Application{"application": app})
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env["REMOTE_USER"],
+			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to encode application")
 
@@ -136,6 +137,6 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	routes.logger.WithFields(log.Fields{
-		"namespace": r.Env["REMOTE_USER"],
+		"namespace": r.Env[env.Namespace],
 	}).Infof("List application instances (%d)", len(app.Instances))
 }

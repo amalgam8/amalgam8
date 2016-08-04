@@ -18,8 +18,6 @@ import (
 	"net/http"
 
 	"github.com/amalgam8/controller/database"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/resources"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -31,37 +29,23 @@ var _ = Describe("Manager", func() {
 		manager    Manager
 		tenantInfo resources.TenantInfo
 		id         string
-		token      string
 		db         database.Tenant
-		cache      *notification.MockTenantProducerCache
-		n          *nginx.MockGenerator
 	)
 
 	Context("Manager", func() {
 
 		BeforeEach(func() {
-			n = &nginx.MockGenerator{}
 			db = database.NewTenant(database.NewMemoryCloudantDB())
-			cache = new(notification.MockTenantProducerCache)
 			manager = NewManager(Config{
-				Database:      db,
-				ProducerCache: cache,
-				Generator:     n,
+				Database: db,
 			})
 
 			id = "abcdef"
-			token = "12345"
 			tenantInfo = resources.TenantInfo{
 				LoadBalance: "round_robin",
 				Filters: resources.Filters{
 					Rules:    []resources.Rule{},
 					Versions: []resources.Version{},
-				},
-				Credentials: resources.Credentials{
-					Registry: resources.Registry{
-						URL:   "http://localhost",
-						Token: "12345",
-					},
 				},
 			}
 		})
@@ -73,7 +57,7 @@ var _ = Describe("Manager", func() {
 		})
 
 		It("registers an ID", func() {
-			Expect(manager.Create(id, token, tenantInfo)).ToNot(HaveOccurred())
+			Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 		})
 
 		It("delete invalid id returns error", func() {
@@ -87,7 +71,7 @@ var _ = Describe("Manager", func() {
 
 		Context("entry has been added", func() {
 			BeforeEach(func() {
-				Expect(manager.Create(id, token, tenantInfo)).ToNot(HaveOccurred())
+				Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 			})
 
 			It("ID in database", func() {

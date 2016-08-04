@@ -23,7 +23,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
+	"github.com/amalgam8/registry/api/env"
 	"github.com/amalgam8/registry/api/protocol"
+	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/utils/logging"
 )
 
@@ -39,7 +41,7 @@ var (
 
 // AccessLog produces the access log.
 // It depends on TimerMiddleware and RecorderMiddleware that should be in the wrapped
-// middlewares. It also uses request.Env["REMOTE_USER"].(string) set by the auth middlewares.
+// middlewares. It also uses request.Env[Namespace] set by the auth middlewares.
 type AccessLog struct {
 	logger *log.Entry
 }
@@ -52,7 +54,7 @@ func (mw *AccessLog) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
 		// We log the message in a defer function to make sure that the message
 		// is logged even if a panic occurs in some handler in the chain
 		defer func() {
-			reqID, ok := r.Env[SdRequestID].(string)
+			reqID, ok := r.Env[env.RequestID].(string)
 			if !ok {
 				reqID = "Unknown"
 			}
@@ -90,9 +92,9 @@ func (mw *AccessLog) remoteAddr(r *rest.Request) string {
 	return ""
 }
 
-func (mw *AccessLog) namespace(r *rest.Request) string {
-	if val, exists := r.Env["REMOTE_USER"]; exists {
-		return val.(string)
+func (mw *AccessLog) namespace(r *rest.Request) auth.Namespace {
+	if val, exists := r.Env[env.Namespace]; exists {
+		return val.(auth.Namespace)
 	}
 	return ""
 }
@@ -116,35 +118,35 @@ func (mw *AccessLog) headers(r *rest.Request) string {
 }
 
 func (mw *AccessLog) method(r *rest.Request) string {
-	if val, exists := r.Env[protocol.OperationKey]; exists {
+	if val, exists := r.Env[env.APIOperation]; exists {
 		return val.(protocol.Operation).String()
 	}
 	return r.Method
 }
 
 func (mw *AccessLog) protocol(r *rest.Request) string {
-	if val, exists := r.Env[protocol.ProtocolKey]; exists {
+	if val, exists := r.Env[env.APIProtocol]; exists {
 		return protocol.NameOf(val.(protocol.Type))
 	}
 	return r.Proto
 }
 
 func (mw *AccessLog) statusCode(r *rest.Request) int {
-	if val, exists := r.Env["STATUS_CODE"]; exists {
+	if val, exists := r.Env[env.StatusCode]; exists {
 		return val.(int)
 	}
 	return http.StatusInternalServerError
 }
 
 func (mw *AccessLog) elapsedTime(r *rest.Request) *time.Duration {
-	if val, exists := r.Env["ELAPSED_TIME"]; exists {
+	if val, exists := r.Env[env.ElapsedTime]; exists {
 		return val.(*time.Duration)
 	}
 	return nil
 }
 
 func (mw *AccessLog) bytesWritten(r *rest.Request) int64 {
-	if val, exists := r.Env["BYTES_WRITTEN"]; exists {
+	if val, exists := r.Env[env.BytesWritten]; exists {
 		return val.(int64)
 	}
 	return 0

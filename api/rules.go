@@ -21,12 +21,18 @@ func NewRule(m rules.Manager) *Rule {
 	}
 }
 
-func (r *Rule) Routes() []*rest.Route {
-	return []*rest.Route{
+func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	routes := []*rest.Route{
 		rest.Post("/v1/rules", r.add),
 		rest.Get("/v1/rules", r.list),
 		rest.Delete("/v1/rules", r.remove),
 	}
+
+	for _, route := range routes {
+		route.Func = rest.WrapMiddlewares(middlewares, route.Func)
+	}
+
+	return routes
 }
 
 func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) {

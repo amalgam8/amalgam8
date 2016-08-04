@@ -34,10 +34,15 @@ func NewHealth(reporter metrics.Reporter) *Health {
 }
 
 // Routes for health check API
-func (h *Health) Routes() []*rest.Route {
-	return []*rest.Route{
+func (h *Health) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	routes := []*rest.Route{
 		rest.Get("/health", reportMetric(h.reporter, h.GetHealth, "controller_health")),
 	}
+
+	for _, route := range routes {
+		route.Func = rest.WrapMiddlewares(middlewares, route.Func)
+	}
+	return routes
 }
 
 // GetHealth performs health check on controller and dependencies

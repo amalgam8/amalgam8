@@ -19,18 +19,17 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/api"
-	"github.com/amalgam8/controller/checker"
+	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/config"
 	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
-	"github.com/amalgam8/controller/nginx"
-	"github.com/amalgam8/controller/notification"
 	"github.com/amalgam8/controller/rules"
+
+	"github.com/amalgam8/controller/manager"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -89,7 +88,10 @@ func controllerMain(conf config.Config) error {
 
 	var tenantDB database.Tenant
 	if conf.Database.Type == "memory" {
-
+		db := database.NewMemoryCloudantDB()
+		tenantDB = database.NewTenant(db)
+	} else if conf.Database.Type == "cloudant" {
+		logrus.Warn("Cloudant currently not supported, using in memory storage")
 		db := database.NewMemoryCloudantDB()
 		tenantDB = database.NewTenant(db)
 	} else {
@@ -98,42 +100,40 @@ func controllerMain(conf config.Config) error {
 		return err
 	}
 
-	tpc := notification.NewTenantProducerCache()
-
-	g, err := nginx.NewGenerator(nginx.Config{
+	r := manager.NewManager(manager.Config{
 		Database: tenantDB,
 	})
-	if err != nil {
-		logrus.Error(err)
-		setupHandler.SetError(err)
-		return err
+
+	tenantAPI := api.NewTenant(api.TenantConfig{
+		Reporter: reporter,
+		Manager:  r,
+	})
+	healthAPI := api.NewHealth(reporter)
+
+	var authenticator auth.Authenticator
+	if len(conf.AuthModes) > 0 {
+		auths := make([]auth.Authenticator, len(conf.AuthModes))
+		for i, mode := range conf.AuthModes {
+			switch mode {
+			case "trusted":
+				auths[i] = auth.NewTrustedAuthenticator()
+			case "jwt":
+				jwtAuth, err := auth.NewJWTAuthenticator([]byte(conf.JWTSecret))
+				if err != nil {
+					return fmt.Errorf("Failed to create the authentication module: %s", err)
+				}
+				auths[i] = jwtAuth
+			default:
+				return fmt.Errorf("Failed to create the authentication module: unrecognized authentication mode '%s'", err)
+			}
+		}
+		authenticator, err = auth.NewChainAuthenticator(auths)
+		if err != nil {
+			return err
+		}
+	} else {
+		authenticator = auth.DefaultAuthenticator()
 	}
-
-	//r := manager.NewManager(manager.Config{
-	//	Database:      tenantDB,
-	//	ProducerCache: tpc,
-	//	Generator:     g,
-	//})
-
-	factory := checker.NewRegistryFactory()
-
-	c := checker.New(checker.Config{
-		Database:      tenantDB,
-		ProducerCache: tpc,
-		Generator:     g,
-		Factory:       factory,
-	})
-
-	n := api.NewNGINX(api.NGINXConfig{
-		Reporter:  reporter,
-		Generator: g,
-	})
-	//t := api.NewTenant(api.TenantConfig{
-	//	Reporter: reporter,
-	//	Manager:  r,
-	//})
-	p := api.NewPoll(reporter, c)
-	h := api.NewHealth(reporter)
 
 	ruleManager := rules.NewMemoryManager()
 	rulesAPI := api.NewRule(ruleManager)
@@ -147,19 +147,18 @@ func controllerMain(conf config.Config) error {
 		},
 		&rest.ContentTypeCheckerMiddleware{},
 		&middleware.RequestIDMiddleware{},
-		&middleware.AuthMiddleware{
-			Auth: &middleware.LocalAuth{},
-			Key:  conf.ControlToken,
-		},
 		&middleware.LoggingMiddleware{},
+		middleware.NewRequireHTTPS(middleware.CheckRequest{
+			IsSecure: middleware.IsUsingSecureConnection,
+			Disabled: !conf.RequireHTTPS,
+		}),
 	)
 
-	routes := n.Routes()
-	//routes = append(routes, t.Routes()...)
-	routes = append(routes, h.Routes()...)
-	routes = append(routes, p.Routes()...)
-	routes = append(routes, rulesAPI.Routes()...)
+	authMw := &middleware.AuthMiddleware{Authenticator: authenticator}
 
+	routes := tenantAPI.Routes(authMw)
+	routes = append(routes, rulesAPI.Routes(authMw)...)
+	routes = append(routes, healthAPI.Routes()...)
 	router, err := rest.MakeRouter(
 		routes...,
 	)
@@ -171,26 +170,10 @@ func controllerMain(conf config.Config) error {
 
 	setupHandler.SetHandler(a.MakeHandler())
 
-	//start garbage collection on kafka producer cache
-	tpc.StartGC()
-
 	// Server is already started
 	logrus.WithFields(logrus.Fields{
 		"port": conf.APIPort,
 	}).Info("Server started")
-	if conf.PollInterval.Seconds() != 0.0 {
-		logrus.Info("Beginning periodic poll...")
-		ticker := time.NewTicker(conf.PollInterval)
-		for {
-			select {
-			case <-ticker.C:
-				logrus.Debug("Polling")
-				if err = c.Check(nil); err != nil {
-					logrus.WithError(err).Error("Periodic poll failed")
-				}
-			}
-		}
-	} else {
-		select {}
-	}
+
+	select {}
 }

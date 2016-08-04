@@ -3,77 +3,70 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
+	"strings"
+
+	"github.com/amalgam8/controller/api"
+	"github.com/amalgam8/controller/auth"
+	"github.com/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-// AuthHeader control plane authorization header
-const (
-	AuthHeader   = "Authorization"
-	AuthEnv      = "TENANT_ID"
-	TenantHeader = "A8-Tenant-ID"
-)
+const adminNamespace = "admin"
 
-// Authenticator authenticates tokens
-type Authenticator interface {
-	Authenticate(token string) (string, error)
-}
-
-// AuthMiddleware authenticates incoming requests
+// AuthMiddleware provides a generic authentication middleware
+// On failure, a 401 HTTP response is returned. On success, the wrapped middleware is called.
 type AuthMiddleware struct {
-	Key  string
-	Auth Authenticator
+	Authenticator auth.Authenticator
 }
 
-// MiddlewareFunc rejects unauthenticated requests and returns an error code.
-// Otherwise it propagates the request.
-func (mw *AuthMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
-	return func(w rest.ResponseWriter, r *rest.Request) {
+// MiddlewareFunc returns a go-json-rest HTTP Handler function, wrapping calls to the provided HandlerFunc
+func (mw *AuthMiddleware) MiddlewareFunc(handler rest.HandlerFunc) rest.HandlerFunc {
+	if mw.Authenticator == nil {
+		mw.Authenticator = auth.DefaultAuthenticator()
+	}
 
-		reqID := r.Header.Get(RequestIDHeader)
-		authToken := r.Header.Get(AuthHeader)
-		// Check the header
-		if authToken == mw.Key {
-			tenantID := r.Header.Get(TenantHeader)
-			if tenantID != "" {
-				r.Env[AuthEnv] = tenantID
-				h(w, r)
-				return
-			}
-			logrus.WithFields(logrus.Fields{
-				"remote_address": r.RemoteAddr,
-				"request_id":     reqID,
-				"method":         r.Method,
-				"url":            r.URL,
-			}).Error("Missing tenant ID header")
-			w.WriteHeader(http.StatusUnauthorized)
+	return func(writer rest.ResponseWriter, request *rest.Request) { mw.handler(writer, request, handler) }
+}
+
+func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Request, h rest.HandlerFunc) {
+	authHeader := request.Header.Get(util.AuthHeader) // for Amalgam8 requests
+	token := ""
+
+	if authHeader != "" {
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || (parts[0] != "Bearer" && parts[0] != "bearer") {
+			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_malformed")
 			return
 		}
+		token = parts[1]
+	}
 
-		if authToken != "" {
-			id, err := mw.Auth.Authenticate(authToken)
-			if err != nil {
-				logrus.WithFields(logrus.Fields{
-					"err":            err,
-					"remote_address": r.RemoteAddr,
-					"request_id":     reqID,
-					"method":         r.Method,
-					"url":            r.URL,
-				}).Error("Invalid authentication token")
-				w.WriteHeader(http.StatusUnauthorized)
-				return
-			}
-			r.Env[AuthEnv] = id
-			h(w, r)
-			return
+	nsPtr, err := mw.Authenticator.Authenticate(token)
+	if err != nil {
+		switch err {
+		case auth.ErrEmptyToken:
+			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_missing")
+		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
+			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_not_authorized")
+		case auth.ErrCommunicationError:
+			api.RestError(writer, request, http.StatusServiceUnavailable, "error_auth_failed_validation")
+		default:
+			api.RestError(writer, request, http.StatusInternalServerError, "error_internal")
 		}
-		logrus.WithFields(logrus.Fields{
-			"remote_address": r.RemoteAddr,
-			"request_id":     reqID,
-			"method":         r.Method,
-			"url":            r.URL,
-		}).Error("Invalid authentication token")
-		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
+
+	// Recognize admin namespace and get tenant ID from header
+	if nsPtr.String() == adminNamespace {
+		tenantID := request.Header.Get(util.TenantHeader)
+		if tenantID == "" {
+			api.RestError(writer, request, http.StatusBadRequest, "missing_tenant_header")
+			return
+		}
+		tenantNamespace := auth.Namespace(tenantID)
+		nsPtr = &tenantNamespace
+	}
+
+	request.Env[util.Namespace] = *nsPtr
+	h(writer, request)
 }

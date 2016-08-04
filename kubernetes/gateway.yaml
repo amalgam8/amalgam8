@@ -52,14 +52,16 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_TOKEN
-          value: local
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_SERVICE
           value: gateway
         - name: A8_LOGSTASH_SERVER
           #filebeat YAML issue workaround
           value: "'$(LOGSERVER_SERVICE_HOST):8092'"
         - name: A8_CONTROLLER_POLL
-          value: 15s
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
         - name: A8_REGISTER
           value: "false"

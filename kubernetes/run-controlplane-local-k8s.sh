@@ -21,12 +21,9 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 rfile="registry.yaml"
 cfile="controller.yaml"
-mhfile="messagehub.yaml"
 lgfile="logserver.yaml"
 
 if [ "$1" == "start" ]; then
-    echo "Starting integration bus (kafka)"
-    kubectl create -f $SCRIPTDIR/$mhfile
     echo "Starting logging service (ELK)"
     kubectl create -f $SCRIPTDIR/$lgfile
     echo "Starting multi-tenant service registry"
@@ -36,26 +33,56 @@ if [ "$1" == "start" ]; then
 
     echo "Waiting for control plane to initialize..."
 
-    sleep 60
-    AR=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    AC=localhost:31200
-    KA=$(kubectl get svc/kafka --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    sleep 10
+    REGISTRY_URL=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    CONTROLLER_URL=localhost:31200
+
+    # Wait for controller route to set up
+    echo "Waiting for controller route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Controller route is set to '$CONTROLLER_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+    # Wait for registry route to set up
+    echo "Waiting for registry route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Registry route is set to '$REGISTRY_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: Bearer local" -d @- "http://${AC}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     kubectl delete -f $SCRIPTDIR/$cfile
@@ -63,8 +90,6 @@ elif [ "$1" == "stop" ]; then
     kubectl delete -f $SCRIPTDIR/$rfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$lgfile
-    sleep 3
-    kubectl delete -f $SCRIPTDIR/$mhfile
 else
     echo "usage: $0 start|stop"
     exit 1

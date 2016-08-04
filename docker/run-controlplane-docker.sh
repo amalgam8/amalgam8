@@ -20,29 +20,61 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
-    echo "starting Control plane components (kafka, ELK stack, registry, and controller)"
+    echo "starting Control plane components (ELK stack, registry, and controller)"
     docker-compose -f $SCRIPTDIR/controlplane.yaml up -d
     echo "waiting for the cluster to initialize.."
-    sleep 60
-    AR=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    AC=localhost:31200
-    KA=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' kafka ):9092
+
+    sleep 5
+
+    REGISTRY_URL=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
+    CONTROLLER_URL=localhost:31200
+
+    # Wait for controller route to set up
+    echo "Waiting for controller route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Controller route is set to '$CONTROLLER_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for controller route: /health returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+    # Wait for registry route to set up
+    echo "Waiting for registry route to set up"
+    attempt=0
+    while true; do
+        code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+        if [ "$code" = "200" ]; then
+            echo "Registry route is set to '$REGISTRY_URL'"
+            break
+        fi
+
+        attempt=$((attempt + 1))
+        if [ "$attempt" -gt 10 ]; then
+            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
+            echo "Deploying the controlplane has failed"
+            exit 1
+        fi
+        sleep 10s
+    done
+
+
     echo "Setting up a new tenant named 'local'"
     read -d '' tenant << EOF
 {
-    "credentials": {
-        "kafka": {
-            "brokers": ["${KA}"],
-            "sasl": false
-        },
-        "registry": {
-            "url": "http://${AR}",
-            "token": "local"
-        }
-    }
+    "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -H "Authorization: Bearer local" -d @- "http://${AC}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     docker-compose -f $SCRIPTDIR/controlplane.yaml kill

@@ -123,7 +123,7 @@ var TenantFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   registryToken,
 		EnvVar: envVar(registryToken),
-		Usage:  "API token for Regsitry",
+		Usage:  "API token for Registry",
 	},
 	cli.DurationFlag{
 		Name:   registryPoll,

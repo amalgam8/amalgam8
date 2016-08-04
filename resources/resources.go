@@ -52,84 +52,12 @@ func (e *BasicEntry) GetIV() string {
 	return e.IV
 }
 
-// MetaData service instance metadata
-type MetaData struct {
-	Version string
-}
-
-// ServiceCatalog TODO
-type ServiceCatalog struct {
-	Services   []Service
-	LastUpdate time.Time
-}
-
-// Service TODO
-type Service struct {
-	Name      string
-	Endpoints []Endpoint
-}
-
-// Endpoint TODO
-type Endpoint struct {
-	Type     string
-	Value    string
-	Metadata MetaData
-}
-
-// ByService TODO
-type ByService []Service
-
-// Len TODO
-func (a ByService) Len() int {
-	return len(a)
-}
-
-// Swap TODO
-func (a ByService) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-// Less TODO
-func (a ByService) Less(i, j int) bool {
-	return a[i].Name < a[j].Name
-}
-
-// ByEndpoint TODO
-type ByEndpoint []Endpoint
-
-// Len TODO
-func (a ByEndpoint) Len() int {
-	return len(a)
-}
-
-// Swap TODO
-func (a ByEndpoint) Swap(i, j int) {
-	a[i], a[j] = a[j], a[i]
-}
-
-// Less TODO
-func (a ByEndpoint) Less(i, j int) bool {
-	if a[i].Value == a[j].Value {
-		if a[i].Type == a[j].Type {
-			return a[i].Metadata.Version < a[j].Metadata.Version
-		}
-		return a[i].Type < a[j].Type
-	}
-	return a[i].Value < a[j].Value
-}
-
-// Registry TODO
-type Registry struct {
-	URL   string `json:"url"`
-	Token string `json:"token"`
-}
-
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry
-	TenantToken    string
-	ProxyConfig    ProxyConfig
-	ServiceCatalog ServiceCatalog
+	TenantToken string
+	ProxyConfig ProxyConfig
+	LastUpdate  time.Time
 }
 
 // ProxyConfig TODO
@@ -168,47 +96,4 @@ type Version struct {
 type TenantInfo struct {
 	LoadBalance string  `json:"load_balance"`
 	Filters     Filters `json:"filters"`
-}
-
-// VersionedUpstreams contains upstreams by version
-type VersionedUpstreams struct {
-	UpstreamName string   `json:"name"`
-	Upstreams    []string `json:"upstreams"`
-}
-
-// NGINXJson TODO
-type NGINXJson struct {
-	Upstreams map[string]NGINXUpstream `json:"upstreams"`
-	Services  map[string]NGINXService  `json:"services"`
-	Faults    []NGINXFault             `json:"faults,omitempty"`
-}
-
-// NGINXService TODO
-type NGINXService struct {
-	Default   string `json:"default"`
-	Selectors string `json:"selectors,omitempty"`
-	Type      string `json:"type"`
-}
-
-// NGINXUpstream TODO
-type NGINXUpstream struct {
-	Upstreams []NGINXEndpoint `json:"servers"`
-}
-
-// NGINXEndpoint TODO
-type NGINXEndpoint struct {
-	Host string `json:"host"`
-	Port int    `json:"port"`
-}
-
-// NGINXFault TODO
-type NGINXFault struct {
-	Source           string  `json:"source"`
-	Destination      string  `json:"destination"`
-	Header           string  `json:"header"`
-	Pattern          string  `json:"pattern"`
-	Delay            float64 `json:"delay"`
-	DelayProbability float64 `json:"delay_probability"`
-	AbortProbability float64 `json:"abort_probability"`
-	AbortCode        int     `json:"return_code"`
 }

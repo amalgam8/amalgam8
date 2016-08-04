@@ -72,10 +72,7 @@ func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) erro
 			LoadBalance: tenantInfo.LoadBalance,
 			Filters:     tenantInfo.Filters,
 		},
-		ServiceCatalog: resources.ServiceCatalog{
-			Services:   []resources.Service{},
-			LastUpdate: time.Now(),
-		},
+		LastUpdate: time.Now(),
 	}
 
 	// Copy each element
@@ -522,6 +519,6 @@ func (m *manager) DeleteRules(id string, filterIDs []string) error {
 
 func (m *manager) updateTenant(tenant resources.TenantEntry) error {
 	// Update last update time
-	tenant.ServiceCatalog.LastUpdate = time.Now()
+	tenant.LastUpdate = time.Now()
 	return m.db.Update(tenant)
 }

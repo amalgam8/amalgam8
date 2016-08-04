@@ -1,2 +1,2 @@
-# testing
-Integration testing
+# Amalgam8 Integration Test Scripts
+

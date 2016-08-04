@@ -15,25 +15,24 @@
 package monitor
 
 import (
-	"encoding/json"
 	"reflect"
-	"sort"
 	"time"
+
+	"sort"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/registry/client"
-	"github.com/amalgam8/sidecar/proxy/resources"
 )
 
 // RegistryListener is notified of changes to registry
 type RegistryListener interface {
-	CatalogChange(catalog resources.ServiceCatalog) error
+	CatalogChange([]client.ServiceInstance) error
 }
 
 type registry struct {
 	pollInterval   time.Duration
 	registryClient client.Discovery
-	cachedCatalog  resources.ServiceCatalog
+	cached         []*client.ServiceInstance
 	listeners      []RegistryListener
 	ticker         *time.Ticker
 }
@@ -92,12 +91,17 @@ func (m *registry) poll() error {
 	}
 
 	// Check for differences
-	if !m.catalogsEqual(m.cachedCatalog, latestCatalog) {
+	if !m.catalogsEqual(m.cached, latestCatalog) {
 		// Update cached copy of catalog
-		m.cachedCatalog = latestCatalog
+		m.cached = latestCatalog
+
+		dereferenced := make([]client.ServiceInstance, len(latestCatalog))
+		for i := range latestCatalog {
+			dereferenced[i] = *latestCatalog[i]
+		}
 
 		for _, listener := range m.listeners {
-			if err = listener.CatalogChange(latestCatalog); err != nil {
+			if err = listener.CatalogChange(dereferenced); err != nil {
 				logrus.WithError(err).Warn("Registry listener failed")
 			}
 		}
@@ -107,59 +111,27 @@ func (m *registry) poll() error {
 }
 
 // catalogsEqual
-func (m *registry) catalogsEqual(a, b resources.ServiceCatalog) bool {
-	equal := reflect.DeepEqual(a.Services, b.Services)
+func (m *registry) catalogsEqual(a, b []*client.ServiceInstance) bool {
+	equal := reflect.DeepEqual(a, b)
 	logrus.WithFields(logrus.Fields{
 		"a":     a,
 		"b":     b,
 		"equal": equal,
-	}).Debug("Comparing catalogs")
+	}).Debug("Comparing service instances")
 	return equal
 }
 
 // getLatestCatalog
-// FIXME: is this conversion still necessary?
-func (m *registry) getLatestCatalog() (resources.ServiceCatalog, error) {
-	catalog := resources.ServiceCatalog{}
-
+func (m *registry) getLatestCatalog() ([]*client.ServiceInstance, error) {
 	instances, err := m.registryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
-		return catalog, err
+		return instances, err
 	}
 
-	// Convert
-	serviceMap := make(map[string]*resources.Service)
-	for _, instance := range instances {
-		if serviceMap[instance.ServiceName] == nil {
-			serviceMap[instance.ServiceName] = &resources.Service{
-				Name:      instance.ServiceName,
-				Endpoints: []resources.Endpoint{},
-			}
-		}
+	// TODO: is sorting by ID sufficient?
+	sort.Sort(ByID(instances))
 
-		metadata := map[string]string{}
-		err = json.Unmarshal(instance.Metadata, &metadata)
-
-		endpoint := resources.Endpoint{
-			Type:     instance.Endpoint.Type,
-			Value:    instance.Endpoint.Value,
-			Metadata: resources.MetaData{Version: metadata["version"]},
-		}
-
-		serviceMap[instance.ServiceName].Endpoints = append(serviceMap[instance.ServiceName].Endpoints, endpoint)
-	}
-
-	for _, service := range serviceMap {
-		catalog.Services = append(catalog.Services, *service)
-	}
-
-	// Sort for comparisons (registry does not guarantee any ordering)
-	sort.Sort(resources.ByService(catalog.Services))
-	for _, service := range catalog.Services {
-		sort.Sort(resources.ByEndpoint(service.Endpoints))
-	}
-
-	return catalog, nil
+	return instances, nil
 }
 
 // Stop monitoring registry
@@ -171,4 +143,22 @@ func (m *registry) Stop() error {
 	}
 
 	return nil
+}
+
+// ByID sorts by ID
+type ByID []*client.ServiceInstance
+
+// Len of the array
+func (a ByID) Len() int {
+	return len(a)
+}
+
+// Swap i and j
+func (a ByID) Swap(i, j int) {
+	a[i], a[j] = a[j], a[i]
+}
+
+// Less i and j
+func (a ByID) Less(i, j int) bool {
+	return a[i].ID < a[j].ID
 }

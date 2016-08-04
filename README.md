@@ -114,6 +114,7 @@ A8_PROXY=false
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
 A8_REGISTRY_TOKEN=a8registry_auth_token
+A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_version_tag
 A8_ENDPOINT_PORT=port_where_service_is_listening
 A8_ENDPOINT_TYPE=http|https|tcp|udp|user
@@ -129,6 +130,7 @@ version-aware routing are required.
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
 A8_REGISTRY_TOKEN=a8registry_auth_token
+A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_version_tag
 A8_SERVICE=service_name:service_version_tag
 A8_ENDPOINT_PORT=port_where_service_is_listening
@@ -141,21 +143,10 @@ A8_CONTROLLER_TOKEN=a8controller_auth_token
 A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
 ```
 
-**Update propagation: polling vs real-time**: By default, the sidecar will
-periodically poll the Amalgam8 Controller for updates on registered
-microservices, rules for routing requests to various microservices,
-etc. For real-time update propagation, the Amalgam8 has the ability to
-publish updates to a Kafka bus. If you have setup the Amalgam8 controller
-with Kafka, add the following environment variable while launching your
-microservices:
-
-```bash
-A8_KAFKA_BROKER=kafkahost1:kafkaport,kafkahost2:kafkaport
-```
-
-By default, Amalgam8 uses Kafka without any authentication. If you wish to
-use Kafka with SASL, refer to the [configuration section](#config) for
-details regarding the additional environment variables needed.
+**Update propagation: polling : By default, the sidecar will
+periodically poll the Amalgam8 Controller for rule updates on routing requests
+and fault injection.  The sidecar will separately poll Amalgam8 Registry for
+updates on registered microservices.
 
 **Request logs**: All logs pertaining to external API calls made by
 the Nginx proxy will be stored in `/var/log/nginx/a8_access.log` and
@@ -232,17 +223,11 @@ line flags.
 | A8_TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
 | A8_REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
 | A8_REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
+| A8_REGISTRY_POLL | --registry_poll | interval for polling Registry | 15s | no |
 | A8_NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
 | A8_CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
 | A8_CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
 | A8_LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
-| A8_KAFKA_USER | --kafka_user | kafka username |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_PASS | --kafka_pass | kafka password |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_TOKEN | --kafka_token | kafka token |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_ADMIN_URL | --kafka_admin_url | kafka admin URL |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_REST_URL | --kafka_rest_url | kafka REST URL |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_SASL | --kafka_sasl | use SASL/PLAIN authentication for kafka |  | Kafka-based communication with controller is optional |
-| A8_KAFKA_BROKER | --kafka_broker [--kafka_broker option --kafka_broker option] | kafka brokers |  | Kafka-based communication with controller is optional |
 |  | --help, -h | show help | | |
 |  | --version, -v | print the version | | |
 

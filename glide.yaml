@@ -17,9 +17,8 @@ package: github.com/amalgam8/sidecar
 import:
 
 - package: github.com/amalgam8/registry
-    
-- package: github.com/Shopify/sarama
-  version: 89bd629b50e1a69c40d40ded1c82a767b4859442
+
+- package: github.com/amalgam8/controller
 
 - package: github.com/Sirupsen/logrus
   version: 0.8.7
@@ -32,4 +31,4 @@ import:
 
 - package: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
-  
+

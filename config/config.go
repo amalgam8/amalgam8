@@ -37,16 +37,7 @@ type Tenant struct {
 type Registry struct {
 	URL   string
 	Token string
-}
-
-// Kafka configuration
-type Kafka struct {
-	Brokers  []string
-	Username string
-	Password string
-	APIKey   string
-	RestURL  string
-	SASL     bool
+	Poll  time.Duration
 }
 
 // Nginx stores NGINX configuration
@@ -77,7 +68,6 @@ type Config struct {
 	Tenant         Tenant
 	Controller     Controller
 	Registry       Registry
-	Kafka          Kafka
 	Nginx          Nginx
 	LogLevel       logrus.Level
 	AppArgs        []string
@@ -141,14 +131,7 @@ func New(context *cli.Context) *Config {
 		Registry: Registry{
 			URL:   context.String(registryURL),
 			Token: context.String(registryToken),
-		},
-		Kafka: Kafka{
-			Username: context.String(kafkaUsername),
-			Password: context.String(kafkaPassword),
-			APIKey:   context.String(kafkaToken),
-			RestURL:  context.String(kafkaRestURL),
-			Brokers:  context.StringSlice(kafkaBrokers),
-			SASL:     context.Bool(kafkaSASL),
+			Poll:  context.Duration(registryPoll),
 		},
 		Nginx: Nginx{
 			Port: context.Int(nginxPort),
@@ -159,7 +142,7 @@ func New(context *cli.Context) *Config {
 }
 
 // Validate the configuration
-func (c *Config) Validate(validateCreds bool) error {
+func (c *Config) Validate() error {
 
 	if !c.Register && !c.Proxy {
 		return errors.New("Sidecar serves no purpose. Please enable either proxy or registry or both")
@@ -185,6 +168,9 @@ func (c *Config) Validate(validateCreds bool) error {
 		)
 	}
 
+	// Registry URL is needed for both proxying and registering.  Registry token is not required in all auth cases
+	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))
+
 	if c.Register {
 		validators = append(validators,
 			func() error {
@@ -200,13 +186,6 @@ func (c *Config) Validate(validateCreds bool) error {
 			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
 		)
-
-		if validateCreds {
-			validators = append(validators,
-				IsNotEmpty("Registry token", c.Registry.Token),
-				IsValidURL("Regsitry URL", c.Registry.URL),
-			)
-		}
 	}
 
 	if c.Proxy {
@@ -215,52 +194,6 @@ func (c *Config) Validate(validateCreds bool) error {
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
 
-		if validateCreds {
-			validators = append(validators,
-				IsNotEmpty("Registry token", c.Registry.Token),
-				IsValidURL("Regsitry URL", c.Registry.URL),
-			)
-
-			// If any of the Kafka config is present validate the Message Hub config
-			if len(c.Kafka.Brokers) > 0 || c.Kafka.Username != "" || c.Kafka.Password != "" {
-				validators = append(validators,
-					func() error {
-						if len(c.Kafka.Brokers) == 0 {
-							return errors.New("Kafka requires at least one broker")
-						}
-
-						for _, broker := range c.Kafka.Brokers {
-							if err := IsNotEmpty("Kafka broker", broker)(); err != nil {
-								return err
-							}
-						}
-						return nil
-					},
-				)
-				if c.Kafka.SASL {
-					validators = append(validators,
-						IsNotEmpty("Kafka username", c.Kafka.Username),
-						IsNotEmpty("Kafka password", c.Kafka.Password),
-						IsNotEmpty("Kafka token", c.Kafka.APIKey),
-						IsValidURL("Kafka Rest URL", c.Kafka.RestURL),
-					)
-				} else {
-					validators = append(validators,
-						func() error {
-							if len(c.Kafka.Brokers) != 0 {
-								if c.Kafka.Username != "" || c.Kafka.Password != "" ||
-									c.Kafka.RestURL != "" || c.Kafka.APIKey != "" {
-									return errors.New("Kafka credentials provided when SASL authentication disabled")
-								}
-							}
-
-							return nil
-						},
-					)
-				}
-			}
-
-		}
 	}
 
 	return Validate(validators)

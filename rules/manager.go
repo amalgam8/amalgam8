@@ -2,11 +2,16 @@ package rules
 
 import "errors"
 
+type Filter struct {
+	IDs  []string
+	Tags []string
+}
+
 type Manager interface {
 	AddRules(tenantID string, rules []Rule) error
-	GetRules(tenantID string, ruleIDs []string) ([]Rule, error)
+	GetRules(tenantID string, filter Filter) ([]Rule, error)
 	UpdateRules(tenantID string, rules []Rule) error
-	DeleteRules(tenantID string, ruleIDs []string) error
+	DeleteRules(tenantID string, filter Filter) error
 }
 
 func NewMemoryManager() Manager {
@@ -41,14 +46,16 @@ func (m *memory) AddRules(tenantID string, rules []Rule) error {
 	return nil
 }
 
-func (m *memory) GetRules(tenantID string, ruleIDs []string) ([]Rule, error) {
+// TODO: tag filtering
+func (m *memory) GetRules(tenantID string, filter Filter) ([]Rule, error) {
 	rules, exists := m.rules[tenantID]
 	if !exists {
-		return nil, errors.New("tenant not found")
+		//return nil, errors.New("tenant not found")
+		return []Rule{}, nil
 	}
 
 	var results []Rule
-	if len(ruleIDs) == 0 {
+	if len(filter.IDs) == 0 {
 		results = make([]Rule, len(m.rules[tenantID]))
 
 		index := 0
@@ -57,8 +64,8 @@ func (m *memory) GetRules(tenantID string, ruleIDs []string) ([]Rule, error) {
 			index++
 		}
 	} else {
-		results = make([]Rule, 0, len(ruleIDs))
-		for _, id := range ruleIDs {
+		results = make([]Rule, 0, len(filter.IDs))
+		for _, id := range filter.IDs {
 			rule, exists := m.rules[tenantID][id]
 			if exists {
 				results = append(results, rule)
@@ -75,24 +82,27 @@ func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
 	return nil
 }
 
-func (m *memory) DeleteRules(tenantID string, ruleIDs []string) error {
+// TODO: tag filtering
+func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 	_, exists := m.rules[tenantID]
 	if !exists {
-		return errors.New("tenant not found")
+		// TODO: indicate that none of the rules exist
+		//return errors.New("tenant not found")
+		return errors.New("rule not found")
 	}
 
-	if len(ruleIDs) == 0 {
+	if len(filter.IDs) == 0 {
 		m.rules[tenantID] = make(map[string]Rule)
 	} else {
 		// Ensure all the IDs exist
-		for _, id := range ruleIDs {
+		for _, id := range filter.IDs {
 			_, exists := m.rules[tenantID][id]
 			if !exists {
 				return errors.New("rule not found")
 			}
 		}
 
-		for _, id := range ruleIDs {
+		for _, id := range filter.IDs {
 			delete(m.rules[tenantID], id)
 		}
 	}

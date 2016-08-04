@@ -61,8 +61,14 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) {
 func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) {
 	tenantID := req.PathParam("id")
 	ruleIDs := getQueries("id", req)
+	tags := getQueries("tag", req)
 
-	rules, err := r.manager.GetRules(tenantID, ruleIDs)
+	filter := rules.Filter{
+		IDs:  ruleIDs,
+		Tags: tags,
+	}
+
+	rules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
@@ -80,8 +86,14 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) {
 func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) {
 	tenantID := req.PathParam("id")
 	ruleIDs := getQueries("id", req)
+	tags := getQueries("tag", req)
 
-	if err := r.manager.DeleteRules(tenantID, ruleIDs); err != nil {
+	filter := rules.Filter{
+		IDs:  ruleIDs,
+		Tags: tags,
+	}
+
+	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "could_not_delete_rules")
 		return

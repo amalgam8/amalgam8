@@ -15,7 +15,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -24,12 +23,10 @@ import (
 	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/config"
-	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/rules"
 
-	"github.com/amalgam8/controller/manager"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -86,54 +83,21 @@ func controllerMain(conf config.Config) error {
 
 	reporter := metrics.NewReporter()
 
-	var tenantDB database.Tenant
-	if conf.Database.Type == "memory" {
-		db := database.NewMemoryCloudantDB()
-		tenantDB = database.NewTenant(db)
-	} else if conf.Database.Type == "cloudant" {
-		logrus.Warn("Cloudant currently not supported, using in memory storage")
-		db := database.NewMemoryCloudantDB()
-		tenantDB = database.NewTenant(db)
-	} else {
-		err = errors.New("unsupported database type")
-		setupHandler.SetError(err)
-		return err
-	}
+	//var tenantDB database.Tenant
+	//if conf.Database.Type == "memory" {
+	//	db := database.NewMemoryCloudantDB()
+	//	tenantDB = database.NewTenant(db)
+	//} else if conf.Database.Type == "cloudant" {
+	//	logrus.Warn("Cloudant currently not supported, using in memory storage")
+	//	db := database.NewMemoryCloudantDB()
+	//	tenantDB = database.NewTenant(db)
+	//} else {
+	//	err = errors.New("unsupported database type")
+	//	setupHandler.SetError(err)
+	//	return err
+	//}
 
-	r := manager.NewManager(manager.Config{
-		Database: tenantDB,
-	})
-
-	tenantAPI := api.NewTenant(api.TenantConfig{
-		Reporter: reporter,
-		Manager:  r,
-	})
 	healthAPI := api.NewHealth(reporter)
-
-	var authenticator auth.Authenticator
-	if len(conf.AuthModes) > 0 {
-		auths := make([]auth.Authenticator, len(conf.AuthModes))
-		for i, mode := range conf.AuthModes {
-			switch mode {
-			case "trusted":
-				auths[i] = auth.NewTrustedAuthenticator()
-			case "jwt":
-				jwtAuth, err := auth.NewJWTAuthenticator([]byte(conf.JWTSecret))
-				if err != nil {
-					return fmt.Errorf("Failed to create the authentication module: %s", err)
-				}
-				auths[i] = jwtAuth
-			default:
-				return fmt.Errorf("Failed to create the authentication module: unrecognized authentication mode '%s'", err)
-			}
-		}
-		authenticator, err = auth.NewChainAuthenticator(auths)
-		if err != nil {
-			return err
-		}
-	} else {
-		authenticator = auth.DefaultAuthenticator()
-	}
 
 	ruleManager := rules.NewMemoryManager()
 	rulesAPI := api.NewRule(ruleManager)
@@ -154,10 +118,15 @@ func controllerMain(conf config.Config) error {
 		}),
 	)
 
+	authenticator, err := setupAuthenticator(conf)
+	if err != nil {
+		setupHandler.SetError(err)
+		return err
+	}
+
 	authMw := &middleware.AuthMiddleware{Authenticator: authenticator}
 
-	routes := tenantAPI.Routes(authMw)
-	routes = append(routes, rulesAPI.Routes(authMw)...)
+	routes := rulesAPI.Routes(authMw)
 	routes = append(routes, healthAPI.Routes()...)
 	router, err := rest.MakeRouter(
 		routes...,
@@ -176,4 +145,32 @@ func controllerMain(conf config.Config) error {
 	}).Info("Server started")
 
 	select {}
+}
+
+func setupAuthenticator(conf config.Config) (authenticator auth.Authenticator, err error) {
+	if len(conf.AuthModes) > 0 {
+		auths := make([]auth.Authenticator, len(conf.AuthModes))
+		for i, mode := range conf.AuthModes {
+			switch mode {
+			case "trusted":
+				auths[i] = auth.NewTrustedAuthenticator()
+			case "jwt":
+				jwtAuth, err := auth.NewJWTAuthenticator([]byte(conf.JWTSecret))
+				if err != nil {
+					return authenticator, fmt.Errorf("Failed to create the authentication module: %s", err)
+				}
+				auths[i] = jwtAuth
+			default:
+				return authenticator, fmt.Errorf("Failed to create the authentication module: unrecognized authentication mode '%s'", err)
+			}
+		}
+		authenticator, err = auth.NewChainAuthenticator(auths)
+		if err != nil {
+			return authenticator, err
+		}
+	} else {
+		authenticator = auth.DefaultAuthenticator()
+	}
+
+	return authenticator, nil
 }

@@ -29,7 +29,7 @@ import (
 
 // Manager client
 type Manager interface {
-	Create(id, token string, rules resources.TenantInfo) error
+	Create(id string, rules resources.TenantInfo) error
 	Set(id string, rules resources.TenantInfo) error
 	Get(id string) (resources.TenantEntry, error)
 	Delete(id string) error
@@ -60,14 +60,13 @@ func NewManager(conf Config) Manager {
 	}
 }
 
-func (m *manager) Create(id, token string, tenantInfo resources.TenantInfo) error {
+func (m *manager) Create(id string, tenantInfo resources.TenantInfo) error {
 	var err error
 
 	entry := resources.TenantEntry{
 		BasicEntry: resources.BasicEntry{
 			ID: id,
 		},
-		TenantToken: token,
 		ProxyConfig: resources.ProxyConfig{
 			LoadBalance: tenantInfo.LoadBalance,
 			Filters:     tenantInfo.Filters,

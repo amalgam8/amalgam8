@@ -55,7 +55,6 @@ func (e *BasicEntry) GetIV() string {
 // TenantEntry TODO
 type TenantEntry struct {
 	BasicEntry
-	TenantToken string
 	ProxyConfig ProxyConfig
 	LastUpdate  time.Time
 }

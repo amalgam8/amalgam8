@@ -29,7 +29,6 @@ var _ = Describe("Manager", func() {
 		manager    Manager
 		tenantInfo resources.TenantInfo
 		id         string
-		token      string
 		db         database.Tenant
 	)
 
@@ -42,7 +41,6 @@ var _ = Describe("Manager", func() {
 			})
 
 			id = "abcdef"
-			token = "12345"
 			tenantInfo = resources.TenantInfo{
 				LoadBalance: "round_robin",
 				Filters: resources.Filters{
@@ -59,7 +57,7 @@ var _ = Describe("Manager", func() {
 		})
 
 		It("registers an ID", func() {
-			Expect(manager.Create(id, token, tenantInfo)).ToNot(HaveOccurred())
+			Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 		})
 
 		It("delete invalid id returns error", func() {
@@ -73,7 +71,7 @@ var _ = Describe("Manager", func() {
 
 		Context("entry has been added", func() {
 			BeforeEach(func() {
-				Expect(manager.Create(id, token, tenantInfo)).ToNot(HaveOccurred())
+				Expect(manager.Create(id, tenantInfo)).ToNot(HaveOccurred())
 			})
 
 			It("ID in database", func() {

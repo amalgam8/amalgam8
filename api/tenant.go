@@ -18,8 +18,6 @@ import (
 	"errors"
 	"net/http"
 
-	"strings"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/manager"
 	"github.com/amalgam8/controller/metrics"
@@ -196,15 +194,12 @@ func (t *Tenant) PostTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 	tenantInfo := resources.TenantInfo{}
 
-	tenantToken := req.Header.Get(util.AuthHeader)
-	tenantToken = strings.Replace(tenantToken, "Bearer ", "", -1)
-
 	if err = req.DecodeJsonPayload(&tenantInfo); err != nil {
 		RestError(w, req, http.StatusBadRequest, "json_error")
 		return err
 	}
 
-	if err = t.manager.Create(tenantID, tenantToken, tenantInfo); err != nil {
+	if err = t.manager.Create(tenantID, tenantInfo); err != nil {
 		processError(w, req, err)
 		return err
 	}
@@ -241,13 +236,10 @@ func (t *Tenant) PutTenant(w rest.ResponseWriter, req *rest.Request) error {
 
 // GetTenant returns credentials and metadata for a tenant
 func (t *Tenant) GetTenant(w rest.ResponseWriter, req *rest.Request) error {
-	// validate auth header
-	// if this tenant has orphans, CSB will know that the token is invalid
-
 	tenantID := GetTenantID(req)
 	if tenantID == "" {
 		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
-		return errors.New("special error")
+		return errors.New("error_invalid_input")
 	}
 
 	entry, err := t.manager.Get(tenantID)
@@ -273,7 +265,7 @@ func (t *Tenant) GetServiceVersions(w rest.ResponseWriter, req *rest.Request) er
 	tenantID := GetTenantID(req)
 	if tenantID == "" {
 		RestError(w, req, http.StatusBadRequest, "error_invalid_input")
-		return errors.New("special error")
+		return errors.New("error_invalid_input")
 	}
 	service := req.PathParam("service")
 

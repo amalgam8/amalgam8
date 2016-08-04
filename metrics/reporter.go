@@ -38,9 +38,9 @@ func (l *logger) Failure(id string, time time.Duration, err error) error {
 	//statsdClient.Inc(name+"CountFailure", 1, 1.0)
 	//statsdclient.TimingDuration(id+"ResponseTimeFailure", endTime, 1.0)
 	logrus.WithFields(logrus.Fields{
-		"err":  err,
-		"id":   id,
-		"time": time.String(),
+		"err":       err,
+		"metric_id": id,
+		"time":      time.String(),
 	}).Error("Metric recorded failure")
 	return nil
 }
@@ -49,8 +49,8 @@ func (l *logger) Success(id string, time time.Duration) error {
 	//statsdClient.Inc(id+"CountSuccess", 1, 1.0)
 	//statsdClient.TimingDuration(name+"ResponseTimeSuccess", endTime, 1.0)
 	logrus.WithFields(logrus.Fields{
-		"id":   id,
-		"time": time.String(),
+		"metric_id": id,
+		"time":      time.String(),
 	}).Debug("Metric recorded success")
 	return nil
 }

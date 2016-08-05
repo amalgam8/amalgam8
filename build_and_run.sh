@@ -21,6 +21,9 @@ EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
 git clone --branch master https://github.com/amalgam8/examples $EXAMPLESDIR
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
+
+#######Test Docker setup
+echo "Testing docker-based deployment.."
 $EXAMPLESDIR/docker/run-controlplane-docker.sh start
 sleep 5
 docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
@@ -28,3 +31,22 @@ sleep 5
 docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
 sleep 10
 $SCRIPTDIR/testing/demo_script.sh
+echo "Docker tests successful. Cleaning up.."
+$EXAMPLESDIR/docker/cleanup.sh
+sleep 10
+
+
+#######Test Kubernetes setup
+echo "Testing kubernetes-based deployment.."
+sudo $EXAMPLESDIR/kubernetes/install-kubernetes.sh
+sleep 15
+$EXAMPLESDIR/kubernetes/run-controlplane-local-k8s.sh start
+sleep 15
+kubectl create -f $EXAMPLESDIR/kubernetes/gateway.yaml
+sleep 15
+kubectl create -f $EXAMPLESDIR/kubernetes/bookinfo.yaml
+echo "Waiting for the services to come online.."
+sleep 60
+$SCRIPTDIR/testing/demo_script.sh
+echo "Kubernetes tests successful. Cleaning up.."
+$EXAMPLESDIR/kubernetes/cleanup.sh

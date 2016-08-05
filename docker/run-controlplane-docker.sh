@@ -26,8 +26,9 @@ if [ "$1" == "start" ]; then
 
     sleep 5
 
-    REGISTRY_URL=$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
-    CONTROLLER_URL=localhost:31200
+    REGISTRY_URL=http://localhost:31300
+    #$(docker inspect -f '{{.NetworkSettings.IPAddress}}' registry ):8080
+    CONTROLLER_URL=http://localhost:31200
 
     # Wait for controller route to set up
     echo "Waiting for controller route to set up"
@@ -74,7 +75,7 @@ if [ "$1" == "start" ]; then
     "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     docker-compose -f $SCRIPTDIR/controlplane.yaml kill

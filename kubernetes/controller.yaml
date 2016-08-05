@@ -52,6 +52,6 @@ spec:
         imagePullPolicy: IfNotPresent
         env:
         - name: A8_LOG_LEVEL
-          value: debug
+          value: info
         ports:
         - containerPort: 6379

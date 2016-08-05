@@ -50,8 +50,5 @@ controller:
   ports:
     - "31200:6379"
   environment:
-    - A8_POLL_INTERVAL=5s
     - A8_LOG_LEVEL=info
-  links:
-    - registry
   container_name: controller

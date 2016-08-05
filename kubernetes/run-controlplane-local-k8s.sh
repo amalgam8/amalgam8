@@ -34,8 +34,9 @@ if [ "$1" == "start" ]; then
     echo "Waiting for control plane to initialize..."
 
     sleep 10
-    REGISTRY_URL=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
-    CONTROLLER_URL=localhost:31200
+    REGISTRY_URL=http://localhost:31300
+    #$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
+    CONTROLLER_URL=http://localhost:31200
 
     # Wait for controller route to set up
     echo "Waiting for controller route to set up"
@@ -82,7 +83,7 @@ if [ "$1" == "start" ]; then
     "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     kubectl delete -f $SCRIPTDIR/$cfile

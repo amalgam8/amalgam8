@@ -34,8 +34,8 @@ if [ "$1" == "start" ]; then
     cat $SCRIPTDIR/controller.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Waiting for controller to initialize..."
     sleep 20
-    REGISTRY_URL="${MYIP}:31300"
-    CONTROLLER_URL="${MYIP}:31200"
+    REGISTRY_URL="http://${MYIP}:31300"
+    CONTROLLER_URL="http://${MYIP}:31200"
 
     # Wait for controller route to set up
     echo "Waiting for controller route to set up"
@@ -81,7 +81,7 @@ if [ "$1" == "start" ]; then
     "load_balance": "round_robin"
 }
 EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "http://${CONTROLLER_URL}/v1/tenants"
+    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller

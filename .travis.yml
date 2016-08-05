@@ -12,15 +12,21 @@ go:
 env:
     # Platforms to build for
     - PLATFORM=linux/amd64
-    - DOCKER_COMPOSE_VERSION=1.5.1
 
 before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
     - sudo rm /usr/local/bin/docker-compose
-    - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+    - curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
     - sudo mv docker-compose /usr/local/bin
+    - sudo pip install git+https://github.com/amalgam8/a8ctl
+
+install:
+    - go get amalgam8/controller
+    - go get amalgam8/registry
+    - go get amalgam8/sidecar
+
 
 script:
     # Need to set explicitly, as these are unset by 'gimme'

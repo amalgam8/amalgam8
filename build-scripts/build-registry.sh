@@ -17,8 +17,8 @@
 
 set -x
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$SCRIPTDIR/../registry/
+#SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+MAKEDIR=$GOPATH/src/github.com/amalgam8/registry/
 
 make -C $MAKEDIR build GOOS=linux GOARCH=amd64
 STATUS=$?

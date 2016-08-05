@@ -3,11 +3,11 @@ set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-git clone https://github.com/amalgam8/controller
-git clone https://github.com/amalgam8/registry
-git clone https://github.com/amalgam8/sidecar
+#git clone https://github.com/amalgam8/controller ../controller
+#git clone https://github.com/amalgam8/registry ../registry
+#git clone https://github.com/amalgam8/sidecar ../sidecar
 git clone https://github.com/amalgam8/examples
-sudo pip install git+https://github.com/amalgam8/a8ctl
+#sudo pip install git+https://github.com/amalgam8/a8ctl
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
 $SCRIPTDIR/examples/docker/run-controlplane-docker.sh start

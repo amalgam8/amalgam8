@@ -1,6 +1,25 @@
 #!/bin/bash
+#
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+
+#set -x
 set -o errexit
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+RECIPE_PATH=$GOPATH/src/github.com/amalgam8/examples/apps/bookinfo
 a8ctl service-list
 sleep 2
 a8ctl rule-clear
@@ -109,7 +128,7 @@ echo "works!"
 
 #######Gremlin
 echo "Testing gremlin recipe.."
-a8ctl recipe-run --topology $SCRIPTDIR/../examples/apps/bookinfo/topology.json --scenarios $SCRIPTDIR/../examples/apps/bookinfo/gremlins.json --checks $SCRIPTDIR/../examples/apps/bookinfo/checklist.json --run-load-script $SCRIPTDIR//inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
+a8ctl recipe-run --topology $RECIPE_PATH/topology.json --scenarios $RECIPE_PATH/gremlins.json --checks $RECIPE_PATH/checklist.json --run-load-script $SCRIPTDIR/inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
 if [ $? -gt 0 ]; then
     echo "a8ctl recipe-run exited with non-zero status. Either load injection failed or there was an error in a8ctl"
     exit 1

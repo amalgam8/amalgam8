@@ -18,11 +18,7 @@ set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
-#git clone https://github.com/amalgam8/controller ../controller
-#git clone https://github.com/amalgam8/registry ../registry
-#git clone https://github.com/amalgam8/sidecar ../sidecar
-git clone https://github.com/amalgam8/examples $EXAMPLESDIR
-#sudo pip install git+https://github.com/amalgam8/a8ctl
+git clone --branch master https://github.com/amalgam8/examples $EXAMPLESDIR
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
 $EXAMPLESDIR/docker/run-controlplane-docker.sh start

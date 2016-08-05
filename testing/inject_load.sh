@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 
-#set -x
+set -x
 set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -70,4 +70,4 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 echoend "works!"
-sleep 5
+sleep 10

@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 
-#set -x
+set -x
 set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -30,7 +30,7 @@ a8ctl route-set --default v1 productpage
 a8ctl route-set --default v1 details
 a8ctl route-set --default v1 ratings
 a8ctl route-set --default v1 --selector 'v2(user="jason")' reviews
-sleep 2
+sleep 10
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
 curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v1.html
@@ -57,7 +57,7 @@ echo "works!"
 ########Fault injection
 echo "testing fault injection.."
 a8ctl rule-set --source reviews:v2 --destination ratings:v1 --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
-sleep 2
+sleep 10
 
 ###For shriram
 echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
@@ -104,7 +104,7 @@ echo "works!"
 #####Clear rules and check
 echo "clearing all rules.."
 a8ctl rule-clear
-sleep 2
+sleep 10
 
 echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
 before=$(date +"%s")

@@ -23,9 +23,9 @@ before_install:
     - sudo pip install git+https://github.com/amalgam8/a8ctl
 
 install:
-    - go get amalgam8/controller
-    - go get amalgam8/registry
-    - go get amalgam8/sidecar
+    - go get github.com/amalgam8/controller
+    - go get github.com/amalgam8/registry
+    - go get github.com/amalgam8/sidecar
 
 
 script:

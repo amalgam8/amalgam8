@@ -17,18 +17,18 @@
 set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
+EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
 #git clone https://github.com/amalgam8/controller ../controller
 #git clone https://github.com/amalgam8/registry ../registry
 #git clone https://github.com/amalgam8/sidecar ../sidecar
-git clone https://github.com/amalgam8/examples
+git clone https://github.com/amalgam8/examples $EXAMPLESDIR
 #sudo pip install git+https://github.com/amalgam8/a8ctl
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
-$SCRIPTDIR/examples/docker/run-controlplane-docker.sh start
+$EXAMPLESDIR/docker/run-controlplane-docker.sh start
 sleep 5
-docker-compose -f $SCRIPTDIR/examples/docker/gateway.yaml up -d
+docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
 sleep 5
-docker-compose -f $SCRIPTDIR/examples/docker/bookinfo.yaml up -d
+docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
 sleep 10
 $SCRIPTDIR/testing/demo_script.sh

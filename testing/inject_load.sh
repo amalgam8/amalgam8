@@ -29,7 +29,7 @@ echostart() {
 echoend() {
     echoerr $@;
 }
-
+sleep 10
 echostart "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
 before=$(date +"%s")
 curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.html

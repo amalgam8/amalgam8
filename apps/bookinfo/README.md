@@ -198,9 +198,9 @@ and adds a set of assertions (`checklist.json`)
 that we expect to pass: each service in the call chain should return `HTTP
 200 OK` and the productpage should respond in 7 seconds.
 
-* Edit the IP address of the `log_server` field in the file
-  `apps/bookinfo/checklist.json` to point to the IP address where the
-  controller is running (192.168.33.33 or localhost or your docker machine
+* For marathon and docker-machine based setups, set the A8_LOG_SERVER environment variable 
+  to point to the elasticsearch server created during the control plane setup. By default, 
+  it points to `localhost:30200`.
   IP).
 
 * Run the recipe using the following command from the main examples folder:

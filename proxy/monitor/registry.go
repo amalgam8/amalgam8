@@ -24,7 +24,7 @@ import (
 	"github.com/amalgam8/registry/client"
 )
 
-// RegistryListener is notified of changes to registry
+// RegistryListener is notified of changes to the registry catalog
 type RegistryListener interface {
 	CatalogChange([]client.ServiceInstance) error
 }
@@ -32,7 +32,7 @@ type RegistryListener interface {
 type registry struct {
 	pollInterval   time.Duration
 	registryClient client.Discovery
-	cached         []*client.ServiceInstance
+	cached         []client.ServiceInstance
 	listeners      []RegistryListener
 	ticker         *time.Ticker
 }
@@ -83,25 +83,21 @@ func (m *registry) Start() error {
 
 // poll registry for changes in the catalog
 func (m *registry) poll() error {
-	// Get newest catalog from Registry
+	// Get newest catalog from registry
 	latestCatalog, err := m.getLatestCatalog()
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
 	}
 
-	// Check for differences
+	// Check for changes
 	if !m.catalogsEqual(m.cached, latestCatalog) {
 		// Update cached copy of catalog
 		m.cached = latestCatalog
 
-		dereferenced := make([]client.ServiceInstance, len(latestCatalog))
-		for i := range latestCatalog {
-			dereferenced[i] = *latestCatalog[i]
-		}
-
+		// Notify the listeners.
 		for _, listener := range m.listeners {
-			if err = listener.CatalogChange(dereferenced); err != nil {
+			if err = listener.CatalogChange(latestCatalog); err != nil {
 				logrus.WithError(err).Warn("Registry listener failed")
 			}
 		}
@@ -110,28 +106,48 @@ func (m *registry) poll() error {
 	return nil
 }
 
-// catalogsEqual
-func (m *registry) catalogsEqual(a, b []*client.ServiceInstance) bool {
-	equal := reflect.DeepEqual(a, b)
+// catalogsEqual checks for pertinent differences between the given instances. We assume that all the instances have
+// been presorted. Instances are compared by all values except for heartbeat and TTL.
+func (m *registry) catalogsEqual(a, b []client.ServiceInstance) bool {
+	equal := true
+	if len(a) != len(b) {
+		equal = false
+	} else {
+		for i := range a {
+			if a[i].ID != b[i].ID || a[i].ServiceName != b[i].ServiceName || a[i].Status != b[i].Status ||
+				!reflect.DeepEqual(a[i].Tags, b[i].Tags) || a[i].Endpoint.Type != b[i].Endpoint.Type ||
+				a[i].Endpoint.Value != b[i].Endpoint.Value || !reflect.DeepEqual(a[i].Metadata, b[i].Metadata) {
+				equal = false
+				break
+			}
+		}
+	}
+
 	logrus.WithFields(logrus.Fields{
 		"a":     a,
 		"b":     b,
 		"equal": equal,
 	}).Debug("Comparing service instances")
+
 	return equal
 }
 
 // getLatestCatalog
-func (m *registry) getLatestCatalog() ([]*client.ServiceInstance, error) {
+func (m *registry) getLatestCatalog() ([]client.ServiceInstance, error) {
 	instances, err := m.registryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
-		return instances, err
+		return []client.ServiceInstance{}, err
 	}
 
-	// TODO: is sorting by ID sufficient?
-	sort.Sort(ByID(instances))
+	// Dereference the instances.
+	deref := make([]client.ServiceInstance, len(instances))
+	for i := range instances {
+		deref[i] = *instances[i]
+	}
 
-	return instances, nil
+	sort.Sort(ByID(deref))
+
+	return deref, nil
 }
 
 // Stop monitoring registry
@@ -146,7 +162,7 @@ func (m *registry) Stop() error {
 }
 
 // ByID sorts by ID
-type ByID []*client.ServiceInstance
+type ByID []client.ServiceInstance
 
 // Len of the array
 func (a ByID) Len() int {

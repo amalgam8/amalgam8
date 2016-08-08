@@ -1,0 +1,240 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Rule",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "priority": {
+      "type": "number"
+    },
+    "match": {
+      "type": "object",
+      "properties": {
+        "all": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/match"
+          }
+        },
+        "any": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/match"
+          }
+        },
+        "none": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/match"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "$ref": "#/definitions/action"
+    }
+  },
+  "required": [
+    "match",
+    "action"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "match": {
+      "title": "Match",
+      "description": "Conditions that must be true to apply the action",
+      "type": "object",
+      "properties": {
+        "all": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "any": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "none": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "source": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "destination": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        "headers": {
+          "title": "Headers",
+          "description": "Header key/value pairs",
+          "type": "object",
+          "additionalProperties": {
+            "title": "Header",
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "title": "Action",
+      "description": "Action to apply to matching requests",
+      "type": "object",
+      "properties": {
+        "route": {
+          "title": "Route",
+          "description": "Routes requests to a given destination.",
+          "type": "object",
+          "properties": {
+            "backends": {
+              "title": "Backends",
+              "description": "List of backends to route to.",
+              "type": "array",
+              "items": {
+                "title": "Backend",
+                "description": "Backend definition.",
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "title": "Service name",
+                    "description": "The service name.",
+                    "type": "string"
+                  },
+                  "tags": {
+                    "title": "Tags",
+                    "description": "Only route to services with the given tags",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "weight": {
+                    "title": "Traffic weight",
+                    "description": "Percentage of traffic to route to this backend.",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1,
+                    "exclusiveMinimum": true,
+                    "default": 1
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "delays": {
+          "title": "Delays",
+          "description": "Delays to apply to request",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "probability": {
+                "$ref": "#/definitions/probability"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "title": "Tag",
+                  "description": "Destination tag to filter on",
+                  "type": "string"
+                }
+              },
+              "duration": {
+                "type": "number",
+                "description": "Duration of delay in seconds",
+                "minimum": 0,
+                "exclusiveMinimum": true
+              }
+            },
+            "required": [
+              "duration"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "aborts": {
+          "title": "Abort",
+          "description": "Conditionally abort the request",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "probability": {
+                "$ref": "#/definitions/probability"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "title": "Tag",
+                  "description": "Destination tag to filter on",
+                  "type": "string"
+                }
+              },
+              "return_code": {
+                "type": "number",
+                "description": "Return code",
+                "minimum": -5,
+                "maximum": 599
+              }
+            },
+            "required": [
+              "return_code"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "probability": {
+      "title": "Probability",
+      "description": "Probability of executing action",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "exclusiveMinimum": true,
+      "default": 1
+    }
+  }
+}

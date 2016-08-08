@@ -1,6 +1,10 @@
 package rules
 
-import "errors"
+import (
+	"errors"
+
+	"github.com/xeipuuv/gojsonschema"
+)
 
 type Filter struct {
 	IDs  []string
@@ -17,17 +21,25 @@ type Manager interface {
 func NewMemoryManager() Manager {
 	return &memory{
 		rules: make(map[string]map[string]Rule),
+		validator: &validator{
+			schemaLoader: gojsonschema.NewReferenceLoader("file://./schema.json"),
+		},
 	}
 }
 
 type memory struct {
-	rules map[string]map[string]Rule
+	rules     map[string]map[string]Rule
+	validator Validator
 }
 
 func (m *memory) AddRules(tenantID string, rules []Rule) error {
+	if len(rules) == 0 {
+		return errors.New("rules: no rules provided")
+	}
+
 	// Validate rules
 	for _, rule := range rules {
-		if err := Validate(rule); err != nil {
+		if err := m.validator.Validate(rule); err != nil {
 			return err
 		}
 	}

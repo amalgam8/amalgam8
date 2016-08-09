@@ -53,15 +53,13 @@ spec:
         env:
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_TENANT_TOKEN
-          value: local
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_REGISTRY_TOKEN
-          value: local
         - name: A8_LOG_SERVER
           value: $(LOGSERVER_SERVICE_HOST):$(LOGSERVER_SERVICE_PORT_ES1)
         - name: PYTHONUNBUFFERED
           value: "0"
+        - name: A8_DEBUG
+          value: "1"
         ports:
         - containerPort: 5000

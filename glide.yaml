@@ -16,6 +16,10 @@ package: github.com/amalgam8/controller
 
 import:
 
+- package: github.com/garyburd/redigo/redis
+
+- package: github.com/xeipuuv/gojsonschema
+
 - package: github.com/amalgam8/registry
 
 - package: github.com/Shopify/sarama

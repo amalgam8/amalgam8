@@ -38,7 +38,7 @@ type replicatedFactory struct {
 	repHandler *replicationHandler
 }
 
-func newReplicatedFactory(conf *replicatedConfig) CatalogFactory {
+func newReplicatedFactory(conf *replicatedConfig) *replicatedFactory {
 	rh := newReplicationHandler(conf)
 	return &replicatedFactory{conf: conf, repHandler: rh}
 }
@@ -50,6 +50,12 @@ func (f *replicatedFactory) CreateCatalog(namespace auth.Namespace) (Catalog, er
 	}
 	f.repHandler.addCatalog(namespace, repCatalog)
 	return repCatalog, nil
+}
+
+// activate synchronizes state with remote peer, then start serving incoming replication events and/or sync requests.
+// It should be called only once, after the replicatedFactory has been created and properly initialized.
+func (f *replicatedFactory) activate() error {
+	return f.repHandler.activate()
 }
 
 type replicatedCatalog struct {

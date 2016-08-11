@@ -117,10 +117,7 @@ returned to the user along with the content of the Registry itself.
 
 ## REST API
 
-The documentation for
-[Amalgam8 Controller's REST API](https://amalgam8.io/controller) is
-available in Swagger format.
-The Amalgam8 Registry [API documentation](https://amalgam8.io/registry) is
+Amalgam8 Registry [API documentation](https://amalgam8.io/registry) is
 available in Swagger format.
 
 ## Building from source

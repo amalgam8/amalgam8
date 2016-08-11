@@ -56,7 +56,7 @@ type Controller struct {
 // Config TODO
 type Config struct {
 	ServiceName    string
-	ServiceVersion string
+	ServiceTags    []string
 	EndpointHost   string
 	EndpointPort   int
 	EndpointType   string
@@ -98,19 +98,22 @@ func New(context *cli.Context) *Config {
 	}
 
 	var name string
-	var version string
+	var tags []string
 
 	i := strings.Index(context.String(serviceName), ":")
 	if i == -1 {
 		name = context.String(serviceName)
+		tags = []string{}
 	} else {
 		name = context.String(serviceName)[:i]
-		version = context.String(serviceName)[i+1:]
+
+		tagsString := context.String(serviceName)[i+1:]
+		tags = strings.Split(tagsString, ",")
 	}
 
 	return &Config{
 		ServiceName:    name,
-		ServiceVersion: version,
+		ServiceTags:    tags,
 		EndpointHost:   endpointHost,
 		EndpointPort:   context.Int(endpointPort),
 		EndpointType:   context.String(endpointType),

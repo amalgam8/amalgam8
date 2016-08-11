@@ -2,33 +2,34 @@ package monitor
 
 import (
 	"testing"
-	"github.com/amalgam8/registry/client"
 	"time"
+
+	"github.com/amalgam8/registry/client"
 )
 
 func TestCatalogComparison(t *testing.T) {
 	r := registry{}
 
-	cases := [] struct{
-		A, B []client.ServiceInstance
+	cases := []struct {
+		A, B  []client.ServiceInstance
 		Equal bool
-	} {
+	}{
 		{
-			A: []client.ServiceInstance{},
-			B: []client.ServiceInstance{},
+			A:     []client.ServiceInstance{},
+			B:     []client.ServiceInstance{},
 			Equal: true,
 		},
 		{ // TTL and heartbeat should be ignored when comparing
 			A: []client.ServiceInstance{
 				{
 					LastHeartbeat: time.Unix(0, 0),
-					TTL: 1,
+					TTL:           1,
 				},
 			},
 			B: []client.ServiceInstance{
 				{
 					LastHeartbeat: time.Unix(1, 0),
-					TTL: 2,
+					TTL:           2,
 				},
 			},
 			Equal: true,
@@ -39,7 +40,7 @@ func TestCatalogComparison(t *testing.T) {
 					ServiceName: "ServiceA",
 				},
 			},
-			B: []client.ServiceInstance{},
+			B:     []client.ServiceInstance{},
 			Equal: false,
 		},
 		{

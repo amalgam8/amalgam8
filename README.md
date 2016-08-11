@@ -48,35 +48,35 @@ The following environment variables are available. All of them are optional.
 
 #### Registry Configuration
 
-| Environment Key | Flag Name                   | Description | Default Value |
-|:----------------|:----------------------------|:------------|:--------------|
-| `API_PORT` | `--api_port` | API port number | 8080 |
-| `LOG_LEVEL` | `--log_level` | Logging level. Supported values are: `debug`, `info`, `warn`, `error`, `fatal`, `panic` | `debug` |
-| `LOG_FORMAT` | `--log_format` | Logging format. Supported values are: `text`, `json`, `logstash` | `text` |
-| `NAMESPACE_CAPACITY` | `--namespace_capacity` | maximum number of instances that may be registered in a namespace | -1 (no capacity limit) |  
-| `DEFAULT_TTL` | `--default_ttl` | Registry default instance time-to-live (TTL) | 30s |
-| `MIN_TTL` | `--min_ttl` | Minimum TTL that may be specified during registration | 10s | 
-| `MAX_TTL` | `--max_ttl` | Maximum TTL that may be specified during registration | 10m |
+| Environment Variable | Flag Name                   | Description | Default Value |
+|:---------------------|:----------------------------|:------------|:--------------|
+| `A8_API_PORT` | `--api_port` | API port number | 8080 |
+| `A8_LOG_LEVEL` | `--log_level` | Logging level. Supported values are: `debug`, `info`, `warn`, `error`, `fatal`, `panic` | `debug` |
+| `A8_LOG_FORMAT` | `--log_format` | Logging format. Supported values are: `text`, `json`, `logstash` | `text` |
+| `A8_NAMESPACE_CAPACITY` | `--namespace_capacity` | maximum number of instances that may be registered in a namespace | -1 (no capacity limit) |  
+| `A8_DEFAULT_TTL` | `--default_ttl` | Registry default instance time-to-live (TTL) | 30s |
+| `A8_MIN_TTL` | `--min_ttl` | Minimum TTL that may be specified during registration | 10s | 
+| `A8_MAX_TTL` | `--max_ttl` | Maximum TTL that may be specified during registration | 10m |
 
 
 #### Authentication and Authorization
 
 The Amalgam8 Registry supports multi-tenancy by isolating each tenant into a separate namespace.
 A namespace is defined by an opaque string carried in the HTTP `Authorization` header of API requests. The following
-namespace authorization methods are supported and controlled via the `AUTH_MODE` environment variable (or `--auth_mode`
+namespace authorization methods are supported and controlled via the `A8_AUTH_MODE` environment variable (or `--auth_mode`
 flag):
 * None: if no authorization mode is defined, all instances are registered into a default shared namespace. 
 * Trusted: namespace is retrieved directly from the Authorization header. This provides namespace separation in a trusted
 environment (e.g., single tenant with multiple applications or environments).
 * JWT: encodes the namespace value in a signed JWT token claim. 
 
-| Environment Key | Flag Name                   | Description | Default Value |
-|:----------------|:----------------------------|:------------|:--------------|
-| `AUTH_MODE` | `--auth_mode` | Authentication modes. Supported values are: `trusted`, `jwt` | none (no isolation) |
-| `JWT_SECRET` | `--jwt_secret` | Secret key for JWT authentication | none (must be set if `AUTH_MODE` is `jwt`) |
-| `REQUIRE_HTTPS` | `--require_https` | Require clients to use HTTPS for API calls | `false` |
+| Environment Variable | Flag Name                   | Description | Default Value |
+|:---------------------|:----------------------------|:------------|:--------------|
+| `A8_AUTH_MODE` | `--auth_mode` | Authentication modes. Supported values are: `trusted`, `jwt` | none (no isolation) |
+| `A8_JWT_SECRET` | `--jwt_secret` | Secret key for JWT authentication | none (must be set if `A8_AUTH_MODE` is `jwt`) |
+| `A8_REQUIRE_HTTPS` | `--require_https` | Require clients to use HTTPS for API calls | `false` |
 
-If `jwt` is specified, `JWT_SECRET` (or `--jwt_secret`) must be set as well to allow encryption and decryption.
+If `jwt` is specified, `A8_JWT_SECRET` (or `--jwt_secret`) must be set as well to allow encryption and decryption.
 Namespace value encoding must be present in every API call using HTTP Bearer Authorization:
 
 ```bash
@@ -94,13 +94,13 @@ volume must be mounted RW into each container.  We are exploring
 alternative discovery mechanisms.
 
 
-| Environment Key | Flag Name                   | Description | Default Value |
-|:----------------|:----------------------------|:------------|:--------------|
-| `CLUSTER_SIZE` | `--cluster_size` | Cluster minimal healthy size, peers detecting a lower value will log errors | 1 (standalone) |
-| `CLUSTER_DIR` | `--cluster_dir` | Filesystem directory for cluster membership | none, must be specified for clustering to work |
-| `REPLICATION` | `--replication` | Enable replication between cluster members | `false` |
-| `REPLICATION_PORT` | `--replication_port` | Replication port number | 6100 |
-| `SYNC_TIMEOUT` | `--sync_timeout` | Timeout for establishing connections to peers for replication | 30s |
+| Environment Variable | Flag Name                   | Description | Default Value |
+|:---------------------|:----------------------------|:------------|:--------------|
+| `A8_CLUSTER_SIZE` | `--cluster_size` | Cluster minimal healthy size, peers detecting a lower value will log errors | 1 (standalone) |
+| `A8_CLUSTER_DIR` | `--cluster_dir` | Filesystem directory for cluster membership | none, must be specified for clustering to work |
+| `A8_REPLICATION` | `--replication` | Enable replication between cluster members | `false` |
+| `A8_REPLICATION_PORT` | `--replication_port` | Replication port number | 6100 |
+| `A8_SYNC_TIMEOUT` | `--sync_timeout` | Timeout for establishing connections to peers for replication | 30s |
 
 #### Catalog Extensions
 
@@ -108,11 +108,11 @@ The Amalgam8 Registry supports read-only catalogs extensions.
 The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, FileSystem, etc) is read by the Registry and
 returned to the user along with the content of the Registry itself.
 
-| Environment Key | Flag Name                   | Description | Default Value |
-|:----------------|:----------------------------|:------------|:--------------|
-| `K8S_URL` | `--k8s_url` | Enable kubernetes catalog and specify the API server | (none) |
-| `K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
-| `FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf`. See [FileSystem catalog documentation](doc/filesystem_catalog.md) for more information | (none) |
+| Environment Variable | Flag Name                   | Description | Default Value |
+|:---------------------|:----------------------------|:------------|:--------------|
+| `A8_K8S_URL` | `--k8s_url` | Enable kubernetes catalog and specify the API server | (none) |
+| `A8_K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
+| `A8_FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf`. See [FileSystem catalog documentation](doc/filesystem_catalog.md) for more information | (none) |
 
 
 ## REST API

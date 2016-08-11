@@ -177,5 +177,5 @@ var Flags = []cli.Flag{
 
 // envVarFromFlag returns the environment variable bound to the given flag
 func envVarFromFlag(name string) string {
-	return strings.ToUpper(name)
+	return "A8_" + strings.ToUpper(name)
 }

@@ -68,7 +68,7 @@ else
             --min 1 --max 2 --desired 1 \
             --hostname $REGISTRY_HOSTNAME \
             --domain $ROUTES_DOMAIN \
-            --env AUTH_MODE=trusted \
+            --env A8_AUTH_MODE=trusted \
             ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE}
 fi
 

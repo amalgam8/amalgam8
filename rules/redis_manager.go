@@ -20,7 +20,7 @@ func NewRedisManager(address, password string) Manager {
 		validator: &validator{
 			schemaLoader: gojsonschema.NewReferenceLoader("file://./schema.json"),
 		},
-		address: address,
+		address:  address,
 		password: password,
 	}
 }

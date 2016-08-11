@@ -17,8 +17,10 @@ package database
 type Database interface {
 	ReadKeys() ([]string, error)
 	ReadEntry(key string) (string, error)
+	ReadEntries(keys []string) ([]string, error)
 	ReadAllEntries() (map[string]string, error)
 	ReadAllMatchingEntries(match string) (map[string]string, error)
 	InsertEntry(key string, entry string) error
 	DeleteEntry(key string) (int, error)
+	DeleteEntries(keys []string) ([]int, error)
 }

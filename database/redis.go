@@ -98,6 +98,30 @@ func (rdb *redisDB) ReadAllEntries() (map[string]string, error) {
 	return entries, err
 }
 
+func (rdb *redisDB) ReadEntries(keys []string) ([]string, error) {
+	conn := rdb.conn
+	if rdb.conn == nil {
+		conn = rdb.connect()
+		defer conn.Close()
+	}
+
+	for _, key := range keys {
+		conn.Send("HGET", rdb.namespace.String(), key)
+	}
+	conn.Flush()
+
+	results := make([]string, len(keys))
+	for index := range keys {
+		entry, err := redis.String(conn.Receive())
+		if err != nil {
+			return results, err
+		}
+		results[index] = entry
+	}
+
+	return results, nil
+}
+
 func (rdb *redisDB) ReadAllMatchingEntries(match string) (map[string]string, error) {
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -157,4 +181,28 @@ func (rdb *redisDB) DeleteEntry(key string) (int, error) {
 	}
 
 	return redis.Int(conn.Do("HDEL", rdb.namespace.String(), key))
+}
+
+func (rdb *redisDB) DeleteEntries(keys []string) ([]int, error) {
+	conn := rdb.conn
+	if rdb.conn == nil {
+		conn = rdb.connect()
+		defer conn.Close()
+	}
+
+	for _, key := range keys {
+		conn.Send("HDEL", rdb.namespace.String(), key)
+	}
+	conn.Flush()
+
+	results := make([]int, len(keys))
+	for index := range keys {
+		entry, err := redis.Int(conn.Receive())
+		if err != nil {
+			return results, err
+		}
+		results[index] = entry
+	}
+
+	return results, nil
 }

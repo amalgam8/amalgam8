@@ -58,7 +58,7 @@ var Flags = []cli.Flag{
 	cli.StringFlag{
 		Name:   LogLevelFlag,
 		EnvVar: envVarFromFlag(LogLevelFlag),
-		Value:  "debug",
+		Value:  "info",
 		Usage:  "Logging level. Supported values are: 'debug', 'info', 'warn', 'error', 'fatal', 'panic'",
 	},
 

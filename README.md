@@ -112,7 +112,7 @@ returned to the user along with the content of the Registry itself.
 |:----------------|:----------------------------|:------------|:--------------|
 | `K8S_URL` | `--k8s_url` | Enable kubernetes catalog and specify the API server | (none) |
 | `K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
-| `FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf` | (none) |
+| `FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf`. See [FileSystem catalog documentation](doc/filesystem_catalog.md) for more information | (none) |
 
 
 ## REST API

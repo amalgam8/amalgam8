@@ -43,7 +43,7 @@ var _ = Describe("Config", func() {
 
 		It("has expected default", func() {
 			// Expected defaults specified in documentation
-			Expect(c.APIPort).To(Equal(6379))
+			Expect(c.APIPort).To(Equal(apiPort))
 			Expect(c.Database.Type).To(Equal("memory"))
 		})
 
@@ -54,7 +54,7 @@ var _ = Describe("Config", func() {
 		BeforeEach(func() {
 
 			c = &Config{
-				APIPort:   6379,
+				APIPort:   apiPort,
 				SecretKey: "ABCEDFGHIJKLMNOP",
 				Database: Database{
 					Type: "memory",

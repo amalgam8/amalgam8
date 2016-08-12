@@ -60,7 +60,7 @@ func New(context *cli.Context) *Config {
 			Type:     context.String(dbType),
 			Username: context.String(dbUser),
 			Password: context.String(dbPassword),
-			Host:     "https://" + context.String(dbHost), // FIXME: conditionally add HTTPS
+			Host:     context.String(dbHost),
 		},
 		APIPort:      context.Int(apiPort),
 		SecretKey:    context.String(secretKey),
@@ -87,6 +87,8 @@ func (c *Config) Validate() error {
 			util.IsNotEmpty("Database host name", c.Database.Host),
 		}
 		validators = append(validators, additionalValidators...)
+	} else if c.Database.Type == "redis" {
+		// TODO: redis logic
 	} else if c.Database.Type != "memory" {
 		return fmt.Errorf("Invalid database type %v", c.Database.Type)
 	}

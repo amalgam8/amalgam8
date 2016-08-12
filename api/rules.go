@@ -3,6 +3,9 @@ package api
 import (
 	"net/http"
 
+	"errors"
+
+	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/rules"
 	"github.com/ant0ine/go-json-rest/rest"
 )
@@ -22,10 +25,12 @@ func NewRule(m rules.Manager) *Rule {
 }
 
 func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
+	reporter := metrics.NewReporter()
+
 	routes := []*rest.Route{
-		rest.Post("/v1/rules", r.add),
-		rest.Get("/v1/rules", r.list),
-		rest.Delete("/v1/rules", r.remove),
+		rest.Post("/v1/rules", reportMetric(reporter, r.add, "add_rules")),
+		rest.Get("/v1/rules", reportMetric(reporter, r.list, "get_rules")),
+		rest.Delete("/v1/rules", reportMetric(reporter, r.remove, "delete_rules")),
 	}
 
 	for _, route := range routes {
@@ -35,30 +40,31 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	return routes
 }
 
-func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) {
+func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 	tenantID := req.PathParam("id")
 
 	tenantRules := TenantRules{}
 	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
 		RestError(w, req, http.StatusBadRequest, "invalid_json")
-		return
+		return err
 	}
 
 	if len(tenantRules.Rules) == 0 {
 		RestError(w, req, http.StatusBadRequest, "no_rules_provided")
-		return
+		return errors.New("no_rules_provided")
 	}
 
 	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "request_failed")
-		return
+		return err
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	return nil
 }
 
-func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) {
+func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	tenantID := req.PathParam("id")
 	ruleIDs := getQueries("id", req)
 	tags := getQueries("tag", req)
@@ -72,7 +78,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) {
 	if err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
-		return
+		return err
 	}
 
 	tenantRules := TenantRules{
@@ -81,9 +87,10 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&tenantRules)
+	return nil
 }
 
-func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) {
+func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	tenantID := req.PathParam("id")
 	ruleIDs := getQueries("id", req)
 	tags := getQueries("tag", req)
@@ -96,10 +103,11 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) {
 	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "could_not_delete_rules")
-		return
+		return err
 	}
 
 	w.WriteHeader(http.StatusOK)
+	return nil
 }
 
 func getQueries(key string, req *rest.Request) []string {

@@ -99,7 +99,14 @@ func controllerMain(conf config.Config) error {
 
 	healthAPI := api.NewHealth(reporter)
 
-	ruleManager := rules.NewMemoryManager()
+	var ruleManager rules.Manager
+	if conf.Database.Type == "redis" {
+		ruleManager = rules.NewRedisManager(
+			rules.NewRedisDB(conf.Database.Host, conf.Database.Password),
+		)
+	} else {
+		ruleManager = rules.NewMemoryManager()
+	}
 	rulesAPI := api.NewRule(ruleManager)
 
 	a := rest.NewApi()

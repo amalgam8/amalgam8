@@ -29,7 +29,7 @@ type Reporter interface {
 
 type logger struct{}
 
-// NewReporter basic Reporter implementation that logs succes and failure
+// NewReporter basic Reporter implementation that logs success and failure
 func NewReporter() Reporter {
 	return &logger{}
 }

@@ -15,13 +15,11 @@
 package api
 
 import (
-	"net/http"
 	"path/filepath"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/auth"
-	"github.com/amalgam8/controller/database"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -35,21 +33,6 @@ func getQueryIDs(key string, req *rest.Request) []string {
 		return []string{}
 	}
 	return values
-}
-
-func handleDBReadError(w rest.ResponseWriter, req *rest.Request, err error) {
-	if err != nil {
-		if ce, ok := err.(*database.DBError); ok {
-			if ce.StatusCode == http.StatusNotFound {
-				RestError(w, req, http.StatusNotFound, "no matching id")
-				return
-			}
-			RestError(w, req, http.StatusServiceUnavailable, "database_error")
-			return
-		}
-		RestError(w, req, http.StatusServiceUnavailable, "failed_to_read_info")
-		return
-	}
 }
 
 func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.Request) error, name string) rest.HandlerFunc {

@@ -2,14 +2,29 @@ local json     = require("cjson.safe")
 local math     = require("math")
 local balancer = require("ngx.balancer")
 local string   = require("resty.string")
+local cmsgpack = require("cmsgpack.safe")
 
-local Amalgam8 = { _VERSION = '0.2.0',
-	     upstreams_dict = {},
-	     faults_dict = {},
-	     services_dict = {}
-}
+local ngx_log = ngx.log
+local ngx_ERR = ngx.ERR
+local ngx_DEBUG = ngx.DEBUG
+local ngx_INFO = ngx.INFO
+local ngx_WARN = ngx.WARN
+local ngx_var = ngx.var
+local ngx_shared = ngx.shared
+local tostring = tostring
 
-local function isValidString(input)
+--TODO: This code has been tested with a single worker only
+-----With multiple workers, we might need a read-write lock on the
+-----shared state (a8_instances, a8_rules) so that workers do not see
+-----intermediate state of system while an update is in progress. That could
+-----potentially result in erroneous routing. Since the sidecar operates as a
+-----"sidecar", along side the app, one worker should be sufficient in most
+-----situations. Hence, no effort has been made to protect accesses to the
+-----global shared state with locks. The performance of lua-resty-lock needs
+-----to be evaluated at high load.
+local Amalgam8 = { _VERSION = '0.3.0' }
+
+local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then
       return true
    else
@@ -17,7 +32,8 @@ local function isValidString(input)
    end
 end
 
-local function isValidNumber(input)
+
+local function is_valid_number(input)
    if input and type(input) == 'number' then
       return true
    else
@@ -25,372 +41,292 @@ local function isValidNumber(input)
    end
 end
 
-function Amalgam8:decodeJson(input)
-   local upstreams = {}
-   local services = {}
-   local faults = {}
 
-   if input.upstreams then
-      for name, upstream in pairs(input.upstreams) do
-         if upstream.servers then
-            upstreams[name] = {
-               servers = {},
-            }
-
-            for _, server in ipairs(upstream.servers) do
-               if isValidString(server.host) and isValidNumber(server.port) and server.port > 0 then
-                  table.insert(upstreams[name].servers, {
-                                  host   = server.host,
-                                  port   = server.port,
-                  })
-               else
-                  ngx.log(ngx.WARN, "ignoring invalid upstream " .. name .. ":invalid data format for host and port")
-               --   return nil, nil, nil, "invalid data format for upstream server host or port"
-               end
-            end
-         end
-      end
-   end
-
-   if input.services then
-      for name, metadata in pairs(input.services) do
-         if isValidString(metadata.default) then
-            if not isValidString(metadata.type) then
-               metadata.type = 'http'
-            end
-            if metadata.type == 'http' or metadata.type == 'https' then
-               services[name] = {
-                  default = metadata.default,
-                  service_type = metadata.type,
-                  selectors = metadata.selectors
-               }
-            else
-               ngx.log(ngx.WARN, "ignoring service " .. name .. ":invalid service_type. Only http|https is allowed")
-               -- return nil, nil, nil, "invalid service_type. Only http|https is allowed"
-            end
-         else
-            ngx.log(ngx.WARN, "ignoring service " .. name .. ":invalid/empty value for default service version")
-            --   return nil, nil, nil, "invalid/empty value for default service version"
-         end
-      end
-   end
-
-   if input.faults then
-      for i, fault in ipairs(input.faults) do
-         if isValidString(fault.source) and isValidString(fault.destination) and isValidString(fault.header) and isValidString(fault.pattern) then
-            if fault.source == self.source_service then
-               if not isValidNumber(fault.delay) then
-                  fault.delay = 0.0
-               end
-               if not isValidNumber(fault.return_code) then
-                  fault.return_code = nil
-               end
-               if not isValidNumber(fault.abort_probability) then
-                  fault.abort_probability = 0.0
-               end
-               if not isValidNumber(fault.delay_probability) then
-                  fault.delay_probability = 0.0
-               end
-               --if (fault.abort_probability > 0.0 and fault.return_code ) or (fault.delay_probability > 0.0 and fault.delay > 0.0) then
-                  table.insert(faults, {
-                                  source = fault.source,
-                                  destination = fault.destination,
-                                  header =  fault.header,
-                                  pattern = fault.pattern,
-                                  delay = fault.delay,
-                                  delay_probability = fault.delay_probability,
-                                  abort_probability = fault.abort_probability,
-                                  return_code = fault.return_code
-                  })
-               --else
-               --   return nil, nil, nil, "Invalid fault entry. Atleast one of abort/delay fault details should be non zero"
-               -- end
-            else
-               ngx.log(ngx.WARN, "Ignoring fault entry " .. fault.source .. " as it does not match source_service " .. self.source_service)
-            end
-         else
-            ngx.log(ngx.WARN, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern)
-            -- return nil, nil, nil, "Invalid fault entry. Found empty source/destination/header/pattern" .. fault.source .. "," .. fault.destination .. ",".. fault.header .. "," .. fault.pattern
-         end
-      end
-   else
-      ngx.log(ngx.DEBUG, "NOTE: No fault entries specified")
-   end
-   return upstreams, services, faults, nil
-end
-
-local function getMyName()
+local function get_name_and_tags()
    local service_name = os.getenv("A8_SERVICE")
---   local service_version = os.getenv("A8_SERVICE_VERSION")
 
-   if not isValidString(service_name) then
-      return nil, "A8_SERVICE environment variable is either empty or not set"
+   if not is_valid_string(service_name) then
+      return nil, nil, "A8_SERVICE environment variable is either empty or not set"
    end
 
-   return service_name, nil
-   -- if isValidString(service_version) then
-   --    return service_name .. "_" .. service_version, nil
-   -- else
-   --    return service_name, nil
+   local tags = {}
+   local name, version
+   for x,y,z in string.gmatch(service_name, '([^:]+)(:?(.*))') do
+      name = x
+      version = y
+      break
+   end
+
+   return name, version, nil
+   -- if version then
+   --    for t in string.gmatch(version, '([^:]+)') do
+   --       table.insert(tags, t)
+   --    end
    -- end
+   
+   -- return name, tags, nil
 end
 
-function Amalgam8:new(upstreams_dict, services_dict, faults_dict)
+
+local function create_instance(i)
+   local instance = {}
+   instance.type = i.type
+   instance.tags = table.concat(i.tags, ",")
+   if not i.type then
+      instance.type = 'http'
+   end
+   for x,y,z in string.gmatch(i.endpoint.value, '([^:]+)(:?(.*))') do
+      instance.host = x
+      instance.port = y
+      break
+   end
+   if not instance.port then
+      if instance.type == 'http' then
+         instance.port = 80
+      elseif instance.type == 'https' then
+         instance.port = 443
+      else
+         ngx_log(ngx_WARN, "ignoring endpoint " .. instance.host .. ", missing port")
+         return nil
+      end
+   end
+   -- TODO: add support for hostnames in endpoints
+   return instance
+end
+
+
+local function compare_rules(a, b)
+   return a.priority < b.priority
+end
+
+
+local function compare_backends(a, b)
+   return a.weight < b.weight
+end
+
+
+local function is_rule_for_me(myname, mytags, rule)
+   --by default we assume rule is for us if the
+   -- A. (match.(all|any|none).source is nil) OR
+   -- (C. (the source field in all|any sub match matches service name and tags) AND
+   -- D. (the source field in none sub match DOES NOT match service name and tags))
+   --right now, only ALL is supported
+
+   if not rule.match then return false end
+   if not rule.match.all then return false end
+
+   local is_my_tag_empty = (string.len(mytags) == 0)
+
+   -- empty source implies wildcard (A)
+   if not rule.match.all.source then return true end
+   local mismatch = false
+
+   for _, i in ipairs(rule.match.all.source) do
+      if i.name == myname then
+         local empty_src_tags = (not i.tags)
+         if empty_src_tags and is_my_tag_empty then return true end
+         if empty_src_tags or is_my_tag_empty then next end
+         for _, t in ipairs(i.tags) do
+            if not string.find(mytags, t, 1, true) then
+               mismatch = true
+               break
+            end
+         end
+         if mismatch then next end
+         return true
+      end
+   end
+end
+
+
+local function create_rule(rule, myname, mytags)
+   -- no match implies wildcard rule from * to *
+   if not is_rule_for_me(myname, mytags, rule.match) then
+      return nil
+   end
+
+   if not rule.priority then
+      rule.priority = 0
+   end
+
+   if not rule.action then
+      return nil
+   end
+
+   -- set default weights for backends where no weight is specified
+   ---- Take the leftover weight and distribute it equally among
+   ---- unweighted backends
+   if rule.action.backends then
+      local sum = 0
+      local unweighted = 0
+      for _, b in ipairs(rule.action.backends) do
+         if b.weight then
+            sum = sum + b.weight
+         else
+            unweighted = unweighted + 1
+         end
+      end
+      if unweighted > 0 then
+         local balance = 1 - sum
+         for _, b in ipairs(rule.action.backends) do
+            if not b.weight then
+               b.weight = balance/unweighted
+            end
+         end
+      end
+      table.sort(rule.action.backends, compare_backends)
+   end
+
+   return rule
+end
+
+
+function Amalgam8:new()
    o = {}
    setmetatable(o, self)
    self.__index = self
 
-   local upstreams = ngx.shared[upstreams_dict]
-   if not upstreams then
-      return "upstreams dictionary " .. upstreams_dict .. " not found"
-   end
-
-   local services = ngx.shared[services_dict]
-   if not services then
-      return "services dictionary " .. services_dict .. " not found"
-   end
-
-   local faults = ngx.shared[faults_dict]
-   if not faults then
-      return "faults dictionary " .. faults_dict .. " not found"
-   end
-
-   local source_service, err = getMyName()
+   local myname, mytags, err = get_name_and_tags()
    if err then
       return err
    end
 
-   self.upstreams_dict = upstreams
-   self.services_dict = services
-   self.faults_dict = faults
-   self.source_service = source_service
+   self.myname = myname
+   self.mytags = mytags
    return o
 end
 
-function Amalgam8:updateUpstream(name, upstream)
-   if table.getn(upstream.servers) == 0 then
-      return nil
-   end
 
-   local current = {
-      name         = name,
-      upstream     = upstream,
-   }
+-- a8_instances stores registry info
+-- a8_rules stores rules data, keyed by destination. Each entry is an array of
+-- rules for that destination, ordered by priority.
 
-   for _, server in ipairs(upstream.servers) do
-      if not server.host then
-         return "null host for server"
+-- Select rule from a8_rules[destination]
+-- select backend and obtain the backend's tags
+-- then do delay/abort if backend's tags match
+-- then fetchInstances of the backend based on its tags and load balance.
+
+-- Two functions are needed for rule matching:
+--  get_instances(service_name, tags)
+--  match_instance_tags(instance, tags)
+function Amalgam8:update_state(input)
+   local a8_instances = {}
+   local a8_rules = {}
+   local err
+
+   if input.instances then
+       for _, e in ipairs(input.instances) do
+         if not a8_instances[e.service_name] then
+            a8_instances[e.service_name] = {}
+         end
+         local instance = create_instance(e)
+         if instance then
+            table.insert(a8_instances[e.service_name], instance)
+         end
+       end
+
+       for service, instances in pairs(a8_instances) do
+         serialized = cmsgpack.pack(instances)
+         _, err = ngx_shared.a8_instances:set(service, serialized)
+         if err then
+            err = "failed to update instances for service:"..service..":"..err
+            return err
+         end
       end
 
-      if not server.port then
-         return "null port for server"
+   end
+
+   if input.rules then
+      for _, r in ipairs(input.rules) do
+         if not a8_rules[r.destination] then
+            a8_rules[r.destination] = {}
+         end
+         local rule = create_rule(r, self.myname, self.mytags)
+         if rule then
+            table.insert(a8_rules[r.destination], rule)
+         end
       end
-   end
 
-   local current_serialized, err = json.encode(current)
-   if err then
-      return err
-   end
+      for service, rset in pairs(a8_rules) do
+         table.sort(rset, compare_rules)
+         serialized = cmsgpack.pack(rset)
+         _, err = ngx_shared.a8_rules:set(service, serialized)
+         if err then
+            err = "failed to update rules for service:"..service..":"..err
+            return err
+         end
+      end
 
-   local _, err = self.upstreams_dict:set(name, current_serialized)
-   if err then
-      return err
    end
 
    return nil
 end
 
-function Amalgam8:updateService(name, metadata)
-
-   local current = {
-      name         = name,
-      metadata   = metadata,
-   }
-
-   if not isValidString(metadata.default) then
-      return "null entry for default version"
-   end
-
-   if metadata.selectors then
-      -- convert the selectors field from string to lua table
-      local selectors_fn, err = loadstring( "return " .. metadata.selectors)
-      if err then
-         ngx.log(ngx.ERR, "failed to compile selector", err)
-         return err
-      end
-      current.metadata.selectors = selectors_fn()
-   end
-
-   local current_serialized, err = json.encode(current)
-   if err then
-      return err
-   end
-
-   local _, err = self.services_dict:set(name, current_serialized)
-   if err then
-      return err
-   end
-
-   return nil
-end
-
-function Amalgam8:updateFault(i, fault)
-
-   local name = tostring(i)
-
-   local current = {
-      name  = name,
-      fault = fault,
-   }
-
-   -- no error checks here, assuming that the controller has done them already.
-   -- FIXME: still need to define rule prioritization in the presence of wildcards.
-
-   local current_serialized, err = json.encode(current)
-   if err or not current_serialized then
-      ngx.log(ngx.ERR, "JSON encoding failed for fault fault between " .. fault.source .. " and " .. fault.destination .. " err:" .. err)
-      return err
-   end
-
-   -- local _, err = table.insert(self.faults_dict, current_serialized)
-   local _, err = self.faults_dict:set(i, current_serialized)
-   if err then
-      ngx.log(ngx.ERR, "Failed to update faults_dict for fault between " .. fault.source .. " and " .. fault.destination .. " err:" .. err)
-      return err
-   end
-
-   return nil
-end
-
-function Amalgam8:updateProxy(input)
-   local upstreams, services, faults, err = self:decodeJson(input)
-
-   if err then
-      return err
-   end
-
-   for name, upstream in pairs(upstreams) do
-      err = self:updateUpstream(name, upstream)
-      if err then
-         err = "error updating upstream " .. name .. ": " .. err
-         break
-      end
-   end
-
-   if err then
-      return err
-   end
-
-   for name, metadata in pairs(services) do
-      err = self:updateService(name, metadata)
-      if err then
-         err = "error updating service " .. name .. ": " .. err
-         break
-      end
-   end
-
-   if err then
-      return err
-   end
-
-   for i, fault in ipairs(faults) do
-      err = self:updateFault(i, fault)
-      if err then
-         err = "error updating fault " .. fault.destination .. ": " .. err
-         break
-      end
-   end
-
-   if err then
-      return err
-   end
-
-   self.faults_dict:set("len", table.getn(faults))
-end
-
-function Amalgam8:getUpstream(name)
-   local serialized = self.upstreams_dict:get(name)
+function Amalgam8:get_instances(service)
+   local serialized = ngx_shared.a8_instances:get(service)
    if serialized then
-      return json.decode(serialized)
+      return cmsgpack.unpack(serialized)
    end
 end
 
-function Amalgam8:getService(name)
-   local serialized = self.services_dict:get(name)
+function Amalgam8:get_rules(service)
+   local serialized = ngx_shared.a8_rules:get(service)
    if serialized then
-      return json.decode(serialized)
+      return cmsgpack.unpack(serialized)
    end
 end
 
-function Amalgam8:getFault(index)
-   local serialized = self.faults_dict:get(index)
-   if serialized then
-      return json.decode(serialized)
-   end
+function Amalgam8:reset_state()
+   ngx_shared.a8_instances:flush_all()
+   ngx_shared.a8_instances:flush_expired()
+   ngx_shared.a8_rules:flush_all()
+   ngx_shared.a8_rules:flush_expired()
 end
 
---- FIXME
-function Amalgam8:resetState()
-   self.upstreams_dict:flush_all()
-   self.upstreams_dict:flush_expired()
-   self.services_dict:flush_all()
-   self.services_dict:flush_expired()
-   self.faults_dict:flush_all()
-   self.faults_dict:flush_expired()
-   self.faults_dict:set("len", 0) --marker
-end
-
-function Amalgam8:updateConfig()
+function Amalgam8:proxy_admin()
    if ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
       ngx.req.read_body()
 
-      local input, err = json.decode(ngx.req.get_body_data())
+      local input, err = cmsgpack.unpack(ngx.req.get_body_data())
       if err then
          ngx.status = ngx.HTTP_BAD_REQUEST
-         ngx.log(ngx.ERR, "error decoding input json: " .. err)
+         ngx_log(ngx_ERR, "error decoding input json: " .. err)
          ngx.say("error decoding input json: " .. err)
          ngx.exit(ngx.status)
       end
 
-      -- TODO: FIXME. There is no concept of locking so far.
-      self:resetState()
-      err = self:updateProxy(input)
+      -- TODO: locking in multi-worker context.
+      self:reset_state()
+      err = self:update_state(input)
       if err then
          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-         ngx.log(ngx.ERR, "error updating proxy: " .. err)
+         ngx_log(ngx_ERR, "error updating proxy: " .. err)
          ngx.say("error updating internal state: " .. err)
          ngx.exit(ngx.status)
       end
       ngx.exit(ngx.HTTP_OK)
    elseif ngx.req.get_method() == "GET" then
       local state = {
-         services = {},
-         upstreams = {},
-         faults = {}
+         instances = {},
+         rules = {}
       }
 
       -- TODO: This fetches utmost 1024 keys only
-      local services = self.services_dict:get_keys()
-      local upstreams = self.upstreams_dict:get_keys()
-      local faults = self.faults_dict:get_keys()
+      local instance_keys = ngx_shared.a8_instances:get_keys()
+      local rule_keys = ngx_shared.a8_rules:get_keys()
 
-      for _,name in ipairs(services) do
-         state.services[name] = self:getService(name)
+      for _,service in ipairs(instance_keys) do
+         state.instances[service] = self:get_instances(service)
       end
-
-      for _,name in ipairs(upstreams) do
-         state.upstreams[name] = self:getUpstream(name)
-      end
-      local len = self.faults_dict:get("len")
-      for i=1,len do
-         table.insert(state.faults, self:getFault(i))
+      for _,service in ipairs(rule_keys) do
+         state.rules[service] = self:get_rules(service)
       end
 
       local output, err = json.encode(state)
       if err then
          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
          ngx.say("error encoding state as JSON:" .. err)
-         ngx.log(ngx.ERR, "error encoding state as JSON:" .. err)
+         ngx_log(ngx_ERR, "error encoding state as JSON:" .. err)
          nex.exit(ngx.status)
       end
       ngx.header["content-type"] = "application/json"
@@ -401,66 +337,60 @@ function Amalgam8:updateConfig()
    end
 end
 
-function Amalgam8:balance()
-   local name = ngx.var.a8proxy_upstream
-   if not name then
-      ngx.status = ngx.HTTP_BAD_GATEWAY
-      ngx.log(ngx.ERR, "$a8proxy_upstream is not specified")
-      ngx.exit(ngx.status)
-      return
-   end
+-- function Amalgam8:balance()
+--    local name = ngx_var.service_name
+--    local tags = ngx.var.service_tags
+--    if not name then
+--       ngx.status = ngx.HTTP_BAD_GATEWAY
+--       ngx_log(ngx_ERR, "$a8proxy_instance is not specified")
+--       ngx.exit(ngx.status)
+--       return
+--    end
 
-   local upstream, err = self:getUpstream(name)
-   if err then
-      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-      ngx.log(ngx.ERR, "error getting upstream " .. name .. ": " .. err)
-      ngx.exit(ngx.status)
-      return
-   end
+--    local instances = self:get_instances(name)
+--    if not instances or table.getn(instances) == 0 then
+--       ngx.status = ngx.HTTP_NOT_FOUND
+--       ngx_log(ngx_ERR, "service " .. name .. " is not known or has no known instances")
+--       ngx.exit(ngx.status)
+--       return
+--    end
 
-   if not upstream or table.getn(upstream.upstream.servers) == 0 then
-      ngx.status = ngx.HTTP_NOT_FOUND
-      ngx.log(ngx.ERR, "upstream " .. name .. " is not known or has no known instances")
-      ngx.exit(ngx.status)
-      return
-   end
+--    --TODO: refactor. Need different LB functions
+--    local index    = math.random(1, table.getn(instances)) % table.getn(instances) + 1
+--    local instance = instances[index]
 
-   --TODO: refactor. Need different LB functions
-   local index    = math.random(1, table.getn(upstream.upstream.servers)) % table.getn(upstream.upstream.servers) + 1
-   local upstream = upstream.upstream.servers[index]
+--    local _, err = balancer.set_current_peer(instance.host, instance.port)
+--    if err then
+--       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+--       ngx_log(ngx_ERR, "failed to set current peer for instance " .. name .. ": " .. err)
+--       ngx.exit(ngx.status)
+--       return
+--    end
+-- end
 
-   local _, err = balancer.set_current_peer(upstream.host, upstream.port)
-   if err then
-      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-      ngx.log(ngx.ERR, "failed to set current peer for upstream " .. name .. ": " .. err)
-      ngx.exit(ngx.status)
-      return
-   end
-end
+-- function Amalgam8:get_service_metadata()
+--    local name = ngx_var.service_name
+--    if not name then
+--       ngx_log(ngx_ERR, "$service_name is not specified")
+--       return nil, nil, nil
+--    end
 
-function Amalgam8:get_service_metadata()
-   local name = ngx.var.service_name
-   if not name then
-      ngx.log(ngx.ERR, "$service_name is not specified")
-      return nil, nil, nil
-   end
+--    local service, err = self:getService(name)
+--    if err then
+--       ngx_log(ngx_ERR, "error getting service " .. name .. ": " .. err)
+--       return nil, nil, nil
+--    end
 
-   local service, err = self:getService(name)
-   if err then
-      ngx.log(ngx.ERR, "error getting service " .. name .. ": " .. err)
-      return nil, nil, nil
-   end
+--    if not service or not service.metadata then
+--       ngx_log(ngx_ERR, "service " .. name .. " or metadata is not known")
+--       return nil, nil, nil
+--    end
 
-   if not service or not service.metadata then
-      ngx.log(ngx.ERR, "service " .. name .. " or metadata is not known")
-      return nil, nil, nil
-   end
+--    return service.metadata.service_type, service.metadata.default, service.metadata.selectors
+-- end
 
-   return service.metadata.service_type, service.metadata.default, service.metadata.selectors
-end
-
-function Amalgam8:get_source_service()
-   return self.source_service
-end
+-- function Amalgam8:get_myname()
+--    return self.myname
+-- end
 
 return Amalgam8

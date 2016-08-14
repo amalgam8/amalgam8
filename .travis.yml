@@ -37,9 +37,7 @@ script:
 
 # Configure notifications
 notifications:
-    email:
-        on_success: never
-        on_failure: always
+    email: false
     slack:
         rooms:
             - secure: "ajrmsfOXJVvt2O5XaCP398Uhbwz+HQvMrEXpXafq+b8pN+54SQWjmCMv/krp8YPjiRYYK+L257LDWEzOJjbcaOX5zXSL83ABUVx+gzlj4VFPT4EwYADCuy/9JVlplikOKn3629WO17aliKav3WoRlNAprwUqDEC2P4I02+aiLNs/hSll0tVwLfVyCUq6Zc5rPPIftidortTMHDmH8cvLGTixJOPf1j/8vGT0mcalukajOW+G7sLDAsLSjJlE7MNv5zhkRakt5zlmmlLJhmSrQEJ/qUVM1HOYvofcJMDvYHKNqdQixfSg+IyozqBrEVpNWVsA5TZnrZB0JVM6ijvbZwLUtKgjuOpSOepsf1J+QCdbzRTp3SArh5GFeXxe20ikY+Iw7vqkdClB/VVMIWiH0X6D9e4npCFSQkQEETFPMnD+XDCdXc1QvjnZpGJw4lqP2TVa5rqwA6E+3pH7ymyadE/57ENYRyntV+c3N2fklw2yXn4hO3oUG/RVJKGEG0JuFSlhioWWydxnsDeBq9xkBeknC2Phez2g3m4nJRdlPaegkQA1VSwPrBKF4x2F3/pGzoD7DM7B2iTbrHGLdf5dY8t2AopTTHvOftAR+UeQ5dUckGrbQkowPGhqOUDrSYJurQKQCfuGrT08tDWv5EDkogv4rvn3FesMb1jyxjUIFfM="

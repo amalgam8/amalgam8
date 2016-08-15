@@ -104,44 +104,115 @@ local function compare_backends(a, b)
    return a.weight < b.weight
 end
 
+local function match_tags(src_tag_string, dst_tag_set) --assumes both are not nil
+   -- local empty_src_tags = (string.len(src_tag_string) == 0)
+   -- local empty_dst_tags = (not dst_tag_set)
+   local match = true
+   for _, t in ipairs(dst_tag_set) do
+      if not string.find(src_tag_string, t, 1, true) then
+         match = false
+         break
+      end
+   end
+   return match
+end
+
+local function check_and_preprocess_match(myname, mytags, match_type, match_sub_block)
+   if not match_sub_block then
+      if match_type ~= "none" then
+         return true, nil
+      else
+         return false, nil -- return false for empty none block
+      end
+   end
+
+   local match_cond = {}
+   local is_my_tag_empty = (string.len(mytags) == 0)
+   local match_found = false
+
+   for _, m in ipairs(match_sub_block) do
+      local check1 = false
+      local check2 = false
+
+      if m.source then 
+         local empty_src_tags = (not m.source.tags)
+         local empty_src_name = (not m.source.name)
+         local tags = m.source.tags
+
+         --src has a name
+         -- name match, with empty rule src tags
+         -- src tags and my tags matched
+         check1 = (not empty_src_name and (m.source.name == myname) and (empty_src_tags or (not is_my_tag_empty and match_tags(mytags, tags))))
+
+         -- src has no service name. But it should have tags
+         check2 = (empty_src_name and (not is_my_tag_empty and match_tags(mytags, tags)))
+      else
+         -- empty source implies wildcard source. Rule match found for all/any. continue collecting other fields.
+         if match_type ~= "none" then check1 = true end
+      end
+      
+      if check1 or check2 then
+         match_found = true
+         if m.headers then
+            for k,v in pairs(m.headers) do
+               match_cond[k]=v
+            end
+         end
+      end
+   end
+
+   return match_found, match_cond
+end
+
 
 local function is_rule_for_me(myname, mytags, rule)
    --by default we assume rule is for us if the
    -- A. (match.(all|any|none).source is nil) OR
-   -- (C. (the source field in all|any sub match matches service name and tags) AND
-   -- D. (the source field in none sub match DOES NOT match service name and tags))
+   -- (B. (the source field in all|any sub match matches service name and tags) AND
+   --  C. (the source field in none sub match DOES NOT match service name and tags))
+   -- If the source field has no service name but tags are provided, then we compare our tags
+   -- with the source tags.
+   ---- If our service tags are empty, then try next source block
+   -- if source field has service name but no service tags, then the rule applies to us if service name matches
+   -- if source field has no service name but has service tags, then the rule applies to us if tags match
+   ----if our service has no tags, then try next source block
+
    --right now, only ALL is supported
 
-   if not rule.match then return false end
-   if not rule.match.all then return false end
+   if not rule.match then return true end
 
-   local is_my_tag_empty = (string.len(mytags) == 0)
-
-   -- empty source implies wildcard (A)
-   if not rule.match.all.source then return true end
-   local mismatch = false
-
-   for _, i in ipairs(rule.match.all.source) do
-      if i.name == myname then
-         local empty_src_tags = (not i.tags)
-         if empty_src_tags and is_my_tag_empty then return true end
-         if empty_src_tags or is_my_tag_empty then next end
-         for _, t in ipairs(i.tags) do
-            if not string.find(mytags, t, 1, true) then
-               mismatch = true
-               break
-            end
-         end
-         if mismatch then next end
-         return true
+   local match = {}
+   local all_headers, any_headers, none_headers
+   local all_res, any_res, none_res
+ 
+   if rule.match.source or rule.match.headers then
+      match["source"] = rule.match.source
+      match["headers"] = rule.match.headers
+      if not rule.match.all then
+         rule.match.all = {}
       end
+      table.insert(rule.match.all, match)
    end
+
+   all_res, all_headers = check_and_consolidate_match(myname, mytags, "all", rule.match.all)
+   any_res, any_headers = check_and_consolidate_match(myname, mytags, "any", rule.match.any)
+   none_res, none_headers = check_and_consolidate_match(myname, mytags, "none", rule.match.none)
+
+   local res = (all_res or any_res) and not none_res
+   if res then
+      rule.match = {
+         all = all_headers,
+         any = any_headers,
+         none = none_headers
+      }
+   end
+   return res
 end
 
 
 local function create_rule(rule, myname, mytags)
    -- no match implies wildcard rule from * to *
-   if not is_rule_for_me(myname, mytags, rule.match) then
+   if not is_rule_for_me(myname, mytags, rule) then
       return nil
    end
 
@@ -149,17 +220,17 @@ local function create_rule(rule, myname, mytags)
       rule.priority = 0
    end
 
-   if not rule.action then
+   if not rule.routes or not rule.actions then
       return nil
    end
 
    -- set default weights for backends where no weight is specified
    ---- Take the leftover weight and distribute it equally among
    ---- unweighted backends
-   if rule.action.backends then
+   if rule.route.backends then
       local sum = 0
       local unweighted = 0
-      for _, b in ipairs(rule.action.backends) do
+      for _, b in ipairs(rule.route.backends) do
          if b.weight then
             sum = sum + b.weight
          else
@@ -168,13 +239,13 @@ local function create_rule(rule, myname, mytags)
       end
       if unweighted > 0 then
          local balance = 1 - sum
-         for _, b in ipairs(rule.action.backends) do
+         for _, b in ipairs(rule.route.backends) do
             if not b.weight then
                b.weight = balance/unweighted
             end
          end
       end
-      table.sort(rule.action.backends, compare_backends)
+      table.sort(rule.route.backends, compare_backends)
    end
 
    return rule

@@ -19,6 +19,7 @@ import:
 - package: github.com/garyburd/redigo/redis
 
 - package: github.com/xeipuuv/gojsonschema
+  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 
 - package: github.com/amalgam8/registry
 

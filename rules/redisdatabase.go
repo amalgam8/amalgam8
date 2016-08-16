@@ -34,7 +34,9 @@ func NewRedisDB(address string, password string) *redisDB {
 				redis.DialPassword(password),
 			)
 			if err != nil {
-				conn.Close()
+				if conn != nil {
+					conn.Close()
+				}
 				return nil, err
 			}
 			return conn, nil

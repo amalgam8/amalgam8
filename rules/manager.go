@@ -3,12 +3,18 @@ package rules
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/xeipuuv/gojsonschema"
 )
 
 type Filter struct {
 	IDs  []string
 	Tags []string
+}
+
+func (f Filter) String() string {
+	return fmt.Sprintf("filter: IDs=%v Tags=%v", f.IDs, f.Tags)
 }
 
 type Manager interface {

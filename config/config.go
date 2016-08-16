@@ -17,6 +17,9 @@ package config
 import (
 	"fmt"
 
+	"errors"
+	"net/url"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/util"
 	"github.com/codegangsta/cli"
@@ -88,6 +91,21 @@ func (c *Config) Validate() error {
 		}
 		validators = append(validators, additionalValidators...)
 	} else if c.Database.Type == "redis" {
+		validators = append(
+			validators,
+			func() error {
+				u, err := url.Parse(c.Database.Host)
+				if err != nil {
+					return errors.New("Redis database host name is not a valid URL")
+				}
+
+				if u.Scheme != "redis" {
+					return errors.New("Redis database host name must have scheme of 'redis'")
+				}
+
+				return nil
+			},
+		)
 		// TODO: redis logic
 	} else if c.Database.Type != "memory" {
 		return fmt.Errorf("Invalid database type %v", c.Database.Type)

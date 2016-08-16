@@ -24,6 +24,7 @@ type redisManager struct {
 	db        *redisDB
 }
 
+// TODO: return IDs somehow
 func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
@@ -36,36 +37,39 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 		}
 	}
 
-	// add rules
+	entries := make(map[string]string)
 	for _, rule := range rules {
-		rule.ID = uuid.New()
+		data, err := json.Marshal(&rule)
+		if err != nil {
+			return err
+		}
 
-		// Write the JSON registration data to the database
-		ruleBytes, err := json.Marshal(&rule)
-		if err != nil {
-			return err
-		}
-		err = r.db.InsertEntry(tenantID, rule.ID, string(ruleBytes))
-		if err != nil {
-			return err
-		}
+		id := uuid.New() // Generate an ID for each rule
+		entries[id] = string(data)
+	}
+
+	if err := r.db.InsertEntries(tenantID, entries); err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"namespace": tenantID,
+		}).Error("Error reading all entries from redis")
+		return err
 	}
 
 	return nil
 }
 
 // TODO: tag filtering
-func (r *redisManager) GetRules(tenantID string, filter Filter) ([]Rule, error) {
+func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error) {
 	results := []Rule{}
 
 	var stringRules []string
 	var err error
 	if len(filter.IDs) == 0 {
-		entries, err := r.db.ReadAllEntries(tenantID)
+		entries, err := r.db.ReadAllEntries(namespace)
 		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"err": err,
-				"id":  tenantID,
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"namespace": namespace,
+				"filter":    filter,
 			}).Error("Error reading all entries from redis")
 			return results, err
 		}
@@ -73,16 +77,13 @@ func (r *redisManager) GetRules(tenantID string, filter Filter) ([]Rule, error) 
 			stringRules = append(stringRules, entry)
 		}
 	} else {
-		for _, id := range filter.IDs {
-			entry, err := r.db.ReadEntry(tenantID, id)
-			if err != nil {
-				logrus.WithError(err).WithFields(logrus.Fields{
-					"tenant_id": tenantID,
-					"id":        id,
-				}).Error("Could not read entry from Redis")
-				return results, err
-			}
-			stringRules = append(stringRules, entry)
+		stringRules, err = r.db.ReadEntries(namespace, filter.IDs)
+		if err != nil {
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"namespace": namespace,
+				"filter":    filter,
+			}).Error("Could not read entries from Redis")
+			return results, err
 		}
 	}
 
@@ -91,7 +92,7 @@ func (r *redisManager) GetRules(tenantID string, filter Filter) ([]Rule, error) 
 		rule := Rule{}
 		if err = json.Unmarshal([]byte(entry), &rule); err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
-				"tenant_id": tenantID,
+				"tenant_id": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
 			return results, err
@@ -123,14 +124,12 @@ func (r *redisManager) DeleteRules(tenantID string, filter Filter) error {
 		ids = append(ids, filter.IDs...)
 	}
 
-	for _, id := range ids {
-		if err := r.db.DeleteEntry(tenantID, id); err != nil {
-			logrus.WithFields(logrus.Fields{
-				"err": err,
-				"key": id,
-			}).Error("Error deleting entry from redis")
-			return err
-		}
+	if err := r.db.DeleteEntries(tenantID, ids); err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"namespace": tenantID,
+			"filter":    filter,
+		}).Error("Error deleting entries from Redis")
+		return err
 	}
 
 	return nil

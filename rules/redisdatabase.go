@@ -14,9 +14,7 @@
 
 package rules
 
-import (
-	"github.com/garyburd/redigo/redis"
-)
+import "github.com/garyburd/redigo/redis"
 
 type redisDB struct {
 	pool     *redis.Pool
@@ -34,7 +32,6 @@ func NewRedisDB(address string, password string) *redisDB {
 				redis.DialPassword(password),
 			)
 			if err != nil {
-				conn.Close()
 				return nil, err
 			}
 			return conn, nil
@@ -58,15 +55,6 @@ func (rdb *redisDB) ReadKeys(namespace string) ([]string, error) {
 	return hashKeys, err
 }
 
-func (rdb *redisDB) ReadEntry(namespace, key string) (string, error) {
-	conn := rdb.pool.Get()
-	defer conn.Close()
-
-	entry, err := redis.String(conn.Do("HGET", namespace, key))
-
-	return entry, err
-}
-
 func (rdb *redisDB) ReadAllEntries(namespace string) (map[string]string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
@@ -76,20 +64,48 @@ func (rdb *redisDB) ReadAllEntries(namespace string) (map[string]string, error) 
 	return entries, err
 }
 
-// TODO: sanitize input?
-func (rdb *redisDB) InsertEntry(namespace, key, entry string) error {
+func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	_, err := conn.Do("HSET", namespace, key, entry)
+	conn.Send("MULTI")
+	for _, id := range ids {
+		conn.Send("HGET", namespace, id)
+	}
+	entries, err := redis.Strings(conn.Do("EXEC")) // TODO: validate each response?
+	if err != nil {
+		return []string{}, err
+	}
+
+	return entries, nil
+}
+
+func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) error {
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	conn.Send("MULTI")
+	for id, entry := range entries {
+		conn.Send("HSET", namespace, id, entry)
+	}
+	_, err := conn.Do("EXEC")
+
+	// TODO: validate each response?
+
 	return err
 }
 
-func (rdb *redisDB) DeleteEntry(namespace, key string) error {
+func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	// TODO: ensure one field has been removed?
-	_, err := conn.Do("HDEL", namespace, key)
+	conn.Send("MULTI")
+	for _, id := range ids {
+		conn.Send("HDEL", namespace, id)
+	}
+	_, err := conn.Do("EXEC")
+
+	// TODO: more error checking?
+
 	return err
 }

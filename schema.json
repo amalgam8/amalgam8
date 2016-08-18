@@ -15,6 +15,9 @@
     "priority": {
       "type": "number"
     },
+    "destination": {
+      "type": "string"
+    },
     "match": {
       "type": "object",
       "properties": {

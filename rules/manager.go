@@ -9,8 +9,9 @@ import (
 )
 
 type Filter struct {
-	IDs  []string
-	Tags []string
+	IDs         []string
+	Tags        []string
+	Destinations []string
 }
 
 func (f Filter) String() string {
@@ -22,6 +23,8 @@ type Manager interface {
 	GetRules(tenantID string, filter Filter) ([]Rule, error)
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
+
+	SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error
 }
 
 func NewMemoryManager() Manager {
@@ -125,5 +128,9 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 		}
 	}
 
+	return nil
+}
+
+func (m *memory) SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error {
 	return nil
 }

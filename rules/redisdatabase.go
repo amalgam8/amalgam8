@@ -14,7 +14,12 @@
 
 package rules
 
-import "github.com/garyburd/redigo/redis"
+import (
+	"encoding/json"
+
+	"github.com/garyburd/redigo/redis"
+	"fmt"
+)
 
 type redisDB struct {
 	pool     *redis.Pool
@@ -89,6 +94,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 
 	conn.Send("MULTI")
 	for id, entry := range entries {
+		fmt.Println(entry)
 		conn.Send("HSET", namespace, id, entry)
 	}
 	_, err := conn.Do("EXEC")
@@ -109,6 +115,66 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	_, err := conn.Do("EXEC")
 
 	// TODO: more error checking?
+
+	return err
+}
+
+const (
+	RuleAny = iota
+	RuleRoute
+	RuleAction
+)
+
+func (rdb *redisDB) SetByDestination(namespace string, destinations []string, ruleType int, rules []Rule) error {
+	// Get all rules
+	entryMap, err := rdb.ReadAllEntries(namespace)
+	if err != nil {
+		return err
+	}
+
+	// Get IDs filtered by destination
+	idsToDelete := make([]string, 0, len(entryMap))
+	for _, entry := range entryMap {
+		rule := Rule{}
+		err := json.Unmarshal([]byte(entry), &rule)
+		if err != nil {
+			return err
+		}
+
+		for _, destination := range destinations {
+			if rule.Destination == destination {
+				if (ruleType == RuleAction && len(rule.Action) > 0) ||
+					(ruleType == RuleRoute && len(rule.Route) > 0) {
+					idsToDelete = append(idsToDelete, rule.ID)
+				}
+			}
+		}
+	}
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	conn.Send("MULTI")
+
+	// Add new rules
+	fmt.Println("Destination insert")
+	for _, rule := range rules {
+		entry, err := json.Marshal(&rule)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(string(entry))
+
+		conn.Send("HSET", namespace, rule.ID, string(entry))
+	}
+
+	// Delete IDs
+	for _, id := range idsToDelete {
+		conn.Send("HDEL", namespace, id)
+	}
+
+	// Execute transaction
+	_, err = conn.Do("EXEC")
 
 	return err
 }

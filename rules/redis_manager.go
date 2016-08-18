@@ -8,6 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
+	"fmt"
 )
 
 func NewRedisManager(db *redisDB) Manager {
@@ -39,12 +40,13 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 
 	entries := make(map[string]string)
 	for _, rule := range rules {
+		id := uuid.New() // Generate an ID for each rule
+		rule.ID = id
 		data, err := json.Marshal(&rule)
 		if err != nil {
 			return err
 		}
 
-		id := uuid.New() // Generate an ID for each rule
 		entries[id] = string(data)
 	}
 
@@ -100,7 +102,39 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 		results[index] = rule
 	}
 
+	results = FilterRules(filter, results)
+
 	return results, nil
+}
+
+func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error {
+	for i := range rules {
+		rules[i].ID = uuid.New()
+	}
+
+	fmt.Println(filter)
+
+	return r.db.SetByDestination(namespace, filter.Destinations, ruleType, rules)
+
+	// TODO: return info about the new rules?
+
+}
+
+func FilterRules(filter Filter, rules []Rule) []Rule {
+	filteredResults := make([]Rule, 0, len(rules))
+	if len(filter.Destinations) > 0 {
+		for _, rule := range rules {
+			for _, destination := range filter.Destinations {
+				if rule.Destination == destination {
+					filteredResults = append(filteredResults, rule)
+				}
+			}
+		}
+
+		return filteredResults
+	}
+
+	return rules
 }
 
 func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {

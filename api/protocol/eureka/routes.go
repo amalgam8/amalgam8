@@ -78,6 +78,13 @@ func (routes *Routes) RouteHandlers(middlewares ...rest.Middleware) []*rest.Rout
 			Handler:   routes.listApps,
 		},
 		{
+			Path:      applicationsURLTrailingSlash(),
+			Method:    "GET",
+			Protocol:  protocol.Eureka,
+			Operation: protocol.ListServices,
+			Handler:   routes.listApps,
+		},
+		{
 			Path:      applicationTemplateURL(),
 			Method:    "GET",
 			Protocol:  protocol.Eureka,

@@ -17,8 +17,8 @@ package rules
 import (
 	"encoding/json"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
-	"fmt"
 )
 
 type redisDB struct {
@@ -26,6 +26,8 @@ type redisDB struct {
 	address  string
 	password string
 }
+
+// TODO: The returns from all the redis commands need to be double checked to ensure we are detecting all the errors
 
 // NewRedisDB returns an instance of a Redis database
 func NewRedisDB(address string, password string) *redisDB {
@@ -76,30 +78,32 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	conn.Send("MULTI")
-	for _, id := range ids {
-		conn.Send("HGET", namespace, id)
-	}
-	entries, err := redis.Strings(conn.Do("EXEC")) // TODO: validate each response?
-	if err != nil {
-		return []string{}, err
+	args := make([]interface{}, len(ids)+1)
+	args[0] = namespace
+	for i, id := range ids {
+		args[i+1] = id
 	}
 
-	return entries, nil
+	return redis.Strings(conn.Do("HMGET", args...))
+	// TODO: more error checking?
 }
 
 func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	conn.Send("MULTI")
-	for id, entry := range entries {
-		fmt.Println(entry)
-		conn.Send("HSET", namespace, id, entry)
-	}
-	_, err := conn.Do("EXEC")
+	args := make([]interface{}, len(entries)*2+1)
+	args[0] = namespace
 
-	// TODO: validate each response?
+	i := 1
+	for id, entry := range entries {
+		args[i] = id
+		args[i+1] = entry
+		i += 2
+	}
+
+	_, err := redis.String(conn.Do("HMSET", args...))
+	// TODO: more error checking?
 
 	return err
 }
@@ -108,12 +112,15 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	conn.Send("MULTI")
-	for _, id := range ids {
-		conn.Send("HDEL", namespace, id)
+	args := make([]interface{}, len(ids)+1)
+	args[0] = namespace
+	i := 1
+	for id := range ids {
+		args[i] = id
+		i++
 	}
-	_, err := conn.Do("EXEC")
 
+	_, err := redis.Int(conn.Do("HDEL", args...))
 	// TODO: more error checking?
 
 	return err
@@ -125,56 +132,87 @@ const (
 	RuleAction
 )
 
-func (rdb *redisDB) SetByDestination(namespace string, destinations []string, ruleType int, rules []Rule) error {
+func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Rule) error {
+	entries := make([]string, len(rules))
+	for i, rule := range rules {
+		entry, err := json.Marshal(&rule)
+		if err != nil {
+			return err
+		}
+		entries[i] = string(entry)
+	}
+
+	conn := rdb.pool.Get()
+	defer conn.Close() // Automatically calls DISCARD if necessary
+
+	conn.Do("WATCH", namespace)
+
 	// Get all rules
-	entryMap, err := rdb.ReadAllEntries(namespace)
+	existingEntries, err := redis.StringMap(conn.Do("HGETALL", namespace))
 	if err != nil {
 		return err
 	}
 
-	// Get IDs filtered by destination
-	idsToDelete := make([]string, 0, len(entryMap))
-	for _, entry := range entryMap {
+	// Unmarshal
+	existingRules := make([]Rule, 0, len(existingEntries))
+	for _, entry := range existingEntries {
 		rule := Rule{}
 		err := json.Unmarshal([]byte(entry), &rule)
 		if err != nil {
 			return err
 		}
 
-		for _, destination := range destinations {
-			if rule.Destination == destination {
-				if (ruleType == RuleAction && len(rule.Action) > 0) ||
-					(ruleType == RuleRoute && len(rule.Route) > 0) {
-					idsToDelete = append(idsToDelete, rule.ID)
-				}
-			}
-		}
+		existingRules = append(existingRules, rule)
 	}
-	conn := rdb.pool.Get()
-	defer conn.Close()
+
+	rulesToDelete := FilterRules(filter, existingRules)
+	logrus.WithFields(logrus.Fields{
+		"pre_filtered": existingRules,
+		"filtered":     rulesToDelete,
+		"filter":       filter,
+	}).Debug("Filtering")
 
 	conn.Send("MULTI")
 
 	// Add new rules
-	fmt.Println("Destination insert")
-	for _, rule := range rules {
-		entry, err := json.Marshal(&rule)
+	if len(entries) > 0 {
+		args := make([]interface{}, len(entries)*2+1)
+		args[0] = namespace
+		i := 1
+		for id, entry := range entries {
+			args[i] = id
+			args[i+1] = entry
+			i += 2
+		}
+
+		err = conn.Send("HMSET", args...)
 		if err != nil {
 			return err
 		}
-
-		fmt.Println(string(entry))
-
-		conn.Send("HSET", namespace, rule.ID, string(entry))
 	}
 
 	// Delete IDs
-	for _, id := range idsToDelete {
-		conn.Send("HDEL", namespace, id)
+	if len(rulesToDelete) > 0 {
+		args := make([]interface{}, len(rulesToDelete)+1)
+		args[0] = namespace
+		for i, rule := range rulesToDelete {
+			args[i+1] = rule.ID
+		}
+		logrus.Debug("HDEL", args)
+
+		err = conn.Send("HDEL", args...)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Execute transaction
-	_, err = conn.Do("EXEC")
+	_, err = redis.Values(conn.Do("EXEC"))
+
+	// Nil return indicates that the transaction failed
+	if err == redis.ErrNil {
+		logrus.Error("Transaction failed due to conflict")
+	}
 
 	return err
 }

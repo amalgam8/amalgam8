@@ -8,7 +8,6 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
-	"fmt"
 )
 
 func NewRedisManager(db *redisDB) Manager {
@@ -107,26 +106,28 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 	return results, nil
 }
 
-func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error {
+func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, rules []Rule) error {
 	for i := range rules {
 		rules[i].ID = uuid.New()
 	}
 
-	fmt.Println(filter)
-
-	return r.db.SetByDestination(namespace, filter.Destinations, ruleType, rules)
+	return r.db.SetByDestination(namespace, filter, rules)
 
 	// TODO: return info about the new rules?
 
 }
 
 func FilterRules(filter Filter, rules []Rule) []Rule {
+	// FIXME: destination should not need to be provided to filter by rule type
 	filteredResults := make([]Rule, 0, len(rules))
 	if len(filter.Destinations) > 0 {
 		for _, rule := range rules {
-			for _, destination := range filter.Destinations {
-				if rule.Destination == destination {
-					filteredResults = append(filteredResults, rule)
+			if filter.RuleType == RuleAny || (filter.RuleType == RuleAction && len(rule.Action) > 0) ||
+				(filter.RuleType == RuleRoute && len(rule.Route) > 0) {
+				for _, destination := range filter.Destinations {
+					if rule.Destination == destination {
+						filteredResults = append(filteredResults, rule)
+					}
 				}
 			}
 		}

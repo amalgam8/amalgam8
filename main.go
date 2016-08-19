@@ -107,7 +107,7 @@ func controllerMain(conf config.Config) error {
 	} else {
 		ruleManager = rules.NewMemoryManager()
 	}
-	rulesAPI := api.NewRule(ruleManager)
+	rulesAPI := api.NewRule(ruleManager, reporter)
 
 	a := rest.NewApi()
 	a.Use(

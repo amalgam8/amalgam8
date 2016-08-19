@@ -9,13 +9,14 @@ import (
 )
 
 type Filter struct {
-	IDs         []string
-	Tags        []string
+	IDs          []string
+	Tags         []string
 	Destinations []string
+	RuleType     int
 }
 
 func (f Filter) String() string {
-	return fmt.Sprintf("filter: IDs=%v Tags=%v", f.IDs, f.Tags)
+	return fmt.Sprintf("filter: IDs=%v Tags=%v Destinations=%v RuleType=%v", f.IDs, f.Tags, f.Destinations, f.RuleType)
 }
 
 type Manager interface {
@@ -24,7 +25,7 @@ type Manager interface {
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
 
-	SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error
+	SetRulesByDestination(namespace string, filter Filter, rules []Rule) error
 }
 
 func NewMemoryManager() Manager {
@@ -131,6 +132,6 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 	return nil
 }
 
-func (m *memory) SetRulesByDestination(namespace string, filter Filter, ruleType int, rules []Rule) error {
+func (m *memory) SetRulesByDestination(namespace string, filter Filter, rules []Rule) error {
 	return nil
 }

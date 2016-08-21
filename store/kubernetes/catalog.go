@@ -158,18 +158,16 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 		for _, subset := range endpoints.Subsets {
 			for _, address := range subset.Addresses {
 				for _, port := range subset.Ports {
-					var endpointType string
-					switch port.Protocol {
-					case ProtocolUDP:
-						endpointType = "udp"
-					case ProtocolTCP:
-						endpointType = "tcp"
-					}
-					endpointValue := fmt.Sprintf("%s:%d", address.IP, port.Port)
-
 					var uid string
 					var version string
 					var tags []string
+
+					// Parse the service endpoint
+					endpoint, err := parseEndpoint(address, port)
+					if err != nil {
+						kc.logger.WithError(err).Warningf("Skipping endpoint %s for service %s", address.TargetRef.Name, sname)
+						continue
+					}
 
 					// Parse UID and version out of the pod name
 					if address.TargetRef != nil {
@@ -193,7 +191,7 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 					inst := &store.ServiceInstance{
 						ID:          fmt.Sprintf("%s-%d", uid, port.Port),
 						ServiceName: sname,
-						Endpoint:    &store.Endpoint{Type: endpointType, Value: endpointValue},
+						Endpoint:    endpoint,
 						Status:      "UP",
 						Tags:        tags,
 						TTL:         0,
@@ -206,4 +204,32 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 		}
 	}
 	return services, instances, nil
+}
+
+func parseEndpoint(address EndpointAddress, port EndpointPort) (*store.Endpoint, error) {
+	var endpointType string
+	var endpointValue string = fmt.Sprintf("%s:%d", address.IP, port.Port)
+
+	switch port.Protocol {
+	case ProtocolUDP:
+		endpointType = "udp"
+	case ProtocolTCP:
+		portName := strings.ToLower(port.Name)
+		switch portName {
+		case "http":
+			fallthrough
+		case "https":
+			endpointType = portName
+			endpointValue = fmt.Sprintf("%s://%s", endpointType, endpointValue)
+		default:
+			endpointType = "tcp"
+		}
+	default:
+		return nil, fmt.Errorf("unsupported kubernetes endpoint port protocol: %s", port.Protocol)
+	}
+
+	return &store.Endpoint{
+		Type:  endpointType,
+		Value: endpointValue,
+	}, nil
 }

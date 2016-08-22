@@ -5,10 +5,11 @@ import (
 
 	"encoding/json"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
-	"fmt"
 )
 
 func NewRedisManager(db *redisDB) Manager {
@@ -110,6 +111,13 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, rules []Rule) error {
 	for i := range rules {
 		rules[i].ID = uuid.New()
+	}
+
+	// Validate rules
+	for _, rule := range rules {
+		if err := r.validator.Validate(rule); err != nil {
+			return err
+		}
 	}
 
 	return r.db.SetByDestination(namespace, filter, rules)

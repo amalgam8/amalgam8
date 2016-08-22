@@ -60,7 +60,7 @@ func (rdb *redisDB) ReadKeys(namespace string) ([]string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	logrus.Debug("HKEYS", namespace)
+	logrus.Debug("HKEYS ", namespace)
 	hashKeys, err := redis.Strings(conn.Do("HKEYS", namespace))
 
 	return hashKeys, err
@@ -70,7 +70,7 @@ func (rdb *redisDB) ReadAllEntries(namespace string) (map[string]string, error) 
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	logrus.Debug("HGETALL", namespace)
+	logrus.Debug("HGETALL ", namespace)
 	entries, err := redis.StringMap(conn.Do("HGETALL", namespace))
 
 	return entries, err
@@ -86,7 +86,7 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error
 		args[i+1] = id
 	}
 
-	logrus.Debug("HMGET", args)
+	logrus.Debug("HMGET ", args)
 	return redis.Strings(conn.Do("HMGET", args...))
 	// TODO: more error checking?
 }
@@ -105,7 +105,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 		i += 2
 	}
 
-	logrus.Debug("HMSET", args)
+	logrus.Debug("HMSET ", args)
 	_, err := redis.String(conn.Do("HMSET", args...))
 	// TODO: more error checking?
 
@@ -124,7 +124,7 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 		i++
 	}
 
-	logrus.Debug("HDEL", args)
+	logrus.Debug("HDEL ", args)
 	_, err := redis.Int(conn.Do("HDEL", args...))
 	// TODO: more error checking?
 
@@ -189,23 +189,13 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 			args[i+1] = entry
 			i += 2
 		}
-		logrus.Debug("HMSET", args)
+		logrus.Debug("HMSET ", args)
 
 		err = conn.Send("HMSET", args...)
 		if err != nil {
 			return err
 		}
 	}
-
-	// Execute transaction
-	_, err = redis.Values(conn.Do("EXEC"))
-
-	// Nil return indicates that the transaction failed
-	if err == redis.ErrNil {
-		logrus.Error("Transaction failed due to conflict")
-	}
-
-	conn.Send("MULTI")
 
 	// Delete IDs
 	if len(rulesToDelete) > 0 {
@@ -214,7 +204,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 		for i, rule := range rulesToDelete {
 			args[i+1] = rule.ID
 		}
-		logrus.Debug("HDEL", args)
+		logrus.Debug("HDEL ", args)
 
 		err = conn.Send("HDEL", args...)
 		if err != nil {

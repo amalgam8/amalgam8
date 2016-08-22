@@ -63,6 +63,12 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 		return errors.New("no_rules_provided")
 	}
 
+	for i := range tenantRules.Rules {
+		if tenantRules.Rules[i].Tags == nil {
+			tenantRules.Rules[i].Tags = []string{}
+		}
+	}
+
 	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
 		RestError(w, req, http.StatusInternalServerError, "request_failed")
@@ -130,6 +136,12 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
 		RestError(w, req, http.StatusBadRequest, "invalid_json")
 		return err
+	}
+
+	for i := range tenantRules.Rules {
+		if tenantRules.Rules[i].Tags == nil {
+			tenantRules.Rules[i].Tags = []string{}
+		}
 	}
 
 	filter := rules.Filter{

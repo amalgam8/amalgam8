@@ -60,6 +60,7 @@ func (rdb *redisDB) ReadKeys(namespace string) ([]string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
+	logrus.Debug("HKEYS", namespace)
 	hashKeys, err := redis.Strings(conn.Do("HKEYS", namespace))
 
 	return hashKeys, err
@@ -69,6 +70,7 @@ func (rdb *redisDB) ReadAllEntries(namespace string) (map[string]string, error) 
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
+	logrus.Debug("HGETALL", namespace)
 	entries, err := redis.StringMap(conn.Do("HGETALL", namespace))
 
 	return entries, err
@@ -84,6 +86,7 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error
 		args[i+1] = id
 	}
 
+	logrus.Debug("HMGET", args)
 	return redis.Strings(conn.Do("HMGET", args...))
 	// TODO: more error checking?
 }
@@ -102,6 +105,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 		i += 2
 	}
 
+	logrus.Debug("HMSET", args)
 	_, err := redis.String(conn.Do("HMSET", args...))
 	// TODO: more error checking?
 
@@ -115,11 +119,12 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	args := make([]interface{}, len(ids)+1)
 	args[0] = namespace
 	i := 1
-	for id := range ids {
+	for _, id := range ids {
 		args[i] = id
 		i++
 	}
 
+	logrus.Debug("HDEL", args)
 	_, err := redis.Int(conn.Do("HDEL", args...))
 	// TODO: more error checking?
 
@@ -133,13 +138,13 @@ const (
 )
 
 func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Rule) error {
-	entries := make([]string, len(rules))
-	for i, rule := range rules {
+	entries := make(map[string]string)
+	for _, rule := range rules {
 		entry, err := json.Marshal(&rule)
 		if err != nil {
 			return err
 		}
-		entries[i] = string(entry)
+		entries[rule.ID] = string(entry)
 	}
 
 	conn := rdb.pool.Get()
@@ -184,12 +189,23 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 			args[i+1] = entry
 			i += 2
 		}
+		logrus.Debug("HMSET", args)
 
 		err = conn.Send("HMSET", args...)
 		if err != nil {
 			return err
 		}
 	}
+
+	// Execute transaction
+	_, err = redis.Values(conn.Do("EXEC"))
+
+	// Nil return indicates that the transaction failed
+	if err == redis.ErrNil {
+		logrus.Error("Transaction failed due to conflict")
+	}
+
+	conn.Send("MULTI")
 
 	// Delete IDs
 	if len(rulesToDelete) > 0 {

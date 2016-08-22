@@ -8,6 +8,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
+	"fmt"
 )
 
 func NewRedisManager(db *redisDB) Manager {
@@ -158,6 +159,9 @@ func (r *redisManager) DeleteRules(tenantID string, filter Filter) error {
 	} else {
 		ids = append(ids, filter.IDs...)
 	}
+
+	fmt.Println("Bulk delete")
+	fmt.Println(ids)
 
 	if err := r.db.DeleteEntries(tenantID, ids); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{

@@ -71,7 +71,9 @@ end
 local function create_instance(i)
    local instance = {}
    instance.type = i.type
-   instance.tags = table.concat(i.tags, ",")
+   if i.tags then 
+      instance.tags = table.concat(i.tags, ",")
+   end
    if not i.type then
       instance.type = 'http'
    end
@@ -95,14 +97,58 @@ local function create_instance(i)
 end
 
 
-local function compare_rules(a, b)
-   return a.priority < b.priority
+local function compare_rules_descending(a, b)
+   return a.priority > b.priority
 end
 
 
-local function compare_backends(a, b)
-   return a.weight < b.weight
+-- local function compare_backends(a, b)
+--    return a.weight < b.weight
+-- end
+
+
+local function match_header_value(req_headers, header_name, header_val_pattern)
+   local header = req_headers[header_name]
+   if header then
+      local m, err = ngx.re.match(header, header_val_pattern, "o")
+      if m then return true end
+   end
+   return false
 end
+
+
+local function match_headers(req_headers, rule)
+   if not rule.match then return true end --source matched (earlier), destination matched.
+   if rule.match.all then
+      for k, v in pairs(rule.match.all) do
+         if not match_header_value(req_headers, k, v) then return false end
+      end
+   end
+
+   if rule.match.any then
+      -- all conditions should hold true (AND)
+      -- atleast one should pass. (OR).
+      local any_match = false
+
+      for k, v in pairs(rule.match.any) do
+         if match_header_value(req_headers, k, v) then
+            any_match = true
+            break
+         end
+      end
+      if not any_match then return false end
+   end
+
+   if rule.match.none then
+      -- none of the conditions should match
+      for k, v in pairs(rule.match.none) do
+         if match_header_value(req_headers, k, v) then return false end
+      end
+   end
+
+   return true
+end
+
 
 local function match_tags(src_tag_string, dst_tag_set) --assumes both are not nil
    -- local empty_src_tags = (string.len(src_tag_string) == 0)
@@ -126,7 +172,7 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
       end
    end
 
-   local match_cond = {}
+   local match_cond = nil
    local is_my_tag_empty = (string.len(mytags) == 0)
    local match_found = false
 
@@ -154,6 +200,7 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
       if check1 or check2 then
          match_found = true
          if m.headers then
+            match_cond = {}
             for k,v in pairs(m.headers) do
                match_cond[k]=v
             end
@@ -194,17 +241,21 @@ local function is_rule_for_me(myname, mytags, rule)
       table.insert(rule.match.all, match)
    end
 
-   all_res, all_headers = check_and_consolidate_match(myname, mytags, "all", rule.match.all)
-   any_res, any_headers = check_and_consolidate_match(myname, mytags, "any", rule.match.any)
-   none_res, none_headers = check_and_consolidate_match(myname, mytags, "none", rule.match.none)
+   all_res, all_headers = check_and_preprocess_match(myname, mytags, "all", rule.match.all)
+   any_res, any_headers = check_and_preprocess_match(myname, mytags, "any", rule.match.any)
+   none_res, none_headers = check_and_preprocess_match(myname, mytags, "none", rule.match.none)
 
    local res = (all_res or any_res) and not none_res
    if res then
-      rule.match = {
-         all = all_headers,
-         any = any_headers,
-         none = none_headers
-      }
+      if not all_headers and not any_headers and not none_headers then
+         rule.match = nil
+      else
+         rule.match = {
+            all = all_headers,
+            any = any_headers,
+            none = none_headers
+         }
+      end
    end
    return res
 end
@@ -220,15 +271,21 @@ local function create_rule(rule, myname, mytags)
       rule.priority = 0
    end
 
-   if not rule.routes or not rule.actions then
+   if not rule.route and not rule.action then
+      return nil
+   end
+
+   -- rule can have only route or action. Not both.
+   if rule.route and rule.action then
       return nil
    end
 
    -- set default weights for backends where no weight is specified
    ---- Take the leftover weight and distribute it equally among
    ---- unweighted backends
-   if rule.route.backends then
-      local sum = 0
+   if rule.route and rule.route.backends then
+      local sum = 0.0
+      local prev = 0.0
       local unweighted = 0
       for _, b in ipairs(rule.route.backends) do
          if b.weight then
@@ -237,18 +294,56 @@ local function create_rule(rule, myname, mytags)
             unweighted = unweighted + 1
          end
       end
-      if unweighted > 0 then
-         local balance = 1 - sum
-         for _, b in ipairs(rule.route.backends) do
-            if not b.weight then
-               b.weight = balance/unweighted
-            end
-         end
+
+      if sum > 1.0 then
+         ngx_log(ngx_ERR, "sum of weights has exceeded 1.0: " .. prev)
+         return nil
       end
-      table.sort(rule.route.backends, compare_backends)
+      local balance = 1 - sum
+      for _, b in ipairs(rule.route.backends) do
+         if not b.weight then
+            b.weight = 1.0 * balance/unweighted
+         end
+         b.weight_order = prev + b.weight
+         prev = b.weight_order         
+      end
+      if prev > 1.0 then
+         ngx_log(ngx_ERR, "total weights has exceeded 1.0: " .. prev)
+         return nil
+      end
    end
 
+   -- if its an action rule, search for a8_recipe_id in the tags and promote it to its own field
+   if rule.action and rule.tags then
+      local a8_recipe_id
+      for _, t in ipairs(rule.tags) do
+         a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
+         if a8_recipe_id then
+            rule.a8_recipe_id = a8_recipe_id
+            break
+         end
+      end
+   end     
    return rule
+end
+
+
+local function get_unpacked_val(shared_dict, key)
+   local serialized = shared_dict:get(key)
+   if serialized then
+      return cmsgpack.unpack(serialized)
+   end
+   return nil
+end
+
+
+local function reset_state()
+   ngx_shared.a8_instances:flush_all()
+   ngx_shared.a8_instances:flush_expired()
+   ngx_shared.a8_routes:flush_all()
+   ngx_shared.a8_routes:flush_expired()
+   ngx_shared.a8_actions:flush_all()
+   ngx_shared.a8_actions:flush_expired()
 end
 
 
@@ -282,7 +377,8 @@ end
 --  match_instance_tags(instance, tags)
 function Amalgam8:update_state(input)
    local a8_instances = {}
-   local a8_rules = {}
+   local a8_routes = {}
+   local a8_actions = {}
    local err
 
    if input.instances then
@@ -308,51 +404,57 @@ function Amalgam8:update_state(input)
    end
 
    if input.rules then
-      for _, r in ipairs(input.rules) do
-         if not a8_rules[r.destination] then
-            a8_rules[r.destination] = {}
+      if input.rules.routes then 
+         for _, r in ipairs(input.rules.routes) do
+            --- destination need not be the same as the service_name.
+            --- One can have URIs in the destination as well. 
+            if not a8_routes[r.destination] then
+               a8_routes[r.destination] = {}
+            end
+            local rule = create_rule(r, self.myname, self.mytags)
+            if rule then
+               table.insert(a8_routes[r.destination], rule)
+            end
          end
-         local rule = create_rule(r, self.myname, self.mytags)
-         if rule then
-            table.insert(a8_rules[r.destination], rule)
+
+         for destination, rset in pairs(a8_routes) do
+            table.sort(rset, compare_rules_descending)
+            serialized = cmsgpack.pack(rset)
+            _, err = ngx_shared.a8_routes:set(destination, serialized)
+            if err then
+               err = "failed to update routes for service:"..service..":"..err
+               return err
+            end
          end
       end
+      if input.rules.actions then 
+         for _, r in ipairs(input.rules.actions) do
+            --- destination need not be the same as the service_name.
+            --- One can have URIs in the destination as well. 
+            if not a8_actions[r.destination] then
+               a8_actions[r.destination] = {}
+            end
+            local rule = create_rule(r, self.myname, self.mytags)
+            if rule then
+               table.insert(a8_actions[r.destination], rule)
+            end
+         end
 
-      for service, rset in pairs(a8_rules) do
-         table.sort(rset, compare_rules)
-         serialized = cmsgpack.pack(rset)
-         _, err = ngx_shared.a8_rules:set(service, serialized)
-         if err then
-            err = "failed to update rules for service:"..service..":"..err
-            return err
+         for destination, rset in pairs(a8_routes) do
+            table.sort(rset, compare_rules_descending)
+            serialized = cmsgpack.pack(rset)
+            _, err = ngx_shared.a8_actions:set(destination, serialized)
+            if err then
+               err = "failed to update actions for service:"..service..":"..err
+               return err
+            end
          end
       end
-
    end
 
    return nil
 end
 
-function Amalgam8:get_instances(service)
-   local serialized = ngx_shared.a8_instances:get(service)
-   if serialized then
-      return cmsgpack.unpack(serialized)
-   end
-end
-
-function Amalgam8:get_rules(service)
-   local serialized = ngx_shared.a8_rules:get(service)
-   if serialized then
-      return cmsgpack.unpack(serialized)
-   end
-end
-
-function Amalgam8:reset_state()
-   ngx_shared.a8_instances:flush_all()
-   ngx_shared.a8_instances:flush_expired()
-   ngx_shared.a8_rules:flush_all()
-   ngx_shared.a8_rules:flush_expired()
-end
 
 function Amalgam8:proxy_admin()
    if ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
@@ -379,18 +481,23 @@ function Amalgam8:proxy_admin()
    elseif ngx.req.get_method() == "GET" then
       local state = {
          instances = {},
-         rules = {}
+         routes = {},
+         actions = {}
       }
 
       -- TODO: This fetches utmost 1024 keys only
       local instance_keys = ngx_shared.a8_instances:get_keys()
-      local rule_keys = ngx_shared.a8_rules:get_keys()
+      local route_keys = ngx_shared.a8_routes:get_keys()
+      local action_keys = ngx_shared.a8_actions:get_keys()
 
-      for _,service in ipairs(instance_keys) do
-         state.instances[service] = self:get_instances(service)
+      for _,key in ipairs(instance_keys) do
+         state.instances[key] = get_unpacked_val(key)
       end
-      for _,service in ipairs(rule_keys) do
-         state.rules[service] = self:get_rules(service)
+      for _,key in ipairs(route_keys) do
+         state.routes[key] = get_unpacked_val(key)
+      end
+      for _,key in ipairs(action_keys) do
+         state.actions[key] = get_unpacked_val(key)
       end
 
       local output, err = json.encode(state)
@@ -407,6 +514,131 @@ function Amalgam8:proxy_admin()
       return ngx.exit(ngx.HTTP_BAD_REQUEST)
    end
 end
+
+
+---select the route rule to apply
+---select the backend from the route rule (and instances)
+---select the action rule to apply
+---apply the actions from the action rule based on tags
+---pass on to balancer_by_lua for actual routing
+function Amalgam8:apply_rules()
+   local destination = ngx.var.service_name
+   ngx.var.a8_backend_name = destination
+
+   local instances = get_unpacked_val(ngx_shared.a8_instances, destination)
+   if not instances or table.getn(instances) == 0 then
+      ngx.status = ngx.HTTP_NOT_FOUND
+      ngx.exit(ngx.status)
+   end
+
+   local routes = get_unpacked_val(ngx_shared.a8_routes, destination)
+   local actions = get_unpacked_val(ngx_shared.a8_actions, destination)
+   local headers = ngx.req.get_headers()
+
+   local selected_instances = {}
+   local selected_route = nil
+   local selected_action = nil
+   local selected_backend = nil
+   if routes then
+      for _, r in ipairs(routes) do --rules are ordered by decreasing priority
+         if match_headers(headers, r) then -- TODO: add_cookie from version_routing.lua
+            selected_route = r
+            break
+         end
+      end
+      if not selected_route then
+         ngx.status = 412 -- Precondition failed
+         ngx.exit(ngx.status)
+      end
+      local weight = math.random()
+      for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
+         if weight < b.weight_order then
+            selected_backend = b
+            break
+         end
+      end
+      if not selected_backend.tags then
+         if selected_backend.name and selected_backend.name ~= destination then
+            selected_instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
+         end
+         if not selected_backend.name or not instances then
+            ngx.status = ngx.HTTP_NOT_FOUND
+            ngx.exit(ngx.status)
+         end
+      else
+         if selected_backend.name and selected_backend.name ~= destination then
+            instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
+            if not instances then
+               ngx.status = ngx.HTTP_NOT_FOUND
+               ngx.exit(ngx.status)
+            end
+         else
+            selected_backend.name = destination
+         end         
+         for _, i in ipairs(instances) do
+            if i.tags and match_tags(i.tags, selected_backend.tags) then
+               table.insert(selected_instances, i)
+            end
+         end
+      end
+      ngx.var.a8_backend_name = selected_backend.name
+
+      if not selected_instances or table.getn(selected_instances) == 0 then
+         ngx.status = ngx.HTTP_NOT_FOUND
+         ngx.exit(ngx.status)
+      end
+   else
+      selected_instances = instances
+      ngx.var.a8_backend_name = destination
+   end
+
+   --    --TODO: refactor. Need different LB functions
+   local index    = math.random(1, table.getn(selected_instances)) % table.getn(selected_instances) + 1
+   local upstream_instance = selected_instances[index]
+   ngx.var.a8_upstream_host = upstream_instance.host
+   ngx.var.a8_upstream_port = upstream_instance.port
+   ngx.var.a8_upstream_tags = upstream_instance.tags
+   ngx.var.a8_service_type = upstream_instance.type
+
+   -- TODO: Set the upstream_host_header based on host field in selected backend.
+
+   if actions then
+      for _, r in ipairs(actions) do --rules are ordered by decreasing priority
+         if match_headers(headers, r) then -- TODO: add_cookie from version_routing.lua
+            selected_action = r
+            break
+         end
+      end
+      ngx.var.a8_recipe_id = selected_action.a8_recipe_id
+      if selected_action.delay then
+         if not selected_action.delay.tags or match_tags(upstream_instance.tags, selected_action.delay.tags) then
+            if selected_action.delay.probability == 1.0 or (math.random() < selected_action.delay.probability) then
+               ngx.sleep(selected_action.delay.duration)
+            end
+         end
+      end
+      if selected_action.abort then
+         if not selected_action.abort.tags or match_tags(upstream_instance.tags, selected_action.abort.tags) then
+            if selected_action.abort.probability == 1.0 or (math.random() < selected_action.abort.probability) then
+               ngx.exit(selected_action.abort.return_code)
+            end
+         end
+      end         
+   end
+end
+
+
+function Amalgam8:load_balance()
+   --- TODO: set timeouts specified in rule. Set retries specified in rule
+   --- Add failover logic. For the failover logic, need to know the backend block chosen in apply_rules()
+   local _, err = balancer.set_current_peer(ngx.var.a8_upstream_host, ngx.var.a8_upstream_port)
+   if err then
+      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+      ngx_log(ngx_ERR, "failed to set current peer"..err)
+      ngx.exit(ngx.status)
+   end
+end
+
 
 -- function Amalgam8:balance()
 --    local name = ngx_var.service_name
@@ -460,8 +692,15 @@ end
 --    return service.metadata.service_type, service.metadata.default, service.metadata.selectors
 -- end
 
--- function Amalgam8:get_myname()
---    return self.myname
--- end
+
+function Amalgam8:get_myname()
+   return self.myname
+end
+
+
+function Amalgam8:get_mytags()
+   return self.mytags
+end
+
 
 return Amalgam8

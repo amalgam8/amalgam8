@@ -131,6 +131,15 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	return err
 }
 
+func (rdb *redisDB) DeleteAllEntries(namespace string) error {
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	_, err := redis.Int(conn.Do("DEL", namespace))
+
+	return err
+}
+
 const (
 	RuleAny = iota
 	RuleRoute

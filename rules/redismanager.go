@@ -19,8 +19,6 @@ import (
 
 	"encoding/json"
 
-	"fmt"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
@@ -166,32 +164,23 @@ func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
 	return nil
 }
 
-// TODO: tag filtering
+// TODO: filtering
 func (r *redisManager) DeleteRules(tenantID string, filter Filter) error {
-	ids := []string{}
-
 	if len(filter.IDs) == 0 {
-		keys, err := r.db.ReadKeys(tenantID)
-		if err != nil {
-			logrus.WithFields(logrus.Fields{
-				"err": err,
-				"id":  tenantID,
+		if err := r.db.DeleteAllEntries(tenantID); err != nil {
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"id": tenantID,
 			}).Error("Failed to read all entries for tenant")
+			return err
 		}
-		ids = append(ids, keys...)
 	} else {
-		ids = append(ids, filter.IDs...)
-	}
-
-	fmt.Println("Bulk delete")
-	fmt.Println(ids)
-
-	if err := r.db.DeleteEntries(tenantID, ids); err != nil {
-		logrus.WithError(err).WithFields(logrus.Fields{
-			"namespace": tenantID,
-			"filter":    filter,
-		}).Error("Error deleting entries from Redis")
-		return err
+		if err := r.db.DeleteEntries(tenantID, filter.IDs); err != nil {
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"namespace": tenantID,
+				"filter":    filter,
+			}).Error("Error deleting entries from Redis")
+			return err
+		}
 	}
 
 	return nil

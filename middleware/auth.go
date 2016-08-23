@@ -19,9 +19,9 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/util"
+	"github.com/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -49,7 +49,7 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if authHeader != "" {
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || (parts[0] != "Bearer" && parts[0] != "bearer") {
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_malformed")
+			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_malformed")
 			return
 		}
 		token = parts[1]
@@ -59,13 +59,13 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_missing")
+			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_missing")
 		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_not_authorized")
+			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_not_authorized")
 		case auth.ErrCommunicationError:
-			api.RestError(writer, request, http.StatusServiceUnavailable, "error_auth_failed_validation")
+			i18n.RestError(writer, request, http.StatusServiceUnavailable, "error_auth_failed_validation")
 		default:
-			api.RestError(writer, request, http.StatusInternalServerError, "error_internal")
+			i18n.RestError(writer, request, http.StatusInternalServerError, "error_internal")
 		}
 		return
 	}
@@ -74,7 +74,7 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if nsPtr.String() == adminNamespace {
 		tenantID := request.Header.Get(util.TenantHeader)
 		if tenantID == "" {
-			api.RestError(writer, request, http.StatusBadRequest, "missing_tenant_header")
+			i18n.RestError(writer, request, http.StatusBadRequest, "missing_tenant_header")
 			return
 		}
 		tenantNamespace := auth.Namespace(tenantID)

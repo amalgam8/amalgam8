@@ -14,11 +14,10 @@
 
 FROM alpine:latest
 
-# Environment variables
-ENV NGINX_PORT 6379
 EXPOSE 6379
 
 WORKDIR /opt/a8controller
 COPY /bin/a8controller /opt/a8controller/a8controller
+COPY /locales /opt/a8controller/locales
 
 ENTRYPOINT ["/opt/a8controller/a8controller"]

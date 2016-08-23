@@ -21,6 +21,7 @@ import (
 
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/rules"
+	"github.com/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -75,12 +76,12 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 
 	tenantRules := TenantRules{}
 	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
-		RestError(w, req, http.StatusBadRequest, "invalid_json")
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
 	if len(tenantRules.Rules) == 0 {
-		RestError(w, req, http.StatusBadRequest, "no_rules_provided")
+		i18n.RestError(w, req, http.StatusBadRequest, "no_rules_provided")
 		return errors.New("no_rules_provided")
 	}
 
@@ -92,7 +93,7 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 
 	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "request_failed")
+		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
 		return err
 	}
 
@@ -116,7 +117,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	rules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
+		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
 		return err
 	}
 
@@ -153,7 +154,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	entries, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
+		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
 		return err
 	}
 
@@ -197,7 +198,7 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 
 	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "could_not_delete_rules")
+		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_delete_rules")
 		return err
 	}
 
@@ -211,7 +212,7 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	tenantRules := TenantRules{}
 	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
-		RestError(w, req, http.StatusBadRequest, "invalid_json")
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
@@ -228,7 +229,7 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "request_failed")
+		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
 		return err
 	}
 
@@ -255,7 +256,7 @@ func (r *Rule) getByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	entries, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
-		RestError(w, req, http.StatusInternalServerError, "request_failed")
+		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
 		return err
 	}
 
@@ -287,7 +288,7 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, []rules.Rule{}); err != nil {
 		// TODO: more informative error parsing
-		RestError(w, req, http.StatusInternalServerError, "request_failed")
+		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
 		return err
 	}
 

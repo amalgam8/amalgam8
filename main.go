@@ -27,6 +27,7 @@ import (
 	"github.com/amalgam8/controller/middleware"
 	"github.com/amalgam8/controller/rules"
 
+	"github.com/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/codegangsta/cli"
 )
@@ -62,6 +63,8 @@ func controllerMain(conf config.Config) error {
 	logrus.Info(conf.LogLevel)
 	logrus.SetLevel(conf.LogLevel)
 
+	i18n.LoadLocales("./locales")
+
 	setupHandler := middleware.NewSetupHandler()
 
 	var validationErr error
@@ -82,20 +85,6 @@ func controllerMain(conf config.Config) error {
 	}
 
 	reporter := metrics.NewReporter()
-
-	//var tenantDB database.Tenant
-	//if conf.Database.Type == "memory" {
-	//	db := database.NewMemoryCloudantDB()
-	//	tenantDB = database.NewTenant(db)
-	//} else if conf.Database.Type == "cloudant" {
-	//	logrus.Warn("Cloudant currently not supported, using in memory storage")
-	//	db := database.NewMemoryCloudantDB()
-	//	tenantDB = database.NewTenant(db)
-	//} else {
-	//	err = errors.New("unsupported database type")
-	//	setupHandler.SetError(err)
-	//	return err
-	//}
 
 	healthAPI := api.NewHealth(reporter)
 

@@ -14,6 +14,11 @@ type TenantRules struct {
 	Rules []rules.Rule `json:"rules"`
 }
 
+type ServiceRules struct {
+	ServiceName string       `json:"service"`
+	Rules       []rules.Rule `json:"rules"`
+}
+
 type Rule struct {
 	manager  rules.Manager
 	reporter metrics.Reporter
@@ -33,13 +38,15 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 		rest.Get("/v1/rules", reportMetric(r.reporter, r.list, "get_rules")),
 		rest.Delete("/v1/rules", reportMetric(r.reporter, r.remove, "delete_rules")),
 
-		rest.Put("/v1/rules/#destination", reportMetric(r.reporter, r.setDestination, "put_rule_destination")),
-		rest.Put("/v1/rules/#destination/routes", reportMetric(r.reporter, r.setRouteDestination, "put_rule_route_destination")),
-		rest.Put("/v1/rules/#destination/actions", reportMetric(r.reporter, r.setActionDestination, "put_rule_action_destination")),
-		rest.Get("/v1/rules/#destination/routes", reportMetric(r.reporter, r.getRouteDestination, "get_rule_route_destination")),
-		rest.Get("/v1/rules/#destination/actions", reportMetric(r.reporter, r.getActionDestination, "get_rule_action_destination")),
-		rest.Delete("/v1/rules/#destination/routes", reportMetric(r.reporter, r.deleteRouteDestination, "delete_rule_route_destination")),
-		rest.Delete("/v1/rules/#destination/actions", reportMetric(r.reporter, r.deleteActionDestination, "delete_rule_action_destination")),
+		rest.Get("/v1/rules/routes", reportMetric(r.reporter, r.getRoutes, "get_all_routes")),
+		rest.Get("/v1/rules/actions", reportMetric(r.reporter, r.getActions, "get_all_actions")),
+
+		rest.Put("/v1/rules/routes/#destination", reportMetric(r.reporter, r.setRouteDestination, "put_rule_route_destination")),
+		rest.Put("/v1/rules/actions/#destination", reportMetric(r.reporter, r.setActionDestination, "put_rule_action_destination")),
+		rest.Get("/v1/rules/routes/#destination", reportMetric(r.reporter, r.getRouteDestination, "get_rule_route_destination")),
+		rest.Get("/v1/rules/actions/#destination", reportMetric(r.reporter, r.getActionDestination, "get_rule_action_destination")),
+		rest.Delete("/v1/rules/routes/#destination", reportMetric(r.reporter, r.deleteRouteDestination, "delete_rule_route_destination")),
+		rest.Delete("/v1/rules/actions/#destination", reportMetric(r.reporter, r.deleteActionDestination, "delete_rule_action_destination")),
 	}
 
 	for _, route := range routes {
@@ -108,6 +115,62 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
+func (r *Rule) getRoutes(w rest.ResponseWriter, req *rest.Request) error {
+	return r.getByRuleType(rules.RuleRoute, w, req)
+}
+
+func (r *Rule) getActions(w rest.ResponseWriter, req *rest.Request) error {
+	return r.getByRuleType(rules.RuleAction, w, req)
+}
+
+func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
+	tenantID := GetTenantID(req)
+	ruleIDs := getQueries("id", req)
+	tags := getQueries("tag", req)
+	destinations := getQueries("destination", req)
+
+	filter := rules.Filter{
+		IDs:          ruleIDs,
+		Tags:         tags,
+		Destinations: destinations,
+		RuleType:     ruleType,
+	}
+
+	entries, err := r.manager.GetRules(tenantID, filter)
+	if err != nil {
+		// TODO: more informative error parsing
+		RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
+		return err
+	}
+
+	respJSON := struct {
+		Services map[string][]rules.Rule `json:"services"`
+	}{
+		Services: make(map[string][]rules.Rule),
+	}
+
+	services := make(map[string][]rules.Rule)
+	for _, rule := range entries {
+		if _, ok := services[rule.Destination]; ok {
+			rulesByService := services[rule.Destination]
+			rulesByService = append(rulesByService, rule)
+			services[rule.Destination] = rulesByService
+		} else {
+			rulesByService := []rules.Rule{rule}
+			services[rule.Destination] = rulesByService
+		}
+	}
+	//for name, serviceRules := range services {
+	//	respJSON.Services[name] =  serviceRules
+	//}
+	respJSON.Services = services
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&respJSON)
+
+	return nil
+}
+
 func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	tenantID := GetTenantID(req)
 	ruleIDs := getQueries("id", req)
@@ -157,10 +220,6 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	w.WriteHeader(http.StatusCreated)
 	return nil
-}
-
-func (r *Rule) setDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.setByDestination(rules.RuleAny, w, req)
 }
 
 func (r *Rule) setRouteDestination(w rest.ResponseWriter, req *rest.Request) error {

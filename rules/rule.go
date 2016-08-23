@@ -9,5 +9,5 @@ type Rule struct {
 	Destination string          `json:"destination"`
 	Match       json.RawMessage `json:"match"`
 	Route       json.RawMessage `json:"route,omitempty"`
-	Action      json.RawMessage `json:"action,omitempty"`
+	Actions     json.RawMessage `json:"actions,omitempty"`
 }

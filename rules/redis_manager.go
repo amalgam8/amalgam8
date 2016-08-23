@@ -131,7 +131,7 @@ func FilterRules(filter Filter, rules []Rule) []Rule {
 	filteredResults := make([]Rule, 0, len(rules))
 	if len(filter.Destinations) > 0 {
 		for _, rule := range rules {
-			if filter.RuleType == RuleAny || (filter.RuleType == RuleAction && len(rule.Action) > 0) ||
+			if filter.RuleType == RuleAny || (filter.RuleType == RuleAction && len(rule.Actions) > 0) ||
 				(filter.RuleType == RuleRoute && len(rule.Route) > 0) {
 				for _, destination := range filter.Destinations {
 					if rule.Destination == destination {

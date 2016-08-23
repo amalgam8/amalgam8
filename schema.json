@@ -13,7 +13,8 @@
       }
     },
     "priority": {
-      "type": "number"
+      "type": "number",
+      "default": 0
     },
     "destination": {
       "type": "string"
@@ -23,85 +24,90 @@
       "properties": {
         "all": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/match"
           }
         },
         "any": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/match"
           }
         },
         "none": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "$ref": "#/definitions/match"
           }
         }
       },
-      "additionalProperties": false
-    },
-    "action": {
-      "$ref": "#/definitions/action"
+      "additionalProperties": false,
+      "minProperties": 1
     },
     "route": {
-      "type": "object"
+      "$ref": "#/definitions/route"
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/delayAction"
+          },
+          {
+            "$ref": "#/definitions/abortAction"
+          }
+        ]
+      }
     }
   },
-  "required": [
-    "match"
+  "additionalFields": false,
+  "required": ["id", "destination"],
+  "oneOf": [
+    {
+      "title": "Route rule",
+      "required": ["route"]
+    },
+    {
+      "title": "Action rule",
+      "required": ["actions"]
+    }
   ],
-  "additionalProperties": false,
   "definitions": {
+    "tags": {
+      "title": "Tags",
+      "description": "An array of one or more unique service tags.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
     "match": {
       "title": "Match",
-      "description": "Conditions that must be true to apply the action",
+      "description": "Conditions that must be true to apply the action or routing",
       "type": "object",
       "properties": {
-        "all": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        },
-        "any": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        },
-        "none": {
-          "type": "array",
-          "items": {
-            "type": "object"
-          }
-        },
         "source": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "tags": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            },
-            "additionalProperties": false
-          }
-        },
-        "destination": {
+          "title": "Source",
+          "description": "Microservice where request originated from",
           "type": "object",
           "properties": {
             "name": {
               "type": "string"
+            },
+            "tags": {
+              "$ref": "#/definitions/tags"
             }
           },
+          "required": [
+            "name"
+          ],
           "additionalProperties": false
         },
         "headers": {
@@ -111,125 +117,92 @@
           "additionalProperties": {
             "title": "Header",
             "type": "string"
-          }
+          },
+          "minProperties": 1
         }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "minProperties": 1
     },
-    "action": {
-      "title": "Action",
-      "description": "Action to apply to matching requests",
+    "basicBackend": {
+      "title": "Basic Backend",
+      "description": "Basic backend to route to",
       "type": "object",
       "properties": {
-        "route": {
-          "title": "Route",
-          "description": "Routes requests to a given destination.",
-          "type": "object",
-          "properties": {
-            "backends": {
-              "title": "Backends",
-              "description": "List of backends to route to.",
-              "type": "array",
-              "items": {
-                "title": "Backend",
-                "description": "Backend definition.",
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "title": "Service name",
-                    "description": "The service name.",
-                    "type": "string"
-                  },
-                  "tags": {
-                    "title": "Tags",
-                    "description": "Only route to services with the given tags",
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "weight": {
-                    "title": "Traffic weight",
-                    "description": "Percentage of traffic to route to this backend.",
-                    "type": "number",
-                    "minimum": 0,
-                    "maximum": 1,
-                    "exclusiveMinimum": true,
-                    "default": 1
-                  }
-                },
-                "required": [
-                  "name"
-                ],
-                "additionalProperties": false
-              }
-            }
-          },
-          "additionalProperties": false
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
         },
-        "delays": {
-          "title": "Delays",
-          "description": "Delays to apply to request",
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "probability": {
-                "$ref": "#/definitions/probability"
-              },
-              "tags": {
-                "type": "array",
-                "items": {
-                  "title": "Tag",
-                  "description": "Destination tag to filter on",
-                  "type": "string"
-                }
-              },
-              "duration": {
-                "type": "number",
-                "description": "Duration of delay in seconds",
-                "minimum": 0,
-                "exclusiveMinimum": true
-              }
-            },
-            "required": [
-              "duration"
-            ],
-            "additionalProperties": false
-          }
+        "tags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "backend": {
+      "title": "Backend",
+      "description": "Backend to route to",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
         },
-        "aborts": {
-          "title": "Abort",
-          "description": "Conditionally abort the request",
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "weight": {
+          "title": "Traffic weight",
+          "description": "Percentage of traffic to route to this backend.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "exclusiveMinimum": true,
+          "default": 1
+        },
+        "timeout": {
+          "description": "Request timeout or read/write timeout on the pipe in seconds",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "retries": {
+          "description": "Number of times to retry request or re-establish connectivity",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "failover": {
+          "description": "When requests to this backend fail, fallback to provided backends",
           "type": "array",
+          "minItems": 1,
           "items": {
-            "type": "object",
-            "properties": {
-              "probability": {
-                "$ref": "#/definitions/probability"
-              },
-              "tags": {
-                "type": "array",
-                "items": {
-                  "title": "Tag",
-                  "description": "Destination tag to filter on",
-                  "type": "string"
-                }
-              },
-              "return_code": {
-                "type": "number",
-                "description": "Return code",
-                "minimum": -5,
-                "maximum": 599
-              }
-            },
-            "required": [
-              "return_code"
-            ],
-            "additionalProperties": false
+            "$ref": "#/definitions/basicBackend"
           }
         }
       },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "backends": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/backend"
+          }
+        }
+      },
+      "required": ["backends"],
       "additionalProperties": false
     },
     "probability": {
@@ -240,6 +213,75 @@
       "maximum": 1,
       "exclusiveMinimum": true,
       "default": 1
+    },
+    "action": {
+      "title": "Action",
+      "description": "Action to apply to matching requests",
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string"
+        }
+      },
+      "required": ["action"]
+    },
+    "delayAction": {
+      "title": "Delay",
+      "description": "Conditionally delay the request",
+      "properties": {
+        "action": {
+          "enum": ["delay"]
+        },
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of delay in seconds",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        }
+      },
+      "required": [
+        "duration"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "abortAction": {
+      "title": "Abort",
+      "description": "Conditionally abort the request",
+      "properties": {
+        "action": {
+          "enum": ["abort"]
+        },
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "return_code": {
+          "type": "number",
+          "description": "Return code",
+          "minimum": -5,
+          "maximum": 599
+        }
+      },
+      "required": ["return_code"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
     }
   }
 }

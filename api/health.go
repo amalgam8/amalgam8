@@ -47,7 +47,7 @@ func (h *Health) Routes(middlewares ...rest.Middleware) []*rest.Route {
 
 // GetHealth performs health check on controller and dependencies
 func (h *Health) GetHealth(w rest.ResponseWriter, req *rest.Request) error {
-	// TODO: perform checks on cloudant, optionally SD and MH
+	// TODO: perform checks on dependencies
 	w.WriteHeader(http.StatusOK)
 	return nil
 }

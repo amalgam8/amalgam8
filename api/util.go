@@ -22,7 +22,20 @@ import (
 	"github.com/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/nicksnyder/go-i18n/i18n"
+	"github.com/amalgam8/controller/util"
+	"github.com/amalgam8/controller/auth"
 )
+
+// GetTenantID obtains the tenant ID
+func GetTenantID(req *rest.Request) string {
+	tenantID := req.Env[util.Namespace]
+
+	if namespace, ok := tenantID.(auth.Namespace); ok {
+		return namespace.String()
+	}
+
+	return ""
+}
 
 func reportMetric(reporter metrics.Reporter, f func(rest.ResponseWriter, *rest.Request) error, name string) rest.HandlerFunc {
 	return func(w rest.ResponseWriter, req *rest.Request) {

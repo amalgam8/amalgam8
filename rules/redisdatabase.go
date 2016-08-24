@@ -19,14 +19,22 @@ import (
 
 	"errors"
 
+	"encoding/base64"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 )
 
+type Entry struct {
+	IV      string `json:"IV"`
+	Payload string `json:"payload"`
+}
+
 type redisDB struct {
-	pool     *redis.Pool
-	address  string
-	password string
+	pool       *redis.Pool
+	address    string
+	password   string
+	encryption Encryption
 }
 
 // TODO: The returns from all the redis commands need to be double checked to ensure we are detecting all the errors
@@ -48,8 +56,9 @@ func NewRedisDB(address string, password string) *redisDB {
 			}
 			return conn, nil
 		}, 240),
-		address:  address,
-		password: password,
+		address:    address,
+		password:   password,
+		encryption: nil,
 	}
 
 	// TODO: either make configurable, or tweak this number appropriately
@@ -68,14 +77,25 @@ func (rdb *redisDB) ReadKeys(namespace string) ([]string, error) {
 	return hashKeys, err
 }
 
-func (rdb *redisDB) ReadAllEntries(namespace string) (map[string]string, error) {
+func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	logrus.Debug("HGETALL ", namespace)
-	entries, err := redis.StringMap(conn.Do("HGETALL", namespace))
+	entryMap, err := redis.StringMap(conn.Do("HGETALL", namespace))
+	if err != nil {
+		return []string{}, err
+	}
 
-	return entries, err
+	// Transform into an array
+	entries := make([]string, len(entryMap))
+	i := 0
+	for _, entry := range entryMap {
+		entries[i] = entry
+		i++
+	}
+
+	return rdb.decrypt(entries)
 }
 
 func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error) {
@@ -89,18 +109,27 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error
 	}
 
 	logrus.Debug("HMGET ", args)
-	return redis.Strings(conn.Do("HMGET", args...))
-	// TODO: more error checking?
+	entries, err := redis.Strings(conn.Do("HMGET", args...)) // TODO: more error checking?
+	if err != nil {
+		return []string{}, err
+	}
+
+	return rdb.decrypt(entries)
 }
 
 func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	args := BuildHMSetArgs(namespace, entries)
+	encrypted, err := rdb.encrypt(entries)
+	if err != nil {
+		return err
+	}
+
+	args := BuildHMSetArgs(namespace, encrypted)
 
 	logrus.Debug("HMSET ", args)
-	_, err := redis.String(conn.Do("HMSET", args...))
+	_, err = redis.String(conn.Do("HMSET", args...))
 
 	return err
 }
@@ -260,6 +289,78 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 	}
 
 	return err
+}
+
+// encrypt
+func (rdb *redisDB) encrypt(entries map[string]string) (map[string]string, error) {
+	// Short-circuit without encryption
+	if rdb.encryption == nil {
+		return entries, nil
+	}
+
+	encryptedMap := make(map[string]string)
+	for id, entry := range entries {
+		iv := rdb.encryption.NewIV()
+		payload, err := rdb.encryption.Encrypt(iv, []byte(entry))
+		if err != nil {
+			logrus.Error("Encryption failed")
+			return encryptedMap, err
+		}
+
+		encodedIV := base64.StdEncoding.EncodeToString(iv)
+		encodedPayload := base64.StdEncoding.EncodeToString(payload)
+
+		e := Entry{
+			IV:      encodedIV,
+			Payload: encodedPayload,
+		}
+
+		data, err := json.Marshal(&e)
+		if err != nil {
+			logrus.Error("Encryption failed")
+			return encryptedMap, err
+		}
+
+		encryptedMap[id] = string(data)
+	}
+
+	return encryptedMap, nil
+}
+
+// decrypt
+func (rdb *redisDB) decrypt(entries []string) ([]string, error) {
+	// Short-circuit without encryption
+	if rdb.encryption == nil {
+		return entries, nil
+	}
+
+	e := Entry{}
+
+	decryptedEntries := make([]string, len(entries))
+	for i, entry := range entries {
+		if err := json.Unmarshal([]byte(entry), &e); err != nil {
+			return []string{}, err
+		}
+
+		decodedPayload, err := base64.StdEncoding.DecodeString(e.Payload)
+		if err != nil {
+			return []string{}, err
+		}
+
+		decodedIV, err := base64.StdEncoding.DecodeString(e.IV)
+		if err != nil {
+			return []string{}, err
+		}
+
+		decrypted, err := rdb.encryption.Decrypt(decodedIV, decodedPayload)
+		if err != nil {
+			return []string{}, err
+		}
+
+		decryptedEntries[i] = string(decrypted)
+	}
+
+	return decryptedEntries, nil
 }
 
 func BuildHMSetArgs(key string, fieldMap map[string]string) []interface{} {

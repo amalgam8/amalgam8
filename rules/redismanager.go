@@ -80,16 +80,13 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 	var stringRules []string
 	var err error
 	if len(filter.IDs) == 0 {
-		entries, err := r.db.ReadAllEntries(namespace)
+		stringRules, err = r.db.ReadAllEntries(namespace)
 		if err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Error reading all entries from redis")
 			return results, err
-		}
-		for _, entry := range entries {
-			stringRules = append(stringRules, entry)
 		}
 	} else {
 		stringRules, err = r.db.ReadEntries(namespace, filter.IDs)

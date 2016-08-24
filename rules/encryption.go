@@ -17,5 +17,5 @@ package rules
 type Encryption interface {
 	Encrypt(iv, data []byte) ([]byte, error)
 	Decrypt(iv, data []byte) ([]byte, error)
-	NewIV() ([]byte, error)
+	NewIV() []byte
 }

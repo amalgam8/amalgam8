@@ -24,6 +24,6 @@ func (n *noop) Decrypt(iv, data []byte) ([]byte, error) {
 	return data, nil
 }
 
-func (n *noop) NewIV() ([]byte, error) {
-	return []byte{}, nil
+func (n *noop) NewIV() []byte {
+	return []byte{}
 }

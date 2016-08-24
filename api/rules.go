@@ -51,6 +51,7 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Post("/v1/rules", reportMetric(r.reporter, r.add, "add_rules")),
 		rest.Get("/v1/rules", reportMetric(r.reporter, r.list, "get_rules")),
+		rest.Put("/v1/rules", reportMetric(r.reporter, r.update, "update_rules")),
 		rest.Delete("/v1/rules", reportMetric(r.reporter, r.remove, "delete_rules")),
 
 		rest.Get("/v1/rules/routes", reportMetric(r.reporter, r.getRoutes, "get_all_routes")),
@@ -127,6 +128,37 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&tenantRules)
+	return nil
+}
+
+// TODO: ensure all IDs have been set
+func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
+	tenantID := GetTenantID(req)
+
+	tenantRules := TenantRules{}
+	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
+		return err
+	}
+
+	if len(tenantRules.Rules) == 0 {
+		i18n.RestError(w, req, http.StatusBadRequest, "no_rules_provided")
+		return errors.New("no_rules_provided")
+	}
+
+	for i := range tenantRules.Rules {
+		if tenantRules.Rules[i].Tags == nil {
+			tenantRules.Rules[i].Tags = []string{}
+		}
+	}
+
+	if err := r.manager.UpdateRules(tenantID, tenantRules.Rules); err != nil {
+		// TODO: more informative error parsing
+		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		return err
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	return nil
 }
 

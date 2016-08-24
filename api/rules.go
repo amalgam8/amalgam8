@@ -143,7 +143,7 @@ func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	if len(tenantRules.Rules) == 0 {
-		i18n.RestError(w, req, http.StatusBadRequest, "no_rules_provided")
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
@@ -155,7 +155,7 @@ func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
 
 	if err := r.manager.UpdateRules(tenantID, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -229,7 +229,7 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 
 	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_delete_rules")
+		handleManagerError(w, req, err)
 		return err
 	}
 

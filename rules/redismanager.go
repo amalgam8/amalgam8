@@ -168,7 +168,7 @@ func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
 	// Validate rules
 	for _, rule := range rules {
 		if err := r.validator.Validate(rule); err != nil {
-			return err
+			return &InvalidRuleError{}
 		}
 	}
 

@@ -66,7 +66,7 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 	if err := r.db.InsertEntries(tenantID, entries); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"namespace": tenantID,
-		}).Error("Error reading all entries from redis")
+		}).Error("Error inserting entries in Redis")
 		return err
 	}
 
@@ -161,6 +161,34 @@ func FilterRules(filter Filter, rules []Rule) []Rule {
 }
 
 func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
+	if len(rules) == 0 {
+		return errors.New("rules: no rules provided")
+	}
+
+	// Validate rules
+	for _, rule := range rules {
+		if err := r.validator.Validate(rule); err != nil {
+			return err
+		}
+	}
+
+	entries := make(map[string]string)
+	for _, rule := range rules {
+		data, err := json.Marshal(&rule)
+		if err != nil {
+			return err
+		}
+
+		entries[rule.ID] = string(data)
+	}
+
+	if err := r.db.UpdateEntries(tenantID, entries); err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"namespace": tenantID,
+		}).Error("Error updating entries in Redis")
+		return err
+	}
+
 	return nil
 }
 

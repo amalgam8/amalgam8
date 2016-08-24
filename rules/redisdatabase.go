@@ -17,6 +17,8 @@ package rules
 import (
 	"encoding/json"
 
+	"errors"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 )
@@ -95,19 +97,54 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	args := make([]interface{}, len(entries)*2+1)
-	args[0] = namespace
-
-	i := 1
-	for id, entry := range entries {
-		args[i] = id
-		args[i+1] = entry
-		i += 2
-	}
+	args := BuildHMSetArgs(namespace, entries)
 
 	logrus.Debug("HMSET ", args)
 	_, err := redis.String(conn.Do("HMSET", args...))
-	// TODO: more error checking?
+
+	return err
+}
+
+// 1. Get all existing IDs
+// 2. Ensure the new rules are a subset of the existing rules
+// 3. Update the rules
+func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) error {
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
+	conn.Do("WATCH", namespace) // TODO: return codes?
+
+	existingIDs, err := redis.Strings(conn.Do("HKEYS", namespace))
+	if err != nil {
+		return err
+	}
+
+	existingIDSet := make(map[string]bool)
+	for _, id := range existingIDs {
+		existingIDSet[id] = true
+	}
+
+	// TODO: build a list of all the IDs that are missing?
+	for id := range entries {
+		_, exists := existingIDSet[id]
+		if !exists {
+			return errors.New("rules: id " + id + " does not exist")
+		}
+	}
+
+	conn.Send("MULTI")
+	args := BuildHMSetArgs(namespace, entries)
+	if err := conn.Send("HMSET", args...); err != nil {
+		return err
+	}
+
+	// Execute transaction
+	_, err = redis.Values(conn.Do("EXEC"))
+
+	// Nil return indicates that the transaction failed
+	if err == redis.ErrNil {
+		logrus.Error("Transaction failed due to conflict")
+	}
 
 	return err
 }
@@ -188,24 +225,6 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 
 	conn.Send("MULTI")
 
-	// Add new rules
-	if len(entries) > 0 {
-		args := make([]interface{}, len(entries)*2+1)
-		args[0] = namespace
-		i := 1
-		for id, entry := range entries {
-			args[i] = id
-			args[i+1] = entry
-			i += 2
-		}
-		logrus.Debug("HMSET ", args)
-
-		err = conn.Send("HMSET", args...)
-		if err != nil {
-			return err
-		}
-	}
-
 	// Delete IDs
 	if len(rulesToDelete) > 0 {
 		args := make([]interface{}, len(rulesToDelete)+1)
@@ -221,6 +240,17 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 		}
 	}
 
+	// Add new rules
+	if len(entries) > 0 {
+		args := BuildHMSetArgs(namespace, entries)
+
+		logrus.Debug("HMSET ", args)
+		err = conn.Send("HMSET", args...)
+		if err != nil {
+			return err
+		}
+	}
+
 	// Execute transaction
 	_, err = redis.Values(conn.Do("EXEC"))
 
@@ -230,4 +260,18 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 	}
 
 	return err
+}
+
+func BuildHMSetArgs(key string, fieldMap map[string]string) []interface{} {
+	args := make([]interface{}, len(fieldMap)*2+1)
+	args[0] = key
+
+	i := 1
+	for id, entry := range fieldMap {
+		args[i] = id
+		args[i+1] = entry
+		i += 2
+	}
+
+	return args
 }

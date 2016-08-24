@@ -47,7 +47,7 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 	// Validate rules
 	for _, rule := range rules {
 		if err := r.validator.Validate(rule); err != nil {
-			return err
+			return &InvalidRuleError{}
 		}
 	}
 
@@ -57,7 +57,7 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 		rule.ID = id
 		data, err := json.Marshal(&rule)
 		if err != nil {
-			return err
+			return &JSONMarshallError{Message: err.Error()}
 		}
 
 		entries[id] = string(data)
@@ -110,7 +110,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 				"tenant_id": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
-			return results, err
+			return results, &JSONMarshallError{Message: err.Error()}
 		}
 		results[index] = rule
 	}
@@ -128,7 +128,7 @@ func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, ru
 	// Validate rules
 	for _, rule := range rules {
 		if err := r.validator.Validate(rule); err != nil {
-			return err
+			return &InvalidRuleError{}
 		}
 	}
 

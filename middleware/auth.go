@@ -49,7 +49,7 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if authHeader != "" {
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || (parts[0] != "Bearer" && parts[0] != "bearer") {
-			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_malformed")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationMalformedHeader)
 			return
 		}
 		token = parts[1]
@@ -59,13 +59,13 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:
-			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_missing")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationMissingHeader)
 		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
-			i18n.RestError(writer, request, http.StatusUnauthorized, "error_auth_not_authorized")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationNotAuthorized)
 		case auth.ErrCommunicationError:
-			i18n.RestError(writer, request, http.StatusServiceUnavailable, "error_auth_failed_validation")
+			i18n.RestError(writer, request, http.StatusServiceUnavailable, i18n.ErrorAuthorizationTokenValidationFailed)
 		default:
-			i18n.RestError(writer, request, http.StatusInternalServerError, "error_internal")
+			i18n.RestError(writer, request, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		}
 		return
 	}

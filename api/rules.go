@@ -19,6 +19,7 @@ import (
 
 	"errors"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/metrics"
 	"github.com/amalgam8/controller/rules"
 	"github.com/amalgam8/controller/util/i18n"
@@ -81,7 +82,7 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	if len(tenantRules.Rules) == 0 {
-		i18n.RestError(w, req, http.StatusBadRequest, "no_rules_provided")
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
@@ -93,7 +94,7 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 
 	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -117,7 +118,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	rules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -154,7 +155,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	entries, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "could_not_get_rules")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -175,9 +176,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 			services[rule.Destination] = rulesByService
 		}
 	}
-	//for name, serviceRules := range services {
-	//	respJSON.Services[name] =  serviceRules
-	//}
+
 	respJSON.Services = services
 
 	w.WriteHeader(http.StatusOK)
@@ -229,7 +228,7 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, tenantRules.Rules); err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -256,7 +255,7 @@ func (r *Rule) getByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 
 	entries, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
-		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -288,7 +287,7 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, []rules.Rule{}); err != nil {
 		// TODO: more informative error parsing
-		i18n.RestError(w, req, http.StatusInternalServerError, "request_failed")
+		handleManagerError(w, req, err)
 		return err
 	}
 
@@ -311,4 +310,17 @@ func getQueries(key string, req *rest.Request) []string {
 		return []string{}
 	}
 	return values
+}
+
+func handleManagerError(w rest.ResponseWriter, req *rest.Request, err error, args ...interface{}) {
+	switch e := err.(type) {
+	case *rules.InvalidRuleError:
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidRule)
+	case *rules.JSONMarshallError:
+		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer)
+	default:
+		logrus.WithError(e).Warn("Unknown error")
+		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer)
+	}
+
 }

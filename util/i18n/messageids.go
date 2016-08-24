@@ -15,5 +15,14 @@
 package i18n
 
 const (
-	ErrorInvalidJSON = "error_invalid_json"
+	ErrorInvalidJSON     = "error_invalid_json"
+	ErrorInvalidRule     = "error_invalid_rule"
+	ErrorNoRulesProvided = "error_no_rules_provided"
+
+	ErrorAuthorizationMissingHeader         = "error_auth_header_missing"
+	ErrorAuthorizationMalformedHeader       = "error_auth_header_malformed"
+	ErrorAuthorizationTokenValidationFailed = "error_auth_failed_validation"
+	ErrorAuthorizationNotAuthorized         = "error_auth_not_authorized"
+
+	ErrorInternalServer = "error_internal"
 )

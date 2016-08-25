@@ -19,7 +19,6 @@ import (
 
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -45,25 +44,18 @@ func (m *memory) AddRules(tenantID string, rules []Rule) error {
 		return errors.New("rules: no rules provided")
 	}
 
-	logrus.Info("Validating rules")
-
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
 		return err
 	}
-
-	logrus.Info("Generating IDs")
 
 	// Generate IDs
 	m.generateRuleIDs(rules)
 
 	// Add the rules
 	m.mutex.Lock()
-	logrus.Info("Locked mutex")
 	defer m.mutex.Unlock()
 	m.addRules(tenantID, rules)
-
-	logrus.Info("Added rules")
 
 	return nil
 }

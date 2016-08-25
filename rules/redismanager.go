@@ -135,28 +135,6 @@ func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, ru
 
 }
 
-func FilterRules(filter Filter, rules []Rule) []Rule {
-	filteredResults := make([]Rule, 0, len(rules))
-
-	for _, rule := range rules {
-		if filter.RuleType == RuleAny || (filter.RuleType == RuleAction && len(rule.Actions) > 0) ||
-			(filter.RuleType == RuleRoute && len(rule.Route) > 0) {
-
-			if len(filter.Destinations) > 0 {
-				for _, destination := range filter.Destinations {
-					if rule.Destination == destination {
-						filteredResults = append(filteredResults, rule)
-					}
-				}
-			} else {
-				filteredResults = append(filteredResults, rule)
-			}
-		}
-	}
-
-	return filteredResults
-}
-
 func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")

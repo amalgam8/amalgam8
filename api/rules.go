@@ -186,7 +186,6 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 
 	entries, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -228,7 +227,6 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -259,7 +257,6 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 	}
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, tenantRules.Rules); err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -318,7 +315,6 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 	}
 
 	if err := r.manager.SetRulesByDestination(tenantID, filter, []rules.Rule{}); err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}

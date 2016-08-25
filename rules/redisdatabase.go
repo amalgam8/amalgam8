@@ -161,6 +161,11 @@ func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) e
 		}
 	}
 
+	entries, err = rdb.encrypt(entries)
+	if err != nil {
+		return err
+	}
+
 	conn.Send("MULTI")
 	args := BuildHMSetArgs(namespace, entries)
 	if err := conn.Send("HMSET", args...); err != nil {
@@ -213,6 +218,8 @@ const (
 )
 
 func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Rule) error {
+	var err error
+
 	entries := make(map[string]string)
 	for _, rule := range rules {
 		entry, err := json.Marshal(&rule)
@@ -222,27 +229,44 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 		entries[rule.ID] = string(entry)
 	}
 
+	entries, err = rdb.encrypt(entries)
+	if err != nil {
+		return err
+	}
+
 	conn := rdb.pool.Get()
 	defer conn.Close() // Automatically calls DISCARD if necessary
 
 	conn.Do("WATCH", namespace)
 
 	// Get all rules
-	existingEntries, err := redis.StringMap(conn.Do("HGETALL", namespace))
+	existingEntryMap, err := redis.StringMap(conn.Do("HGETALL", namespace))
+	if err != nil {
+		return err
+	}
+
+	existingEntries := make([]string, len(existingEntryMap))
+	i := 0
+	for _, entry := range existingEntryMap {
+		existingEntries[i] = entry
+		i++
+	}
+
+	existingEntries, err = rdb.decrypt(existingEntries)
 	if err != nil {
 		return err
 	}
 
 	// Unmarshal
-	existingRules := make([]Rule, 0, len(existingEntries))
-	for _, entry := range existingEntries {
+	existingRules := make([]Rule, len(existingEntries))
+	for i, entry := range existingEntries {
 		rule := Rule{}
 		err := json.Unmarshal([]byte(entry), &rule)
 		if err != nil {
 			return err
 		}
 
-		existingRules = append(existingRules, rule)
+		existingRules[i] = rule
 	}
 
 	rulesToDelete := FilterRules(filter, existingRules)

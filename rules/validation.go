@@ -34,6 +34,7 @@ func (v *validator) Validate(rule Rule) error {
 	ruleLoader := gojsonschema.NewGoLoader(&rule)
 	result, err := gojsonschema.Validate(v.schemaLoader, ruleLoader)
 	if err != nil {
+		logrus.WithError(err).Error("Could not validate with schema")
 		return err
 	}
 

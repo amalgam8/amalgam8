@@ -21,7 +21,7 @@ type Rule struct {
 	Priority    int             `json:"priority"`
 	Tags        []string        `json:"tags,omitempty"`
 	Destination string          `json:"destination"`
-	Match       json.RawMessage `json:"match"`
+	Match       json.RawMessage `json:"match,omitempty"`
 	Route       json.RawMessage `json:"route,omitempty"`
 	Actions     json.RawMessage `json:"actions,omitempty"`
 }

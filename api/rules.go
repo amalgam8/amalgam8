@@ -159,7 +159,7 @@ func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 
@@ -347,12 +347,12 @@ func getQueries(key string, req *rest.Request) []string {
 func handleManagerError(w rest.ResponseWriter, req *rest.Request, err error, args ...interface{}) {
 	switch e := err.(type) {
 	case *rules.InvalidRuleError:
-		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidRule)
+		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidRule, args)
 	case *rules.JSONMarshallError:
-		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer)
+		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer, args)
 	default:
 		logrus.WithError(e).Warn("Unknown error")
-		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer)
+		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer, args)
 	}
 
 }

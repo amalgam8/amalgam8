@@ -24,6 +24,8 @@ cfile="controller.yaml"
 lgfile="logserver.yaml"
 
 if [ "$1" == "start" ]; then
+    echo "Starting redis storage"
+    kubectl create -f $SCRIPTDIR/$rdsfile
     echo "Starting logging service (ELK)"
     kubectl create -f $SCRIPTDIR/$lgfile
     echo "Starting multi-tenant service registry"
@@ -89,6 +91,8 @@ elif [ "$1" == "stop" ]; then
     kubectl delete -f $SCRIPTDIR/$rfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$lgfile
+    sleep 3
+    kubectl delete -f $SCRIPTDIR/$rdsfile
 else
     echo "usage: $0 start|stop"
     exit 1

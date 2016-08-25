@@ -1,23 +1,18 @@
 {
-    "id": "a8-controller",
+    "id": "a8-redis",
     "container": {
 	"type": "DOCKER",
 	"docker": {
-	    "image": "amalgam8/a8-controller",
+	    "image": "redis:alpine",
 	    "network": "BRIDGE",
 	    "portMappings": [
 		{
 		    "containerPort": 6379,
-		    "hostPort": 31200,
+		    "hostPort": 31400,
 		    "protocol" : "tcp"
 		}
 	    ]
 	}
-    },
-    "env": {
-	    "A8_LOG_LEVEL":"info",
-		"A8_DATABASE_TYPE":"redis",
-		"A8_DATABASE_HOST":"redis://__REPLACEME__:31400"
     },
     "instances": 1,
     "cpus": 0.1,

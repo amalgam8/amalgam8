@@ -42,6 +42,12 @@
           "items": {
             "$ref": "#/definitions/match"
           }
+        },
+        "source": {
+          "$ref": "#/definitions/source"
+        },
+        "headers": {
+          "$ref": "#/definitions/headers"
         }
       },
       "additionalProperties": false,
@@ -88,37 +94,43 @@
       "uniqueItems": true,
       "minItems": 1
     },
+    "source": {
+      "title": "Source",
+      "description": "Microservice where request originated from",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "headers": {
+      "title": "Headers",
+      "description": "Header key/value pairs",
+      "type": "object",
+      "additionalProperties": {
+        "title": "Header",
+        "type": "string"
+      },
+      "minProperties": 1
+    },
     "match": {
       "title": "Match",
       "description": "Conditions that must be true to apply the action or routing",
       "type": "object",
       "properties": {
         "source": {
-          "title": "Source",
-          "description": "Microservice where request originated from",
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "tags": {
-              "$ref": "#/definitions/tags"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "additionalProperties": false
+          "$ref": "#/definitions/source"
         },
         "headers": {
-          "title": "Headers",
-          "description": "Header key/value pairs",
-          "type": "object",
-          "additionalProperties": {
-            "title": "Header",
-            "type": "string"
-          },
-          "minProperties": 1
+          "$ref": "#/definitions/headers"
         }
       },
       "additionalProperties": false,

@@ -19,6 +19,5 @@ type Manager interface {
 	GetRules(tenantID string, filter Filter) ([]Rule, error)
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
-
-	SetRulesByDestination(namespace string, filter Filter, rules []Rule) error
+	SetRules(namespace string, filter Filter, rules []Rule) error
 }

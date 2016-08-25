@@ -31,6 +31,15 @@ func (f Filter) String() string {
 
 // FilterRules returns a list of filtered rules.
 func FilterRules(f Filter, rules []Rule) []Rule {
+	// Set of acceptable IDs
+	var ids map[string]bool
+	if len(f.IDs) > 0 {
+		ids = make(map[string]bool)
+		for _, id := range f.IDs {
+			ids[id] = true
+		}
+	}
+
 	// Set of acceptable destinations
 	var dests map[string]bool
 	if len(f.Destinations) > 0 {
@@ -52,6 +61,13 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 	// Iterate through the rules, building a new list of rules that pass the filter
 	res := make([]Rule, 0, len(rules)) // Filtered rules
 	for _, rule := range rules {
+		// Filter by ID. The ID must be a member of the acceptable IDs.
+		if ids != nil {
+			if _, exists := ids[rule.ID]; !exists {
+				continue
+			}
+		}
+
 		// Filter by rule type
 		if (f.RuleType == RuleAction && len(rule.Actions) == 0) ||
 			(f.RuleType == RuleRoute && len(rule.Route) == 0) {

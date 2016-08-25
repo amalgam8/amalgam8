@@ -256,7 +256,7 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRulesByDestination(tenantID, filter, tenantRules.Rules); err != nil {
+	if err := r.manager.SetRules(tenantID, filter, tenantRules.Rules); err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -314,7 +314,7 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRulesByDestination(tenantID, filter, []rules.Rule{}); err != nil {
+	if err := r.manager.SetRules(tenantID, filter, []rules.Rule{}); err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}

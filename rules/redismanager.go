@@ -73,7 +73,6 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 	return nil
 }
 
-// TODO: tag filtering
 func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error) {
 	results := []Rule{}
 
@@ -117,7 +116,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 	return results, nil
 }
 
-func (r *redisManager) SetRulesByDestination(namespace string, filter Filter, rules []Rule) error {
+func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) error {
 	for i := range rules {
 		rules[i].ID = uuid.New()
 	}

@@ -1,16 +1,17 @@
-hash: 47f0e934eaf8982d5488d166a7ca4e9b332c04352d772b3044bbd326357c13bf
-updated: 2016-08-03T20:29:00.168379572+01:00
+hash: 0a2f02db7e0dcc673b56de6b9943ab6e6d607f94a354241f2950c5f9ced83dfb
+updated: 2016-08-26T16:07:46.486905119+01:00
 imports:
 - name: github.com/amalgam8/controller
-  version: 61679f9d97de1c9a0f72094ae7edf2244aae77c7
-  subpackages:
-  - resources
-- name: github.com/amalgam8/registry
-  version: bebdfef8f255e4334f4bee38ae4f655754966439
+  version: b1e54dbc614279f08a0d8b3497d72da1599a7e72
   subpackages:
   - client
-  - api/protocol/amalgam8
+  - rules
+- name: github.com/amalgam8/registry
+  version: c33c959174267b42ca8ea7a8fa728e80871ed5f2
+  subpackages:
+  - client
   - api/env
+  - api/protocol/amalgam8
   - api/middleware
   - api/protocol
   - auth
@@ -23,7 +24,7 @@ imports:
   - cluster
   - utils/health
 - name: github.com/ant0ine/go-json-rest
-  version: bd5fcdd7b0b7e63f4abb171498784efbd01fda7b
+  version: 37ad7dc626602a8355801da6acd85155655520f8
   subpackages:
   - rest
   - rest/trie
@@ -31,6 +32,11 @@ imports:
   version: bca61c476e3c752594983e4c9bcd5f62fb09f157
 - name: github.com/dgrijalva/jwt-go
   version: e5cb38552fb8426fe9f0f2b3bc8408f238b97b87
+- name: github.com/garyburd/redigo
+  version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
+  subpackages:
+  - redis
+  - internal
 - name: github.com/nicksnyder/go-i18n
   version: 37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3
   subpackages:
@@ -69,12 +75,20 @@ imports:
   - matchers/support/goraph/edge
   - matchers/support/goraph/node
   - matchers/support/goraph/util
+- name: github.com/pborman/uuid
+  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 - name: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
   subpackages:
   - formatters/logstash
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 testImports: []

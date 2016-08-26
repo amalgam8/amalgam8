@@ -58,7 +58,7 @@ var Flags = []cli.Flag{
 	cli.StringFlag{
 		Name:   LogLevelFlag,
 		EnvVar: envVarFromFlag(LogLevelFlag),
-		Value:  "debug",
+		Value:  "info",
 		Usage:  "Logging level. Supported values are: 'debug', 'info', 'warn', 'error', 'fatal', 'panic'",
 	},
 
@@ -177,5 +177,5 @@ var Flags = []cli.Flag{
 
 // envVarFromFlag returns the environment variable bound to the given flag
 func envVarFromFlag(name string) string {
-	return strings.ToUpper(name)
+	return "A8_" + strings.ToUpper(name)
 }

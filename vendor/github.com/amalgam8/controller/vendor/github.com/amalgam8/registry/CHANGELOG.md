@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1 (August 1, 2016)
+
+- Fixed [#33](https://github.com/amalgam8/registry/issues/33): Panic during synchronization of the Registry's store 
+
 ## 0.2.0 (July 20, 2016)
 
 - Support for registry adapters that can be used to synchronize the

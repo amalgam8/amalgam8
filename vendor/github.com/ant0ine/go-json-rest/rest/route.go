@@ -5,7 +5,7 @@ import (
 )
 
 // Route defines a route as consumed by the router. It can be instantiated directly, or using one
-// of the shortcut methods: rest.Get, rest.Post, rest.Put, and rest.Delete.
+// of the shortcut methods: rest.Get, rest.Post, rest.Put, rest.Patch and rest.Delete.
 type Route struct {
 
 	// Any HTTP method. It will be used as uppercase to avoid common mistakes.
@@ -35,6 +35,16 @@ func (route *Route) MakePath(pathParams map[string]string) string {
 		path = r.Replace(path)
 	}
 	return path
+}
+
+// Head is a shortcut method that instantiates a HEAD route. See the Route object the parameters definitions.
+// Equivalent to &Route{"HEAD", pathExp, handlerFunc}
+func Head(pathExp string, handlerFunc HandlerFunc) *Route {
+	return &Route{
+		HttpMethod: "HEAD",
+		PathExp:    pathExp,
+		Func:       handlerFunc,
+	}
 }
 
 // Get is a shortcut method that instantiates a GET route. See the Route object the parameters definitions.
@@ -67,10 +77,30 @@ func Put(pathExp string, handlerFunc HandlerFunc) *Route {
 	}
 }
 
+// Patch is a shortcut method that instantiates a PATCH route.  See the Route object the parameters definitions.
+// Equivalent to &Route{"PATCH", pathExp, handlerFunc}
+func Patch(pathExp string, handlerFunc HandlerFunc) *Route {
+	return &Route{
+		HttpMethod: "PATCH",
+		PathExp:    pathExp,
+		Func:       handlerFunc,
+	}
+}
+
 // Delete is a shortcut method that instantiates a DELETE route. Equivalent to &Route{"DELETE", pathExp, handlerFunc}
 func Delete(pathExp string, handlerFunc HandlerFunc) *Route {
 	return &Route{
 		HttpMethod: "DELETE",
+		PathExp:    pathExp,
+		Func:       handlerFunc,
+	}
+}
+
+// Options is a shortcut method that instantiates an OPTIONS route.  See the Route object the parameters definitions.
+// Equivalent to &Route{"OPTIONS", pathExp, handlerFunc}
+func Options(pathExp string, handlerFunc HandlerFunc) *Route {
+	return &Route{
+		HttpMethod: "OPTIONS",
 		PathExp:    pathExp,
 		Func:       handlerFunc,
 	}

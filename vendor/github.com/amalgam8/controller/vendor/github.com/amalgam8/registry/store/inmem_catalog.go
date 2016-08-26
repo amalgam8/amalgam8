@@ -58,7 +58,7 @@ type inMemoryFactory struct {
 	conf *inMemoryConfig
 }
 
-func newInmemFactory(conf *inMemoryConfig) CatalogFactory {
+func newInMemoryFactory(conf *inMemoryConfig) *inMemoryFactory {
 	return &inMemoryFactory{conf: conf}
 }
 
@@ -86,7 +86,7 @@ type inMemoryCatalog struct {
 	sync.RWMutex
 }
 
-func newInMemoryCatalog(conf *inMemoryConfig) Catalog {
+func newInMemoryCatalog(conf *inMemoryConfig) *inMemoryCatalog {
 	if conf == nil {
 		conf = defaultInMemoryConfig
 	}

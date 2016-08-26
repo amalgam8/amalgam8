@@ -29,12 +29,17 @@ type ResponseWriter interface {
 	WriteHeader(int)
 }
 
+// This allows to customize the field name used in the error response payload.
+// It defaults to "Error" for compatibility reason, but can be changed before starting the server.
+// eg: rest.ErrorFieldName = "errorMessage"
+var ErrorFieldName = "Error"
+
 // Error produces an error response in JSON with the following structure, '{"Error":"My error message"}'
 // The standard plain text net/http Error helper can still be called like this:
 // http.Error(w, "error message", code)
 func Error(w ResponseWriter, error string, code int) {
 	w.WriteHeader(code)
-	err := w.WriteJson(map[string]string{"Error": error})
+	err := w.WriteJson(map[string]string{ErrorFieldName: error})
 	if err != nil {
 		panic(err)
 	}
@@ -61,7 +66,11 @@ type responseWriter struct {
 
 func (w *responseWriter) WriteHeader(code int) {
 	if w.Header().Get("Content-Type") == "" {
-		w.Header().Set("Content-Type", "application/json")
+		// Per spec, UTF-8 is the default, and the charset parameter should not
+		// be necessary. But some clients (eg: Chrome) think otherwise.
+		// Since json.Marshal produces UTF-8, setting the charset parameter is a
+		// safe option.
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	}
 	w.ResponseWriter.WriteHeader(code)
 	w.wroteHeader = true

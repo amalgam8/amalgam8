@@ -118,15 +118,15 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error
 }
 
 func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) error {
-	conn := rdb.pool.Get()
-	defer conn.Close()
-
 	encrypted, err := rdb.encrypt(entries)
 	if err != nil {
 		return err
 	}
 
 	args := BuildHMSetArgs(namespace, encrypted)
+
+	conn := rdb.pool.Get()
+	defer conn.Close()
 
 	logrus.Debug("HMSET ", args)
 	_, err = redis.String(conn.Do("HMSET", args...))

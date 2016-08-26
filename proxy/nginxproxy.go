@@ -40,9 +40,9 @@ type nginxProxy struct {
 // NewNGINXProxy instantiates a new instance
 func NewNGINXProxy(nginxClient nginx.Manager) NGINXProxy {
 	return &nginxProxy{
-		rules: []rules.Rule{},
+		rules:     []rules.Rule{},
 		instances: []client.ServiceInstance{},
-		nginx: nginxClient,
+		nginx:     nginxClient,
 	}
 }
 

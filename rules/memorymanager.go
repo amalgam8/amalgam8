@@ -20,16 +20,13 @@ import (
 	"sync"
 
 	"github.com/pborman/uuid"
-	"github.com/xeipuuv/gojsonschema"
 )
 
-func NewMemoryManager() Manager {
+func NewMemoryManager(validator Validator) Manager {
 	return &memory{
-		rules: make(map[string]map[string]Rule),
-		validator: &validator{
-			schemaLoader: gojsonschema.NewReferenceLoader("file://./schema.json"),
-		},
-		mutex: &sync.Mutex{},
+		rules:     make(map[string]map[string]Rule),
+		validator: validator,
+		mutex:     &sync.Mutex{},
 	}
 }
 

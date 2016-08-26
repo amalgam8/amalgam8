@@ -21,15 +21,12 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
-	"github.com/xeipuuv/gojsonschema"
 )
 
-func NewRedisManager(db *redisDB) Manager {
+func NewRedisManager(db *redisDB, v Validator) Manager {
 	return &redisManager{
-		validator: &validator{
-			schemaLoader: gojsonschema.NewReferenceLoader("file://./schema.json"),
-		},
-		db: db,
+		validator: v,
+		db:        db,
 	}
 }
 

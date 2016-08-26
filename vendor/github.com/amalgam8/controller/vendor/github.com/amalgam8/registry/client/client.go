@@ -279,10 +279,5 @@ func normalizeConfig(config *Config) error {
 		return newError(ErrorCodeInvalidConfiguration, fmt.Sprintf("unsupported scheme %s", url.Scheme), nil, "")
 	}
 
-	url.Query()
-	if config.AuthToken == "" {
-		return newError(ErrorCodeInvalidConfiguration, "missing authentication token", nil, "")
-	}
-
 	return nil
 }

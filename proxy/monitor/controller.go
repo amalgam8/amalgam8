@@ -89,11 +89,11 @@ func (c *controller) poll() error {
 		return err
 	}
 
-	// Check if the rules have been modified since the last poll
-	if c.currentVersion != nil && !resp.LastUpdated.After(*c.currentVersion) {
-		return nil
-	}
-	c.currentVersion = &resp.LastUpdated
+	//// Check if the rules have been modified since the last poll
+	//if c.currentVersion != nil && !resp.LastUpdated.After(*c.currentVersion) {
+	//	return nil
+	//}
+	//c.currentVersion = &resp.LastUpdated
 
 	// Notify listeners
 	for _, listener := range c.listeners {

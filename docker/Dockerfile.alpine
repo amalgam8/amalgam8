@@ -110,7 +110,7 @@
 
 FROM openresty/openresty:alpine
 
-RUN apk update && apk add curl lua-cmsgpack lua-cjson
+RUN apk update && apk add curl
 
 RUN ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     ln -sf /usr/local/openresty/nginx/logs /var/log/nginx && \

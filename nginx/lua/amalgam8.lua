@@ -1,8 +1,6 @@
-local json     = require("cjson.safe")
+local cjson     = require("cjson.safe")
 local math     = require("math")
 local balancer = require("ngx.balancer")
-local string   = require("resty.string")
-local cmsgpack = require("cmsgpack.safe")
 
 local ngx_log = ngx.log
 local ngx_ERR = ngx.ERR
@@ -331,7 +329,7 @@ end
 local function get_unpacked_val(shared_dict, key)
    local serialized = shared_dict:get(key)
    if serialized then
-      return cmsgpack.unpack(serialized)
+      return cjson.decode(serialized)
    end
    return nil
 end
@@ -393,7 +391,7 @@ function Amalgam8:update_state(input)
        end
 
        for service, instances in pairs(a8_instances) do
-         serialized = cmsgpack.pack(instances)
+         serialized = cjson.encode(instances)
          _, err = ngx_shared.a8_instances:set(service, serialized)
          if err then
             err = "failed to update instances for service:"..service..":"..err
@@ -419,7 +417,7 @@ function Amalgam8:update_state(input)
 
          for destination, rset in pairs(a8_routes) do
             table.sort(rset, compare_rules_descending)
-            serialized = cmsgpack.pack(rset)
+            serialized = cjson.encode(rset)
             _, err = ngx_shared.a8_routes:set(destination, serialized)
             if err then
                err = "failed to update routes for service:"..service..":"..err
@@ -442,7 +440,7 @@ function Amalgam8:update_state(input)
 
          for destination, rset in pairs(a8_routes) do
             table.sort(rset, compare_rules_descending)
-            serialized = cmsgpack.pack(rset)
+            serialized = cjson.encode(rset)
             _, err = ngx_shared.a8_actions:set(destination, serialized)
             if err then
                err = "failed to update actions for service:"..service..":"..err
@@ -460,7 +458,7 @@ function Amalgam8:proxy_admin()
    if ngx.req.get_method() == "PUT" or ngx.req.get_method() == "POST" then
       ngx.req.read_body()
 
-      local input, err = cmsgpack.unpack(ngx.req.get_body_data())
+      local input, err = cjson.decode(ngx.req.get_body_data())
       if err then
          ngx.status = ngx.HTTP_BAD_REQUEST
          ngx_log(ngx_ERR, "error decoding input json: " .. err)
@@ -469,7 +467,7 @@ function Amalgam8:proxy_admin()
       end
 
       -- TODO: locking in multi-worker context.
-      self:reset_state()
+      reset_state()
       err = self:update_state(input)
       if err then
          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
@@ -500,7 +498,7 @@ function Amalgam8:proxy_admin()
          state.actions[key] = get_unpacked_val(key)
       end
 
-      local output, err = json.encode(state)
+      local output, err = cjson.encode(state)
       if err then
          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
          ngx.say("error encoding state as JSON:" .. err)

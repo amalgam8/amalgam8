@@ -14,11 +14,6 @@
 
 FROM openresty/openresty:trusty
 
-RUN apt-get -y update && \
-    apt-get -y install git && \
-    /usr/local/openresty/luajit/bin/luarocks install lua-cmsgpack && \
-    apt-get --purge autoremove -y git
-
 RUN ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     ln -sf /usr/local/openresty/nginx/logs /var/log/nginx && \
     rm /var/log/nginx/access.log /var/log/nginx/error.log && \

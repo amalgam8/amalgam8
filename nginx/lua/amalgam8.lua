@@ -51,7 +51,7 @@ local function get_name_and_tags()
    local name, version
    for x,y,z in string.gmatch(service_name, '([^:]+)(:?(.*))') do
       name = x
-      version = y
+      version = z
       break
    end
 
@@ -66,18 +66,32 @@ local function get_name_and_tags()
 end
 
 
+local function add_cookie(cookie)
+   local cookies = ngx.header["Set-Cookie"] or {}
+
+    if type(cookies) == "string" then
+        cookies = {cookies}
+    end
+    table.insert(cookies, cookie)
+    ngx.header['Set-Cookie'] = cookies
+end
+
+
 local function create_instance(i)
+   if i.status ~= "UP" then return nil end
    local instance = {}
-   instance.type = i.type
+
    if i.tags then 
       instance.tags = table.concat(i.tags, ",")
    end
-   if not i.type then
+
+   instance.type = i.endpoint.type
+   if not i.endpoint.type then
       instance.type = 'http'
    end
    for x,y,z in string.gmatch(i.endpoint.value, '([^:]+)(:?(.*))') do
       instance.host = x
-      instance.port = y
+      instance.port = tonumber(z)
       break
    end
    if not instance.port then
@@ -162,13 +176,7 @@ local function match_tags(src_tag_string, dst_tag_set) --assumes both are not ni
 end
 
 local function check_and_preprocess_match(myname, mytags, match_type, match_sub_block)
-   if not match_sub_block then
-      if match_type ~= "none" then
-         return true, nil
-      else
-         return false, nil -- return false for empty none block
-      end
-   end
+   if not match_sub_block then return false, nil end
 
    local match_cond = nil
    local is_my_tag_empty = (string.len(mytags) == 0)
@@ -187,7 +195,6 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
          -- name match, with empty rule src tags
          -- src tags and my tags matched
          check1 = (not empty_src_name and (m.source.name == myname) and (empty_src_tags or (not is_my_tag_empty and match_tags(mytags, tags))))
-
          -- src has no service name. But it should have tags
          check2 = (empty_src_name and (not is_my_tag_empty and match_tags(mytags, tags)))
       else
@@ -203,6 +210,7 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
                match_cond[k]=v
             end
          end
+         return match_found, match_cond -- consider only the first match in the array of blocks containing source/headers
       end
    end
 
@@ -243,7 +251,9 @@ local function is_rule_for_me(myname, mytags, rule)
    any_res, any_headers = check_and_preprocess_match(myname, mytags, "any", rule.match.any)
    none_res, none_headers = check_and_preprocess_match(myname, mytags, "none", rule.match.none)
 
-   local res = (all_res or any_res) and not none_res
+   -- either all block or any block must match and nothing in none block should match.
+   -- empty blocks amount to nil. We have already taken care of all blocks being empty by checking for empty rule.match
+   local res = ((all_res and rule.match.all) or (any_res and rule.match.any)) and not (none_res and rule.match.none)
    if res then
       if not all_headers and not any_headers and not none_headers then
          rule.match = nil
@@ -269,12 +279,12 @@ local function create_rule(rule, myname, mytags)
       rule.priority = 0
    end
 
-   if not rule.route and not rule.action then
+   if not rule.route and not rule.actions then
       return nil
    end
 
    -- rule can have only route or action. Not both.
-   if rule.route and rule.action then
+   if rule.route and rule.actions then
       return nil
    end
 
@@ -297,7 +307,7 @@ local function create_rule(rule, myname, mytags)
          ngx_log(ngx_ERR, "sum of weights has exceeded 1.0: " .. prev)
          return nil
       end
-      local balance = 1 - sum
+      local balance = 1.0 - sum
       for _, b in ipairs(rule.route.backends) do
          if not b.weight then
             b.weight = 1.0 * balance/unweighted
@@ -312,7 +322,7 @@ local function create_rule(rule, myname, mytags)
    end
 
    -- if its an action rule, search for a8_recipe_id in the tags and promote it to its own field
-   if rule.action and rule.tags then
+   if rule.actions and rule.tags then
       local a8_recipe_id
       for _, t in ipairs(rule.tags) do
          a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
@@ -381,71 +391,67 @@ function Amalgam8:update_state(input)
 
    if input.instances then
        for _, e in ipairs(input.instances) do
-         if not a8_instances[e.service_name] then
-            a8_instances[e.service_name] = {}
-         end
          local instance = create_instance(e)
          if instance then
+            if not a8_instances[e.service_name] then
+               a8_instances[e.service_name] = {}
+            end
             table.insert(a8_instances[e.service_name], instance)
          end
        end
 
        for service, instances in pairs(a8_instances) do
-         serialized = cjson.encode(instances)
-         _, err = ngx_shared.a8_instances:set(service, serialized)
+          serialized = cjson.encode(instances)
+          _, err = ngx_shared.a8_instances:set(service, serialized)
+          if err then
+             err = "failed to update instances for service:"..service..":"..err
+             return err
+          end
+       end
+   end
+
+   if input.rules then
+      for _, r in ipairs(input.rules) do
+         if r.route then
+            local rule = create_rule(r, self.myname, self.mytags)
+            if rule then
+               --- destination need not be the same as the service_name.
+               --- One can have URIs in the destination as well. 
+               if not a8_routes[r.destination] then
+                  a8_routes[r.destination] = {}
+               end
+               table.insert(a8_routes[r.destination], rule)
+            end
+         elseif r.actions then
+            local rule = create_rule(r, self.myname, self.mytags)
+            if rule then
+               --- destination need not be the same as the service_name.
+               --- One can have URIs in the destination as well. 
+               if not a8_actions[r.destination] then
+                  a8_actions[r.destination] = {}
+               end
+               table.insert(a8_actions[r.destination], rule)
+            end
+         end
+      end
+
+      for destination, rset in pairs(a8_routes) do
+         table.sort(rset, compare_rules_descending)
+         serialized = cjson.encode(rset)
+         _, err = ngx_shared.a8_routes:set(destination, serialized)
          if err then
-            err = "failed to update instances for service:"..service..":"..err
+            err = "failed to update routes for service:"..service..":"..err
             return err
          end
       end
 
-   end
-
-   if input.rules then
-      if input.rules.routes then 
-         for _, r in ipairs(input.rules.routes) do
-            --- destination need not be the same as the service_name.
-            --- One can have URIs in the destination as well. 
-            if not a8_routes[r.destination] then
-               a8_routes[r.destination] = {}
-            end
-            local rule = create_rule(r, self.myname, self.mytags)
-            if rule then
-               table.insert(a8_routes[r.destination], rule)
-            end
-         end
-
-         for destination, rset in pairs(a8_routes) do
-            table.sort(rset, compare_rules_descending)
-            serialized = cjson.encode(rset)
-            _, err = ngx_shared.a8_routes:set(destination, serialized)
-            if err then
-               err = "failed to update routes for service:"..service..":"..err
-               return err
-            end
-         end
-      end
-      if input.rules.actions then 
-         for _, r in ipairs(input.rules.actions) do
-            --- destination need not be the same as the service_name.
-            --- One can have URIs in the destination as well. 
-            if not a8_actions[r.destination] then
-               a8_actions[r.destination] = {}
-            end
-            local rule = create_rule(r, self.myname, self.mytags)
-            if rule then
-               table.insert(a8_actions[r.destination], rule)
-            end
-         end
-
-         for destination, rset in pairs(a8_routes) do
-            table.sort(rset, compare_rules_descending)
-            serialized = cjson.encode(rset)
-            _, err = ngx_shared.a8_actions:set(destination, serialized)
-            if err then
-               err = "failed to update actions for service:"..service..":"..err
-               return err
-            end
+      for destination, aset in pairs(a8_actions) do
+         table.sort(aset, compare_rules_descending)
+         serialized = cjson.encode(aset)
+         _, err = ngx_shared.a8_actions:set(destination, serialized)
+         if err then
+            err = "failed to update actions for service:"..service..":"..err
+            return err
          end
       end
    end
@@ -464,6 +470,11 @@ function Amalgam8:proxy_admin()
          ngx_log(ngx_ERR, "error decoding input json: " .. err)
          ngx.say("error decoding input json: " .. err)
          ngx.exit(ngx.status)
+      end
+
+      if table.getn(input.instances) == 0 and table.getn(input.rules) == 0 then
+         ngx_log(ngx_ERR, "Received empty input from caller. Ignoring..")
+         ngx.exit(400)
       end
 
       -- TODO: locking in multi-worker context.
@@ -489,13 +500,13 @@ function Amalgam8:proxy_admin()
       local action_keys = ngx_shared.a8_actions:get_keys()
 
       for _,key in ipairs(instance_keys) do
-         state.instances[key] = get_unpacked_val(key)
+         state.instances[key] = get_unpacked_val(ngx_shared.a8_instances, key)
       end
       for _,key in ipairs(route_keys) do
-         state.routes[key] = get_unpacked_val(key)
+         state.routes[key] = get_unpacked_val(ngx_shared.a8_routes, key)
       end
       for _,key in ipairs(action_keys) do
-         state.actions[key] = get_unpacked_val(key)
+         state.actions[key] = get_unpacked_val(ngx_shared.a8_actions, key)
       end
 
       local output, err = cjson.encode(state)
@@ -537,9 +548,10 @@ function Amalgam8:apply_rules()
    local selected_route = nil
    local selected_action = nil
    local selected_backend = nil
+   ---local cookie_version = ngx.var.cookie_version --check for version cookie
    if routes then
       for _, r in ipairs(routes) do --rules are ordered by decreasing priority
-         if match_headers(headers, r) then -- TODO: add_cookie from version_routing.lua
+         if match_headers(headers, r) then
             selected_route = r
             break
          end
@@ -548,13 +560,22 @@ function Amalgam8:apply_rules()
          ngx.status = 412 -- Precondition failed
          ngx.exit(ngx.status)
       end
-      local weight = math.random()
-      for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
-         if weight < b.weight_order then
-            selected_backend = b
-            break
+      -- if cookie_version then --backend was selected earlier. Check for that backend in list
+      --    for _,b in ipairs(selected_route.backends) do
+      --       if weight < b.weight_order then
+      --          selected_backend = b
+      --          break
+      --       end
+      --    end
+      -- else
+         local weight = math.random()
+         for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
+            if weight < b.weight_order then
+               selected_backend = b
+               break
+            end
          end
-      end
+--      end
       if not selected_backend.tags then
          if selected_backend.name and selected_backend.name ~= destination then
             selected_instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
@@ -590,6 +611,14 @@ function Amalgam8:apply_rules()
       ngx.var.a8_backend_name = destination
    end
 
+   -- local selected_version = nil
+   -- if selected_backend.tags then
+   --    cookie_version = table.concat(selected_backend.tags, ",")
+   --    --store cookie in browser
+   --    --TODO: check for user agent string and then do this
+   --    add_cookie("version="..cookie_version.."; Path=/"..destination)
+   -- end
+
    --    --TODO: refactor. Need different LB functions
    local index    = math.random(1, table.getn(selected_instances)) % table.getn(selected_instances) + 1
    local upstream_instance = selected_instances[index]
@@ -602,7 +631,7 @@ function Amalgam8:apply_rules()
 
    if actions then
       for _, r in ipairs(actions) do --rules are ordered by decreasing priority
-         if match_headers(headers, r) then -- TODO: add_cookie from version_routing.lua
+         if match_headers(headers, r) then
             selected_action = r
             break
          end

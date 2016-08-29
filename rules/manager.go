@@ -18,7 +18,7 @@ import "time"
 
 type Manager interface {
 	AddRules(tenantID string, rules []Rule) (NewRules, error)
-	GetRules(tenantID string, filter Filter) ([]Rule, error)
+	GetRules(tenantID string, filter Filter) (RetrievedRules, error)
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
 	SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error)

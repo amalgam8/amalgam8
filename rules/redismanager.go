@@ -78,7 +78,7 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) (NewRules, error)
 	}, nil
 }
 
-func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error) {
+func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules, error) {
 	results := []Rule{}
 
 	var stringRules []string
@@ -90,7 +90,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Error reading all entries from redis")
-			return results, err
+			return RetrievedRules{}, err
 		}
 	} else {
 		stringRules, err = r.db.ReadEntries(namespace, filter.IDs)
@@ -99,7 +99,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Could not read entries from Redis")
-			return results, err
+			return RetrievedRules{}, err
 		}
 	}
 
@@ -111,14 +111,17 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 				"tenant_id": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
-			return results, &JSONMarshallError{Message: err.Error()}
+			return RetrievedRules{}, &JSONMarshallError{Message: err.Error()}
 		}
 		results[index] = rule
 	}
 
 	results = FilterRules(filter, results)
 
-	return results, nil
+	return RetrievedRules{
+		Rules:       results,
+		LastUpdated: nil,
+	}, nil
 }
 
 func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {

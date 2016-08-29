@@ -124,7 +124,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 		RuleType:     rules.RuleAny,
 	}
 
-	rules, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
@@ -132,7 +132,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	tenantRules := TenantRules{
-		Rules: rules,
+		Rules: retrievedRules.Rules,
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -192,7 +192,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 		RuleType:     ruleType,
 	}
 
-	entries, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -205,7 +205,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	}
 
 	services := make(map[string][]rules.Rule)
-	for _, rule := range entries {
+	for _, rule := range retrievedRules.Rules {
 		if _, ok := services[rule.Destination]; ok {
 			rulesByService := services[rule.Destination]
 			rulesByService = append(rulesByService, rule)
@@ -298,14 +298,14 @@ func (r *Rule) getByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 		RuleType:     ruleType,
 	}
 
-	entries, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
 
 	tenantRules := TenantRules{
-		Rules: entries,
+		Rules: retrievedRules.Rules,
 	}
 
 	w.WriteHeader(http.StatusOK)

@@ -19,21 +19,25 @@ import (
 
 	"sync"
 
+	"time"
+
 	"github.com/pborman/uuid"
 )
 
 func NewMemoryManager(validator Validator) Manager {
 	return &memory{
 		rules:     make(map[string]map[string]Rule),
+		lastUpdated: make(map[string]*time.Time),
 		validator: validator,
 		mutex:     &sync.Mutex{},
 	}
 }
 
 type memory struct {
-	rules     map[string]map[string]Rule
-	validator Validator
-	mutex     *sync.Mutex
+	rules       map[string]map[string]Rule
+	lastUpdated map[string]*time.Time
+	validator   Validator
+	mutex       *sync.Mutex
 }
 
 func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
@@ -74,15 +78,20 @@ func (m *memory) addRules(tenantID string, rules []Rule) {
 	for _, rule := range rules {
 		m.rules[tenantID][rule.ID] = rule
 	}
+
+	t := time.Now()
+	m.lastUpdated[tenantID] = &t
 }
 
-func (m *memory) GetRules(tenantID string, filter Filter) ([]Rule, error) {
+func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error) {
 	m.mutex.Lock()
 
 	rules, exists := m.rules[tenantID]
 	if !exists {
 		m.mutex.Unlock()
-		return []Rule{}, nil
+		return RetrievedRules{
+			Rules: []Rule{},
+		}, nil
 	}
 
 	var results []Rule
@@ -100,17 +109,28 @@ func (m *memory) GetRules(tenantID string, filter Filter) ([]Rule, error) {
 			rule, exists := m.rules[tenantID][id]
 			if !exists {
 				m.mutex.Unlock()
-				return nil, errors.New("rule not found")
+				return RetrievedRules{}, errors.New("rule not found")
 			}
 
 			results = append(results, rule)
 		}
 	}
+
+	lastUpdated := m.lastUpdated[tenantID]
+	if lastUpdated == nil {
+		t := time.Now()
+		m.lastUpdated[tenantID] = &t
+		lastUpdated = &t
+	}
+
 	m.mutex.Unlock()
 
 	results = FilterRules(filter, results)
 
-	return results, nil
+	return RetrievedRules{
+		Rules:       results,
+		LastUpdated: lastUpdated,
+	}, nil
 }
 
 func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
@@ -156,6 +176,9 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 	}
 
 	m.rules[tenantID] = make(map[string]Rule)
+
+	t := time.Now()
+	m.lastUpdated[tenantID] = &t
 
 	return nil
 }
@@ -204,7 +227,7 @@ func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {
 
 	rules = FilterRules(filter, rules)
 
-	for _, rule := range ruleMap {
+	for _, rule := range rules {
 		delete(m.rules[tenantID], rule.ID)
 	}
 

@@ -70,12 +70,19 @@ end
 
 local function add_cookie(cookie)
    local cookies = ngx.header["Set-Cookie"] or {}
-
     if type(cookies) == "string" then
         cookies = {cookies}
     end
     table.insert(cookies, cookie)
     ngx.header['Set-Cookie'] = cookies
+end
+
+
+local function create_cookie_version(route_backend)
+   local name = route_backend.name or ""
+   local tags = route_backend.tags or ""
+   if route_backend.tags then tags = table.concat(route_backend.tags, ",") end
+   return name.."-"..tags
 end
 
 
@@ -605,7 +612,8 @@ function Amalgam8:apply_rules()
    local selected_route = nil
    local selected_actions = nil
    local selected_backend = nil
-   ---local cookie_version = ngx.var.cookie_version --check for version cookie
+   local cookie_version = ngx.var.cookie_version --check for version cookie
+
    if routes then
       for _, r in ipairs(routes) do --rules are ordered by decreasing priority
          -- r1 = cjson.encode(r)
@@ -621,16 +629,17 @@ function Amalgam8:apply_rules()
          ngx.status = 412 -- Precondition failed
          ngx.exit(ngx.status)
       end
-      -- if cookie_version then --backend was selected earlier. Check for that backend in list
-      --    for _,b in ipairs(selected_route.backends) do
-      --       if weight < b.weight_order then
-      --          selected_backend = b
-      --          break
-      --       end
-      --    end
-      -- else
+
       if #selected_route.backends == 1 then
          selected_backend = selected_route.backends[1]
+      elseif cookie_version then --check if backend still exists
+         for _, b in ipairs(selected_route.backends) do
+            -- concatenate backend name and tags
+            if cookie_version == create_cookie_version(b) then
+               selected_backend = b
+               break
+            end
+         end
       else
          local weight = math.random()
          for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
@@ -640,7 +649,7 @@ function Amalgam8:apply_rules()
             end
          end
       end
-      --  end
+
       if not selected_backend.tags then
          if selected_backend.name and selected_backend.name ~= destination then
             selected_instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
@@ -675,14 +684,6 @@ function Amalgam8:apply_rules()
       selected_instances = instances
       ngx.var.a8_backend_name = destination
    end
-
-   -- local selected_version = nil
-   -- if selected_backend.tags then
-   --    cookie_version = table.concat(selected_backend.tags, ",")
-   --    --store cookie in browser
-   --    --TODO: check for user agent string and then do this
-   --    add_cookie("version="..cookie_version.."; Path=/"..destination)
-   -- end
 
    --    --TODO: refactor. Need different LB functions
    local upstream_instance = selected_instances[math.random(#selected_instances)]
@@ -721,6 +722,14 @@ function Amalgam8:apply_rules()
          end
       end
    end
+
+  --set the version cookie      
+   local selected_version =  create_cookie_version(selected_backend)
+   if cookie_version then --delete old cookie
+      add_cookie("version=; Path=/" .. selected_backend.name .. "; Expires=" .. ngx.cookie_time(0))
+   end
+   --set the cookie to the version we selected
+   add_cookie("version="..selected_version.."; Path=/"..selected_backend.name)
 end
 
 

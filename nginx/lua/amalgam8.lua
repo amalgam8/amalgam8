@@ -390,13 +390,15 @@ function Amalgam8:update_state(input)
    local err
 
    if input.instances then
-       for _, e in ipairs(input.instances) do
-         local instance = create_instance(e)
-         if instance then
-            if not a8_instances[e.service_name] then
-               a8_instances[e.service_name] = {}
+      for _, e in ipairs(input.instances) do
+         if e.service_name ~= self.myname then
+            local instance = create_instance(e)
+            if instance then
+               if not a8_instances[e.service_name] then
+                  a8_instances[e.service_name] = {}
+               end
+               table.insert(a8_instances[e.service_name], instance)
             end
-            table.insert(a8_instances[e.service_name], instance)
          end
        end
 
@@ -472,13 +474,17 @@ function Amalgam8:proxy_admin()
          ngx.exit(ngx.status)
       end
 
-      if table.getn(input.instances) == 0 and table.getn(input.rules) == 0 then
-         ngx_log(ngx_ERR, "Received empty input from caller. Ignoring..")
-         ngx.exit(400)
-      end
+      -- if table.getn(input.instances) == 0 and table.getn(input.rules) == 0 then
+      --   ngx_log(ngx_ERR, "Received empty input from caller. Ignoring..")
+      --   ngx.exit(400)
+      -- end
 
       -- TODO: locking in multi-worker context.
       reset_state()
+      if #input.instances == 0 and #input.rules == 0 then
+         ngx.exit(ngx.HTTP_OK)
+      end
+
       err = self:update_state(input)
       if err then
          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
@@ -535,7 +541,7 @@ function Amalgam8:apply_rules()
    ngx.var.a8_backend_name = destination
 
    local instances = get_unpacked_val(ngx_shared.a8_instances, destination)
-   if not instances or table.getn(instances) == 0 then
+   if not instances or #instances == 0 then
       ngx.status = ngx.HTTP_NOT_FOUND
       ngx.exit(ngx.status)
    end
@@ -575,7 +581,7 @@ function Amalgam8:apply_rules()
                break
             end
          end
---      end
+      --  end
       if not selected_backend.tags then
          if selected_backend.name and selected_backend.name ~= destination then
             selected_instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
@@ -602,7 +608,7 @@ function Amalgam8:apply_rules()
       end
       ngx.var.a8_backend_name = selected_backend.name
 
-      if not selected_instances or table.getn(selected_instances) == 0 then
+      if not selected_instances or #selected_instances == 0 then
          ngx.status = ngx.HTTP_NOT_FOUND
          ngx.exit(ngx.status)
       end
@@ -620,8 +626,7 @@ function Amalgam8:apply_rules()
    -- end
 
    --    --TODO: refactor. Need different LB functions
-   local index    = math.random(1, table.getn(selected_instances)) % table.getn(selected_instances) + 1
-   local upstream_instance = selected_instances[index]
+   local upstream_instance = selected_instances[math.random(#selected_instances)]
    ngx.var.a8_upstream_host = upstream_instance.host
    ngx.var.a8_upstream_port = upstream_instance.port
    ngx.var.a8_upstream_tags = upstream_instance.tags

@@ -19,25 +19,23 @@ import (
 
 	"sync"
 
-	"time"
-
 	"github.com/pborman/uuid"
 )
 
 func NewMemoryManager(validator Validator) Manager {
 	return &memory{
 		rules:     make(map[string]map[string]Rule),
-		lastUpdated: make(map[string]*time.Time),
+		revision:  make(map[string]int64),
 		validator: validator,
 		mutex:     &sync.Mutex{},
 	}
 }
 
 type memory struct {
-	rules       map[string]map[string]Rule
-	lastUpdated map[string]*time.Time
-	validator   Validator
-	mutex       *sync.Mutex
+	rules     map[string]map[string]Rule
+	revision  map[string]int64
+	validator Validator
+	mutex     *sync.Mutex
 }
 
 func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
@@ -79,18 +77,20 @@ func (m *memory) addRules(tenantID string, rules []Rule) {
 		m.rules[tenantID][rule.ID] = rule
 	}
 
-	t := time.Now()
-	m.lastUpdated[tenantID] = &t
+	m.revision[tenantID]++
 }
 
 func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error) {
 	m.mutex.Lock()
 
+	revision := m.revision[tenantID]
+
 	rules, exists := m.rules[tenantID]
 	if !exists {
 		m.mutex.Unlock()
 		return RetrievedRules{
-			Rules: []Rule{},
+			Rules:    []Rule{},
+			Revision: revision,
 		}, nil
 	}
 
@@ -116,20 +116,13 @@ func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error
 		}
 	}
 
-	lastUpdated := m.lastUpdated[tenantID]
-	if lastUpdated == nil {
-		t := time.Now()
-		m.lastUpdated[tenantID] = &t
-		lastUpdated = &t
-	}
-
 	m.mutex.Unlock()
 
 	results = FilterRules(filter, results)
 
 	return RetrievedRules{
-		Rules:       results,
-		LastUpdated: lastUpdated,
+		Rules:    results,
+		Revision: revision,
 	}, nil
 }
 
@@ -177,8 +170,7 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 
 	m.rules[tenantID] = make(map[string]Rule)
 
-	t := time.Now()
-	m.lastUpdated[tenantID] = &t
+	m.revision[tenantID]++
 
 	return nil
 }

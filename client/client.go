@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/rules"
@@ -15,8 +14,8 @@ import (
 )
 
 type RuleResponse struct {
-	LastUpdated time.Time    `json:"last_updated"`
-	Rules       []rules.Rule `json:"rules"`
+	Rules    []rules.Rule `json:"rules"`
+	Revision int64        `json:"revision"`
 }
 
 // Config stores the configurable attributes of the client.

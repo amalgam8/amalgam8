@@ -83,8 +83,9 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 
 	var stringRules []string
 	var err error
+	var rev int64
 	if len(filter.IDs) == 0 {
-		stringRules, err = r.db.ReadAllEntries(namespace)
+		stringRules, rev, err = r.db.ReadAllEntries(namespace)
 		if err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
@@ -93,7 +94,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 			return RetrievedRules{}, err
 		}
 	} else {
-		stringRules, err = r.db.ReadEntries(namespace, filter.IDs)
+		stringRules, rev, err = r.db.ReadEntries(namespace, filter.IDs)
 		if err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
@@ -119,8 +120,8 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 	results = FilterRules(filter, results)
 
 	return RetrievedRules{
-		Rules:       results,
-		LastUpdated: nil,
+		Rules:    results,
+		Revision: rev,
 	}, nil
 }
 

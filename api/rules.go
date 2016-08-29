@@ -30,6 +30,11 @@ type TenantRules struct {
 	Rules []rules.Rule `json:"rules"`
 }
 
+type RuleList struct {
+	Rules    []rules.Rule `json:"rules"`
+	Revision int64        `json:"revision"`
+}
+
 type ServiceRules struct {
 	ServiceName string       `json:"service"`
 	Rules       []rules.Rule `json:"rules"`
@@ -131,12 +136,13 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 		return err
 	}
 
-	tenantRules := TenantRules{
-		Rules: retrievedRules.Rules,
+	ruleList := RuleList{
+		Rules:    retrievedRules.Rules,
+		Revision: retrievedRules.Revision,
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.WriteJson(&tenantRules)
+	w.WriteJson(&ruleList)
 	return nil
 }
 

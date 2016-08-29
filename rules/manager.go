@@ -14,8 +14,6 @@
 
 package rules
 
-import "time"
-
 type Manager interface {
 	AddRules(tenantID string, rules []Rule) (NewRules, error)
 	GetRules(tenantID string, filter Filter) (RetrievedRules, error)
@@ -29,6 +27,11 @@ type NewRules struct {
 }
 
 type RetrievedRules struct {
-	Rules       []Rule
-	LastUpdated *time.Time
+	// Rules filtered
+	Rules []Rule
+
+	// Revision of the rules for this namespace. Each time the rules for this namespace are changed, this the
+	// revision is incremented.
+	// FIXME: if a Redis DB is updated once a millisecond the revision will roll over after 292,471,208.678 years.
+	Revision int64
 }

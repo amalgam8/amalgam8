@@ -69,14 +69,14 @@ func NewRedisDB(address string, password string) *redisDB {
 	return db
 }
 
-func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, error) {
+func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, int64, error) {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
 	logrus.Debug("HGETALL ", namespace)
 	entryMap, err := redis.StringMap(conn.Do("HGETALL", BuildRulesKey(namespace)))
 	if err != nil {
-		return []string{}, err
+		return []string{}, 0, err
 	}
 
 	// Transform into an array
@@ -87,26 +87,46 @@ func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, error) {
 		i++
 	}
 
-	return rdb.decrypt(entries)
+	entries, err = rdb.decrypt(entries)
+	if err != nil {
+		return []string{}, 0, err
+	}
+
+	rev, err := redis.Int64(conn.Do("GET", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	if err == redis.ErrNil {
+		rev = 0
+	}
+
+	return entries, rev, nil
 }
 
-func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, error) {
-	conn := rdb.pool.Get()
-	defer conn.Close()
-
+func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, int64, error) {
 	args := make([]interface{}, len(ids)+1)
 	args[0] = BuildRulesKey(namespace)
 	for i, id := range ids {
 		args[i+1] = id
 	}
 
+	conn := rdb.pool.Get()
+	defer conn.Close()
+
 	logrus.Debug("HMGET ", args)
 	entries, err := redis.Strings(conn.Do("HMGET", args...)) // TODO: more error checking?
 	if err != nil {
-		return []string{}, err
+		return []string{}, 0, err
 	}
 
-	return rdb.decrypt(entries)
+	entries, err = rdb.decrypt(entries)
+	if err != nil {
+		return []string{}, 0, err
+	}
+
+	rev, err := redis.Int64(conn.Do("GET", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	if err == redis.ErrNil {
+		rev = 0
+	}
+
+	return entries, rev, nil
 }
 
 func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) error {
@@ -122,6 +142,11 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 
 	logrus.Debug("HMSET ", args)
 	_, err = redis.String(conn.Do("HMSET", args...))
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -170,9 +195,14 @@ func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) e
 	_, err = redis.Values(conn.Do("EXEC"))
 
 	// Nil return indicates that the transaction failed
-	if err == redis.ErrNil {
-		logrus.Error("Transaction failed due to conflict")
+	if err != nil {
+		if err == redis.ErrNil {
+			logrus.Error("Transaction failed due to conflict")
+		}
+		return err
 	}
+
+	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -192,6 +222,11 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	logrus.Debug("HDEL ", args)
 	_, err := redis.Int(conn.Do("HDEL", args...))
 	// TODO: more error checking?
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -201,6 +236,11 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 	defer conn.Close()
 
 	_, err := redis.Int(conn.Do("DEL", BuildRulesKey(namespace)))
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -297,10 +337,15 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 	// Execute transaction
 	_, err = redis.Values(conn.Do("EXEC"))
 
-	// Nil return indicates that the transaction failed
-	if err == redis.ErrNil {
-		logrus.Error("Transaction failed due to conflict")
+	if err != nil {
+		// Nil return indicates that the transaction failed
+		if err == redis.ErrNil {
+			logrus.Error("Transaction failed due to conflict")
+		}
+		return err
 	}
+
+	_, err = redis.Int64(conn.Do("INCR", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
 
 	return err
 }

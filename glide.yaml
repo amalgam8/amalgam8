@@ -19,7 +19,7 @@ import:
 - package: github.com/amalgam8/registry
 
 - package: github.com/amalgam8/controller
-  version: rule_api_prototype
+  version: rule_rev
 
 - package: github.com/Sirupsen/logrus
   version: 0.8.7

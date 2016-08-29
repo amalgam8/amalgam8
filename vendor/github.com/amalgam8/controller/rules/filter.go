@@ -18,6 +18,12 @@ import (
 	"fmt"
 )
 
+const (
+	RuleAny = iota
+	RuleRoute
+	RuleAction
+)
+
 type Filter struct {
 	IDs          []string
 	Tags         []string
@@ -61,7 +67,7 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 	// Iterate through the rules, building a new list of rules that pass the filter
 	res := make([]Rule, 0, len(rules)) // Filtered rules
 	for _, rule := range rules {
-		// Filter by ID. The ID must be a member of the acceptable IDs.
+		// Filter by ID. The ID must be a member of the set of acceptable IDs.
 		if ids != nil {
 			if _, exists := ids[rule.ID]; !exists {
 				continue

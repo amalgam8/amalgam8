@@ -38,7 +38,7 @@ type controller struct {
 	ticker         *time.Ticker
 	controller     client.Client
 	pollInterval   time.Duration
-	currentVersion *time.Time
+	revision       int64
 	listeners      []ControllerListener
 }
 
@@ -89,11 +89,13 @@ func (c *controller) poll() error {
 		return err
 	}
 
-	//// Check if the rules have been modified since the last poll
-	//if c.currentVersion != nil && !resp.LastUpdated.After(*c.currentVersion) {
-	//	return nil
-	//}
-	//c.currentVersion = &resp.LastUpdated
+	// Short-circuit if the controller's revision is not newer than our revision
+	if c.revision >= resp.Revision {
+		return nil
+	}
+
+	// Update our revision
+	c.revision = resp.Revision
 
 	// Notify listeners
 	for _, listener := range c.listeners {

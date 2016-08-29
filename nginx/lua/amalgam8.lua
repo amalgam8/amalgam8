@@ -22,6 +22,8 @@ local tostring = tostring
 -----to be evaluated at high load.
 local Amalgam8 = { _VERSION = '0.3.0' }
 
+local delay_action, abort_action = 1, 2
+
 local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then
       return true
@@ -301,7 +303,8 @@ local function create_rule(rule, myname, mytags)
    -- set default weights for backends where no weight is specified
    ---- Take the leftover weight and distribute it equally among
    ---- unweighted backends
-   if rule.route and rule.route.backends then
+   if rule.route then
+      if not rule.route.backends then return nil end
       local sum = 0.0
       local prev = 0.0
       local unweighted = 0
@@ -332,16 +335,28 @@ local function create_rule(rule, myname, mytags)
    end
 
    -- if its an action rule, search for a8_recipe_id in the tags and promote it to its own field
-   if rule.actions and rule.tags then
-      local a8_recipe_id
-      for _, t in ipairs(rule.tags) do
-         a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
-         if a8_recipe_id then
-            rule.a8_recipe_id = a8_recipe_id
-            break
+   if rule.actions then
+      for _, a in ipairs(rule.actions) do
+         if a.action == "delay" then
+            a.action= delay_action
+         elseif a.action == "abort" then
+            a.action= abort_action
+         else
+            ngx_log(ngx_ERR, "Unknown action provided in rule "..a.action)
+            return nil
          end
       end
-   end     
+      if rule.tags then
+         local a8_recipe_id
+         for _, t in ipairs(rule.tags) do
+            a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
+            if a8_recipe_id then
+               rule.a8_recipe_id = a8_recipe_id
+               break
+            end
+         end
+      end
+   end
    return rule
 end
 
@@ -502,6 +517,32 @@ function Amalgam8:proxy_admin()
          ngx.say("error updating internal state: " .. err)
          ngx.exit(ngx.status)
       end
+
+      ---START DEBUG
+      -- local state = {
+      --    instances = {},
+      --    routes = {},
+      --    actions = {}
+      -- }
+
+      -- local instance_keys = ngx_shared.a8_instances:get_keys()
+      -- local route_keys = ngx_shared.a8_routes:get_keys()
+      -- local action_keys = ngx_shared.a8_actions:get_keys()
+
+      -- for _,key in ipairs(instance_keys) do
+      --    state.instances[key] = get_unpacked_val(ngx_shared.a8_instances, key)
+      -- end
+      -- for _,key in ipairs(route_keys) do
+      --    state.routes[key] = get_unpacked_val(ngx_shared.a8_routes, key)
+      -- end
+      -- for _,key in ipairs(action_keys) do
+      --    state.actions[key] = get_unpacked_val(ngx_shared.a8_actions, key)
+      -- end
+
+      -- local output, err = cjson.encode(state)
+      -- ngx_log(ngx_DEBUG, output)
+      ---END DEBUG
+
       ngx.exit(ngx.HTTP_OK)
    elseif ngx.req.get_method() == "GET" then
       local state = {
@@ -562,7 +603,7 @@ function Amalgam8:apply_rules()
 
    local selected_instances = {}
    local selected_route = nil
-   local selected_action = nil
+   local selected_actions = nil
    local selected_backend = nil
    ---local cookie_version = ngx.var.cookie_version --check for version cookie
    if routes then
@@ -588,6 +629,9 @@ function Amalgam8:apply_rules()
       --       end
       --    end
       -- else
+      if #selected_route.backends == 1 then
+         selected_backend = selected_route.backends[1]
+      else
          local weight = math.random()
          for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
             if weight < b.weight_order then
@@ -595,6 +639,7 @@ function Amalgam8:apply_rules()
                break
             end
          end
+      end
       --  end
       if not selected_backend.tags then
          if selected_backend.name and selected_backend.name ~= destination then
@@ -649,28 +694,32 @@ function Amalgam8:apply_rules()
    -- TODO: Set the upstream_host_header based on host field in selected backend.
 
    if actions then
-      for _, r in ipairs(actions) do --rules are ordered by decreasing priority
-         if match_headers(headers, r) then
-            selected_action = r.actions
+      -- ngx_log(ngx_DEBUG, destination.." has actions "..tostring(#actions))
+      for _, a in ipairs(actions) do --rules are ordered by decreasing priority
+         if match_headers(headers, a) then
+            selected_actions = a.actions
             break
          end
       end
       if not selected_actions then ngx.exit(0) end -- proceed to next stage
-      ngx.var.a8_recipe_id = selected_action.a8_recipe_id
-      if selected_action.delay then
-         if not selected_action.delay.tags or match_tags(upstream_instance.tags, selected_action.delay.tags) then
-            if selected_action.delay.probability == 1.0 or (math.random() < selected_action.delay.probability) then
-               ngx.sleep(selected_action.delay.duration)
+      -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
+      ngx.var.a8_recipe_id = selected_actions.a8_recipe_id
+      for _,sa in ipairs(selected_actions) do
+         if sa.action <= abort_action then
+            -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
+            if not sa.tags or match_tags(upstream_instance.tags, sa.tags) then
+               -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
+               if math.random() < sa.probability then
+                  -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." probability matched for "..destination)
+                  if sa.action == delay_action then
+                     ngx.sleep(sa.duration)
+                  elseif sa.action == abort_action then
+                     ngx.exit(sa.return_code)
+                  end
+               end
             end
          end
       end
-      if selected_action.abort then
-         if not selected_action.abort.tags or match_tags(upstream_instance.tags, selected_action.abort.tags) then
-            if selected_action.abort.probability == 1.0 or (math.random() < selected_action.abort.probability) then
-               ngx.exit(selected_action.abort.return_code)
-            end
-         end
-      end         
    end
 end
 

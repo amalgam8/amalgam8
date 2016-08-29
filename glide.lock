@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 hash: a6d808181e1cfcbc686310d74f1b8c9721a20859bfc4841d12b654101ab16248
-updated: 2016-05-31T14:32:30.643231596+03:00
+updated: 2016-08-26T08:01:01.092821045-05:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: bd5fcdd7b0b7e63f4abb171498784efbd01fda7b
@@ -40,5 +40,5 @@ imports:
 - name: github.com/stretchr/testify
   version: 9f9027faeb0dad515336ed2f28317f9f8f527ab4
 - name: gopkg.in/yaml.v2
-  version: a83829b6f1293c91addabc89d0571c246397bbf4
+  version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
 devImports: []

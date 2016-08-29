@@ -93,13 +93,21 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 		}
 	}
 
-	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
+	newRules, err := r.manager.AddRules(tenantID, tenantRules.Rules)
+	if err != nil {
 		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
 
+	resp := struct {
+		IDs []string `json:"ids"`
+	}{
+		IDs: newRules.IDs,
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&resp)
 	return nil
 }
 
@@ -256,12 +264,20 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRules(tenantID, filter, tenantRules.Rules); err != nil {
+	newRules, err := r.manager.SetRules(tenantID, filter, tenantRules.Rules)
+	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
 
+	resp := struct {
+		IDs []string `json:"ids"`
+	}{
+		IDs: newRules.IDs,
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&resp)
 	return nil
 }
 
@@ -314,7 +330,8 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRules(tenantID, filter, []rules.Rule{}); err != nil {
+	_, err := r.manager.SetRules(tenantID, filter, []rules.Rule{})
+	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}

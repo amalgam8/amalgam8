@@ -60,7 +60,6 @@ func controllerMain(conf config.Config) error {
 	var err error
 
 	logrus.ErrorKey = "error"
-	logrus.Info(conf.LogLevel)
 	logrus.SetLevel(conf.LogLevel)
 
 	i18n.LoadLocales("./locales")

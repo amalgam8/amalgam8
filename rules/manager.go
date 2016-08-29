@@ -14,10 +14,21 @@
 
 package rules
 
+import "time"
+
 type Manager interface {
-	AddRules(tenantID string, rules []Rule) error
+	AddRules(tenantID string, rules []Rule) (NewRules, error)
 	GetRules(tenantID string, filter Filter) ([]Rule, error)
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
-	SetRules(namespace string, filter Filter, rules []Rule) error
+	SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error)
+}
+
+type NewRules struct {
+	IDs []string
+}
+
+type RetrievedRules struct {
+	Rules       []Rule
+	LastUpdated *time.Time
 }

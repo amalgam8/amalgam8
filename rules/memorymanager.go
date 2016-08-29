@@ -36,14 +36,14 @@ type memory struct {
 	mutex     *sync.Mutex
 }
 
-func (m *memory) AddRules(tenantID string, rules []Rule) error {
+func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
-		return errors.New("rules: no rules provided")
+		return NewRules{}, errors.New("rules: no rules provided")
 	}
 
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
-		return err
+		return NewRules{}, err
 	}
 
 	// Generate IDs
@@ -51,10 +51,18 @@ func (m *memory) AddRules(tenantID string, rules []Rule) error {
 
 	// Add the rules
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.addRules(tenantID, rules)
+	m.mutex.Unlock()
 
-	return nil
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
+
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
 func (m *memory) addRules(tenantID string, rules []Rule) {
@@ -152,10 +160,10 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 	return nil
 }
 
-func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) error {
+func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
-		return err
+		return NewRules{}, err
 	}
 
 	m.generateRuleIDs(rules)
@@ -164,10 +172,21 @@ func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	m.deleteRulesByFilter(namespace, filter)
+	if err := m.deleteRulesByFilter(namespace, filter); err != nil {
+		return NewRules{}, err
+	}
+
 	m.addRules(namespace, rules)
 
-	return nil
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
+
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
 func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {

@@ -30,6 +30,11 @@ type TenantRules struct {
 	Rules []rules.Rule `json:"rules"`
 }
 
+type RuleList struct {
+	Rules    []rules.Rule `json:"rules"`
+	Revision int64        `json:"revision"`
+}
+
 type ServiceRules struct {
 	ServiceName string       `json:"service"`
 	Rules       []rules.Rule `json:"rules"`
@@ -93,13 +98,21 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 		}
 	}
 
-	if err := r.manager.AddRules(tenantID, tenantRules.Rules); err != nil {
+	newRules, err := r.manager.AddRules(tenantID, tenantRules.Rules)
+	if err != nil {
 		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
 
+	resp := struct {
+		IDs []string `json:"ids"`
+	}{
+		IDs: newRules.IDs,
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&resp)
 	return nil
 }
 
@@ -116,19 +129,20 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 		RuleType:     rules.RuleAny,
 	}
 
-	rules, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
 
-	tenantRules := TenantRules{
-		Rules: rules,
+	ruleList := RuleList{
+		Rules:    retrievedRules.Rules,
+		Revision: retrievedRules.Revision,
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.WriteJson(&tenantRules)
+	w.WriteJson(&ruleList)
 	return nil
 }
 
@@ -184,7 +198,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 		RuleType:     ruleType,
 	}
 
-	entries, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -197,7 +211,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	}
 
 	services := make(map[string][]rules.Rule)
-	for _, rule := range entries {
+	for _, rule := range retrievedRules.Rules {
 		if _, ok := services[rule.Destination]; ok {
 			rulesByService := services[rule.Destination]
 			rulesByService = append(rulesByService, rule)
@@ -256,12 +270,20 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRules(tenantID, filter, tenantRules.Rules); err != nil {
+	newRules, err := r.manager.SetRules(tenantID, filter, tenantRules.Rules)
+	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
 
+	resp := struct {
+		IDs []string `json:"ids"`
+	}{
+		IDs: newRules.IDs,
+	}
+
 	w.WriteHeader(http.StatusCreated)
+	w.WriteJson(&resp)
 	return nil
 }
 
@@ -282,14 +304,14 @@ func (r *Rule) getByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 		RuleType:     ruleType,
 	}
 
-	entries, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(tenantID, filter)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
 
 	tenantRules := TenantRules{
-		Rules: entries,
+		Rules: retrievedRules.Rules,
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -314,7 +336,8 @@ func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *res
 		RuleType:     ruleType,
 	}
 
-	if err := r.manager.SetRules(tenantID, filter, []rules.Rule{}); err != nil {
+	_, err := r.manager.SetRules(tenantID, filter, []rules.Rule{})
+	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}

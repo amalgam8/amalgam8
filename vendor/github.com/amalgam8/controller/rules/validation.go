@@ -22,19 +22,34 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
+// Validator validates rules against the rule schema
 type Validator interface {
 	Validate(Rule) error
 }
 
 type validator struct {
-	schemaLoader gojsonschema.JSONLoader
+	schema *gojsonschema.Schema
 }
 
+func NewValidator() (Validator, error) {
+	sl := gojsonschema.NewReferenceLoader("file://./schema.json")
+
+	schema, err := gojsonschema.NewSchema(sl)
+	if err != nil {
+		return nil, err
+	}
+
+	return &validator{
+		schema: schema,
+	}, nil
+}
+
+// Validate a rule
 func (v *validator) Validate(rule Rule) error {
 	ruleLoader := gojsonschema.NewGoLoader(&rule)
-	result, err := gojsonschema.Validate(v.schemaLoader, ruleLoader)
+	result, err := v.schema.Validate(ruleLoader)
 	if err != nil {
-		logrus.WithError(err).Error("Could not validate with schema")
+		logrus.WithError(err).Error("Could not validate rule with schema")
 		return err
 	}
 

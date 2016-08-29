@@ -60,7 +60,6 @@ func controllerMain(conf config.Config) error {
 	var err error
 
 	logrus.ErrorKey = "error"
-	logrus.Info(conf.LogLevel)
 	logrus.SetLevel(conf.LogLevel)
 
 	i18n.LoadLocales("./locales")
@@ -88,13 +87,21 @@ func controllerMain(conf config.Config) error {
 
 	healthAPI := api.NewHealth(reporter)
 
+	validator, err := rules.NewValidator()
+	if err != nil {
+		logrus.WithError(err).Error("Validator creation failed")
+		setupHandler.SetError(err)
+		return err
+	}
+
 	var ruleManager rules.Manager
 	if conf.Database.Type == "redis" {
 		ruleManager = rules.NewRedisManager(
 			rules.NewRedisDB(conf.Database.Host, conf.Database.Password),
+			validator,
 		)
 	} else {
-		ruleManager = rules.NewMemoryManager()
+		ruleManager = rules.NewMemoryManager(validator)
 	}
 	rulesAPI := api.NewRule(ruleManager, reporter)
 

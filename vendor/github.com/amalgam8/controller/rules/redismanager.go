@@ -21,15 +21,12 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/pborman/uuid"
-	"github.com/xeipuuv/gojsonschema"
 )
 
-func NewRedisManager(db *redisDB) Manager {
+func NewRedisManager(db *redisDB, v Validator) Manager {
 	return &redisManager{
-		validator: &validator{
-			schemaLoader: gojsonschema.NewReferenceLoader("file://./schema.json"),
-		},
-		db: db,
+		validator: v,
+		db:        db,
 	}
 }
 
@@ -39,15 +36,15 @@ type redisManager struct {
 }
 
 // TODO: return IDs somehow
-func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
+func (r *redisManager) AddRules(tenantID string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
-		return errors.New("rules: no rules provided")
+		return NewRules{}, errors.New("rules: no rules provided")
 	}
 
 	// Validate rules
 	for _, rule := range rules {
 		if err := r.validator.Validate(rule); err != nil {
-			return &InvalidRuleError{}
+			return NewRules{}, &InvalidRuleError{}
 		}
 	}
 
@@ -57,7 +54,7 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 		rule.ID = id
 		data, err := json.Marshal(&rule)
 		if err != nil {
-			return &JSONMarshallError{Message: err.Error()}
+			return NewRules{}, &JSONMarshallError{Message: err.Error()}
 		}
 
 		entries[id] = string(data)
@@ -67,34 +64,43 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) error {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"namespace": tenantID,
 		}).Error("Error inserting entries in Redis")
-		return err
+		return NewRules{}, err
 	}
 
-	return nil
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
+
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
-func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error) {
+func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules, error) {
 	results := []Rule{}
 
 	var stringRules []string
 	var err error
+	var rev int64
 	if len(filter.IDs) == 0 {
-		stringRules, err = r.db.ReadAllEntries(namespace)
+		stringRules, rev, err = r.db.ReadAllEntries(namespace)
 		if err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Error reading all entries from redis")
-			return results, err
+			return RetrievedRules{}, err
 		}
 	} else {
-		stringRules, err = r.db.ReadEntries(namespace, filter.IDs)
+		stringRules, rev, err = r.db.ReadEntries(namespace, filter.IDs)
 		if err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Could not read entries from Redis")
-			return results, err
+			return RetrievedRules{}, err
 		}
 	}
 
@@ -106,17 +112,20 @@ func (r *redisManager) GetRules(namespace string, filter Filter) ([]Rule, error)
 				"tenant_id": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
-			return results, &JSONMarshallError{Message: err.Error()}
+			return RetrievedRules{}, &JSONMarshallError{Message: err.Error()}
 		}
 		results[index] = rule
 	}
 
 	results = FilterRules(filter, results)
 
-	return results, nil
+	return RetrievedRules{
+		Rules:    results,
+		Revision: rev,
+	}, nil
 }
 
-func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) error {
+func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {
 	for i := range rules {
 		rules[i].ID = uuid.New()
 	}
@@ -124,14 +133,23 @@ func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) e
 	// Validate rules
 	for _, rule := range rules {
 		if err := r.validator.Validate(rule); err != nil {
-			return &InvalidRuleError{}
+			return NewRules{}, &InvalidRuleError{}
 		}
 	}
 
-	return r.db.SetByDestination(namespace, filter, rules)
+	if err := r.db.SetByDestination(namespace, filter, rules); err != nil {
+		return NewRules{}, err
+	}
 
-	// TODO: return info about the new rules?
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
 
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
 func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {

@@ -120,8 +120,8 @@ end
 
 
 local function match_header_value(req_headers, header_name, header_val_pattern)
-   local header = req_headers[header_name]
-   if header then
+   local header_value = req_headers[header_name]
+   if header_value then
       local m, err = ngx.re.match(header, header_val_pattern, "o")
       if m then return true end
    end

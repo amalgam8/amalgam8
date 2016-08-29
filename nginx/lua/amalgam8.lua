@@ -518,13 +518,13 @@ function Amalgam8:proxy_admin()
          ngx.exit(ngx.status)
       end
 
+      ---START DEBUG
       -- local state = {
       --    instances = {},
       --    routes = {},
       --    actions = {}
       -- }
 
-      -- -- TODO: This fetches utmost 1024 keys only
       -- local instance_keys = ngx_shared.a8_instances:get_keys()
       -- local route_keys = ngx_shared.a8_routes:get_keys()
       -- local action_keys = ngx_shared.a8_actions:get_keys()
@@ -541,6 +541,7 @@ function Amalgam8:proxy_admin()
 
       -- local output, err = cjson.encode(state)
       -- ngx_log(ngx_DEBUG, output)
+      ---END DEBUG
 
       ngx.exit(ngx.HTTP_OK)
    elseif ngx.req.get_method() == "GET" then
@@ -628,6 +629,9 @@ function Amalgam8:apply_rules()
       --       end
       --    end
       -- else
+      if #selected_route.backends == 1 then
+         selected_backend = selected_route.backends[1]
+      else
          local weight = math.random()
          for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
             if weight < b.weight_order then
@@ -635,6 +639,7 @@ function Amalgam8:apply_rules()
                break
             end
          end
+      end
       --  end
       if not selected_backend.tags then
          if selected_backend.name and selected_backend.name ~= destination then

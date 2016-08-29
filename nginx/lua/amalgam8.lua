@@ -122,17 +122,27 @@ end
 local function match_header_value(req_headers, header_name, header_val_pattern)
    local header_value = req_headers[header_name]
    if header_value then
-      local m, err = ngx.re.match(header, header_val_pattern, "o")
-      if m then return true end
+      -- ngx_log(ngx_DEBUG, "match_header_value: header_name "..header_name.." value "..header_value.." pattern "..header_val_pattern)
+      local m, err = ngx.re.match(header_value, header_val_pattern, "o")
+      if m then
+         -- ngx_log(ngx_DEBUG, "header matched for "..header_name.." returning true")
+         return true
+      end
    end
    return false
 end
 
 
 local function match_headers(req_headers, rule)
-   if not rule.match then return true end --source matched (earlier), destination matched.
+   -- r1 = cjson.encode(rule)
+   if not rule.match then
+      -- ngx_log(ngx_DEBUG, "match_headers: No rule.match block for rule "..r1)
+      return true
+   end --source matched (earlier), destination matched.
    if rule.match.all then
+      -- ngx_log(ngx_DEBUG, "match_headers: rule has match.all block "..r1)
       for k, v in pairs(rule.match.all) do
+         -- ngx_log(ngx_DEBUG, "match_headers: matching header "..k.." value "..v.." for rule.match.all "..r1)
          if not match_header_value(req_headers, k, v) then return false end
       end
    end
@@ -557,11 +567,15 @@ function Amalgam8:apply_rules()
    ---local cookie_version = ngx.var.cookie_version --check for version cookie
    if routes then
       for _, r in ipairs(routes) do --rules are ordered by decreasing priority
+         -- r1 = cjson.encode(r)
+         -- ngx_log(ngx_DEBUG, "Matching route "..r1)
          if match_headers(headers, r) then
-            selected_route = r
+            selected_route = r.route
             break
          end
       end
+      -- r1 = cjson.encode(selected_route)
+      -- ngx_log(ngx_DEBUG, "selected route "..r1)
       if not selected_route then
          ngx.status = 412 -- Precondition failed
          ngx.exit(ngx.status)
@@ -637,10 +651,11 @@ function Amalgam8:apply_rules()
    if actions then
       for _, r in ipairs(actions) do --rules are ordered by decreasing priority
          if match_headers(headers, r) then
-            selected_action = r
+            selected_action = r.actions
             break
          end
       end
+      if not selected_actions then ngx.exit(0) end -- proceed to next stage
       ngx.var.a8_recipe_id = selected_action.a8_recipe_id
       if selected_action.delay then
          if not selected_action.delay.tags or match_tags(upstream_instance.tags, selected_action.delay.tags) then

@@ -25,6 +25,7 @@ import (
 func NewMemoryManager(validator Validator) Manager {
 	return &memory{
 		rules:     make(map[string]map[string]Rule),
+		revision:  make(map[string]int64),
 		validator: validator,
 		mutex:     &sync.Mutex{},
 	}
@@ -32,18 +33,19 @@ func NewMemoryManager(validator Validator) Manager {
 
 type memory struct {
 	rules     map[string]map[string]Rule
+	revision  map[string]int64
 	validator Validator
 	mutex     *sync.Mutex
 }
 
-func (m *memory) AddRules(tenantID string, rules []Rule) error {
+func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
-		return errors.New("rules: no rules provided")
+		return NewRules{}, errors.New("rules: no rules provided")
 	}
 
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
-		return err
+		return NewRules{}, err
 	}
 
 	// Generate IDs
@@ -51,10 +53,18 @@ func (m *memory) AddRules(tenantID string, rules []Rule) error {
 
 	// Add the rules
 	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.addRules(tenantID, rules)
+	m.mutex.Unlock()
 
-	return nil
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
+
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
 func (m *memory) addRules(tenantID string, rules []Rule) {
@@ -66,15 +76,22 @@ func (m *memory) addRules(tenantID string, rules []Rule) {
 	for _, rule := range rules {
 		m.rules[tenantID][rule.ID] = rule
 	}
+
+	m.revision[tenantID]++
 }
 
-func (m *memory) GetRules(tenantID string, filter Filter) ([]Rule, error) {
+func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error) {
 	m.mutex.Lock()
+
+	revision := m.revision[tenantID]
 
 	rules, exists := m.rules[tenantID]
 	if !exists {
 		m.mutex.Unlock()
-		return []Rule{}, nil
+		return RetrievedRules{
+			Rules:    []Rule{},
+			Revision: revision,
+		}, nil
 	}
 
 	var results []Rule
@@ -92,17 +109,21 @@ func (m *memory) GetRules(tenantID string, filter Filter) ([]Rule, error) {
 			rule, exists := m.rules[tenantID][id]
 			if !exists {
 				m.mutex.Unlock()
-				return nil, errors.New("rule not found")
+				return RetrievedRules{}, errors.New("rule not found")
 			}
 
 			results = append(results, rule)
 		}
 	}
+
 	m.mutex.Unlock()
 
 	results = FilterRules(filter, results)
 
-	return results, nil
+	return RetrievedRules{
+		Rules:    results,
+		Revision: revision,
+	}, nil
 }
 
 func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
@@ -149,13 +170,15 @@ func (m *memory) DeleteRules(tenantID string, filter Filter) error {
 
 	m.rules[tenantID] = make(map[string]Rule)
 
+	m.revision[tenantID]++
+
 	return nil
 }
 
-func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) error {
+func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
-		return err
+		return NewRules{}, err
 	}
 
 	m.generateRuleIDs(rules)
@@ -164,10 +187,21 @@ func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	m.deleteRulesByFilter(namespace, filter)
+	if err := m.deleteRulesByFilter(namespace, filter); err != nil {
+		return NewRules{}, err
+	}
+
 	m.addRules(namespace, rules)
 
-	return nil
+	// Get the new IDs
+	ids := make([]string, len(rules))
+	for i, rule := range rules {
+		ids[i] = rule.ID
+	}
+
+	return NewRules{
+		IDs: ids,
+	}, nil
 }
 
 func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {
@@ -185,7 +219,7 @@ func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {
 
 	rules = FilterRules(filter, rules)
 
-	for _, rule := range ruleMap {
+	for _, rule := range rules {
 		delete(m.rules[tenantID], rule.ID)
 	}
 

@@ -22,7 +22,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// Validator validates rules against the rule schema
+// Validator validates rules against the rule schema.
 type Validator interface {
 	Validate(Rule) error
 }
@@ -31,6 +31,7 @@ type validator struct {
 	schema *gojsonschema.Schema
 }
 
+// NewValidator returns a new Validator.
 func NewValidator() (Validator, error) {
 	sl := gojsonschema.NewReferenceLoader("file://./schema.json")
 
@@ -63,6 +64,7 @@ func (v *validator) Validate(rule Rule) error {
 		logrus.WithFields(logrus.Fields{
 			"descriptions": descriptions,
 		}).Warn("Invalid rule")
+
 		return errors.New("invalid rule")
 	}
 

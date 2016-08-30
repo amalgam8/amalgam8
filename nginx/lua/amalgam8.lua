@@ -687,12 +687,22 @@ function Amalgam8:apply_rules()
 
    --    --TODO: refactor. Need different LB functions
    local upstream_instance = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_host = upstream_instance.host
+   ngx.var.a8_upstream_addr = upstream_instance.host
    ngx.var.a8_upstream_port = upstream_instance.port
    ngx.var.a8_upstream_tags = upstream_instance.tags
    ngx.var.a8_service_type = upstream_instance.type
 
-   -- TODO: Set the upstream_host_header based on host field in selected backend.
+   if selected_backend.host then
+      ngx.var.a8_upstream_host = selected_backend.host
+   end
+
+   if selected_backend.timeout then
+      ngx.var.a8_upstream_timeout = selected_backend.timeout
+   end
+
+   if selected_backend.retries then
+      ngx.var.a8_upstream_retries = selected_backend.retries
+   end
 
    if actions then
       -- ngx_log(ngx_DEBUG, destination.." has actions "..tostring(#actions))
@@ -734,9 +744,8 @@ end
 
 
 function Amalgam8:load_balance()
-   --- TODO: set timeouts specified in rule. Set retries specified in rule
-   --- Add failover logic. For the failover logic, need to know the backend block chosen in apply_rules()
-   local _, err = balancer.set_current_peer(ngx.var.a8_upstream_host, ngx.var.a8_upstream_port)
+   --- TODO: Add failover logic. For the failover logic, need to know the backend block chosen in apply_rules()
+   local _, err = balancer.set_current_peer(ngx.var.a8_upstream_addr, ngx.var.a8_upstream_port)
    if err then
       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
       ngx_log(ngx_ERR, "failed to set current peer"..err)

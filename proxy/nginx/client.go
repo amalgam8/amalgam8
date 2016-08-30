@@ -20,6 +20,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"errors"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/controller/rules"
 	registryclient "github.com/amalgam8/registry/client"
@@ -75,16 +77,16 @@ func (c *client) Update(newInstances []registryclient.ServiceInstance, newRules 
 		return err
 	}
 
+	// Read and close the response body so we can reuse the connection
+	data, _ = ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		data, _ := ioutil.ReadAll(resp.Body)
-
-		logrus.WithError(err).WithFields(logrus.Fields{
+		logrus.WithFields(logrus.Fields{
 			"body":        string(data),
 			"status_code": resp.StatusCode,
 		}).Error("POST to NGINX server failed")
-		return err
+		return errors.New("nginx: POST to NGINX server failed")
 	}
 
 	return nil

@@ -597,7 +597,7 @@ end
 ---pass on to balancer_by_lua for actual routing
 function Amalgam8:apply_rules()
    local destination = ngx.var.service_name
-   ngx.var.a8_backend_name = destination
+   ngx.var.a8_upstream_name = destination
 
    local instances = get_unpacked_val(ngx_shared.a8_instances, destination)
    if not instances or #instances == 0 then
@@ -676,7 +676,7 @@ function Amalgam8:apply_rules()
          end
       end
 
-      ngx.var.a8_backend_name = selected_backend.name
+      ngx.var.a8_upstream_name = selected_backend.name
 
       if not selected_instances or #selected_instances == 0 then
          ngx.status = ngx.HTTP_NOT_FOUND
@@ -706,7 +706,7 @@ function Amalgam8:apply_rules()
 
    else
       selected_instances = instances
-      ngx.var.a8_backend_name = destination
+      ngx.var.a8_upstream_name = destination
    end
 
    --    --TODO: refactor. Need different LB functions

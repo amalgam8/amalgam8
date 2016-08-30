@@ -164,15 +164,8 @@ func (m *memory) DeleteRules(namespace string, filter Filter) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	if len(filter.IDs) > 0 {
-		return m.deleteRulesByFilter(namespace, filter)
-	}
-
-	m.rules[namespace] = make(map[string]Rule)
-
 	m.revision[namespace]++
-
-	return nil
+	return m.deleteRulesByFilter(namespace, filter)
 }
 
 func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {

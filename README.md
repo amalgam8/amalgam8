@@ -220,12 +220,9 @@ line flags.
 | A8_LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
 | A8_SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
 | A8_CONTROLLER_TOKEN | --controller_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
-| A8_TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
-| A8_TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
 | A8_REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
 | A8_REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
 | A8_REGISTRY_POLL | --registry_poll | interval for polling Registry | 15s | no |
-| A8_NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
 | A8_CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
 | A8_CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
 | A8_LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |

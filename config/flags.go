@@ -24,145 +24,110 @@ import (
 )
 
 const (
-	register        = "register"
-	proxy           = "proxy"
-	log             = "log"
-	supervise       = "supervise"
-	registryToken   = "registry_token"
-	registryURL     = "registry_url"
-	registryPoll    = "registry_poll"
-	nginxPort       = "nginx_port"
-	controllerURL   = "controller_url"
-	controllerPoll  = "controller_poll"
-	controllerToken = "controller_token"
-	tenantTTL       = "tenant_ttl"
-	tenantHeartbeat = "tenant_heartbeat"
-	endpointHost    = "endpoint_host"
-	endpointPort    = "endpoint_port"
-	endpointType    = "endpoint_type"
-	serviceName     = "service"
-	logLevel        = "log_level"
-	logstashServer  = "logstash_server"
+	registerFlag        = "register"
+	proxyFlag           = "proxy"
+	serviceFlag         = "service"
+	endpointHostFlag    = "endpoint_host"
+	endpointPortFlag    = "endpoint_port"
+	endpointTypeFlag    = "endpoint_type"
+	registryTokenFlag   = "registry_token"
+	registryURLFlag     = "registry_url"
+	registryPollFlag    = "registry_poll"
+	controllerURLFlag   = "controller_url"
+	controllerTokenFlag = "controller_token"
+	controllerPollFlag  = "controller_poll"
+	superviseFlag       = "supervise"
+	logFlag             = "log"
+	logstashServerFlag  = "logstash_server"
+	logLevelFlag        = "log_level"
 )
 
 // TenantFlags defines all expected args for Tenant
 var TenantFlags = []cli.Flag{
-	cli.StringFlag{
-		Name:   logLevel,
-		EnvVar: envVar(logLevel),
-		Value:  "info",
-		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
-	},
-
-	cli.StringFlag{
-		Name:   serviceName,
-		EnvVar: envVar(serviceName),
-		Usage:  "Service name to register with",
-	},
-	cli.StringFlag{
-		Name:   endpointHost,
-		EnvVar: envVar(endpointHost),
-		Usage:  "Service endpoint host name (local IP is used if none specified)",
-	},
-	cli.IntFlag{
-		Name:   endpointPort,
-		EnvVar: envVar(endpointPort),
-		Usage:  "Service endpoint port",
-	},
-	cli.StringFlag{
-		Name:   endpointType,
-		EnvVar: envVar(endpointType),
-		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
-		Value:  "http",
-	},
-
 	cli.BoolFlag{
-		Name:   register,
-		EnvVar: envVar(register),
+		Name:   registerFlag,
+		EnvVar: envVar(registerFlag),
 		Usage:  "Enable automatic service registration and heartbeat",
 	},
 
 	cli.BoolFlag{
-		Name:   proxy,
-		EnvVar: envVar(proxy),
+		Name:   proxyFlag,
+		EnvVar: envVar(proxyFlag),
 		Usage:  "Enable automatic service discovery and load balancing across services using NGINX",
 	},
-
-	cli.BoolFlag{
-		Name:   log,
-		EnvVar: envVar(log),
-		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",
-	},
-
-	cli.BoolFlag{
-		Name:   supervise,
-		EnvVar: envVar(supervise),
-		Usage:  "Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation",
-	},
-
-	// Tenant
-	cli.DurationFlag{
-		Name:   tenantTTL,
-		EnvVar: envVar(tenantTTL),
-		Value:  time.Duration(time.Minute),
-		Usage:  "Tenant TTL for Registry",
-	},
-	cli.DurationFlag{
-		Name:   tenantHeartbeat,
-		EnvVar: envVar(tenantHeartbeat),
-		Value:  time.Duration(time.Second * 45),
-		Usage:  "Tenant heartbeat interval to Registry",
-	},
-
-	// Registry
 	cli.StringFlag{
-		Name:   registryURL,
-		EnvVar: envVar(registryURL),
+		Name:   serviceFlag,
+		EnvVar: envVar(serviceFlag),
+		Usage:  "Service name to register with",
+	},
+	cli.StringFlag{
+		Name:   endpointHostFlag,
+		EnvVar: envVar(endpointHostFlag),
+		Usage:  "Service endpoint host name (local IP is used if none specified)",
+	},
+	cli.IntFlag{
+		Name:   endpointPortFlag,
+		EnvVar: envVar(endpointPortFlag),
+		Usage:  "Service endpoint port",
+	},
+	cli.StringFlag{
+		Name:   endpointTypeFlag,
+		EnvVar: envVar(endpointTypeFlag),
+		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
+		Value:  "http",
+	},
+	cli.StringFlag{
+		Name:   registryURLFlag,
+		EnvVar: envVar(registryURLFlag),
 		Usage:  "URL for Registry",
 	},
 	cli.StringFlag{
-		Name:   registryToken,
-		EnvVar: envVar(registryToken),
+		Name:   registryTokenFlag,
+		EnvVar: envVar(registryTokenFlag),
 		Usage:  "API token for Registry",
 	},
 	cli.DurationFlag{
-		Name:   registryPoll,
-		EnvVar: envVar(registryPoll),
+		Name:   registryPollFlag,
+		EnvVar: envVar(registryPollFlag),
 		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
-
-	// NGINX
-	cli.IntFlag{
-		Name:   nginxPort,
-		EnvVar: envVar(nginxPort),
-		Value:  6379,
-		Usage:  "Port for NGINX",
-	},
-
-	// Controller
 	cli.StringFlag{
-		Name:   controllerURL,
-		EnvVar: envVar(controllerURL),
+		Name:   controllerURLFlag,
+		EnvVar: envVar(controllerURLFlag),
 		Usage:  "URL for Controller service",
 	},
+	cli.StringFlag{
+		Name:   controllerTokenFlag,
+		EnvVar: envVar(controllerTokenFlag),
+		Usage:  "Amalgam8 controller token",
+	},
 	cli.DurationFlag{
-		Name:   controllerPoll,
-		EnvVar: envVar(controllerPoll),
+		Name:   controllerPollFlag,
+		EnvVar: envVar(controllerPollFlag),
 		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
-	cli.StringFlag{
-		Name:   controllerToken,
-		EnvVar: envVar(controllerToken),
-		Usage:  "Amalgam8 controller token",
+	cli.BoolFlag{
+		Name:   superviseFlag,
+		EnvVar: envVar(superviseFlag),
+		Usage:  "Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation",
 	},
-
-	// Logserver
+	cli.BoolFlag{
+		Name:   logFlag,
+		EnvVar: envVar(logFlag),
+		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",
+	},
 	cli.StringFlag{
-		Name:   logstashServer,
-		EnvVar: envVar(logstashServer),
+		Name:   logstashServerFlag,
+		EnvVar: envVar(logstashServerFlag),
 		Usage:  "Logstash target for nginx logs",
+	},
+	cli.StringFlag{
+		Name:   logLevelFlag,
+		EnvVar: envVar(logLevelFlag),
+		Value:  "info",
+		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
 	},
 }
 

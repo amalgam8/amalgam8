@@ -44,40 +44,31 @@ var _ = Describe("Config", func() {
 			Expect(app.Run(os.Args[:1])).NotTo(HaveOccurred())
 		})
 
-		It("has expected default ports", func() {
-			// Expected defaults specified in documentation
-			Expect(c.Nginx.Port).To(Equal(6379))
-		})
-
 	})
 
 	Context("config validation", func() {
 
 		BeforeEach(func() {
 			c = &Config{
-				Tenant: Tenant{
-					TTL:       60 * time.Second,
-					Heartbeat: 30 * time.Second,
-				},
 				Registry: Registry{
 					URL:   "http://registry",
 					Token: "sd_token",
-				},
-				Nginx: Nginx{
-					Port:    6379,
-					Logging: false,
 				},
 				Controller: Controller{
 					Token: "token",
 					URL:   "http://controller",
 					Poll:  60 * time.Second,
 				},
-				Proxy:        true,
-				Register:     true,
-				ServiceName:  "mock",
-				EndpointHost: "mockhost",
-				EndpointPort: 9090,
-				EndpointType: "http",
+				Proxy:    true,
+				Register: true,
+				Service: Service{
+					Name: "mock",
+				},
+				Endpoint: Endpoint{
+					Host: "mockhost",
+					Port: 9090,
+					Type: "http",
+				},
 			}
 		})
 
@@ -90,19 +81,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 
-		It("rejects an invalid port", func() {
-			c.Nginx.Port = 0
-			Expect(c.Validate()).To(HaveOccurred())
-		})
-
 		It("rejects an excessively large poll interval", func() {
 			c.Controller.Poll = 48 * time.Hour
-			Expect(c.Validate()).To(HaveOccurred())
-		})
-
-		It("rejects a TTL that is less than the heartbeat", func() {
-			c.Tenant.Heartbeat = 5 * time.Minute
-			c.Tenant.TTL = 2 * time.Minute
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 	})

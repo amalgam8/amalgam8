@@ -111,12 +111,12 @@ func sidecarMain(conf config.Config) error {
 			return err
 		}
 
-		address := fmt.Sprintf("%v:%v", conf.EndpointHost, conf.EndpointPort)
+		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
 		serviceInstance := &registryclient.ServiceInstance{
-			ServiceName: conf.ServiceName,
-			Tags:        conf.ServiceTags,
+			ServiceName: conf.Service.Name,
+			Tags:        conf.Service.Tags,
 			Endpoint: registryclient.ServiceEndpoint{
-				Type:  conf.EndpointType,
+				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
 			TTL: 60,
@@ -135,7 +135,7 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Supervise {
-		supervisor.DoAppSupervision(conf.AppArgs)
+		supervisor.DoAppSupervision(conf.App)
 	} else {
 		select {}
 	}

@@ -24,8 +24,8 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/garyburd/redigo/redis"
 	"github.com/amalgam8/controller/util/encryption"
+	"github.com/garyburd/redigo/redis"
 )
 
 type Entry struct {

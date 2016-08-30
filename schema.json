@@ -66,6 +66,9 @@
           },
           {
             "$ref": "#/definitions/abortAction"
+          },
+          {
+            "$ref": "#/definitions/traceAction"
           }
         ]
       }
@@ -288,6 +291,31 @@
         }
       },
       "required": ["return_code"],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "traceAction": {
+      "title": "Trace",
+      "description": "Trace request",
+      "properties": {
+        "action": {
+          "enum": ["trace"]
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "log_key": {
+          "type": "string",
+          "default": "trace"
+        },
+        "log_value": {
+          "type": "string"
+        }
+      },
       "additionalProperties": false,
       "allOf": [
         {

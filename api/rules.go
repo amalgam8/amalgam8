@@ -26,21 +26,19 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
+// RuleList is used to output the results of rule queries.
 type RuleList struct {
 	Rules    []rules.Rule `json:"rules"`
 	Revision int64        `json:"revision"`
 }
 
-type ServiceRules struct {
-	ServiceName string       `json:"service"`
-	Rules       []rules.Rule `json:"rules"`
-}
-
+// Rule API.
 type Rule struct {
 	manager  rules.Manager
 	reporter metrics.Reporter
 }
 
+// NewRule constructs a new Rule API.
 func NewRule(m rules.Manager, r metrics.Reporter) *Rule {
 	return &Rule{
 		manager:  m,
@@ -48,6 +46,7 @@ func NewRule(m rules.Manager, r metrics.Reporter) *Rule {
 	}
 }
 
+// Routes returns this API's routes wrapped by the middlewares.
 func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 
 	routes := []*rest.Route{

@@ -35,11 +35,11 @@ type ControllerConfig struct {
 }
 
 type controller struct {
-	ticker         *time.Ticker
-	controller     client.Client
-	pollInterval   time.Duration
-	revision       int64
-	listeners      []ControllerListener
+	ticker       *time.Ticker
+	controller   client.Client
+	pollInterval time.Duration
+	revision     int64
+	listeners    []ControllerListener
 }
 
 // NewController instantiates a new instance

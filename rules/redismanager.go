@@ -35,7 +35,6 @@ type redisManager struct {
 	db        *redisDB
 }
 
-// TODO: return IDs somehow
 func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
 		return NewRules{}, errors.New("rules: no rules provided")

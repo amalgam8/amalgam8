@@ -25,6 +25,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
+	"github.com/amalgam8/controller/util/encryption"
 )
 
 type Entry struct {
@@ -36,7 +37,7 @@ type redisDB struct {
 	pool       *redis.Pool
 	address    string
 	password   string
-	encryption Encryption
+	encryption encryption.Encryption
 }
 
 // TODO: The returns from all the redis commands need to be double checked to ensure we are detecting all the errors

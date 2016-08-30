@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rules
+package encryption
 
-type noop struct{}
-
-func (n *noop) Encrypt(iv, data []byte) ([]byte, error) {
-	return data, nil
-}
-
-func (n *noop) Decrypt(iv, data []byte) ([]byte, error) {
-	return data, nil
-}
-
-func (n *noop) NewIV() []byte {
-	return []byte{}
+type Encryption interface {
+	Encrypt(iv, data []byte) ([]byte, error)
+	Decrypt(iv, data []byte) ([]byte, error)
+	NewIV() []byte
 }

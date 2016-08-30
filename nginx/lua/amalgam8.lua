@@ -687,6 +687,7 @@ function Amalgam8:apply_rules()
          ngx.var.a8_upstream_host = selected_backend.host
       end
 
+      ---TODO: these two need to be used in balance_by_lua block. 
       if selected_backend.timeout then
          ngx.var.a8_upstream_timeout = selected_backend.timeout
       end

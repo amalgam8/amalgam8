@@ -20,15 +20,23 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidGlobalToken(t *testing.T) {
-	g := globalAuth
-	namespace, err := g.Authenticate("")
+func TestDefaultAuthenticatorEmptyToken(t *testing.T) {
+	auth := DefaultAuthenticator()
+	namespace, err := auth.Authenticate("")
 	assert.NoError(t, err)
-	assert.EqualValues(t, globalNamespace, *namespace)
+	assert.EqualValues(t, defaultNamespace, *namespace)
 }
 
-func TestInvalidGlobalToken(t *testing.T) {
-	g := globalAuth
-	_, err := g.Authenticate("invalid-token")
+func TestDefaultAuthenticatorDefaultToken(t *testing.T) {
+	auth := DefaultAuthenticator()
+	namespace, err := auth.Authenticate(defaultNamespace.String())
+	assert.NoError(t, err)
+	assert.EqualValues(t, defaultNamespace, *namespace)
+}
+
+func TestDefaultAuthenticatorInvalidToken(t *testing.T) {
+	auth := DefaultAuthenticator()
+	namespace, err := auth.Authenticate("invalid-token")
 	assert.Error(t, err)
+	assert.Nil(t, namespace)
 }

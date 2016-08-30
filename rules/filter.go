@@ -19,25 +19,44 @@ import (
 )
 
 const (
+	// RuleAny denotes any rule type
 	RuleAny = iota
+
+	// RuleRoute denotes rules with a routing field
 	RuleRoute
+
+	// RuleAction denotes rules with an action field
 	RuleAction
 )
 
+// Filter to apply to sets of rules.
 type Filter struct {
-	IDs          []string
-	Tags         []string
+	// IDs is the set of acceptable rule IDs. A rule will pass the filter if its ID is a member of this set.
+	// This field is ignored when len(IDs) <= 0.
+	IDs []string
+
+	// Tags is the set of tags each rule must contain. A rule will pass the filter if its tags are a subset of this
+	// set. This field is ignored when len(Tags) <= 0.
+	Tags []string
+
+	// Destinations is the set of acceptable rule destinations. A rule will pass the filter if its destination is
+	// a member of this set. This field is ignored when len(Destinations) <= 0.
 	Destinations []string
-	RuleType     int
+
+	// RuleType is the type of rule to filter by.
+	RuleType int
 }
 
+// String representation of the filter
 func (f Filter) String() string {
-	return fmt.Sprintf("filter: IDs=%v Tags=%v Destinations=%v RuleType=%v", f.IDs, f.Tags, f.Destinations, f.RuleType)
+	return fmt.Sprintf("%#v", f)
 }
 
 // FilterRules returns a list of filtered rules.
 func FilterRules(f Filter, rules []Rule) []Rule {
-	// Set of acceptable IDs
+	// Before we begin filtering we build sets of each filter field to avoid N^2 lookups.
+
+	// Build set of acceptable IDs
 	var ids map[string]bool
 	if len(f.IDs) > 0 {
 		ids = make(map[string]bool)
@@ -46,7 +65,7 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 		}
 	}
 
-	// Set of acceptable destinations
+	// Build set of acceptable destinations
 	var dests map[string]bool
 	if len(f.Destinations) > 0 {
 		dests = make(map[string]bool)
@@ -55,7 +74,7 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 		}
 	}
 
-	// Set of tags the rule must contain
+	// Build set of tags the rule must contain
 	var tags map[string]bool
 	if len(f.Tags) > 0 {
 		tags = make(map[string]bool)

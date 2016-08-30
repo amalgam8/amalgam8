@@ -14,6 +14,7 @@
 
 package util
 
+// Keys of rest.Request.Env used by rest.Middleware.
 const (
 	Namespace = "NAMESPACE"
 )

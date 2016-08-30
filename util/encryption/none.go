@@ -14,16 +14,17 @@
 
 package encryption
 
-type noop struct{}
+// none provides no encryption.
+type none struct{}
 
-func (n *noop) Encrypt(iv, data []byte) ([]byte, error) {
+func (n *none) Encrypt(iv, data []byte) ([]byte, error) {
 	return data, nil
 }
 
-func (n *noop) Decrypt(iv, data []byte) ([]byte, error) {
+func (n *none) Decrypt(iv, data []byte) ([]byte, error) {
 	return data, nil
 }
 
-func (n *noop) NewIV() []byte {
+func (n *none) NewIV() []byte {
 	return []byte{}
 }

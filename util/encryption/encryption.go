@@ -14,8 +14,14 @@
 
 package encryption
 
+// Encryption is an interface for encrypting and decrypting data.
 type Encryption interface {
-	Encrypt(iv, data []byte) ([]byte, error)
-	Decrypt(iv, data []byte) ([]byte, error)
+	// NewIV returns an initialization vector.
 	NewIV() []byte
+
+	// Encrypt the data using the initialization vector.
+	Encrypt(iv, data []byte) ([]byte, error)
+
+	// Decrypt the data using the initialization vector.
+	Decrypt(iv, data []byte) ([]byte, error)
 }

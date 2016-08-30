@@ -14,8 +14,8 @@
 
 package util
 
+// Header keys
 const (
-	// AuthHeader controller authorization header
 	AuthHeader      = "Authorization"
 	NamespaceHeader = "A8-Namespace"
 	RequestIDHeader = "A8-Request-Id"

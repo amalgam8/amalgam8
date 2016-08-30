@@ -244,8 +244,8 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	dests := getQueries("destination", req)
 
 	f := rules.Filter{
-		IDs:  ruleIDs,
-		Tags: tags,
+		IDs:          ruleIDs,
+		Tags:         tags,
 		Destinations: dests,
 	}
 

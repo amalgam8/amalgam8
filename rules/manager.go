@@ -14,24 +14,37 @@
 
 package rules
 
+// Manager is an interface for managing collections of rules mapped by namespace.
 type Manager interface {
+	// AddRules validates the rules and adds them to the collection for the namespace.
 	AddRules(namespace string, rules []Rule) (NewRules, error)
+
+	// GetRules returns a collection of filtered rules from the namespace.
 	GetRules(namespace string, filter Filter) (RetrievedRules, error)
+
+	// UpdateRules updates rules by ID in the namespace.
 	UpdateRules(namespace string, rules []Rule) error
+
+	// DeleteRules deletes rules that match the filter in the namespace.
 	DeleteRules(namespace string, filter Filter) error
+
+	// SetRules deletes the rules that match the filter and adds the new rules as a single
+	// atomic transaction.
 	SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error)
 }
 
+// NewRules provides information about newly added rules.
 type NewRules struct {
+	// IDs of the added rules.
 	IDs []string
 }
 
+// RetrievedRules are the results of a read from a manager.
 type RetrievedRules struct {
-	// Rules filtered
+	// Rules that passed the filter.
 	Rules []Rule
 
-	// Revision of the rules for this namespace. Each time the rules for this namespace are changed, this the
-	// revision is incremented.
-	// FIXME: if a Redis DB is updated once a millisecond the revision will roll over after 292,471,208.678 years.
+	// Revision of the rules for this namespace. Each time the collection of rules for the namespace are changed
+	// the revision is incremented.
 	Revision int64
 }

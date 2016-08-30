@@ -36,7 +36,7 @@ type redisManager struct {
 }
 
 // TODO: return IDs somehow
-func (r *redisManager) AddRules(tenantID string, rules []Rule) (NewRules, error) {
+func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
 		return NewRules{}, errors.New("rules: no rules provided")
 	}
@@ -60,9 +60,9 @@ func (r *redisManager) AddRules(tenantID string, rules []Rule) (NewRules, error)
 		entries[id] = string(data)
 	}
 
-	if err := r.db.InsertEntries(tenantID, entries); err != nil {
+	if err := r.db.InsertEntries(namespace, entries); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
-			"namespace": tenantID,
+			"namespace": namespace,
 		}).Error("Error inserting entries in Redis")
 		return NewRules{}, err
 	}
@@ -109,7 +109,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 		rule := Rule{}
 		if err = json.Unmarshal([]byte(entry), &rule); err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
-				"tenant_id": namespace,
+				"namespace": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
 			return RetrievedRules{}, &JSONMarshallError{Message: err.Error()}
@@ -152,7 +152,7 @@ func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) (
 	}, nil
 }
 
-func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
+func (r *redisManager) UpdateRules(namespace string, rules []Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
 	}
@@ -174,9 +174,9 @@ func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
 		entries[rule.ID] = string(data)
 	}
 
-	if err := r.db.UpdateEntries(tenantID, entries); err != nil {
+	if err := r.db.UpdateEntries(namespace, entries); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
-			"namespace": tenantID,
+			"namespace": namespace,
 		}).Error("Error updating entries in Redis")
 		return err
 	}
@@ -185,18 +185,18 @@ func (r *redisManager) UpdateRules(tenantID string, rules []Rule) error {
 }
 
 // TODO: filtering
-func (r *redisManager) DeleteRules(tenantID string, filter Filter) error {
+func (r *redisManager) DeleteRules(namespace string, filter Filter) error {
 	if len(filter.IDs) == 0 {
-		if err := r.db.DeleteAllEntries(tenantID); err != nil {
+		if err := r.db.DeleteAllEntries(namespace); err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
-				"id": tenantID,
-			}).Error("Failed to read all entries for tenant")
+				"namespace": namespace,
+			}).Error("Failed to read all entries")
 			return err
 		}
 	} else {
-		if err := r.db.DeleteEntries(tenantID, filter.IDs); err != nil {
+		if err := r.db.DeleteEntries(namespace, filter.IDs); err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
-				"namespace": tenantID,
+				"namespace": namespace,
 				"filter":    filter,
 			}).Error("Error deleting entries from Redis")
 			return err

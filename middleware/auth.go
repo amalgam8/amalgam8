@@ -70,15 +70,15 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 		return
 	}
 
-	// Recognize admin namespace and get tenant ID from header
+	// Recognize admin namespace and get the namespace from the header
 	if nsPtr.String() == adminNamespace {
-		tenantID := request.Header.Get(util.TenantHeader)
-		if tenantID == "" {
-			i18n.RestError(writer, request, http.StatusBadRequest, "missing_tenant_header")
+		nsStr := request.Header.Get(util.NamespaceHeader)
+		if nsStr == "" {
+			i18n.RestError(writer, request, http.StatusBadRequest, "missing_namespace_header")
 			return
 		}
-		tenantNamespace := auth.Namespace(tenantID)
-		nsPtr = &tenantNamespace
+		ns := auth.Namespace(nsStr)
+		nsPtr = &ns
 	}
 
 	request.Env[util.Namespace] = *nsPtr

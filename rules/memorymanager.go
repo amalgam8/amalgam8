@@ -38,7 +38,7 @@ type memory struct {
 	mutex     *sync.Mutex
 }
 
-func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
+func (m *memory) AddRules(namespace string, rules []Rule) (NewRules, error) {
 	if len(rules) == 0 {
 		return NewRules{}, errors.New("rules: no rules provided")
 	}
@@ -53,7 +53,7 @@ func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
 
 	// Add the rules
 	m.mutex.Lock()
-	m.addRules(tenantID, rules)
+	m.addRules(namespace, rules)
 	m.mutex.Unlock()
 
 	// Get the new IDs
@@ -67,25 +67,25 @@ func (m *memory) AddRules(tenantID string, rules []Rule) (NewRules, error) {
 	}, nil
 }
 
-func (m *memory) addRules(tenantID string, rules []Rule) {
-	_, exists := m.rules[tenantID]
+func (m *memory) addRules(namespace string, rules []Rule) {
+	_, exists := m.rules[namespace]
 	if !exists {
-		m.rules[tenantID] = make(map[string]Rule)
+		m.rules[namespace] = make(map[string]Rule)
 	}
 
 	for _, rule := range rules {
-		m.rules[tenantID][rule.ID] = rule
+		m.rules[namespace][rule.ID] = rule
 	}
 
-	m.revision[tenantID]++
+	m.revision[namespace]++
 }
 
-func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error) {
+func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, error) {
 	m.mutex.Lock()
 
-	revision := m.revision[tenantID]
+	revision := m.revision[namespace]
 
-	rules, exists := m.rules[tenantID]
+	rules, exists := m.rules[namespace]
 	if !exists {
 		m.mutex.Unlock()
 		return RetrievedRules{
@@ -96,7 +96,7 @@ func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error
 
 	var results []Rule
 	if len(filter.IDs) == 0 {
-		results = make([]Rule, len(m.rules[tenantID]))
+		results = make([]Rule, len(m.rules[namespace]))
 
 		index := 0
 		for _, rule := range rules {
@@ -106,7 +106,7 @@ func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error
 	} else {
 		results = make([]Rule, 0, len(filter.IDs))
 		for _, id := range filter.IDs {
-			rule, exists := m.rules[tenantID][id]
+			rule, exists := m.rules[namespace][id]
 			if !exists {
 				m.mutex.Unlock()
 				return RetrievedRules{}, errors.New("rule not found")
@@ -126,7 +126,7 @@ func (m *memory) GetRules(tenantID string, filter Filter) (RetrievedRules, error
 	}, nil
 }
 
-func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
+func (m *memory) UpdateRules(namespace string, rules []Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
 	}
@@ -140,13 +140,13 @@ func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
 	defer m.mutex.Unlock()
 
 	// Make sure the IDs exist
-	_, exists := m.rules[tenantID]
+	_, exists := m.rules[namespace]
 	if !exists {
 		return errors.New("rules: ID not found")
 	}
 
 	for _, rule := range rules {
-		_, exists := m.rules[tenantID][rule.ID]
+		_, exists := m.rules[namespace][rule.ID]
 		if !exists {
 			return errors.New("rules: ID not found")
 		}
@@ -154,23 +154,23 @@ func (m *memory) UpdateRules(tenantID string, rules []Rule) error {
 
 	// Update the rules
 	for _, rule := range rules {
-		m.rules[tenantID][rule.ID] = rule
+		m.rules[namespace][rule.ID] = rule
 	}
 
 	return nil
 }
 
-func (m *memory) DeleteRules(tenantID string, filter Filter) error {
+func (m *memory) DeleteRules(namespace string, filter Filter) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
 	if len(filter.IDs) > 0 {
-		return m.deleteRulesByFilter(tenantID, filter)
+		return m.deleteRulesByFilter(namespace, filter)
 	}
 
-	m.rules[tenantID] = make(map[string]Rule)
+	m.rules[namespace] = make(map[string]Rule)
 
-	m.revision[tenantID]++
+	m.revision[namespace]++
 
 	return nil
 }
@@ -204,13 +204,13 @@ func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRul
 	}, nil
 }
 
-func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {
-	ruleMap, exists := m.rules[tenantID]
+func (m *memory) deleteRulesByFilter(namespace string, filter Filter) error {
+	ruleMap, exists := m.rules[namespace]
 	if !exists {
 		return nil
 	}
 
-	rules := make([]Rule, len(m.rules[tenantID]))
+	rules := make([]Rule, len(m.rules[namespace]))
 	i := 0
 	for _, rule := range ruleMap {
 		rules[i] = rule
@@ -220,7 +220,7 @@ func (m *memory) deleteRulesByFilter(tenantID string, filter Filter) error {
 	rules = FilterRules(filter, rules)
 
 	for _, rule := range rules {
-		delete(m.rules[tenantID], rule.ID)
+		delete(m.rules[namespace], rule.ID)
 	}
 
 	return nil

@@ -23,11 +23,10 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-// GetTenantID obtains the tenant ID
-func GetTenantID(req *rest.Request) string {
-	tenantID := req.Env[util.Namespace]
-
-	if namespace, ok := tenantID.(auth.Namespace); ok {
+// GetNamespace from a request
+func GetNamespace(req *rest.Request) string {
+	env := req.Env[util.Namespace]
+	if namespace, ok := env.(auth.Namespace); ok {
 		return namespace.String()
 	}
 

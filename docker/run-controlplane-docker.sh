@@ -67,15 +67,6 @@ if [ "$1" == "start" ]; then
         fi
         sleep 10s
     done
-
-
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     docker-compose -f $SCRIPTDIR/controlplane.yaml kill

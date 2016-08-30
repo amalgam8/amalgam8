@@ -35,7 +35,7 @@ if [ "$1" == "start" ]; then
     REGISTRY_URL=$(kubectl get svc/registry --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
     CONTROLLER_URL=$(kubectl get svc/controller --template={{.spec.clusterIP}}:{{\("index .spec.ports 0"\).port}})
 
-        # Wait for controller route to set up
+    # Wait for controller route to set up
     echo "Waiting for controller route to set up"
     attempt=0
     while true; do
@@ -72,16 +72,6 @@ if [ "$1" == "start" ]; then
         fi
         sleep 10s
     done
-
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant >/tmp/tenant_details.json
-    echo "Please assign a public IP to your controller and then issue the following curl command"
-    echo 'cat /tmp/tenant_details.json|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services.."
     kubectl delete -f $SCRIPTDIR/$cfile

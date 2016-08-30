@@ -75,13 +75,6 @@ if [ "$1" == "start" ]; then
         sleep 10s
     done
 
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller

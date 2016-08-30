@@ -75,15 +75,7 @@ if [ "$1" == "start" ]; then
         sleep 10s
     done
 
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant >/tmp/tenant_details.json
-    echo "Please assign a public IP to your controller and then issue the following curl command"
-    echo 'cat /tmp/tenant_details.json|curl -H "Content-Type: application/json" -d @- http://ControllerExternalIP:31200/v1/tenants'
+    echo "Please assign a public IP to your controller"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services.."
     kubectl delete -f $SCRIPTDIR/$cfile

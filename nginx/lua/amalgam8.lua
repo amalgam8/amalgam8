@@ -22,7 +22,7 @@ local tostring = tostring
 -----to be evaluated at high load.
 local Amalgam8 = { _VERSION = '0.3.0' }
 
-local delay_action, abort_action = 1, 2
+local delay_action, abort_action, trace_action = 1, 2, 3
 
 local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then
@@ -341,28 +341,29 @@ local function create_rule(rule, myname, mytags)
       end
    end
 
-   -- if its an action rule, search for a8_recipe_id in the tags and promote it to its own field
    if rule.actions then
       for _, a in ipairs(rule.actions) do
          if a.action == "delay" then
             a.action= delay_action
          elseif a.action == "abort" then
             a.action= abort_action
+         elseif a.action == "trace" then
+            a.action= trace_action
          else
             ngx_log(ngx_ERR, "Unknown action provided in rule "..a.action)
             return nil
          end
       end
-      if rule.tags then
-         local a8_recipe_id
-         for _, t in ipairs(rule.tags) do
-            a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
-            if a8_recipe_id then
-               rule.a8_recipe_id = a8_recipe_id
-               break
-            end
-         end
-      end
+      -- if rule.tags then
+      --    local a8_recipe_id
+      --    for _, t in ipairs(rule.tags) do
+      --       a8_recipe_id = string.match(t, '^a8_recipe_id=(.+)')
+      --       if a8_recipe_id then
+      --          rule.a8_recipe_id = a8_recipe_id
+      --          break
+      --       end
+      --    end
+      -- end
    end
    return rule
 end
@@ -674,12 +675,34 @@ function Amalgam8:apply_rules()
             end
          end
       end
+
       ngx.var.a8_backend_name = selected_backend.name
 
       if not selected_instances or #selected_instances == 0 then
          ngx.status = ngx.HTTP_NOT_FOUND
          ngx.exit(ngx.status)
       end
+
+      if selected_backend.host then
+         ngx.var.a8_upstream_host = selected_backend.host
+      end
+
+      if selected_backend.timeout then
+         ngx.var.a8_upstream_timeout = selected_backend.timeout
+      end
+
+      if selected_backend.retries then
+         ngx.var.a8_upstream_retries = selected_backend.retries
+      end
+
+      --set the version cookie      
+      local selected_version =  create_cookie_version(selected_backend)
+      if cookie_version then --delete old cookie
+         add_cookie("version=; Path=/" .. selected_backend.name .. "; Expires=" .. ngx.cookie_time(0))
+      end
+      --set the cookie to the version we selected
+      add_cookie("version="..selected_version.."; Path=/"..selected_backend.name)
+
    else
       selected_instances = instances
       ngx.var.a8_backend_name = destination
@@ -692,18 +715,6 @@ function Amalgam8:apply_rules()
    ngx.var.a8_upstream_tags = upstream_instance.tags
    ngx.var.a8_service_type = upstream_instance.type
 
-   if selected_backend.host then
-      ngx.var.a8_upstream_host = selected_backend.host
-   end
-
-   if selected_backend.timeout then
-      ngx.var.a8_upstream_timeout = selected_backend.timeout
-   end
-
-   if selected_backend.retries then
-      ngx.var.a8_upstream_retries = selected_backend.retries
-   end
-
    if actions then
       -- ngx_log(ngx_DEBUG, destination.." has actions "..tostring(#actions))
       for _, a in ipairs(actions) do --rules are ordered by decreasing priority
@@ -714,12 +725,12 @@ function Amalgam8:apply_rules()
       end
       if not selected_actions then ngx.exit(0) end -- proceed to next stage
       -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
-      ngx.var.a8_recipe_id = selected_actions.a8_recipe_id
+
       for _,sa in ipairs(selected_actions) do
-         if sa.action <= abort_action then
-            -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
-            if not sa.tags or match_tags(upstream_instance.tags, sa.tags) then
-               -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
+         if not sa.tags or match_tags(upstream_instance.tags, sa.tags) then
+            -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
+            if sa.action <= abort_action then
+               -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
                if math.random() < sa.probability then
                   -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." probability matched for "..destination)
                   if sa.action == delay_action then
@@ -728,18 +739,14 @@ function Amalgam8:apply_rules()
                      ngx.exit(sa.return_code)
                   end
                end
+            elseif sa.action == trace_action then
+               ngx.var.a8_trace_key = sa.log_key
+               ngx.var.a8_trace_value = sa.log_value
             end
          end
       end
    end
 
-  --set the version cookie      
-   local selected_version =  create_cookie_version(selected_backend)
-   if cookie_version then --delete old cookie
-      add_cookie("version=; Path=/" .. selected_backend.name .. "; Expires=" .. ngx.cookie_time(0))
-   end
-   --set the cookie to the version we selected
-   add_cookie("version="..selected_version.."; Path=/"..selected_backend.name)
 end
 
 
@@ -752,59 +759,6 @@ function Amalgam8:load_balance()
       ngx.exit(ngx.status)
    end
 end
-
-
--- function Amalgam8:balance()
---    local name = ngx_var.service_name
---    local tags = ngx.var.service_tags
---    if not name then
---       ngx.status = ngx.HTTP_BAD_GATEWAY
---       ngx_log(ngx_ERR, "$a8proxy_instance is not specified")
---       ngx.exit(ngx.status)
---       return
---    end
-
---    local instances = self:get_instances(name)
---    if not instances or table.getn(instances) == 0 then
---       ngx.status = ngx.HTTP_NOT_FOUND
---       ngx_log(ngx_ERR, "service " .. name .. " is not known or has no known instances")
---       ngx.exit(ngx.status)
---       return
---    end
-
---    --TODO: refactor. Need different LB functions
---    local index    = math.random(1, table.getn(instances)) % table.getn(instances) + 1
---    local instance = instances[index]
-
---    local _, err = balancer.set_current_peer(instance.host, instance.port)
---    if err then
---       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
---       ngx_log(ngx_ERR, "failed to set current peer for instance " .. name .. ": " .. err)
---       ngx.exit(ngx.status)
---       return
---    end
--- end
-
--- function Amalgam8:get_service_metadata()
---    local name = ngx_var.service_name
---    if not name then
---       ngx_log(ngx_ERR, "$service_name is not specified")
---       return nil, nil, nil
---    end
-
---    local service, err = self:getService(name)
---    if err then
---       ngx_log(ngx_ERR, "error getting service " .. name .. ": " .. err)
---       return nil, nil, nil
---    end
-
---    if not service or not service.metadata then
---       ngx_log(ngx_ERR, "service " .. name .. " or metadata is not known")
---       return nil, nil, nil
---    end
-
---    return service.metadata.service_type, service.metadata.default, service.metadata.selectors
--- end
 
 
 function Amalgam8:get_myname()

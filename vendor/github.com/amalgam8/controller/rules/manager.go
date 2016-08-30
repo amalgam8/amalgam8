@@ -15,9 +15,23 @@
 package rules
 
 type Manager interface {
-	AddRules(tenantID string, rules []Rule) error
-	GetRules(tenantID string, filter Filter) ([]Rule, error)
+	AddRules(tenantID string, rules []Rule) (NewRules, error)
+	GetRules(tenantID string, filter Filter) (RetrievedRules, error)
 	UpdateRules(tenantID string, rules []Rule) error
 	DeleteRules(tenantID string, filter Filter) error
-	SetRules(namespace string, filter Filter, rules []Rule) error
+	SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error)
+}
+
+type NewRules struct {
+	IDs []string
+}
+
+type RetrievedRules struct {
+	// Rules filtered
+	Rules []Rule
+
+	// Revision of the rules for this namespace. Each time the rules for this namespace are changed, this the
+	// revision is incremented.
+	// FIXME: if a Redis DB is updated once a millisecond the revision will roll over after 292,471,208.678 years.
+	Revision int64
 }

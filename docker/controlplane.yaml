@@ -51,4 +51,16 @@ controller:
     - "31200:6379"
   environment:
     - A8_LOG_LEVEL=info
+    - A8_DATABASE_TYPE=redis
+    - A8_DATABASE_HOST=redis://redis:6379
+  links:
+    - redis
   container_name: controller
+
+#######Redis Backend###########
+
+redis:
+  image: redis:alpine
+  ports:
+    - "31400:6379"
+  container_name: redis

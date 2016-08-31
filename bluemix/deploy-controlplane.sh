@@ -114,28 +114,4 @@ while true; do
     sleep 10s
 done
 
-echo "Setting up a new controller tenant named 'local'"
-read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-
-attempt=0
-while true; do
-    code=$(echo $tenant | curl -w "%{http_code}" -H "Authorization: Bearer local" -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants")
-    if [ "$code" = "201" ]; then
-        echo "Controller tenant is set up"
-        break
-    fi
-
-    attempt=$((attempt + 1))
-    if [ "$attempt" -gt 10 ]; then
-        echo "Failed setting up controller tenant: controller returned HTTP ${code}"
-        echo "Deploying the controlplane has failed"
-        exit 1
-    fi
-    sleep 10s
-done
-
 echo "Controlplane has been deployed successfully"

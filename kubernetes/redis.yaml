@@ -18,44 +18,37 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: controller
+  name: redis
   labels:
-    name: controller
+    name: redis
 spec:
   ports:
   - port: 6379
     targetPort: 6379
-    nodePort: 31200
+    nodePort: 31400
     protocol: TCP
   selector:
-    name: controller
+    name: redis
   type: NodePort
 ---
 apiVersion: v1
 kind: ReplicationController
 metadata:
-  name: controller
+  name: redis
   labels:
-    name: controller
+    name: redis
 spec:
   replicas: 1
   selector:
-    name: controller
+    name: redis
   template:
     metadata:
       labels:
-        name: controller
+        name: redis
     spec:
       containers:
-      - name: controller
-        image: amalgam8/a8-controller
+      - name: redis
+        image: redis:alpine
         imagePullPolicy: IfNotPresent
-        env:
-        - name: A8_LOG_LEVEL
-          value: info
-        - name: A8_DATABASE_TYPE
-          value: redis
-        - name: A8_DATABASE_HOST
-          value: redis://$(REDIS_SERVICE_HOST):$(REDIS_SERVICE_PORT)
         ports:
         - containerPort: 6379

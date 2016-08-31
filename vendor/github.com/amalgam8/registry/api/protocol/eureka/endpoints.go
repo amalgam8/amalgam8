@@ -34,9 +34,16 @@ func instanceTemplateURL() string {
 	return instanceTemplate
 }
 
-// ApplicationsURL returns URL path used for querying service names
+// ApplicationsURL returns URL path used for querying service names.
+// This is the URL mentioned in the Eureka REST API doc.
 func applicationsURL() string {
-	return appsPath + "/"
+	return appsPath
+}
+
+// ApplicationsURL returns URL path used for querying service names, with a trailing slash appended.
+// This is the actual URL invoked by the Eureka client.
+func applicationsURLTrailingSlash() string {
+	return applicationsURL() + "/"
 }
 
 // InstanceQueryTemplateURL returns the router's (server side) URL path used for querying instance by id

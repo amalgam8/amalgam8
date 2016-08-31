@@ -42,42 +42,25 @@ func newReplicationHandler(conf *replicatedConfig) *replicationHandler {
 	handler := &replicationHandler{
 		conf:     conf,
 		catalogs: make(map[auth.Namespace]*replicatedCatalog),
-		logger:   lentry}
-
-	// Starts a synchronization operation with remote peers
-	// Synchronization is blocking, executes once
-	handler.synchronize()
-
-	// Once Synchronization is complete, handle incoming replication events
-	// Starts an end point to enable incoming replication events from remote peers to do
-	// a registration to the local catalog
-	go handler.replicate()
+		logger:   lentry,
+	}
 
 	return handler
 }
 
-func (rh *replicationHandler) addCatalog(namespace auth.Namespace, catalog *replicatedCatalog) {
-	rh.Lock()
-	defer rh.Unlock()
-	rh.catalogs[namespace] = catalog
+// activate synchronizes state with remote peer, then start serving incoming replication events and/or sync requests.
+// It should be called only once, after the replicationHandler has been created and properly initialized.
+func (rh *replicationHandler) activate() error {
+	rh.synchronize()
+
+	go rh.launchSyncRequestListener()
+	go rh.replicate()
+
+	return nil
 }
 
-func (rh *replicationHandler) replicate() {
-	rh.logger.Info("Start listening for replication notifications")
-
-	for inMsg := range rh.conf.rep.Notification() {
-		if catalog, err := rh.getCatalog(inMsg.Namespace); err != nil {
-			rh.logger.WithFields(log.Fields{
-				"error": err,
-			}).Errorf("Failed to replicate incoming event of %s catalog", inMsg.Namespace)
-		} else {
-			catalog.notifyChannel.Send(inMsg, repTimeout)
-		}
-	}
-
-	rh.logger.Info("Replication notifications listener has stopped")
-}
-
+// synchronize starts a synchronization operation with remote peers.
+// Synchronization is blocking, and should execute only once.
 func (rh *replicationHandler) synchronize() {
 	rh.logger.Info("Starting synchronization")
 
@@ -98,8 +81,23 @@ func (rh *replicationHandler) synchronize() {
 		}
 	}
 	rh.logger.Infof("Synchronization of %d elements has completed", count)
+}
 
-	go rh.launchSyncRequestListener()
+// replicate starts handling incoming replication events from remote peer
+func (rh *replicationHandler) replicate() {
+	rh.logger.Info("Start listening for replication notifications")
+
+	for inMsg := range rh.conf.rep.Notification() {
+		if catalog, err := rh.getCatalog(inMsg.Namespace); err != nil {
+			rh.logger.WithFields(log.Fields{
+				"error": err,
+			}).Errorf("Failed to replicate incoming event of %s catalog", inMsg.Namespace)
+		} else {
+			catalog.notifyChannel.Send(inMsg, repTimeout)
+		}
+	}
+
+	rh.logger.Info("Replication notifications listener has stopped")
 }
 
 func (rh *replicationHandler) launchSyncRequestListener() {
@@ -167,6 +165,13 @@ func (rh *replicationHandler) getCatalog(namespace auth.Namespace) (*replicatedC
 	}
 
 	return catalog, nil
+}
+
+func (rh *replicationHandler) addCatalog(namespace auth.Namespace, catalog *replicatedCatalog) {
+	rh.Lock()
+	defer rh.Unlock()
+
+	rh.catalogs[namespace] = catalog
 }
 
 func (rh *replicationHandler) lookupCatalog(namespace auth.Namespace) *replicatedCatalog {

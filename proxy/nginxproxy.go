@@ -18,10 +18,10 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	a8controller "github.com/amalgam8/controller/resources"
+	"github.com/amalgam8/controller/rules"
+	"github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/sidecar/proxy/nginx"
-	"github.com/amalgam8/sidecar/proxy/resources"
 )
 
 // NGINXProxy updates NGINX to reflect changes in the A8 controller and A8 registry
@@ -31,45 +31,40 @@ type NGINXProxy interface {
 }
 
 type nginxProxy struct {
-	catalog     resources.ServiceCatalog
-	proxyConfig a8controller.ProxyConfig
-	nginx       nginx.Manager
-	mutex       sync.Mutex
+	instances []client.ServiceInstance
+	rules     []rules.Rule
+	nginx     nginx.Manager
+	mutex     sync.Mutex
 }
 
 // NewNGINXProxy instantiates a new instance
 func NewNGINXProxy(nginxClient nginx.Manager) NGINXProxy {
 	return &nginxProxy{
-		proxyConfig: a8controller.ProxyConfig{
-			LoadBalance: "round_robin",
-			Filters: a8controller.Filters{
-				Versions: []a8controller.Version{},
-				Rules:    []a8controller.Rule{},
-			},
-		},
-		nginx: nginxClient,
+		rules:     []rules.Rule{},
+		instances: []client.ServiceInstance{},
+		nginx:     nginxClient,
 	}
 }
 
 // CatalogChange updates NGINX on a change in the catalog
-func (n *nginxProxy) CatalogChange(catalog resources.ServiceCatalog) error {
+func (n *nginxProxy) CatalogChange(instances []client.ServiceInstance) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.catalog = catalog
+	n.instances = instances
 	return n.updateNGINX()
 }
 
 // RuleChange updates NGINX on a change in the proxy configuration
-func (n *nginxProxy) RuleChange(proxyConfig a8controller.ProxyConfig) error {
+func (n *nginxProxy) RuleChange(rules []rules.Rule) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	n.proxyConfig = proxyConfig
+	n.rules = rules
 	return n.updateNGINX()
 }
 
 func (n *nginxProxy) updateNGINX() error {
 	logrus.Debug("Updating NGINX")
-	return n.nginx.Update(n.catalog, n.proxyConfig)
+	return n.nginx.Update(n.instances, n.rules)
 }

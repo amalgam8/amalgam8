@@ -18,27 +18,27 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/resources"
-	"github.com/amalgam8/sidecar/proxy/clients"
+	"github.com/amalgam8/controller/client"
+	"github.com/amalgam8/controller/rules"
 )
 
 // ControllerListener is notified of changes to controller
 type ControllerListener interface {
-	RuleChange(proxyConfig resources.ProxyConfig) error
+	RuleChange([]rules.Rule) error
 }
 
 // ControllerConfig options
 type ControllerConfig struct {
-	Client       clients.Controller
+	Client       client.Client
 	Listeners    []ControllerListener
 	PollInterval time.Duration
 }
 
 type controller struct {
 	ticker       *time.Ticker
-	controller   clients.Controller
+	controller   client.Client
 	pollInterval time.Duration
-	version      *time.Time
+	revision     int64
 	listeners    []ControllerListener
 }
 
@@ -82,28 +82,27 @@ func (c *controller) Start() error {
 // poll the A8 controller for changes and notify listeners
 func (c *controller) poll() error {
 
-	// Get latest config from the A8 controller
-	conf, err := c.controller.GetProxyConfig(c.version)
+	// Get the latest rules from the A8 controller.
+	resp, err := c.controller.GetRules(rules.Filter{})
 	if err != nil {
 		logrus.WithError(err).Error("Call to controller failed")
 		return err
 	}
 
-	if conf == nil { // Nothing to update
+	// Short-circuit if the controller's revision is not newer than our revision
+	if c.revision >= resp.Revision {
 		return nil
 	}
 
+	// Update our revision
+	c.revision = resp.Revision
+
 	// Notify listeners
 	for _, listener := range c.listeners {
-		if err := listener.RuleChange(*conf); err != nil {
+		if err := listener.RuleChange(resp.Rules); err != nil {
 			logrus.WithError(err).Warn("Controller listener failed")
 		}
 	}
-
-	// TODO: either time should be obtained from the controller OR time should only be obtained locally, otherwise
-	// there may be issues with clock synchronization.
-	t := time.Now()
-	c.version = &t
 
 	return nil
 }

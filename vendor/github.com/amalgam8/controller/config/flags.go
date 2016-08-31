@@ -21,32 +21,34 @@ import (
 )
 
 const (
-	apiPort          = "api_port"
-	dbType           = "database_type"
-	dbUser           = "database_username"
-	dbPassword       = "database_password"
-	dbHost           = "database_host"
-	secretKey        = "encryption_key"
-	logLevel         = "log_level"
+	apiPortFlag      = "api_port"
+	dbTypeFlag       = "database_type"
+	dbUserFlag       = "database_username"
+	dbPasswordFlag   = "database_password"
+	dbHostFlag       = "database_host"
+	secretKeyFlag    = "encryption_key"
+	logLevelFlag     = "log_level"
 	authModeFlag     = "auth_mode"
 	jwtSecretFlag    = "jwt_secret"
 	requireHTTPSFlag = "require_https"
 )
 
+const apiPort = 6379
+
 // Flags command line args for Controller
 var Flags = []cli.Flag{
 
 	cli.IntFlag{
-		Name:   apiPort,
-		EnvVar: envVar(apiPort),
-		Value:  6379,
+		Name:   apiPortFlag,
+		EnvVar: envVar(apiPortFlag),
+		Value:  apiPort,
 		Usage:  "API port",
 	},
 
 	cli.StringFlag{
-		Name:   secretKey,
+		Name:   secretKeyFlag,
 		Value:  "abcdefghijklmnop",
-		EnvVar: envVar(secretKey),
+		EnvVar: envVar(secretKeyFlag),
 		Usage:  "secret key",
 	},
 
@@ -70,30 +72,30 @@ var Flags = []cli.Flag{
 
 	// Database
 	cli.StringFlag{
-		Name:   dbType,
-		EnvVar: envVar(dbType),
+		Name:   dbTypeFlag,
+		EnvVar: envVar(dbTypeFlag),
 		Value:  "memory",
 		Usage:  "database type",
 	},
 	cli.StringFlag{
-		Name:   dbUser,
-		EnvVar: envVar(dbUser),
+		Name:   dbUserFlag,
+		EnvVar: envVar(dbUserFlag),
 		Usage:  "database username",
 	},
 	cli.StringFlag{
-		Name:   dbPassword,
-		EnvVar: envVar(dbPassword),
+		Name:   dbPasswordFlag,
+		EnvVar: envVar(dbPasswordFlag),
 		Usage:  "database password",
 	},
 	cli.StringFlag{
-		Name:   dbHost,
-		EnvVar: envVar(dbHost),
+		Name:   dbHostFlag,
+		EnvVar: envVar(dbHostFlag),
 		Usage:  "database host",
 	},
 
 	cli.StringFlag{
-		Name:   logLevel,
-		EnvVar: envVar(logLevel),
+		Name:   logLevelFlag,
+		EnvVar: envVar(logLevelFlag),
 		Value:  "info",
 		Usage:  "logging level (debug, info, warn, error, fatal, panic)",
 	},

@@ -27,6 +27,7 @@
 	  - [CORS](#cors)
 	  - [JSONP](#jsonp)
 	  - [Basic Auth](#basic-auth)
+	  - [Force HTTPS](#forcessl)
 	  - [Status](#status)
 	  - [Status Auth](#status-auth)
   - [Advanced](#advanced)
@@ -70,7 +71,7 @@ This package is "go-gettable", just do:
 
 The recommended way of using this library in your project is to use the **"vendoring"** method,
 where this library code is copied in your repository at a specific revision.
-[This page](http://nathany.com/go-packages/) is a good summary of package management in Go.
+[This page](https://nathany.com/go-packages/) is a good summary of package management in Go.
 
 
 ## Middlewares
@@ -99,6 +100,9 @@ Third Party Middlewares:
 |------|-------------|
 | **[Statsd](https://github.com/ant0ine/go-json-rest-middleware-statsd)** | Send stats to a statsd server |
 | **[JWT](https://github.com/StephanDollberg/go-json-rest-middleware-jwt)** | Provides authentication via Json Web Tokens |
+| **[AuthToken](https://github.com/grayj/go-json-rest-middleware-tokenauth)** | Provides a Token Auth implementation |
+| **[ForceSSL](https://github.com/jadengore/go-json-rest-middleware-force-ssl)** | Forces SSL on requests |
+| **[SecureRedirect](https://github.com/clyphub/go-json-rest-middleware)** | Redirect clients from HTTP to HTTPS |
 
 *If you have a Go-Json-Rest compatible middleware, feel free to submit a PR to add it in this list, and in the examples.*
 
@@ -163,10 +167,6 @@ import (
 	"net"
 	"net/http"
 )
-
-type Message struct {
-	Body string
-}
 
 func main() {
 	api := rest.NewApi()
@@ -780,6 +780,49 @@ func main() {
 
 ```
 
+#### ForceSSL
+
+Demonstrate how to use the [ForceSSL Middleware](https://github.com/jadengore/go-json-rest-middleware-force-ssl) to force HTTPS on requests to a `go-json-rest` API.
+
+For the purposes of this demo, we are using HTTP for all requests and checking the `X-Forwarded-Proto` header to see if it is set to HTTPS (many routers set this to show what type of connection the client is using, such as Heroku). To do a true HTTPS test, make sure and use [`http.ListenAndServeTLS`](https://golang.org/pkg/net/http/#ListenAndServeTLS) with a valid certificate and key file.
+
+Additional documentation for the ForceSSL middleware can be found [here](https://github.com/jadengore/go-json-rest-middleware-force-ssl).
+
+curl demo:
+``` sh
+curl -i 127.0.0.1:8080/
+curl -H "X-Forwarded-Proto:https" -i 127.0.0.1:8080/
+```
+
+code:
+``` go
+package main
+
+import (
+	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/jadengore/go-json-rest-middleware-force-ssl"
+	"log"
+	"net/http"
+)
+
+func main() {
+	api := rest.NewApi()
+	api.Use(&forceSSL.Middleware{
+		TrustXFPHeader:     true,
+		Enable301Redirects: false,
+	})
+	api.SetApp(rest.AppSimple(func(w rest.ResponseWriter, r *rest.Request) {
+		w.WriteJson(map[string]string{"body": "Hello World!"})
+	}))
+
+	// For the purposes of this demo, only HTTP connections accepted.
+	// For true HTTPS, use ListenAndServeTLS.
+	// https://golang.org/pkg/net/http/#ListenAndServeTLS
+	log.Fatal(http.ListenAndServe(":8080", api.MakeHandler()))
+}
+
+```
+
 #### Status
 
 Demonstrate how to setup a `/.status` endpoint
@@ -1188,18 +1231,19 @@ func (mw *SemVerMiddleware) MiddlewareFunc(handler rest.HandlerFunc) rest.Handle
 }
 
 func main() {
-	api := rest.NewApi()
-	api.Use(rest.DefaultDevStack...)
-	api.Use(SemVerMiddleware{
+
+	svmw := SemVerMiddleware{
 		MinVersion: "1.0.0",
 		MaxVersion: "3.0.0",
-	})
+	}
+	api := rest.NewApi()
+	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
 		rest.Get("/#version/message", svmw.MiddlewareFunc(
 			func(w rest.ResponseWriter, req *rest.Request) {
 				version := req.Env["VERSION"].(*semver.Version)
 				if version.Major == 2 {
-					// http://en.wikipedia.org/wiki/Second-system_effect
+					// https://en.wikipedia.org/wiki/Second-system_effect
 					w.WriteJson(map[string]string{
 						"Body": "Hello broken World!",
 					})
@@ -1267,7 +1311,7 @@ func main() {
 
 #### NewRelic
 
-NewRelic integration based on the GoRelic plugin: [github.com/yvasiyarov/gorelic](http://github.com/yvasiyarov/gorelic)
+NewRelic integration based on the GoRelic plugin: [github.com/yvasiyarov/gorelic](https://github.com/yvasiyarov/gorelic)
 
 curl demo:
 ``` sh
@@ -1332,7 +1376,7 @@ func main() {
 
 #### Graceful Shutdown
 
-This example uses [github.com/stretchr/graceful](https://github.com/stretchr/graceful) to try to be nice with the clients waiting for responses during a server shutdown (or restart).
+This example uses [https://github.com/tylerb/graceful](https://github.com/tylerb/graceful) to try to be nice with the clients waiting for responses during a server shutdown (or restart).
 The HTTP response takes 10 seconds to be completed, printing a message on the wire every second.
 10 seconds is also the timeout set for the graceful shutdown.
 You can play with these numbers to show that the server waits for the responses to complete.
@@ -1349,7 +1393,7 @@ package main
 import (
 	"fmt"
 	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/stretchr/graceful"
+        "gopkg.in/tylerb/graceful.v1"
 	"log"
 	"net/http"
 	"time"
@@ -1639,7 +1683,7 @@ In fact the internal code of **go-json-rest** is itself implemented with Middlew
 
 #### The import path has changed to `github.com/ant0ine/go-json-rest/rest`
 
-This is more conform to Go style, and makes [goimports](https://godoc.org/code.google.com/p/go.tools/cmd/goimports) work.
+This is more conform to Go style, and makes [goimports](https://godoc.org/golang.org/x/tools/cmd/goimports) work.
 
 This:
 ``` go
@@ -1751,9 +1795,10 @@ Overall, they provide the same features, but with two methods instead of three, 
 - [Paul Lam](https://github.com/Quantisan)
 - [Thanabodee Charoenpiriyakij](https://github.com/wingyplus)
 - [Sebastien Estienne](https://github.com/sebest)
+- [Edward Bramanti](https://github.com/jadengore)
 
 
-Copyright (c) 2013-2015 Antoine Imbert
+Copyright (c) 2013-2016 Antoine Imbert
 
 [MIT License](https://github.com/ant0ine/go-json-rest/blob/master/LICENSE)
 

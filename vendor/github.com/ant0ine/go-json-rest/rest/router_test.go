@@ -4,13 +4,15 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/ant0ine/go-json-rest/rest/test"
 )
 
 func TestFindRouteAPI(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/",
 			},
@@ -103,7 +105,7 @@ func TestEmptyPathExp(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "",
 			},
@@ -120,7 +122,7 @@ func TestInvalidPathExp(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "invalid",
 			},
@@ -137,7 +139,7 @@ func TestUrlEncodedFind(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/with space", // not urlencoded
 			},
@@ -166,7 +168,7 @@ func TestWithQueryString(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/:id",
 			},
@@ -198,7 +200,7 @@ func TestNonUrlEncodedFind(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/with%20space", // urlencoded
 			},
@@ -227,11 +229,11 @@ func TestDuplicatedRoute(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/",
 			},
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/",
 			},
@@ -248,7 +250,7 @@ func TestSplatUrlEncoded(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/*rest",
 			},
@@ -280,11 +282,11 @@ func TestRouteOrder(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/:id",
 			},
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/*rest",
 			},
@@ -319,11 +321,11 @@ func TestRelaxedPlaceholder(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/:id",
 			},
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/r/#filename",
 			},
@@ -358,11 +360,11 @@ func TestSimpleExample(t *testing.T) {
 
 	r := router{
 		Routes: []*Route{
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/resources/:id",
 			},
-			&Route{
+			{
 				HttpMethod: "GET",
 				PathExp:    "/resources",
 			},
@@ -389,4 +391,48 @@ func TestSimpleExample(t *testing.T) {
 	if pathMatched != true {
 		t.Error("Expected pathMatched to be true")
 	}
+}
+
+func TestHttpResponseLayer(t *testing.T) {
+
+	api := NewApi()
+	router, err := MakeRouter(
+		Get("/r/:id", func(w ResponseWriter, r *Request) {
+			id := r.PathParam("id")
+			w.WriteJson(map[string]string{"Id": id})
+		}),
+		Post("/r/:id", func(w ResponseWriter, r *Request) {
+			// JSON echo
+			data := map[string]string{}
+			err := r.DecodeJsonPayload(&data)
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.WriteJson(data)
+		}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	api.SetApp(router)
+
+	handler := api.MakeHandler()
+
+	// valid get resource
+	recorded := test.RunRequest(t, handler, test.MakeSimpleRequest("GET", "http://1.2.3.4/r/123", nil))
+	recorded.CodeIs(200)
+	recorded.ContentTypeIsJson()
+	recorded.BodyIs(`{"Id":"123"}`)
+
+	// auto 405 on undefined route (wrong method)
+	recorded = test.RunRequest(t, handler, test.MakeSimpleRequest("DELETE", "http://1.2.3.4/r/123", nil))
+	recorded.CodeIs(405)
+	recorded.ContentTypeIsJson()
+	recorded.BodyIs(`{"Error":"Method not allowed"}`)
+
+	// auto 404 on undefined route (wrong path)
+	recorded = test.RunRequest(t, handler, test.MakeSimpleRequest("GET", "http://1.2.3.4/s/123", nil))
+	recorded.CodeIs(404)
+	recorded.ContentTypeIsJson()
+	recorded.BodyIs(`{"Error":"Resource not found"}`)
 }

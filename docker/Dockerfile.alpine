@@ -110,8 +110,7 @@
 
 FROM openresty/openresty:alpine
 
-##install ca-certificates and curl. Useful for debugging lua
-RUN apk add --no-cache curl
+RUN apk update && apk add curl
 
 RUN ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     ln -sf /usr/local/openresty/nginx/logs /var/log/nginx && \

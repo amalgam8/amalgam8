@@ -1,16 +1,18 @@
-hash: 47f0e934eaf8982d5488d166a7ca4e9b332c04352d772b3044bbd326357c13bf
-updated: 2016-08-03T20:29:00.168379572+01:00
+hash: 47adbd258663b423eac1845d0204db5f9fe37b910f3d00a9b9d7d209dcbc472f
+updated: 2016-08-31T09:56:15.220273892-05:00
 imports:
 - name: github.com/amalgam8/controller
-  version: 61679f9d97de1c9a0f72094ae7edf2244aae77c7
-  subpackages:
-  - resources
-- name: github.com/amalgam8/registry
-  version: bebdfef8f255e4334f4bee38ae4f655754966439
+  version: fb49ab33cdd904afc04e0045a2dffb1f144c1882
   subpackages:
   - client
-  - api/protocol/amalgam8
+  - rules
+  - util/encryption
+- name: github.com/amalgam8/registry
+  version: bee64788030c6730b5694f3a756cceacbad53aba
+  subpackages:
+  - client
   - api/env
+  - api/protocol/amalgam8
   - api/middleware
   - api/protocol
   - auth
@@ -23,7 +25,7 @@ imports:
   - cluster
   - utils/health
 - name: github.com/ant0ine/go-json-rest
-  version: bd5fcdd7b0b7e63f4abb171498784efbd01fda7b
+  version: 37ad7dc626602a8355801da6acd85155655520f8
   subpackages:
   - rest
   - rest/trie
@@ -31,6 +33,11 @@ imports:
   version: bca61c476e3c752594983e4c9bcd5f62fb09f157
 - name: github.com/dgrijalva/jwt-go
   version: e5cb38552fb8426fe9f0f2b3bc8408f238b97b87
+- name: github.com/garyburd/redigo
+  version: ffa8d46ada782d81cfda81a0fbd9f45ceae448e8
+  subpackages:
+  - redis
+  - internal
 - name: github.com/nicksnyder/go-i18n
   version: 37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3
   subpackages:
@@ -40,41 +47,22 @@ imports:
   - i18n/translation
 - name: github.com/onsi/ginkgo
   version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
-  subpackages:
-  - config
-  - internal/codelocation
-  - internal/failer
-  - internal/remote
-  - internal/suite
-  - internal/testingtproxy
-  - internal/writer
-  - reporters
-  - reporters/stenographer
-  - types
-  - internal/containernode
-  - internal/leafnodes
-  - internal/spec
-  - internal/specrunner
 - name: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
-  subpackages:
-  - internal/assertion
-  - internal/asyncassertion
-  - internal/testingtsupport
-  - matchers
-  - types
-  - internal/oraclematcher
-  - format
-  - matchers/support/goraph/bipartitegraph
-  - matchers/support/goraph/edge
-  - matchers/support/goraph/node
-  - matchers/support/goraph/util
+- name: github.com/pborman/uuid
+  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 - name: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
   subpackages:
   - formatters/logstash
+- name: github.com/xeipuuv/gojsonpointer
+  version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
+- name: github.com/xeipuuv/gojsonreference
+  version: e02fc20de94c78484cd5ffb007f8af96be030a45
+- name: github.com/xeipuuv/gojsonschema
+  version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-testImports: []
+devImports: []

@@ -21,13 +21,11 @@ import (
 
 	"fmt"
 
-	"encoding/json"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/registry/client"
+	controllerclient "github.com/amalgam8/controller/client"
+	registryclient "github.com/amalgam8/registry/client"
 	"github.com/amalgam8/sidecar/config"
 	"github.com/amalgam8/sidecar/proxy"
-	"github.com/amalgam8/sidecar/proxy/clients"
 	"github.com/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/sidecar/register"
@@ -104,7 +102,7 @@ func sidecarMain(conf config.Config) error {
 	if conf.Register {
 		logrus.Info("Registering")
 
-		registryClient, err := client.New(client.Config{
+		registryClient, err := registryclient.New(registryclient.Config{
 			URL:       conf.Registry.URL,
 			AuthToken: conf.Registry.Token,
 		})
@@ -114,22 +112,14 @@ func sidecarMain(conf config.Config) error {
 		}
 
 		address := fmt.Sprintf("%v:%v", conf.EndpointHost, conf.EndpointPort)
-		serviceInstance := &client.ServiceInstance{
+		serviceInstance := &registryclient.ServiceInstance{
 			ServiceName: conf.ServiceName,
-			Endpoint: client.ServiceEndpoint{
+			Tags:        conf.ServiceTags,
+			Endpoint: registryclient.ServiceEndpoint{
 				Type:  conf.EndpointType,
 				Value: address,
 			},
 			TTL: 60,
-		}
-
-		if conf.ServiceVersion != "" {
-			data, err := json.Marshal(map[string]string{"version": conf.ServiceVersion})
-			if err == nil {
-				serviceInstance.Metadata = data
-			} else {
-				logrus.WithError(err).Warn("Could not marshal service version metadata")
-			}
 		}
 
 		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
@@ -156,17 +146,25 @@ func sidecarMain(conf config.Config) error {
 func startProxy(conf *config.Config) error {
 	var err error
 
-	nginxClient := clients.NewNGINX("http://localhost:5813")
-	controllerClient := clients.NewController(conf)
-
+	nginxClient := nginx.NewClient("http://localhost:5813")
 	nginxManager := nginx.NewManager(
 		nginx.Config{
 			Service: nginx.NewService(),
 			Client:  nginxClient,
 		},
 	)
+	nginxProxy := proxy.NewNGINXProxy(nginxManager)
 
-	registryClient, err := client.New(client.Config{
+	controllerClient, err := controllerclient.New(controllerclient.Config{
+		URL:       conf.Controller.URL,
+		AuthToken: conf.Controller.Token,
+	})
+	if err != nil {
+		logrus.WithError(err).Error("Could not create controller client")
+		return err
+	}
+
+	registryClient, err := registryclient.New(registryclient.Config{
 		URL:       conf.Registry.URL,
 		AuthToken: conf.Registry.Token,
 	})
@@ -174,8 +172,6 @@ func startProxy(conf *config.Config) error {
 		logrus.WithError(err).Error("Could not create registry client")
 		return err
 	}
-
-	nginxProxy := proxy.NewNGINXProxy(nginxManager)
 
 	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
 		Client: controllerClient,

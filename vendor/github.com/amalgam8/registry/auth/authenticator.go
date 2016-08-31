@@ -19,10 +19,7 @@ const module = "AUTH"
 
 // Authenticator is an interface for token authentication
 type Authenticator interface {
-	Authenticate(token string) (*Namespace, error)
-}
 
-// DefaultAuthenticator returns the default authenticator provided by this package
-func DefaultAuthenticator() Authenticator {
-	return NewGlobalAuthenticator()
+	// Authenticate resolves an arbitrary string token into a namespace.
+	Authenticate(token string) (*Namespace, error)
 }

@@ -1,3 +1,17 @@
+// Copyright 2016 IBM Corporation
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
 package middleware
 
 import (
@@ -5,9 +19,9 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/controller/api"
 	"github.com/amalgam8/controller/auth"
 	"github.com/amalgam8/controller/util"
+	"github.com/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -35,7 +49,7 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if authHeader != "" {
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || (parts[0] != "Bearer" && parts[0] != "bearer") {
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_malformed")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationMalformedHeader)
 			return
 		}
 		token = parts[1]
@@ -45,26 +59,26 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_header_missing")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationMissingHeader)
 		case auth.ErrUnauthorized, auth.ErrUnrecognizedToken:
-			api.RestError(writer, request, http.StatusUnauthorized, "error_auth_not_authorized")
+			i18n.RestError(writer, request, http.StatusUnauthorized, i18n.ErrorAuthorizationNotAuthorized)
 		case auth.ErrCommunicationError:
-			api.RestError(writer, request, http.StatusServiceUnavailable, "error_auth_failed_validation")
+			i18n.RestError(writer, request, http.StatusServiceUnavailable, i18n.ErrorAuthorizationTokenValidationFailed)
 		default:
-			api.RestError(writer, request, http.StatusInternalServerError, "error_internal")
+			i18n.RestError(writer, request, http.StatusInternalServerError, i18n.ErrorInternalServer)
 		}
 		return
 	}
 
-	// Recognize admin namespace and get tenant ID from header
+	// Recognize admin namespace and get the namespace from the header
 	if nsPtr.String() == adminNamespace {
-		tenantID := request.Header.Get(util.TenantHeader)
-		if tenantID == "" {
-			api.RestError(writer, request, http.StatusBadRequest, "missing_tenant_header")
+		nsStr := request.Header.Get(util.NamespaceHeader)
+		if nsStr == "" {
+			i18n.RestError(writer, request, http.StatusBadRequest, "missing_namespace_header")
 			return
 		}
-		tenantNamespace := auth.Namespace(tenantID)
-		nsPtr = &tenantNamespace
+		ns := auth.Namespace(nsStr)
+		nsPtr = &ns
 	}
 
 	request.Env[util.Namespace] = *nsPtr

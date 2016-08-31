@@ -18,7 +18,11 @@ set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
-git clone --branch master https://github.com/amalgam8/examples $EXAMPLESDIR
+
+# If examples directory does not exist, clone repo from github
+if [ ! -d "$EXAMPLESDIR" ]; then
+    git clone --branch master https://github.com/amalgam8/examples $EXAMPLESDIR
+fi
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
 
@@ -50,3 +54,5 @@ sleep 60
 $SCRIPTDIR/testing/demo_script.sh
 echo "Kubernetes tests successful. Cleaning up.."
 $EXAMPLESDIR/kubernetes/cleanup.sh
+sleep 5
+sudo $EXAMPLESDIR/kubernetes/uninstall-kubernetes.sh

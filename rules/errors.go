@@ -16,22 +16,28 @@ package rules
 
 import "fmt"
 
+// InvalidRuleError occurs when a rule is not valid
 type InvalidRuleError struct{}
 
+// Error description
 func (e *InvalidRuleError) Error() string {
 	return "Invalid Rule Error"
 }
 
+// RedisInsertError occurs when there is an issue writing to Redis
 type RedisInsertError struct{}
 
+// Error description
 func (e *RedisInsertError) Error() string {
 	return "Redis insert failed"
 }
 
-type JSONMarshallError struct {
+// JSONMarshalError describes a JSON marshal or unmarshaling error
+type JSONMarshalError struct {
 	Message string
 }
 
-func (e *JSONMarshallError) Error() string {
-	return fmt.Sprintf("Error marshalling JSON: %v", e.Message)
+// Error description
+func (e *JSONMarshalError) Error() string {
+	return fmt.Sprintf("Error marshaling JSON: %v", e.Message)
 }

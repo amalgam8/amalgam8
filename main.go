@@ -97,7 +97,8 @@ func controllerMain(conf config.Config) error {
 	var ruleManager rules.Manager
 	if conf.Database.Type == "redis" {
 		ruleManager = rules.NewRedisManager(
-			rules.NewRedisDB(conf.Database.Host, conf.Database.Password),
+			conf.Database.Host,
+			conf.Database.Password,
 			validator,
 		)
 	} else {

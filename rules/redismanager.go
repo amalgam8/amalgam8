@@ -23,10 +23,11 @@ import (
 	"github.com/pborman/uuid"
 )
 
-func NewRedisManager(db *redisDB, v Validator) Manager {
+// NewRedisManager creates a Redis backed manager implementation.
+func NewRedisManager(host, pass string, v Validator) Manager {
 	return &redisManager{
 		validator: v,
-		db:        db,
+		db:        newRedisDB(host, pass),
 	}
 }
 
@@ -53,7 +54,7 @@ func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error
 		rule.ID = id
 		data, err := json.Marshal(&rule)
 		if err != nil {
-			return NewRules{}, &JSONMarshallError{Message: err.Error()}
+			return NewRules{}, &JSONMarshalError{Message: err.Error()}
 		}
 
 		entries[id] = string(data)
@@ -111,7 +112,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 				"namespace": namespace,
 				"entry":     entry,
 			}).Error("Could not unmarshal object returned from Redis")
-			return RetrievedRules{}, &JSONMarshallError{Message: err.Error()}
+			return RetrievedRules{}, &JSONMarshalError{Message: err.Error()}
 		}
 		results[index] = rule
 	}

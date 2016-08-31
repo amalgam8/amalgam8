@@ -367,7 +367,7 @@ func handleManagerError(w rest.ResponseWriter, req *rest.Request, err error, arg
 	switch e := err.(type) {
 	case *rules.InvalidRuleError:
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidRule, args)
-	case *rules.JSONMarshallError:
+	case *rules.JSONMarshalError:
 		i18n.RestError(w, req, http.StatusInternalServerError, i18n.ErrorInternalServer, args)
 	default:
 		logrus.WithError(e).Warn("Unknown error")

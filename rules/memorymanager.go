@@ -22,6 +22,7 @@ import (
 	"github.com/pborman/uuid"
 )
 
+// NewMemoryManager constructs a new in memory manager.
 func NewMemoryManager(validator Validator) Manager {
 	return &memory{
 		rules:     make(map[string]map[string]Rule),

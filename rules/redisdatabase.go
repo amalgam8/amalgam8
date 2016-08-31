@@ -28,6 +28,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 )
 
+// Entry is used to encapsulate a record with an IV for encryption and decryption.
 type Entry struct {
 	IV      string `json:"IV"`
 	Payload string `json:"payload"`
@@ -42,8 +43,8 @@ type redisDB struct {
 
 // TODO: The returns from all the redis commands need to be double checked to ensure we are detecting all the errors
 
-// NewRedisDB returns an instance of a Redis database
-func NewRedisDB(address string, password string) *redisDB {
+// newRedisDB returns an instance of a Redis database
+func newRedisDB(address string, password string) *redisDB {
 	db := &redisDB{
 		pool: redis.NewPool(func() (redis.Conn, error) {
 			// Connect to Redis

@@ -14,12 +14,7 @@
 
 package util
 
-// AuthHeader control plane authorization header
+// Keys of rest.Request.Env used by rest.Middleware.
 const (
-	AuthHeader   = "Authorization"
-	Namespace    = "NAMESPACE"
-	TenantHeader = "A8-Tenant-ID"
-
-	// RequestIDHeader constant for "request-id"
-	RequestIDHeader = "request-id"
+	Namespace = "NAMESPACE"
 )

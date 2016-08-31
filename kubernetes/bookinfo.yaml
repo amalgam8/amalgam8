@@ -36,11 +36,9 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
-        args:
-          - --proxy=false
-          - --log=false
-          - --supervise=false
         env:
+        - name: A8_REGISTER
+          value: "true"
         - name: A8_SERVICE
           value: details:v1
         - name: A8_LOGSTASH_SERVER
@@ -78,11 +76,9 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
-        args:
-          - --proxy=false
-          - --log=false
-          - --supervise=false
         env:
+        - name: A8_REGISTER
+          value: "true"
         - name: A8_SERVICE
           value: ratings:v1
         - name: A8_LOGSTASH_SERVER
@@ -123,6 +119,12 @@ spec:
         ports:
         - containerPort: 6379
         env:
+        - name: A8_REGISTER
+          value: "true"
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
@@ -169,6 +171,12 @@ spec:
         ports:
         - containerPort: 6379
         env:
+        - name: A8_REGISTER
+          value: "true"
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
@@ -215,6 +223,12 @@ spec:
         ports:
         - containerPort: 6379
         env:
+        - name: A8_REGISTER
+          value: "true"
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
@@ -261,6 +275,12 @@ spec:
         ports:
         - containerPort: 6379
         env:
+        - name: A8_REGISTER
+          value: "true"
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL

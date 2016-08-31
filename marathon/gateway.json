@@ -14,7 +14,7 @@
 	    ]
 	}
     },
-    "cmd" : "a8sidecar --register=false --supervise=false",
+    "cmd" : "a8sidecar --proxy --log --supervise=false",
     "env": {
 		"A8_SERVICE" : "gateway",
 		"A8_REGISTRY_URL": "http://__REPLACEME__:31300",

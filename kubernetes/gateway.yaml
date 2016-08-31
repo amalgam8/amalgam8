@@ -50,6 +50,10 @@ spec:
         ports:
         - containerPort: 6379
         env:
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_REGISTRY_URL
@@ -63,5 +67,3 @@ spec:
           value: 5s
         - name: A8_REGISTRY_POLL
           value: 5s
-        - name: A8_REGISTER
-          value: "false"

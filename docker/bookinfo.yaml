@@ -17,8 +17,7 @@ details-v1:
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=details:v1
-    - A8_LOG=false
-    - A8_PROXY=false
+    - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
@@ -28,8 +27,7 @@ ratings-v1:
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=ratings:v1
-    - A8_LOG=false
-    - A8_PROXY=false
+    - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
@@ -39,8 +37,7 @@ reviews-v1:
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v1
-    - A8_LOG=false
-    - A8_PROXY=false
+    - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
@@ -48,6 +45,9 @@ reviews-v1:
 reviews-v2:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine
   environment:
+    - A8_LOG=true
+    - A8_REGISTER=true
+    - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v2
     - A8_ENDPOINT_PORT=9080
@@ -63,6 +63,9 @@ reviews-v2:
 reviews-v3:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine
   environment:
+    - A8_LOG=true
+    - A8_REGISTER=true
+    - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v3
     - A8_ENDPOINT_PORT=9080
@@ -78,6 +81,9 @@ reviews-v3:
 productpage-v1:
   image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine
   environment:
+    - A8_LOG=true
+    - A8_REGISTER=true
+    - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=productpage:v1
     - A8_ENDPOINT_PORT=9080

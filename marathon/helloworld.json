@@ -20,8 +20,9 @@
 			    ]
 			}
 		    },
-		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
+		    "cmd" : "a8sidecar --register --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
+				"A8_REGISTER": "true",
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "A8_SERVICE" : "helloworld:v1"
 		    },
@@ -45,8 +46,9 @@
 			    ]
 			}
 		    },
-		    "cmd" : "a8sidecar --proxy=false --log=false --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
+		    "cmd" : "a8sidecar --register --endpoint_host=${HOST} --endpoint_port=${PORT_5000} --supervise python -u app.py",
 		    "env": {
+				"A8_REGISTER": "true",
                 "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			    "A8_SERVICE" : "helloworld:v2"
 		    },

@@ -39,11 +39,9 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
-        args:
-          - --proxy=false
-          - --log=false
-          - --supervise=false
         env:
+        - name: A8_REGISTER
+          value: "true"
         - name: A8_SERVICE
           value: helloworld:v1
         - name: A8_LOGSTASH_SERVER
@@ -84,11 +82,9 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
-        args:
-          - --proxy=false
-          - --log=false
-          - --supervise=false
         env:
+        - name: A8_REGISTER
+          value: "true"
         - name: A8_SERVICE
           value: helloworld:v2
         - name: A8_LOGSTASH_SERVER

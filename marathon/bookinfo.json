@@ -20,9 +20,9 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python details.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --register --supervise python details.py 9080 http://localhost:6379",
 		            "env": {
-                        "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
+                        "A8_REGISTRY_URL" : "http://__REPLACEME__:31300",
 			            "A8_SERVICE" : "details:v1"
 		            },
 		            "instances": 1,
@@ -45,7 +45,7 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python ratings.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --register --supervise python ratings.py 9080 http://localhost:6379",
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_SERVICE" : "ratings:v1"
@@ -70,7 +70,7 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --log=false --proxy=false --supervise python reviews.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --register --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 			            "A8_SERVICE" : "reviews:v1"
@@ -95,7 +95,7 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --register --proxy --log --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 						"A8_REGISTRY_POLL" : "5s",
@@ -124,7 +124,7 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python reviews.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --register --proxy --log --supervise python reviews.py 9080 http://localhost:6379",
 		            "env": {
                         "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 						"A8_REGISTRY_POLL" : "5s",
@@ -153,7 +153,7 @@
 			                ]
 			            }
 		            },
-                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080} --supervise python productpage.py 9080 http://localhost:6379",
+                    "cmd" : "a8sidecar --endpoint_host=${HOST} --endpoint_port=${PORT_9080}  --register --proxy --log --supervise python productpage.py 9080 http://localhost:6379",
 		            "env": {
 			            "A8_REGISTRY_URL": "http://__REPLACEME__:31300",
 						"A8_REGISTRY_POLL" : "5s",

@@ -48,6 +48,7 @@ func NewController(conf ControllerConfig) Monitor {
 		controller:   conf.Client,
 		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
+		revision:     -1,
 	}
 }
 

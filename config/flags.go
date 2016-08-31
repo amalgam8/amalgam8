@@ -76,19 +76,19 @@ var TenantFlags = []cli.Flag{
 		Value:  "http",
 	},
 
-	cli.BoolTFlag{
+	cli.BoolFlag{
 		Name:   register,
 		EnvVar: envVar(register),
 		Usage:  "Enable automatic service registration and heartbeat",
 	},
 
-	cli.BoolTFlag{
+	cli.BoolFlag{
 		Name:   proxy,
 		EnvVar: envVar(proxy),
 		Usage:  "Enable automatic service discovery and load balancing across services using NGINX",
 	},
 
-	cli.BoolTFlag{
+	cli.BoolFlag{
 		Name:   log,
 		EnvVar: envVar(log),
 		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",

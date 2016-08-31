@@ -14,21 +14,20 @@
 
 package auth
 
-type globalAuthenticator struct{}
+type defaultAuthenticator struct{}
 
-var globalAuth = &globalAuthenticator{}
+var defaultAuth = &defaultAuthenticator{}
+var defaultNamespace = Namespace("default")
 
-// NewGlobalAuthenticator creates a global authenticator instance
-func NewGlobalAuthenticator() Authenticator {
-	return globalAuth
+// DefaultAuthenticator returns the default authenticator provided by this package,
+// which resolves "" (empty string) as well as "default" token to the default namespace.
+func DefaultAuthenticator() Authenticator {
+	return defaultAuth
 }
 
-var globalNamespace = Namespace("global")
-
-func (aut *globalAuthenticator) Authenticate(token string) (*Namespace, error) {
-	if token == "" {
-		return &globalNamespace, nil
+func (aut *defaultAuthenticator) Authenticate(token string) (*Namespace, error) {
+	if token == "" || token == defaultNamespace.String() {
+		return &defaultNamespace, nil
 	}
-
 	return nil, ErrUnrecognizedToken
 }

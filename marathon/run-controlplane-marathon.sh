@@ -28,6 +28,8 @@ if [ "$1" == "start" ]; then
     docker-compose -f /tmp/marathon.yaml up -d
     echo "waiting for the cluster to initialize.."
     sleep 60
+    echo "Starting redis storage backend"
+    cat $SCRIPTDIR/redis.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Starting multi-tenant service registry"
     cat $SCRIPTDIR/registry.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
     echo "Starting multi-tenant controller"
@@ -75,15 +77,9 @@ if [ "$1" == "start" ]; then
         sleep 10s
     done
 
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
+    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-redis
     curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller
     curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-registry
     sleep 10

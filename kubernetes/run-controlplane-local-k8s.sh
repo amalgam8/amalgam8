@@ -22,8 +22,11 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 rfile="registry.yaml"
 cfile="controller.yaml"
 lgfile="logserver.yaml"
+rdsfile="redis.yaml"
 
 if [ "$1" == "start" ]; then
+    echo "Starting redis storage"
+    kubectl create -f $SCRIPTDIR/$rdsfile
     echo "Starting logging service (ELK)"
     kubectl create -f $SCRIPTDIR/$lgfile
     echo "Starting multi-tenant service registry"
@@ -76,14 +79,6 @@ if [ "$1" == "start" ]; then
         sleep 10s
     done
 
-
-    echo "Setting up a new tenant named 'local'"
-    read -d '' tenant << EOF
-{
-    "load_balance": "round_robin"
-}
-EOF
-    echo $tenant | curl -H "Content-Type: application/json" -d @- "${CONTROLLER_URL}/v1/tenants"
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     kubectl delete -f $SCRIPTDIR/$cfile
@@ -91,6 +86,8 @@ elif [ "$1" == "stop" ]; then
     kubectl delete -f $SCRIPTDIR/$rfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$lgfile
+    sleep 3
+    kubectl delete -f $SCRIPTDIR/$rdsfile
 else
     echo "usage: $0 start|stop"
     exit 1

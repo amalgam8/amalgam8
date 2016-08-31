@@ -13,9 +13,13 @@ import (
 	"github.com/amalgam8/registry/api/env"
 )
 
+// RuleResponse is the information returned from a rule query.
 type RuleResponse struct {
-	Rules    []rules.Rule `json:"rules"`
-	Revision int64        `json:"revision"`
+	// Rules that matched the filter.
+	Rules []rules.Rule `json:"rules"`
+
+	// Revision of the rules for this namespace.
+	Revision int64 `json:"revision"`
 }
 
 // Config stores the configurable attributes of the client.
@@ -34,11 +38,13 @@ type Config struct {
 	HTTPClient *http.Client
 }
 
+// Client for the controller.
 type Client interface {
-	GetRules(rules.Filter) (RuleResponse, error)
+	// GetRules returns the rules for this namespace that match the filter.
+	GetRules(f rules.Filter) (RuleResponse, error)
 }
 
-// New controller client.
+// New constructs a new controller client.
 func New(conf Config) (Client, error) {
 	if err := normalizeConfig(&conf); err != nil {
 		return nil, err
@@ -106,30 +112,28 @@ func (c *client) GetRules(filter rules.Filter) (RuleResponse, error) {
 		logrus.WithError(err).Warn("Failed to retrieve rules from controller")
 		return ruleResponse, err
 	}
+	defer resp.Body.Close()
 
 	requestID := resp.Header.Get(env.RequestID)
 
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		respBytes, _ := ioutil.ReadAll(resp.Body)
-
-		logrus.WithFields(logrus.Fields{
-			"status_code": resp.StatusCode,
-			"request_id":  requestID,
-			"body":        string(respBytes),
-		}).Warn("Controller returned bad response code")
-		return ruleResponse, errors.New("Controller returned bad response code") // FIXME: custom error?
-	}
-
-	body, err := ioutil.ReadAll(resp.Body)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"request_id": requestID,
-		}).Warn("Error reading rules JSON from controller")
+		}).Warn("Error reading response from controller")
 		return ruleResponse, err
 	}
 
-	if err = json.Unmarshal(body, &ruleResponse); err != nil {
+	if resp.StatusCode != http.StatusOK {
+		logrus.WithFields(logrus.Fields{
+			"status_code": resp.StatusCode,
+			"request_id":  requestID,
+			"body":        string(data),
+		}).Warn("Controller returned unexpected response code")
+		return ruleResponse, errors.New("client: received unexpected response code") // FIXME: custom error?
+	}
+
+	if err = json.Unmarshal(data, &ruleResponse); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"request_id": requestID,
 		}).Warn("Error reading rules JSON from controller")
@@ -139,9 +143,9 @@ func (c *client) GetRules(filter rules.Filter) (RuleResponse, error) {
 	return ruleResponse, nil
 }
 
+// setAuthHeader optionally sets an authorization header. If the token is empty we assume no authentication is enabled
+// on the controller and do not add the header.
 func (c *client) setAuthHeader(req *http.Request) {
-	// If the token is empty we assume no authentication is enabled on the controller and do not add the
-	// authorization header.
 	if c.authToken != "" {
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", c.authToken))
 	}

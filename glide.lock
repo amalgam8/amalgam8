@@ -1,13 +1,14 @@
-hash: 6900893ed952ac4739d6316e5375b1bd232b030b6dd64bf1571a16f617d76b49
-updated: 2016-08-29T23:06:03.743062635+01:00
+hash: 47adbd258663b423eac1845d0204db5f9fe37b910f3d00a9b9d7d209dcbc472f
+updated: 2016-08-31T09:56:15.220273892-05:00
 imports:
 - name: github.com/amalgam8/controller
-  version: 80b4d9649df0f38f651f0ea2b1ba17eaeeb87027
+  version: fb49ab33cdd904afc04e0045a2dffb1f144c1882
   subpackages:
   - client
   - rules
+  - util/encryption
 - name: github.com/amalgam8/registry
-  version: 7f1f772f2e7a2a43de59eb0c9057c21e5ed69d0d
+  version: bee64788030c6730b5694f3a756cceacbad53aba
   subpackages:
   - client
   - api/env
@@ -46,35 +47,8 @@ imports:
   - i18n/translation
 - name: github.com/onsi/ginkgo
   version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
-  subpackages:
-  - config
-  - internal/codelocation
-  - internal/failer
-  - internal/remote
-  - internal/suite
-  - internal/testingtproxy
-  - internal/writer
-  - reporters
-  - reporters/stenographer
-  - types
-  - internal/containernode
-  - internal/leafnodes
-  - internal/spec
-  - internal/specrunner
 - name: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
-  subpackages:
-  - internal/assertion
-  - internal/asyncassertion
-  - internal/testingtsupport
-  - matchers
-  - types
-  - internal/oraclematcher
-  - format
-  - matchers/support/goraph/bipartitegraph
-  - matchers/support/goraph/edge
-  - matchers/support/goraph/node
-  - matchers/support/goraph/util
 - name: github.com/pborman/uuid
   version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 - name: github.com/rcrowley/go-metrics
@@ -91,4 +65,4 @@ imports:
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-testImports: []
+devImports: []

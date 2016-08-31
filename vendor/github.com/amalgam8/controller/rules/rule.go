@@ -16,6 +16,7 @@ package rules
 
 import "encoding/json"
 
+// Rule represents an individual rule.
 type Rule struct {
 	ID          string          `json:"id"`
 	Priority    int             `json:"priority"`

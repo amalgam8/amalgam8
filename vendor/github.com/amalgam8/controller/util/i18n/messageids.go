@@ -14,6 +14,7 @@
 
 package i18n
 
+// Message IDs for translation.
 const (
 	ErrorInvalidJSON     = "error_invalid_json"
 	ErrorInvalidRule     = "error_invalid_rule"

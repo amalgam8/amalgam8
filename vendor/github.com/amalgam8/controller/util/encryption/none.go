@@ -12,10 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rules
+package encryption
 
-type Encryption interface {
-	Encrypt(iv, data []byte) ([]byte, error)
-	Decrypt(iv, data []byte) ([]byte, error)
-	NewIV() []byte
+// none provides no encryption.
+type none struct{}
+
+func (n *none) Encrypt(iv, data []byte) ([]byte, error) {
+	return data, nil
+}
+
+func (n *none) Decrypt(iv, data []byte) ([]byte, error) {
+	return data, nil
+}
+
+func (n *none) NewIV() []byte {
+	return []byte{}
 }

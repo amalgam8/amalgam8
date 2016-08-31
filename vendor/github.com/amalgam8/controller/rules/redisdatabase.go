@@ -24,6 +24,7 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/controller/util/encryption"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -36,7 +37,7 @@ type redisDB struct {
 	pool       *redis.Pool
 	address    string
 	password   string
-	encryption Encryption
+	encryption encryption.Encryption
 }
 
 // TODO: The returns from all the redis commands need to be double checked to ensure we are detecting all the errors
@@ -74,7 +75,7 @@ func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, int64, error) {
 	defer conn.Close()
 
 	logrus.Debug("HGETALL ", namespace)
-	entryMap, err := redis.StringMap(conn.Do("HGETALL", BuildRulesKey(namespace)))
+	entryMap, err := redis.StringMap(conn.Do("HGETALL", buildRulesKey(namespace)))
 	if err != nil {
 		return []string{}, 0, err
 	}
@@ -92,7 +93,7 @@ func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, int64, error) {
 		return []string{}, 0, err
 	}
 
-	rev, err := redis.Int64(conn.Do("GET", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	rev, err := redis.Int64(conn.Do("GET", buildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
 	if err == redis.ErrNil {
 		rev = 0
 	}
@@ -102,7 +103,7 @@ func (rdb *redisDB) ReadAllEntries(namespace string) ([]string, int64, error) {
 
 func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, int64, error) {
 	args := make([]interface{}, len(ids)+1)
-	args[0] = BuildRulesKey(namespace)
+	args[0] = buildRulesKey(namespace)
 	for i, id := range ids {
 		args[i+1] = id
 	}
@@ -121,7 +122,7 @@ func (rdb *redisDB) ReadEntries(namespace string, ids []string) ([]string, int64
 		return []string{}, 0, err
 	}
 
-	rev, err := redis.Int64(conn.Do("GET", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	rev, err := redis.Int64(conn.Do("GET", buildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
 	if err == redis.ErrNil {
 		rev = 0
 	}
@@ -135,7 +136,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 		return err
 	}
 
-	args := BuildHMSetArgs(BuildRulesKey(namespace), encrypted)
+	args := buildHMSetArgs(buildRulesKey(namespace), encrypted)
 
 	conn := rdb.pool.Get()
 	defer conn.Close()
@@ -146,7 +147,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 		return err
 	}
 
-	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
+	_, err = conn.Do("INCR", buildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -155,7 +156,7 @@ func (rdb *redisDB) InsertEntries(namespace string, entries map[string]string) e
 // 2. Ensure the new rules are a subset of the existing rules
 // 3. Update the rules
 func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) error {
-	key := BuildRulesKey(namespace)
+	key := buildRulesKey(namespace)
 
 	conn := rdb.pool.Get()
 	defer conn.Close()
@@ -186,7 +187,7 @@ func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) e
 	}
 
 	conn.Send("MULTI")
-	args := BuildHMSetArgs(key, entries)
+	args := buildHMSetArgs(key, entries)
 	if err := conn.Send("HMSET", args...); err != nil {
 		return err
 	}
@@ -202,7 +203,7 @@ func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) e
 		return err
 	}
 
-	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
+	_, err = conn.Do("INCR", buildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -212,7 +213,7 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 	defer conn.Close()
 
 	args := make([]interface{}, len(ids)+1)
-	args[0] = BuildRulesKey(namespace)
+	args[0] = buildRulesKey(namespace)
 	i := 1
 	for _, id := range ids {
 		args[i] = id
@@ -226,7 +227,7 @@ func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
 		return err
 	}
 
-	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
+	_, err = conn.Do("INCR", buildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -235,12 +236,12 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
-	_, err := redis.Int(conn.Do("DEL", BuildRulesKey(namespace)))
+	_, err := redis.Int(conn.Do("DEL", buildRulesKey(namespace)))
 	if err != nil {
 		return err
 	}
 
-	_, err = conn.Do("INCR", BuildNamespaceKey(namespace, "revision")) // FIXME: pipeline
+	_, err = conn.Do("INCR", buildNamespaceKey(namespace, "revision")) // FIXME: pipeline
 
 	return err
 }
@@ -248,7 +249,7 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Rule) error {
 	var err error
 
-	key := BuildRulesKey(namespace)
+	key := buildRulesKey(namespace)
 
 	entries := make(map[string]string)
 	for _, rule := range rules {
@@ -325,7 +326,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 
 	// Add new rules
 	if len(entries) > 0 {
-		args := BuildHMSetArgs(key, entries)
+		args := buildHMSetArgs(key, entries)
 
 		logrus.Debug("HMSET ", args)
 		err = conn.Send("HMSET", args...)
@@ -345,7 +346,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 		return err
 	}
 
-	_, err = redis.Int64(conn.Do("INCR", BuildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	_, err = redis.Int64(conn.Do("INCR", buildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
 
 	return err
 }
@@ -422,7 +423,7 @@ func (rdb *redisDB) decrypt(entries []string) ([]string, error) {
 	return decryptedEntries, nil
 }
 
-func BuildHMSetArgs(key string, fieldMap map[string]string) []interface{} {
+func buildHMSetArgs(key string, fieldMap map[string]string) []interface{} {
 	args := make([]interface{}, len(fieldMap)*2+1)
 	args[0] = key
 
@@ -436,10 +437,10 @@ func BuildHMSetArgs(key string, fieldMap map[string]string) []interface{} {
 	return args
 }
 
-func BuildNamespaceKey(namespace, key string) string {
+func buildNamespaceKey(namespace, key string) string {
 	return fmt.Sprintf("controller:%v:%v", namespace, key)
 }
 
-func BuildRulesKey(namespace string) string {
+func buildRulesKey(namespace string) string {
 	return fmt.Sprintf("controller:%v:rules", namespace)
 }

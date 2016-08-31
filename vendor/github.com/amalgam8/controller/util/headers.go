@@ -12,23 +12,11 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package auth
+package util
 
-import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
+// Header keys
+const (
+	AuthHeader      = "Authorization"
+	NamespaceHeader = "A8-Namespace"
+	RequestIDHeader = "A8-Request-Id"
 )
-
-func TestValidGlobalToken(t *testing.T) {
-	g := globalAuth
-	namespace, err := g.Authenticate("")
-	assert.NoError(t, err)
-	assert.EqualValues(t, globalNamespace, *namespace)
-}
-
-func TestInvalidGlobalToken(t *testing.T) {
-	g := globalAuth
-	_, err := g.Authenticate("invalid-token")
-	assert.Error(t, err)
-}

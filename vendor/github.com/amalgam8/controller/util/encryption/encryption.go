@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package rules
+package encryption
 
-type noop struct{}
+// Encryption is an interface for encrypting and decrypting data.
+type Encryption interface {
+	// NewIV returns an initialization vector.
+	NewIV() []byte
 
-func (n *noop) Encrypt(iv, data []byte) ([]byte, error) {
-	return data, nil
-}
+	// Encrypt the data using the initialization vector.
+	Encrypt(iv, data []byte) ([]byte, error)
 
-func (n *noop) Decrypt(iv, data []byte) ([]byte, error) {
-	return data, nil
-}
-
-func (n *noop) NewIV() []byte {
-	return []byte{}
+	// Decrypt the data using the initialization vector.
+	Decrypt(iv, data []byte) ([]byte, error)
 }

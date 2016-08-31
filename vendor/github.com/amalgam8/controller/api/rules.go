@@ -26,25 +26,19 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-type TenantRules struct {
-	Rules []rules.Rule `json:"rules"`
-}
-
+// RuleList is used to output the results of rule queries.
 type RuleList struct {
 	Rules    []rules.Rule `json:"rules"`
 	Revision int64        `json:"revision"`
 }
 
-type ServiceRules struct {
-	ServiceName string       `json:"service"`
-	Rules       []rules.Rule `json:"rules"`
-}
-
+// Rule API.
 type Rule struct {
 	manager  rules.Manager
 	reporter metrics.Reporter
 }
 
+// NewRule constructs a new Rule API.
 func NewRule(m rules.Manager, r metrics.Reporter) *Rule {
 	return &Rule{
 		manager:  m,
@@ -52,6 +46,7 @@ func NewRule(m rules.Manager, r metrics.Reporter) *Rule {
 	}
 }
 
+// Routes returns this API's routes wrapped by the middlewares.
 func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 
 	routes := []*rest.Route{
@@ -79,28 +74,27 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 }
 
 func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
+	namespace := GetNamespace(req)
 
-	tenantRules := TenantRules{}
-	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
+	ruleList := RuleList{}
+	if err := req.DecodeJsonPayload(&ruleList); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	if len(tenantRules.Rules) == 0 {
+	if len(ruleList.Rules) == 0 {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
-	for i := range tenantRules.Rules {
-		if tenantRules.Rules[i].Tags == nil {
-			tenantRules.Rules[i].Tags = []string{}
+	for i := range ruleList.Rules {
+		if ruleList.Rules[i].Tags == nil {
+			ruleList.Rules[i].Tags = []string{}
 		}
 	}
 
-	newRules, err := r.manager.AddRules(tenantID, tenantRules.Rules)
+	newRules, err := r.manager.AddRules(namespace, ruleList.Rules)
 	if err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -117,7 +111,7 @@ func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
+	namespace := GetNamespace(req)
 	ruleIDs := getQueries("id", req)
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
@@ -129,46 +123,48 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 		RuleType:     rules.RuleAny,
 	}
 
-	retrievedRules, err := r.manager.GetRules(tenantID, filter)
+	return r.get(namespace, filter, w, req)
+}
+
+func (r *Rule) get(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+	res, err := r.manager.GetRules(ns, f)
 	if err != nil {
-		// TODO: more informative error parsing
 		handleManagerError(w, req, err)
 		return err
 	}
 
-	ruleList := RuleList{
-		Rules:    retrievedRules.Rules,
-		Revision: retrievedRules.Revision,
+	resp := RuleList{
+		Rules:    res.Rules,
+		Revision: res.Revision,
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.WriteJson(&ruleList)
+	w.WriteJson(&resp)
 	return nil
 }
 
 // TODO: ensure all IDs have been set
 func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
+	namespace := GetNamespace(req)
 
-	tenantRules := TenantRules{}
-	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
+	ruleList := RuleList{}
+	if err := req.DecodeJsonPayload(&ruleList); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	if len(tenantRules.Rules) == 0 {
+	if len(ruleList.Rules) == 0 {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
-	for i := range tenantRules.Rules {
-		if tenantRules.Rules[i].Tags == nil {
-			tenantRules.Rules[i].Tags = []string{}
+	for i := range ruleList.Rules {
+		if ruleList.Rules[i].Tags == nil {
+			ruleList.Rules[i].Tags = []string{}
 		}
 	}
 
-	if err := r.manager.UpdateRules(tenantID, tenantRules.Rules); err != nil {
-		// TODO: more informative error parsing
+	if err := r.manager.UpdateRules(namespace, ruleList.Rules); err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -186,7 +182,7 @@ func (r *Rule) getActions(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
+	namespace := GetNamespace(req)
 	ruleIDs := getQueries("id", req)
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
@@ -198,7 +194,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 		RuleType:     ruleType,
 	}
 
-	retrievedRules, err := r.manager.GetRules(tenantID, filter)
+	retrievedRules, err := r.manager.GetRules(namespace, filter)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -230,17 +226,8 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	return nil
 }
 
-func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
-	ruleIDs := getQueries("id", req)
-	tags := getQueries("tag", req)
-
-	filter := rules.Filter{
-		IDs:  ruleIDs,
-		Tags: tags,
-	}
-
-	if err := r.manager.DeleteRules(tenantID, filter); err != nil {
+func (r *Rule) delete(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+	if err := r.manager.DeleteRules(ns, f); err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -249,28 +236,35 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	return nil
 }
 
-func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
-	destination := req.PathParam("destination")
+func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
+	ns := GetNamespace(req)
+	ruleIDs := getQueries("id", req)
+	tags := getQueries("tag", req)
+	dests := getQueries("destination", req)
 
-	tenantRules := TenantRules{}
-	if err := req.DecodeJsonPayload(&tenantRules); err != nil {
+	f := rules.Filter{
+		IDs:          ruleIDs,
+		Tags:         tags,
+		Destinations: dests,
+	}
+
+	return r.delete(ns, f, w, req)
+}
+
+func (r *Rule) set(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+	ruleList := RuleList{}
+	if err := req.DecodeJsonPayload(&ruleList); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	for i := range tenantRules.Rules {
-		if tenantRules.Rules[i].Tags == nil {
-			tenantRules.Rules[i].Tags = []string{}
+	for i := range ruleList.Rules {
+		if ruleList.Rules[i].Tags == nil {
+			ruleList.Rules[i].Tags = []string{}
 		}
 	}
 
-	filter := rules.Filter{
-		Destinations: []string{destination},
-		RuleType:     ruleType,
-	}
-
-	newRules, err := r.manager.SetRules(tenantID, filter, tenantRules.Rules)
+	newRules, err := r.manager.SetRules(ns, f, ruleList.Rules)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -288,70 +282,75 @@ func (r *Rule) setByDestination(ruleType int, w rest.ResponseWriter, req *rest.R
 }
 
 func (r *Rule) setRouteDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.setByDestination(rules.RuleRoute, w, req)
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
+
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleRoute,
+	}
+
+	return r.set(ns, f, w, req)
 }
 
 func (r *Rule) setActionDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.setByDestination(rules.RuleAction, w, req)
-}
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
 
-func (r *Rule) getByDestination(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
-	destination := req.PathParam("destination")
-
-	filter := rules.Filter{
-		Destinations: []string{destination},
-		RuleType:     ruleType,
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleAction,
 	}
 
-	retrievedRules, err := r.manager.GetRules(tenantID, filter)
-	if err != nil {
-		handleManagerError(w, req, err)
-		return err
-	}
-
-	tenantRules := TenantRules{
-		Rules: retrievedRules.Rules,
-	}
-
-	w.WriteHeader(http.StatusOK)
-	w.WriteJson(&tenantRules)
-	return nil
+	return r.set(ns, f, w, req)
 }
 
 func (r *Rule) getRouteDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.getByDestination(rules.RuleRoute, w, req)
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
+
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleRoute,
+	}
+
+	return r.get(ns, f, w, req)
 }
 
 func (r *Rule) getActionDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.getByDestination(rules.RuleAction, w, req)
-}
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
 
-func (r *Rule) deleteByDestination(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
-	tenantID := GetTenantID(req)
-	destination := req.PathParam("destination")
-
-	filter := rules.Filter{
-		Destinations: []string{destination},
-		RuleType:     ruleType,
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleAction,
 	}
 
-	_, err := r.manager.SetRules(tenantID, filter, []rules.Rule{})
-	if err != nil {
-		handleManagerError(w, req, err)
-		return err
-	}
-
-	w.WriteHeader(http.StatusOK)
-	return nil
+	return r.get(ns, f, w, req)
 }
 
 func (r *Rule) deleteRouteDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.deleteByDestination(rules.RuleRoute, w, req)
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
+
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleRoute,
+	}
+
+	return r.delete(ns, f, w, req)
 }
 
 func (r *Rule) deleteActionDestination(w rest.ResponseWriter, req *rest.Request) error {
-	return r.deleteByDestination(rules.RuleAction, w, req)
+	ns := GetNamespace(req)
+	dest := req.PathParam("destination")
+
+	f := rules.Filter{
+		Destinations: []string{dest},
+		RuleType:     rules.RuleAction,
+	}
+
+	return r.delete(ns, f, w, req)
 }
 
 func getQueries(key string, req *rest.Request) []string {
@@ -363,6 +362,7 @@ func getQueries(key string, req *rest.Request) []string {
 	return values
 }
 
+// handleManagerError interprets errors from the manager and outputs REST error messages.
 func handleManagerError(w rest.ResponseWriter, req *rest.Request, err error, args ...interface{}) {
 	switch e := err.(type) {
 	case *rules.InvalidRuleError:

@@ -202,6 +202,12 @@ that we expect to pass: each service in the call chain should return `HTTP
   to point to the elasticsearch server created during the control plane setup. By default, 
   it points to `localhost:30200`.
 
+* Remove the delay rule that we added in the previous step:
+
+```bash
+a8ctl rule-clear
+```
+
 * Run the recipe using the following command from the main examples folder:
 
 ```bash

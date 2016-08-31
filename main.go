@@ -43,7 +43,7 @@ func main() {
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
 	app.Version = "0.2.0"
-	app.Flags = config.TenantFlags
+	app.Flags = config.Flags
 	app.Action = sidecarCommand
 
 	err := app.Run(os.Args)
@@ -53,21 +53,31 @@ func main() {
 }
 
 func sidecarCommand(context *cli.Context) {
-	conf := config.New(context)
-	if err := sidecarMain(*conf); err != nil {
-		logrus.WithError(err).Error("Setup failed")
+	conf, err := config.New(context)
+	fmt.Printf("%+v\n", conf)
+	if err != nil {
+		logrus.WithError(err).Error("Failure loading configuration")
+	}
+	err = sidecarMain(*conf)
+	if err != nil {
+		logrus.WithError(err).Error("Failure launching sidecar")
 	}
 }
 
 func sidecarMain(conf config.Config) error {
 	var err error
 
-	logrus.SetLevel(conf.LogLevel)
-
 	if err = conf.Validate(); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
 		return err
 	}
+
+	logrusLevel, err := logrus.ParseLevel(conf.LogLevel)
+	if err != nil {
+		logrus.WithError(err).Errorf("Failure parsing requested log level (%v)", conf.LogLevel)
+		logrusLevel = logrus.DebugLevel
+	}
+	logrus.SetLevel(logrusLevel)
 
 	if conf.Log {
 		//Replace the LOGSTASH_REPLACEME string in filebeat.yml with

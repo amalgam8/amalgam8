@@ -16,7 +16,6 @@ package config
 
 import (
 	"strings"
-	"time"
 
 	"fmt"
 
@@ -24,6 +23,7 @@ import (
 )
 
 const (
+	configFlag          = "config"
 	registerFlag        = "register"
 	proxyFlag           = "proxy"
 	serviceFlag         = "service"
@@ -42,14 +42,18 @@ const (
 	logLevelFlag        = "log_level"
 )
 
-// TenantFlags defines all expected args for Tenant
-var TenantFlags = []cli.Flag{
+// Flags is the set of supported flags
+var Flags = []cli.Flag{
+	cli.StringFlag{
+		Name:   configFlag,
+		EnvVar: envVar(configFlag),
+		Usage:  "Load configuration from file",
+	},
 	cli.BoolFlag{
 		Name:   registerFlag,
 		EnvVar: envVar(registerFlag),
 		Usage:  "Enable automatic service registration and heartbeat",
 	},
-
 	cli.BoolFlag{
 		Name:   proxyFlag,
 		EnvVar: envVar(proxyFlag),
@@ -74,7 +78,6 @@ var TenantFlags = []cli.Flag{
 		Name:   endpointTypeFlag,
 		EnvVar: envVar(endpointTypeFlag),
 		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
-		Value:  "http",
 	},
 	cli.StringFlag{
 		Name:   registryURLFlag,
@@ -89,7 +92,6 @@ var TenantFlags = []cli.Flag{
 	cli.DurationFlag{
 		Name:   registryPollFlag,
 		EnvVar: envVar(registryPollFlag),
-		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
 	cli.StringFlag{
@@ -105,7 +107,6 @@ var TenantFlags = []cli.Flag{
 	cli.DurationFlag{
 		Name:   controllerPollFlag,
 		EnvVar: envVar(controllerPollFlag),
-		Value:  time.Duration(15 * time.Second),
 		Usage:  "Interval for polling Controller",
 	},
 	cli.BoolFlag{
@@ -126,7 +127,6 @@ var TenantFlags = []cli.Flag{
 	cli.StringFlag{
 		Name:   logLevelFlag,
 		EnvVar: envVar(logLevelFlag),
-		Value:  "info",
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
 	},
 }

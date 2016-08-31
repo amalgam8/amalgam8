@@ -36,7 +36,7 @@ var _ = Describe("Config", func() {
 
 			app.Name = "sidecar"
 			app.Usage = "Amalgam8 Sidecar"
-			app.Flags = TenantFlags
+			app.Flags = Flags
 			app.Action = func(context *cli.Context) {
 				c = New(context)
 			}

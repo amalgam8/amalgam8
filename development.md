@@ -12,17 +12,23 @@ and then run the samples on your own machine of choice.
 To get started using the provided Vagrant file, run the following commands:
 
 ```bash
-git clone git@github.com:amalgam8/examples.git
-cd examples
-git checkout master
+git clone https://github.com/amalgam8/examples.git
+git clone https://github.com/amalgam8/registry.git
+git clone https://github.com/amalgam8/controller.git
+git clone https://github.com/amalgam8/sidecar.git
+git clone https://github.com/amalgam8/a8ctl.git
+git clone https://github.com/amalgam8/testing.git
+
+cd examples; git checkout master
+cd ../registry; git checkout master
+cd ../controller; git checkout master
+cd ../sidecar; git checkout master
+cd ../a8ctl; git checkout master
+cd ../testing; git checkout master
 cd ..
 
-git clone git@github.com:amalgam8/registry.git
-git clone git@github.com:amalgam8/controller.git
-git clone git@github.com:amalgam8/sidecar.git
-git clone git@github.com:amalgam8/a8ctl.git
-
 cd examples
+
 vagrant up
 vagrant ssh
 
@@ -44,22 +50,21 @@ popd
 You can compile and build the control plane or sidecar images locally, by running one of the following commands:
 
 ```
-build-scripts/build-controller.sh
-build-scripts/build-registry.sh
-build-scripts/build-sidecar.sh
-```
-
-If want to build all three projects, you can run the following command instead:
-
-```
-build-scripts/build-amalgam8.sh
+../testing/build-scripts/build-controller.sh
+../testing/build-scripts/build-registry.sh
+../testing/build-scripts/build-sidecar.sh
 ```
 
 If you change the base sidecar image and rebuild it, ensure that you also locally build the sample images before trying to run them:
 
 ```
-apps/helloworld/build.sh
-apps/bookinfo/build-services.sh
+../testing/build-scripts/build-examples.sh
+```
+
+If want to build all three projects and the samples, you can run the following command instead:
+
+```
+../testing/build-scripts/build-amalgam8.sh
 ```
 
 To remove locally-compiled Amalgam8 images and use the Amalgam8 images from Docker Hub:

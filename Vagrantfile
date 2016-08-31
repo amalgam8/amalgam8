@@ -58,7 +58,7 @@ sudo curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-co
 sudo chmod +x /usr/local/bin/docker-compose
 
 # Install Amalgam8 CLI
-sudo pip install git+https://github.com/amalgam8/a8ctl
+sudo pip install git+https://github.com/amalgam8/a8ctl@master
 
 SCRIPT
 

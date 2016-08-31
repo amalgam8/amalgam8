@@ -51,7 +51,7 @@ func New(context *cli.Context) *Config {
 
 	// TODO: parse this more gracefully
 	loggingLevel := logrus.DebugLevel
-	logLevelArg := context.String(logLevel)
+	logLevelArg := context.String(logLevelFlag)
 	var err error
 	loggingLevel, err = logrus.ParseLevel(logLevelArg)
 	if err != nil {
@@ -60,13 +60,13 @@ func New(context *cli.Context) *Config {
 
 	return &Config{
 		Database: Database{
-			Type:     context.String(dbType),
-			Username: context.String(dbUser),
-			Password: context.String(dbPassword),
-			Host:     context.String(dbHost),
+			Type:     context.String(dbTypeFlag),
+			Username: context.String(dbUserFlag),
+			Password: context.String(dbPasswordFlag),
+			Host:     context.String(dbHostFlag),
 		},
-		APIPort:      context.Int(apiPort),
-		SecretKey:    context.String(secretKey),
+		APIPort:      context.Int(apiPortFlag),
+		SecretKey:    context.String(secretKeyFlag),
 		LogLevel:     loggingLevel,
 		AuthModes:    context.StringSlice(authModeFlag),
 		JWTSecret:    context.String(jwtSecretFlag),

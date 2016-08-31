@@ -25,36 +25,37 @@ import (
 
 	"io/ioutil"
 
+	"reflect"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"gopkg.in/yaml.v2"
-	"reflect"
 )
 
 // Service configuration
 type Service struct {
-	Name string `yaml:"name"`
+	Name string   `yaml:"name"`
 	Tags []string `yaml:"tags"`
 }
 
 // Endpoint configuration
 type Endpoint struct {
 	Host string `yaml:"host"`
-	Port int `yaml:"port"`
+	Port int    `yaml:"port"`
 	Type string `yaml:"type"`
 }
 
 // Registry configuration
 type Registry struct {
-	URL   string `yaml:"url"`
-	Token string `yaml:"token"`
+	URL   string        `yaml:"url"`
+	Token string        `yaml:"token"`
 	Poll  time.Duration `yaml:"poll"`
 }
 
 // Controller configuration
 type Controller struct {
-	URL   string `yaml:"url"`
-	Token string `yaml:"token"`
+	URL   string        `yaml:"url"`
+	Token string        `yaml:"token"`
 	Poll  time.Duration `yaml:"poll"`
 }
 
@@ -63,19 +64,19 @@ type Config struct {
 	Register bool `yaml:"register"`
 	Proxy    bool `yaml:"proxy"`
 
-	Service  Service `yaml:"service"`
+	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
 
-	Registry   Registry `yaml:"registry"`
+	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise bool `yaml:"supervise"`
+	Supervise bool     `yaml:"supervise"`
 	App       []string `yaml:"app"`
 
-	Log            bool `yaml:"log"`
+	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`
 
-	LogLevel string `yaml:"log_level`
+	LogLevel string `yaml:"log_level"`
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -155,7 +156,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	}
 
 	loadFromContextIfSet(&c.Register, registerFlag)
-	loadFromContextIfSet(&c.Proxy, proxyFlag, )
+	loadFromContextIfSet(&c.Proxy, proxyFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
@@ -167,7 +168,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
-	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag,)
+	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 
 	if context.IsSet(serviceFlag) {
@@ -263,7 +264,6 @@ func localIP() string {
 
 	return ""
 }
-
 
 func parseServiceNameAndTags(service string) (name string, tags []string) {
 	i := strings.Index(service, ":")

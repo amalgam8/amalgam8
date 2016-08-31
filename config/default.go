@@ -19,9 +19,9 @@ import "time"
 // DefaultConfig defines default values for the various configuration options
 var DefaultConfig = Config{
 	Register: true,
-	Proxy: true,
+	Proxy:    true,
 
-	Service: Service {
+	Service: Service{
 		Name: "",
 		Tags: nil,
 	},
@@ -31,21 +31,21 @@ var DefaultConfig = Config{
 		Type: "http",
 	},
 
-	Registry:   Registry{
-		URL: "",
+	Registry: Registry{
+		URL:   "",
 		Token: "",
-		Poll: time.Duration(15 * time.Second),
+		Poll:  time.Duration(15 * time.Second),
 	},
-	Controller:   Controller{
-		URL: "",
+	Controller: Controller{
+		URL:   "",
 		Token: "",
-		Poll: time.Duration(15 * time.Second),
+		Poll:  time.Duration(15 * time.Second),
 	},
 
 	Supervise: false,
-	App: nil,
+	App:       nil,
 
-	Log: true,
+	Log:            true,
 	LogstashServer: "",
 
 	LogLevel: "info",

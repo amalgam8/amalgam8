@@ -38,7 +38,7 @@ var _ = Describe("Config", func() {
 			app.Usage = "Amalgam8 Sidecar"
 			app.Flags = Flags
 			app.Action = func(context *cli.Context) {
-				c = New(context)
+				c, _ = New(context)
 			}
 
 			Expect(app.Run(os.Args[:1])).NotTo(HaveOccurred())

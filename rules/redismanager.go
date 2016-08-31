@@ -184,24 +184,6 @@ func (r *redisManager) UpdateRules(namespace string, rules []Rule) error {
 	return nil
 }
 
-// TODO: filtering
 func (r *redisManager) DeleteRules(namespace string, filter Filter) error {
-	if len(filter.IDs) == 0 {
-		if err := r.db.DeleteAllEntries(namespace); err != nil {
-			logrus.WithError(err).WithFields(logrus.Fields{
-				"namespace": namespace,
-			}).Error("Failed to read all entries")
-			return err
-		}
-	} else {
-		if err := r.db.DeleteEntries(namespace, filter.IDs); err != nil {
-			logrus.WithError(err).WithFields(logrus.Fields{
-				"namespace": namespace,
-				"filter":    filter,
-			}).Error("Error deleting entries from Redis")
-			return err
-		}
-	}
-
-	return nil
+	return r.db.SetByDestination(namespace, filter, []Rule{})
 }

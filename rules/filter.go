@@ -47,6 +47,12 @@ type Filter struct {
 	RuleType int
 }
 
+// Empty returns whether the filter has any attributes that would cause rules to be filtered out. A filter is considered
+// empty if no rules would be filtered out from any set of rules.
+func (f Filter) Empty() bool {
+	return len(f.IDs) == 0 && len(f.Tags) == 0 && len(f.Destinations) == 0 && f.RuleType == RuleAny
+}
+
 // String representation of the filter
 func (f Filter) String() string {
 	return fmt.Sprintf("%#v", f)

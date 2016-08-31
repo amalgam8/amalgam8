@@ -152,23 +152,23 @@ delay in all requests with an HTTP Cookie header value for the user
 "jason".
 
 ```bash
-a8ctl rule-set --source reviews:v2 --destination ratings:v1 --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
+a8ctl action-add --source reviews:v2 --destination ratings --cookie user=jason --action 'v1(1->delay=7)'
 ```
 
 Verify the rule has been set by running this command:
 
 ```bash
-a8ctl rule-list
+a8ctl action-list
 ```
 
 You should see the following output:
 
 ```
-+------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
-| Source     | Destination | Header | Header Pattern | Delay Probability | Delay | Abort Probability | Abort Code |
-+------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
-| reviews:v2 | ratings:v1  | Cookie | .*?user=jason  | 1                 | 7     | 0                 | 0          |
-+------------+-------------+--------+----------------+-------------------+-------+-------------------+------------+
++-------------+----------------+-------------------------------+----------+--------------------+--------------------------------------+
+| Destination | Source         | Headers                       | Priority | Actions            | Rule Id                              |
++-------------+----------------+-------------------------------+----------+--------------------+--------------------------------------+
+| ratings     | reviews:v2     | Cookie:.*?user=jason          | 10       | v1(1.0->delay=7.0) | e76d79e6-8b3e-45a7-87e7-674480a92d7c |
++-------------+----------------+-------------------------------+----------+--------------------+--------------------------------------+    
 ```
 
 * Lets see the fault injection in action. Ideally the frontpage of the

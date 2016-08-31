@@ -122,56 +122,60 @@ The output should look something like this:
 {
   "instances": [
     {
-      "last_heartbeat": "2016-04-27T20:43:36.306968276Z",
-      "metadata": {
-        "version": "v2"
-      },
-      "ttl": 45,
+      "tags": [
+        "v2"
+      ],
+      "last_heartbeat": "2016-08-31T21:27:02.059242566Z",
+      "status": "UP",
+      "ttl": 60,
       "endpoint": {
-        "value": "172.17.0.7:5000",
+        "value": "172.17.0.8:5000",
         "type": "http"
       },
       "service_name": "helloworld",
-      "id": "a594b578955aa580"
+      "id": "d57b8e5150a2d1cd"
     },
     {
-      "last_heartbeat": "2016-04-27T20:43:36.610720426Z",
-      "metadata": {
-        "version": "v1"
-      },
-      "ttl": 45,
+      "tags": [
+        "v1"
+      ],
+      "last_heartbeat": "2016-08-31T21:27:02.142425226Z",
+      "status": "UP",
+      "ttl": 60,
       "endpoint": {
-        "value": "172.17.0.4:5000",
+        "value": "172.17.0.9:5000",
         "type": "http"
       },
       "service_name": "helloworld",
-      "id": "9eec2aac0c6308f5"
+      "id": "6e274c9ac7312f6d"
     },
     {
-      "last_heartbeat": "2016-04-27T20:43:36.673541582Z",
-      "metadata": {
-        "version": "v1"
-      },
-      "ttl": 45,
+      "tags": [
+        "v1"
+      ],
+      "last_heartbeat": "2016-08-31T21:27:02.421942924Z",
+      "status": "UP",
+      "ttl": 60,
       "endpoint": {
-        "value": "172.17.0.6:5000",
+        "value": "172.17.0.14:5000",
         "type": "http"
       },
       "service_name": "helloworld",
-      "id": "69ce12035f9ada47"
+      "id": "d9c42f2ce7cae5ff"
     },
     {
-      "last_heartbeat": "2016-04-27T20:43:36.718637643Z",
-      "metadata": {
-        "version": "v2"
-      },
-      "ttl": 45,
+      "tags": [
+        "v2"
+      ],
+      "last_heartbeat": "2016-08-31T21:27:02.921321593Z",
+      "status": "UP",
+      "ttl": 60,
       "endpoint": {
-        "value": "172.17.0.5:5000",
+        "value": "172.17.0.15:5000",
         "type": "http"
       },
       "service_name": "helloworld",
-      "id": "161c6daaca4b23eb"
+      "id": "1061aca7b335fb94"
     }
   ],
   "service_name": "helloworld"
@@ -181,7 +185,7 @@ The output should look something like this:
 To list the routes for a service, run the following cURL command:
 
 ```
-curl http://localhost:31200/v1/versions/helloworld | jq .
+curl http://localhost:31200/v1/rules/routes/helloworld | jq .
 ```
 
 **Note**: Replace localhost:31200 above with the appropriate host
@@ -191,14 +195,33 @@ After running the demo, the output should be as follows:
 
 ```
 {
-  "selectors": "{v2={weight=0.25}}",
-  "default": "v1",
-  "service": "helloworld"
+  "rules": [
+    {
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "v2"
+            ],
+            "weight": 0.25
+          },
+          {
+            "tags": [
+              "v1"
+            ]
+          }
+        ]
+      },
+      "destination": "helloworld",
+      "priority": 1,
+      "id": "3ee8fcaf-929e-40bc-8eb3-a7f4e4ffdf96"
+    }
+  ]
 }
 ```
 
 You can also set routes using the REST API. For example, to send all traffic to v2, run the following curl command:
 
 ```
-curl -X PUT http://localhost:31200/v1/versions/helloworld -d '{"default": "v2"}' -H "Content-Type: application/json"
+curl -X PUT http://localhost:31200/v1/rules/routes/helloworld -d '{"rules": [{"priority": 1, "route": {"backends": [{"tags": ["v2"]}]}, "destination": "helloworld"}]}' -H "Content-Type: application/json"
 ```

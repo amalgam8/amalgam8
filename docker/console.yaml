@@ -14,7 +14,7 @@
 
 ## Amalgam8 ui console ##
 console:
-  image: amalgam8/console
+  image: amalgam8/console-0.3-dev
   environment:
     - A8_CONTROLLER_URL=http://controller:6379
     - A8_REGISTRY_URL=http://registry:8080

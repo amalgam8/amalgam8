@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
       - name: console
-        image: amalgam8/console
+        image: amalgam8/console-0.3-dev
         imagePullPolicy: IfNotPresent
         env:
         - name: A8_CONTROLLER_URL

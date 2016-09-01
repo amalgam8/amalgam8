@@ -33,6 +33,7 @@ else
     cd $EXAMPLESDIR && git pull $EXAMPLESREPO
 fi
 
+cd $EXAMPLESDIR && git checkout master
 # End
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh

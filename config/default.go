@@ -18,8 +18,8 @@ import "time"
 
 // DefaultConfig defines default values for the various configuration options
 var DefaultConfig = Config{
-	Register: true,
-	Proxy:    true,
+	Register: false,
+	Proxy:    false,
 
 	Service: Service{
 		Name: "",
@@ -45,7 +45,7 @@ var DefaultConfig = Config{
 	Supervise: false,
 	App:       nil,
 
-	Log:            true,
+	Log:            false,
 	LogstashServer: "",
 
 	LogLevel: "info",

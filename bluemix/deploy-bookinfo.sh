@@ -55,9 +55,10 @@ bluemix ic group-create --name bookinfo_productpage \
   --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
+  --env A8_REGISTER=true \
+  --env A8_PROXY=true \
   --env A8_SERVICE=productpage:v1 \
-  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${PRODUCTPAGE_IMAGE}:v1 
+  ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${PRODUCTPAGE_IMAGE}:v1
 
 #################################################################################
 # Start the details microservice instances
@@ -72,8 +73,7 @@ bluemix ic group-create --name bookinfo_details \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_SERVICE=details:v1 \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
-  --env A8_PROXY=false \
+  --env A8_REGISTER=true \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${DETAILS_IMAGE}
 
 #################################################################################
@@ -89,8 +89,7 @@ bluemix ic group-create --name bookinfo_ratings \
   --env A8_REGISTRY_TOKEN=$REGISTRY_TOKEN \
   --env A8_SERVICE=ratings:v1 \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
-  --env A8_PROXY=false \
+  --env A8_REGISTER=true \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${RATINGS_IMAGE}
 
 #################################################################################
@@ -108,7 +107,8 @@ bluemix ic group-create --name bookinfo_reviews1 \
   --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
+  --env A8_PROXY=true \
+  --env A8_REGISTER=true \
   --env A8_SERVICE=reviews:v1 \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V1_IMAGE}
 
@@ -123,7 +123,8 @@ bluemix ic group-create --name bookinfo_reviews2 \
   --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
+  --env A8_REGISTER=true \
+  --env A8_PROXY=true \
   --env A8_SERVICE=reviews:v2 \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V2_IMAGE}
 
@@ -138,10 +139,11 @@ bluemix ic group-create --name bookinfo_reviews3 \
   --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
   --env A8_ENDPOINT_PORT=9080 \
-  --env A8_LOG=false \
+  --env A8_REGISTER=true \
+  --env A8_PROXY=true \
   --env A8_SERVICE=reviews:v3 \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V3_IMAGE}
-    
+
 #################################################################################
 # Start the gateway
 #################################################################################
@@ -156,8 +158,7 @@ bluemix ic group-create --name bookinfo_gateway \
   --env A8_CONTROLLER_URL=$CONTROLLER_URL \
   --env A8_CONTROLLER_TOKEN=$CONTROLLER_TOKEN \
   --env A8_CONTROLLER_POLL=5s \
-  --env A8_LOG=false \
-  --env A8_REGISTER=false \
+  --env A8_PROXY=true \
   --env A8_SERVICE=gateway \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 

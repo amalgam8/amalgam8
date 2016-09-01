@@ -18,11 +18,22 @@ set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
+EXAMPLESREPO=https://github.com/amalgam8/examples
 
-# If examples directory does not exist, clone repo from github
-if [ ! -d "$EXAMPLESDIR" ]; then
-    git clone --branch master https://github.com/amalgam8/examples $EXAMPLESDIR
+#from https://gist.github.com/nicferrier/2277987
+LOCALREPO=$EXAMPLESDIR
+
+# We do it this way so that we can abstract if from just git later on
+LOCALREPO_VC_DIR=$EXAMPLESREPO/.git
+
+if [ ! -d $LOCALREPO_VC_DIR ]
+then
+    git clone $EXAMPLESREPO $EXAMPLESDIR
+else
+    cd $EXAMPLESDIR && git pull $EXAMPLESREPO
 fi
+
+# End
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
 

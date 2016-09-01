@@ -83,7 +83,7 @@ type Config struct {
 func New(context *cli.Context) (*Config, error) {
 
 	// Initialize configuration with default values
-	config := &*&DefaultConfig
+	config := *&DefaultConfig
 
 	// Load configuration from file, if specified
 	if context.IsSet(configFlag) {
@@ -103,7 +103,7 @@ func New(context *cli.Context) (*Config, error) {
 		config.Endpoint.Host = waitForLocalIP()
 	}
 
-	return config, nil
+	return &config, nil
 }
 
 func (c *Config) loadFromFile(configFile string) error {

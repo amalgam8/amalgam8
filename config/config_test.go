@@ -210,7 +210,7 @@ service:
 endpoint:
   host: localhost
   port: 9080
-  type: http
+  type: https
 
 registry:
   url:   http://registry:8080
@@ -222,7 +222,7 @@ controller:
   token: local
   poll:  5s
 
-supervise: false
+supervise: true
 app: [ "python", "productpage.py" ]
 
 log: true
@@ -233,9 +233,9 @@ log_level: debug
 			err := ioutil.WriteFile(configFile, []byte(configYaml), 0777)
 			Expect(err).NotTo(HaveOccurred())
 
-			args := []string{
-				"--config=config.yaml",
-			}
+			args := append(os.Args[:1], []string{
+				"--config=" + configFile,
+			}...)
 
 			Expect(app.Run(args)).NotTo(HaveOccurred())
 		})

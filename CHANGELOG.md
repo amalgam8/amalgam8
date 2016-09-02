@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3-rc1 (September 1, 2016)
+
+- Sidecar now polls controller and registry for changes in rules and service instances respectively.
+
+- Removed Kafka dependency from controller and sidecar.
+
+- NGINX Lua code overhauled to support new rules API format from controller.
+
+- Options for sidecar to proxy, register, and log are now default `false`.
+
 ## 0.2.0 (July 21, 2016)
 
 - Nginx configuration is no longer managed by the centralized

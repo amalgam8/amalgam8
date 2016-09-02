@@ -10,7 +10,7 @@
 
 - Controller now supports single tenant (default), trusted, and JWT authentication.
 
-- Controller now has support for Redis persistant storage.
+- Controller now has support for Redis persistent storage.
 
 ## 0.2.1 (July 21, 2016)
 

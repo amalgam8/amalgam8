@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3-rc1 (September 1, 2016)
+
+- The API has been overhauled to support a wider range of routing and fault injection rules.
+
+- The dependency on Kafka has been removed from controller and sidecar.
+
+- Sidecar now polls controller for rule changes and registry for service instance changes.
+
+- Controller now supports single tenant (default), trusted, and JWT authentication.
+
+- Controller now has support for Redis persistent storage.
+
 ## 0.2.1 (July 21, 2016)
 
 - Fixed bug where controller did not send rule updates to sidecar in

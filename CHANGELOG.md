@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 (September 1, 2016)
+## 0.3-rc1 (September 1, 2016)
 
 - The rules schema has been updated to support a wider range of routing and fault injection rules.
 

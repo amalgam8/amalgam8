@@ -2,13 +2,24 @@
 
 ## 0.3-rc1 (September 1, 2016)
 
-- Sidecar now polls controller and registry for changes in rules and service instances respectively.
+- Sidecar now polls controller and registry for changes in rules and 
+service instances respectively.
 
 - Removed Kafka dependency from controller and sidecar.
 
 - NGINX Lua code overhauled to support new rules API format from controller.
 
 - Options for sidecar to proxy, register, and log are now default `false`.
+
+- `A8_SERVICE` is now in the form of `<service_name>:<tag1>,<tag2>,...,<tagN>` 
+where `<tagN>` can be a version number or any other tag.  Sidecar will register
+with registry using these tags and rules can be defined to target services 
+with a particular tag.
+
+- Default authentication behavior of controller and registry is `global auth`,
+wherein they are configured to run in single tenant mode without any authentication.
+In this scenario, `A8_CONTROLLER_TOKEN` and `A8_REGISTRY_TOKEN` should not be 
+provided to the sidecar.
 
 ## 0.2.0 (July 21, 2016)
 

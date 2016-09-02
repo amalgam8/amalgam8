@@ -14,7 +14,7 @@ service instances respectively.
 - `A8_SERVICE` is now in the form of `<service_name>:<tag1>,<tag2>,...,<tagN>` 
 where `<tagN>` can be a version number or any other tag.  Sidecar will register
 with registry using these tags and rules can be defined to target services 
-with a particular tag.
+with a particular set of tag(s).
 
 - Default authentication behavior of controller and registry is `global auth`,
 wherein they are configured to run in single tenant mode without any authentication.

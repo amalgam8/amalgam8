@@ -8,9 +8,9 @@
 
 - Sidecar now polls controller for rule changes and registry for service instance changes.
 
-- Controller now supports single tenant (default), trusted, and jwt authetication.
+- Controller now supports single tenant (default), trusted, and JWT authentication.
 
-- Controller now has support for redis persistant storage.
+- Controller now has support for Redis persistant storage.
 
 ## 0.2.1 (July 21, 2016)
 

@@ -2,7 +2,7 @@
 
 ## 0.3-rc1 (September 1, 2016)
 
-- The rules schema has been updated to support a wider range of routing and fault injection rules.
+- The API has been overhauled to support a wider range of routing and fault injection rules.
 
 - The dependency on Kafka has been removed from controller and sidecar.
 
@@ -11,8 +11,6 @@
 - Controller now supports single tenant (default), trusted, and jwt authetication.
 
 - Controller now has support for redis persistant storage.
-
-- Controller now has the option of encrypting its stored data.
 
 ## 0.2.1 (July 21, 2016)
 

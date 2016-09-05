@@ -138,7 +138,10 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_LOGSTASH_SERVER", "logstash:8092")
 			os.Setenv("A8_LOG_LEVEL", "debug")
 
-			Expect(app.Run(os.Args[:1])).NotTo(HaveOccurred())
+			args := append(os.Args[:1], []string{
+				"python", "productpage.py",
+			}...)
+			Expect(app.Run(args)).NotTo(HaveOccurred())
 		})
 
 		AfterEach(func() {

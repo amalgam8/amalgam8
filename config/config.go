@@ -17,18 +17,14 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"reflect"
+	"strings"
 	"time"
 
-	"net"
-
-	"strings"
-
-	"io/ioutil"
-
-	"reflect"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
 )
 

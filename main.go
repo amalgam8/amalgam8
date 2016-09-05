@@ -15,11 +15,10 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/controller/client"
@@ -30,7 +29,7 @@ import (
 	"github.com/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/sidecar/register"
 	"github.com/amalgam8/sidecar/supervisor"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 func main() {

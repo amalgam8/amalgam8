@@ -15,11 +15,10 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 
-	"fmt"
-
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 const (

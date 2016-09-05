@@ -212,7 +212,7 @@ Order of precedence is command line flags first, then environmenmt variables, co
 | A8_CONFIG | --config | | Path to a file to load configuration from | | no |
 | A8_LOG_LEVEL | --log_level | log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
 | A8_SERVICE | --service | service.name & service.tags | service name to register with, optionally followed by a colon and a comma-separated list of tags | | yes |
-| A8_ENDPOINT_HOST | --endpoint_host | endpoint.host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
+| A8_ENDPOINT_HOST | --endpoint_host | endpoint.host | service endpoint IP or hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
 | A8_ENDPOINT_PORT | --endpoint_port | endpoint.port | service endpoint port |  | yes |
 | A8_ENDPOINT_TYPE | --endpoint_type | endpoint.type | service endpoint type (http, https, udp, tcp, user) | http | no |
 | A8_REGISTER | --register | register | enable automatic service registration and heartbeat | false | See note above |

@@ -28,7 +28,8 @@ import (
 var _ = Describe("Config", func() {
 
 	var (
-		c *Config
+		c    *Config
+		cErr error
 	)
 
 	Context("config loaded with default values", func() {
@@ -39,8 +40,9 @@ var _ = Describe("Config", func() {
 			app.Name = "sidecar"
 			app.Usage = "Amalgam8 Sidecar"
 			app.Flags = Flags
-			app.Action = func(context *cli.Context) {
-				c, _ = New(context)
+			app.Action = func(context *cli.Context) error {
+				c, cErr = New(context)
+				return cErr
 			}
 
 			Expect(app.Run(os.Args[:1])).NotTo(HaveOccurred())
@@ -60,8 +62,9 @@ var _ = Describe("Config", func() {
 			app.Name = "sidecar"
 			app.Usage = "Amalgam8 Sidecar"
 			app.Flags = Flags
-			app.Action = func(context *cli.Context) {
-				c, _ = New(context)
+			app.Action = func(context *cli.Context) error {
+				c, cErr = New(context)
+				return cErr
 			}
 
 			args := append(os.Args[:1], []string{
@@ -117,8 +120,9 @@ var _ = Describe("Config", func() {
 			app.Name = "sidecar"
 			app.Usage = "Amalgam8 Sidecar"
 			app.Flags = Flags
-			app.Action = func(context *cli.Context) {
-				c, _ = New(context)
+			app.Action = func(context *cli.Context) error {
+				c, cErr = New(context)
+				return cErr
 			}
 
 			os.Setenv("A8_REGISTER", "true")
@@ -195,8 +199,9 @@ var _ = Describe("Config", func() {
 			app.Name = "sidecar"
 			app.Usage = "Amalgam8 Sidecar"
 			app.Flags = Flags
-			app.Action = func(context *cli.Context) {
-				c, _ = New(context)
+			app.Action = func(context *cli.Context) error {
+				c, cErr = New(context)
+				return cErr
 			}
 
 			configYaml := `

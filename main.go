@@ -47,20 +47,16 @@ func main() {
 
 	err := app.Run(os.Args)
 	if err != nil {
-		logrus.WithError(err).Error("Failure running main")
+		logrus.WithError(err).Error("Failure launching sidecar")
 	}
 }
 
-func sidecarCommand(context *cli.Context) {
+func sidecarCommand(context *cli.Context) error {
 	conf, err := config.New(context)
-	fmt.Printf("%+v\n", conf)
 	if err != nil {
-		logrus.WithError(err).Error("Failure loading configuration")
+		return err
 	}
-	err = sidecarMain(*conf)
-	if err != nil {
-		logrus.WithError(err).Error("Failure launching sidecar")
-	}
+	return sidecarMain(*conf)
 }
 
 func sidecarMain(conf config.Config) error {

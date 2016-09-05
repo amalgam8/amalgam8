@@ -1,5 +1,5 @@
-hash: 47adbd258663b423eac1845d0204db5f9fe37b910f3d00a9b9d7d209dcbc472f
-updated: 2016-08-31T09:56:15.220273892-05:00
+hash: bbbc2c438a22325818ff1bf84a4ce7c66d81c4b4da48be8ba2aab0e17a2dd26d
+updated: 2016-09-05T14:36:01.092879408+03:00
 imports:
 - name: github.com/amalgam8/controller
   version: fb49ab33cdd904afc04e0045a2dffb1f144c1882
@@ -47,8 +47,35 @@ imports:
   - i18n/translation
 - name: github.com/onsi/ginkgo
   version: 462326b1628e124b23f42e87a8f2750e3c4e2d24
+  subpackages:
+  - config
+  - internal/codelocation
+  - internal/failer
+  - internal/remote
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - types
+  - internal/containernode
+  - internal/leafnodes
+  - internal/spec
+  - internal/specrunner
 - name: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+  subpackages:
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/testingtsupport
+  - matchers
+  - types
+  - internal/oraclematcher
+  - format
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
 - name: github.com/pborman/uuid
   version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 - name: github.com/rcrowley/go-metrics
@@ -57,6 +84,8 @@ imports:
   version: 418b41d23a1bf978c06faea5313ba194650ac088
   subpackages:
   - formatters/logstash
+- name: github.com/urfave/cli
+  version: 168c95418e66e019fe17b8f4f5c45aa62ff80e23
 - name: github.com/xeipuuv/gojsonpointer
   version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
 - name: github.com/xeipuuv/gojsonreference
@@ -65,4 +94,4 @@ imports:
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 - name: gopkg.in/yaml.v2
   version: e4d366fc3c7938e2958e662b4258c7a89e1f0e3e
-devImports: []
+testImports: []

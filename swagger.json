@@ -1,222 +1,109 @@
 {
-  "swagger" : "2.0",
-  "info" : {
-    "title" : "Controller API for Amalgam8",
+  "swagger": "2.0",
+  "info": {
+    "title": "Controller API for Amalgam8",
     "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc.",
-    "version" : "0.2"
+    "version": "0.3"
   },
-  "schemes" : [ "https" ],
-  "consumes" : [ "application/json" ],
-  "produces" : [ "application/json" ],
-  "paths" : {
-    "/health" : {
-      "parameters" : [ ],
-      "get" : {
-        "tags" : [ ],
-        "summary" : "Status of the controller",
-        "description" : "Returns status of the controller",
-        "responses" : {
-          "200" : {
-            "description" : "Controller is healthy"
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/health": {
+      "parameters": [],
+      "get": {
+        "summary": "Status of the controller",
+        "description": "Returns status of the controller.",
+        "responses": {
+          "200": {
+            "description": "Controller is healthy."
           },
           "503": {
-            "description" : "Controller is unhealthy"
+            "description": "Controller is unhealthy."
           }
         }
       }
     },
-    "/v1/tenants" : {
-      "parameters" : [
-        {
-          "name": "token",
-          "in": "header",
-          "description": "Tenant token",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "post" : {
-        "tags" : [ ],
-        "summary" : "Register a tenant",
-        "description" : "Registers a tenant with the controller",
-        "parameters" : [
-          {
-            "name": "token",
-            "in": "header",
-            "description": "Tenant token",
-            "type": "string",
-            "required": true
-          },
-          {
-            "name": "tenant",
-            "in": "body",
-            "description": "Tenant information",
-            "schema": {
-              "$ref": "#/definitions/tenant"
-            },
-            "required": true
-          }
-        ],
-        "responses" : {
-          "201" : {
-            "description" : "Tenant registered"
-          },
-          "400" : {
-            "description" : "Invalid request"
-          },
-          "409" : {
-            "description" : "Tenant already registered"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
-      "get" : {
-        "tags" : [ ],
-        "summary" : "Configuration of a tenant",
-        "description" : "Returns the configuration of a tenant",
-        "responses" : {
-          "200" : {
-            "description" : "Tenant information",
-            "schema" : {
-              "$ref" : "#/definitions/tenant"
-            }
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
-      "put" : {
-        "tags" : [ ],
-        "summary" : "Update tenant information",
-        "description" : "Updates the configuration of a tenant",
-        "parameters" : [
-          {
-            "name": "tenant_info",
-            "in": "body",
-            "description": "Information to update",
-            "schema": {
-              "$ref": "#/definitions/tenant"
-            },
-            "required": true
-          }
-        ],
-        "responses" : {
-          "200" : {
-            "description" : "Tenant info successfully updated"
-          },
-          "400" : {
-            "description" : "Malformed JSON in request"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
-      "delete" : {
-        "tags" : [ ],
-        "summary" : "Unregisters a tenant",
-        "description" : "Unregisters a tenant",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Tenant successfully deleted"
-          },
-          "404" : {
-            "description" : "No information exists for tenant ID"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      }
-    },
-    "/v1/rules" : {
-      "parameters" : [
-        {
-          "name": "token",
-          "in": "header",
-          "description": "Tenant token",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "get" : {
-        "tags" : [ ],
-        "summary" : "Gets rules for a tenant",
-        "description" : "Gets rules for a given tenant. If query parameters are provided, the results are filtered based on the query parameters. Otherwise all rules for a given tenant are returned. Query parameters can be repeated to query for multiple rules.",
-        "parameters" : [
-          {
-            "name": "id",
-            "in": "query",
-            "description": "Rule ID",
-            "required": false,
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "collectionFormat": "multi"
-          }
-        ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully retrieved rules",
-            "schema" : {
-              "$ref" : "#/definitions/rules"
-            }
-          },
-          "404" : {
-            "description" : "One or more rule was not found"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      },
-
-      "post" : {
-        "summary" : "Adds rules to a tenant",
-        "description" :"Adds rules to a tenant. Rules are added transactionally; on a failure, no rules are added.",
-        "parameters" : [
+    "/v1/rules": {
+      "parameters": [],
+      "post": {
+        "summary": "Add rules to the controller.",
+        "description": "Transactionally add rules to the controller. All rules are validated\nagainst the rule schema.\n",
+        "parameters": [
           {
             "name": "rules",
             "in": "body",
-            "description": "Rules",
+            "description": "Rules to add",
             "schema": {
-              "$ref": "#/definitions/rules"
+              "$ref": "#/definitions/ruleList"
             },
             "required": true
           }
         ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully created rules",
-            "schema" : {
-              "$ref" : "#/definitions/in_rules"
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
             }
           },
-          "503" : {
-            "description" : "Error communicating with database"
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       },
-
-      "delete" : {
-        "summary" : "Removes rules from a tenant",
-        "description" : "Removes rules from a tenant. Rules are removed transactionally; on a failure, no rules are removed. If query parameters are provided, only rules matching the parameters will be removed. If no query parameters are provided, all rules are removed",
-        "parameters" : [
+      "get": {
+        "summary": "Get rules from the controller.",
+        "description": "Query for rules that pass the specified filters. Filters are specified using query parameters.",
+        "parameters": [
           {
             "name": "id",
             "in": "query",
-            "description": "Rule ID",
+            "description": "Set of rule IDs.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Set of tags each rule must contain.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "description": "Set of acceptable rule destinations.",
             "required": false,
             "type": "array",
             "items": {
@@ -225,251 +112,731 @@
             "collectionFormat": "multi"
           }
         ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully removed rules"
-          },
-          "404" : {
-            "description" : "One or more rule was not found"
-          },
-          "503" : {
-            "description" : "Error communicating with database"
-          }
-        }
-      }
-    },
-
-    "/v1/versions/{service}" : {
-      "parameters" : [
-        {
-          "name": "token",
-          "in": "header",
-          "description": "Tenant token",
-          "type": "string",
-          "required": true
-        },
-        {
-          "name": "service",
-          "in": "path",
-          "description": "Service Name",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "get" : {
-        "tags" : [ ],
-        "summary" : "Returns the service version rules for a tenant",
-        "description" : "Returns the version filter for a tenant for a service",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully retrieved version filter",
-            "schema" : {
-              "$ref" : "#/definitions/version"
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
             }
           },
-          "404" : {
-            "description" : "No information exists for tenant ID or service name"
+          "404": {
+            "description": "Could not find rule(s).",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           },
-          "503" : {
-            "description" : "Error communicating with database"
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       },
-      "put" : {
-        "tags" : [ ],
-        "summary" : "Create a service version filter for a tenant",
-        "description" : "Creates a version filter for a tenant for a service",
-        "parameters" : [
+      "put": {
+        "summary": "Update rules in the controller.",
+        "description": "Transactionally update the specified rules. No rules are updated on failure.",
+        "parameters": [
           {
-            "name": "version",
+            "name": "rules",
             "in": "body",
-            "description": "New version filter for tenant",
+            "description": "Rules to add",
             "schema": {
-              "$ref": "#/definitions/version"
+              "$ref": "#/definitions/ruleList"
             },
             "required": true
           }
         ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully created version filter"
+        "responses": {
+          "200": {
+            "description": "Rules have been updated successfully."
           },
-          "400" : {
-            "description" : "Missing or invalid JSON"
+          "404": {
+            "description": "Could not find all the rules.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           },
-          "404" : {
-            "description" : "No information exists for tenant ID"
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           },
-          "503" : {
-            "description" : "Error communicating with database"
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       },
-      "delete" : {
-        "tags" : [ ],
-        "summary" : "Delete the service version filter for a tenant",
-        "description" : "Deletes the service version filter for a tenant",
-        "parameters" : [ ],
-        "responses" : {
-          "200" : {
-            "description" : "Successfully deleted version filter"
+      "delete": {
+        "summary": "Remove rules from the controller.",
+        "description": "Remove rules that pass the query criteria.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Set of rule IDs.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           },
-          "404" : {
-            "description" : "No information exists for tenant ID or service name"
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Set of tags each rule must contain.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
           },
-          "503" : {
-            "description" : "Error communicating with database"
+          {
+            "name": "destination",
+            "in": "query",
+            "description": "Set of acceptable rule destinations.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "404": {
+            "description": "Specified rules do not exist.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/routes": {
+      "get": {
+        "summary": "Get route rules",
+        "description": "Get rules that define a route keyed by destination.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/rulesByDestination"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/actions": {
+      "get": {
+        "summary": "Get action rules",
+        "description": "Get rules that define actions keyed by destination.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/rulesByDestination"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/routes/{destination}": {
+      "parameters": [
+        {
+          "name": "destination",
+          "in": "path",
+          "description": "Destination",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get route rules by destination.",
+        "description": "Get rules that define a route.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace route rules by destination.",
+        "description": "Transactionally replace all route rules by destination.",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
+            }
+          },
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove route rules by destination.",
+        "description": "Delete all rules that define a route by destination.",
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/actions/{destination}": {
+      "parameters": [
+        {
+          "name": "destination",
+          "in": "path",
+          "description": "Destination",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get action rules by destination.",
+        "description": "Get rules that define actions.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace action rules by destination.",
+        "description": "Transactionally replace all action rules by destination.",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
+            }
+          },
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove action rules by destination.",
+        "description": "Delete all rules that define actions by destination.",
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)            ",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
           }
         }
       }
     }
   },
-  "definitions" : {
-    "tenant" : {
-      "properties" : {
-        "id" : {
-          "type" : "string",
-          "description" : "ID of tenant"
-        },
-        "port" : {
-          "type" : "integer",
-          "description" : "NGINX port"
-        },
-        "load_balance" : {
-          "type" : "string",
-          "description" : "Load balancing algorithm for tenant"
-        },
-        "filters" : {
-          "$ref" : "#/definitions/filter"
-        }
+  "definitions": {
+    "ids": {
+      "title": "IDs",
+      "description": "Rule IDs",
+      "type": "array",
+      "items": {
+        "title": "ID",
+        "description": "Rule ID",
+        "type": "string"
       }
     },
-    "filter" : {
-      "properties" : {
-        "rules" : {
-          "type" : "array",
-          "description" : "delay filters for tenant",
-          "items" : {
-            "$ref" : "#/definitions/rule"
-          }
-        },
-        "versions" : {
-          "type" : "array",
-          "description" : "abort filters for tenant",
-          "items" : {
-            "$ref" : "#/definitions/version"
-          }
-        }
-      }
+    "tags": {
+      "title": "Tags",
+      "description": "An array of one or more unique service tags.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "minItems": 1
     },
-    "in_rules" : {
+    "source": {
+      "title": "Source",
+      "description": "Microservice where request originated from",
+      "type": "object",
       "properties": {
-        "rules" : {
-          "type" : "array",
-          "description" : "rules",
-          "items" : {
-            "$ref" : "#/definitions/in_rule"
-          }
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
         }
-      }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
     },
-    "in_rule" : {
-      "properties" : {
-        "source" : {
-          "type" : "string",
-          "description" : "Service name of request source"
-        },
-        "destination" : {
-          "type" : "string",
-          "description" : "Service name of request destination"
-        },
-        "pattern" : {
-          "type" : "string",
-          "description" : "Header pattern"
-        },
-        "delay" : {
-          "type" : "number",
-          "description" : "Delay in seconds"
-        },
-        "delay_probability" : {
-          "type" : "number",
-          "description" : "Delay probability in range [0.0, 1.0]"
-        },
-        "abort_probability" : {
-          "type" : "number",
-          "description" : "Abort probability in range [0.0, 1.0]"
-        },
-        "return_code" : {
-          "type" : "integer",
-          "description" : "Failure code returned by abort"
-        }
-      }
+    "headers": {
+      "title": "Headers",
+      "description": "Header key/value pairs",
+      "type": "object",
+      "additionalProperties": {
+        "title": "Header",
+        "type": "string"
+      },
+      "minProperties": 1
     },
-    "rules" : {
+    "match": {
+      "title": "Match",
+      "description": "Conditions that must be true to apply the action or routing",
+      "type": "object",
       "properties": {
-        "rules" : {
-          "type" : "array",
-          "description" : "rules",
-          "items" : {
-            "$ref" : "#/definitions/rule"
+        "source": {
+          "$ref": "#/definitions/source"
+        },
+        "headers": {
+          "$ref": "#/definitions/headers"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "basicBackend": {
+      "title": "Basic Backend",
+      "description": "Basic backend to route to",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "backend": {
+      "title": "Backend",
+      "description": "Backend to route to",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "weight": {
+          "title": "Traffic weight",
+          "description": "Percentage of traffic to route to this backend.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "exclusiveMinimum": true,
+          "default": 1
+        },
+        "timeout": {
+          "description": "Request timeout or read/write timeout on the pipe in seconds",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "retries": {
+          "description": "Number of times to retry request or re-establish connectivity",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "failover": {
+          "description": "When requests to this backend fail, fallback to provided backends",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/basicBackend"
+          }
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "backends": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/backend"
+          }
+        }
+      },
+      "required": [
+        "backends"
+      ],
+      "additionalProperties": false
+    },
+    "probability": {
+      "title": "Probability",
+      "description": "Probability of executing action",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "exclusiveMinimum": true,
+      "default": 1
+    },
+    "action": {
+      "title": "Action",
+      "description": "Action to apply to matching requests",
+      "type": "object",
+      "discriminator": "action",
+      "properties": {
+        "action": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "delayAction": {
+      "title": "Delay",
+      "description": "Conditionally delay the request",
+      "properties": {
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of delay in seconds",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        }
+      },
+      "required": [
+        "duration"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "abortAction": {
+      "title": "Abort",
+      "description": "Conditionally abort the request",
+      "properties": {
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "return_code": {
+          "type": "number",
+          "description": "Return code",
+          "minimum": -5,
+          "maximum": 599
+        }
+      },
+      "required": [
+        "return_code"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "traceAction": {
+      "title": "Trace",
+      "description": "Trace request",
+      "properties": {
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "log_key": {
+          "type": "string",
+          "default": "trace"
+        },
+        "log_value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "rule": {
+      "title": "Rule",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "priority": {
+          "type": "number",
+          "default": 0
+        },
+        "destination": {
+          "type": "string"
+        },
+        "match": {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "any": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "none": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "source": {
+              "$ref": "#/definitions/source"
+            },
+            "headers": {
+              "$ref": "#/definitions/headers"
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "route": {
+          "$ref": "#/definitions/route"
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/action"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "destination"
+      ]
+    },
+    "ruleList": {
+      "title": "Rules",
+      "description": "Collection of rules",
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/rule"
           }
         }
       }
     },
-    "rule" : {
-      "properties" : {
-        "id" : {
-          "type" : "string",
-          "description" : "Rule ID"
-        },
-        "source" : {
-          "type" : "string",
-          "description" : "Service name of request source"
-        },
-        "destination" : {
-          "type" : "string",
-          "description" : "Service name of request destination"
-        },
-        "header" : {
-          "type" : "string",
-          "description" : "Header name"
-        },
-        "pattern" : {
-          "type" : "string",
-          "description" : "Header pattern"
-        },
-        "delay" : {
-          "type" : "number",
-          "description" : "Delay in seconds"
-        },
-        "delay_probability" : {
-          "type" : "number",
-          "description" : "Delay probability in range [0.0, 1.0]"
-        },
-        "abort_probability" : {
-          "type" : "number",
-          "description" : "Abort probability in range [0.0, 1.0]"
-        },
-        "return_code" : {
-          "type" : "integer",
-          "description" : "Failure code returned by abort"
-        }
+    "rulesByDestination": {
+      "title": "Rules by destination",
+      "description": "Rules mapped by destination.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ruleList"
       }
     },
-    "version" : {
-      "properties" : {
-        "service" : {
-          "type" : "string",
-          "description" : "Service to apply versioning to"
+    "error": {
+      "title": "Error",
+      "description": "Error description",
+      "type": "object",
+      "properties": {
+        "error": {
+          "title": "Error",
+          "description": "The error type.",
+          "type": "string"
         },
-        "default" : {
-          "type" : "string",
-          "description" : "Default Service version to use"
-        },
-        "selector" : {
-          "type" : "object",
-          "description" : "Version selector"
+        "message": {
+          "title": "Message",
+          "description": "Translated error message.",
+          "type": "string"
         }
       }
     }

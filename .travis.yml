@@ -22,9 +22,10 @@ script:
     - export GOOS=${PLATFORM%/*}
     - export GOARCH=${PLATFORM#*/}
     
-    # Analyze, test and build the code, and then package the binary
-    - make verify release APP_VER=$TRAVIS_TAG
+    # Analyze, test and build the code
+    - make verify
 
+before_deploy: make release
 deploy:
     
     # Upload files to GitHub as release attachments

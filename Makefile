@@ -20,7 +20,7 @@
 
 SHELL 		:= /bin/bash
 APP_NAME	:= a8sidecar
-APP_VER		:= v0.2.0
+APP_VER		:= $(shell git describe)
 DOCKERFILE  := ./docker/Dockerfile.ubuntu
 BINDIR		:= bin
 RELEASEDIR  := release
@@ -153,7 +153,7 @@ release:
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(APP_NAME)
 	@cp $(BINDIR)/$(APP_NAME) $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^./::' .
-	@cp install-a8sidecar.sh $(RELEASEDIR)/
+	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" install-a8sidecar.sh > $(RELEASEDIR)/install-a8sidecar.sh
 
 #---------------
 #-- tools

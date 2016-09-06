@@ -17,131 +17,167 @@ package config
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"reflect"
+	"strings"
 	"time"
 
-	"net"
-
-	"strings"
-
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
+	"gopkg.in/yaml.v2"
 )
 
-// Tenant stores tenant configuration
-type Tenant struct {
-	TTL       time.Duration
-	Heartbeat time.Duration
+// Service configuration
+type Service struct {
+	Name string   `yaml:"name"`
+	Tags []string `yaml:"tags"`
+}
+
+// Endpoint configuration
+type Endpoint struct {
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
+	Type string `yaml:"type"`
 }
 
 // Registry configuration
 type Registry struct {
-	URL   string
-	Token string
-	Poll  time.Duration
-}
-
-// Nginx stores NGINX configuration
-type Nginx struct {
-	Port    int
-	Logging bool
+	URL   string        `yaml:"url"`
+	Token string        `yaml:"token"`
+	Poll  time.Duration `yaml:"poll"`
 }
 
 // Controller configuration
 type Controller struct {
-	URL   string
-	Poll  time.Duration
-	Token string
+	URL   string        `yaml:"url"`
+	Token string        `yaml:"token"`
+	Poll  time.Duration `yaml:"poll"`
 }
 
-// Config TODO
+// Config stores the various configuration options for the sidecar
 type Config struct {
-	ServiceName    string
-	ServiceTags    []string
-	EndpointHost   string
-	EndpointPort   int
-	EndpointType   string
-	LogstashServer string
-	Register       bool
-	Proxy          bool
-	Log            bool
-	Supervise      bool
-	Tenant         Tenant
-	Controller     Controller
-	Registry       Registry
-	Nginx          Nginx
-	LogLevel       logrus.Level
-	AppArgs        []string
+	Register bool `yaml:"register"`
+	Proxy    bool `yaml:"proxy"`
+
+	Service  Service  `yaml:"service"`
+	Endpoint Endpoint `yaml:"endpoint"`
+
+	Registry   Registry   `yaml:"registry"`
+	Controller Controller `yaml:"controller"`
+
+	Supervise bool     `yaml:"supervise"`
+	App       []string `yaml:"app"`
+
+	Log            bool   `yaml:"log"`
+	LogstashServer string `yaml:"logstash_server"`
+
+	LogLevel string `yaml:"log_level"`
 }
 
-// New TODO
-func New(context *cli.Context) *Config {
+// New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
+func New(context *cli.Context) (*Config, error) {
 
-	// TODO: parse this more gracefully
-	loggingLevel := logrus.DebugLevel
-	logLevelArg := context.String(logLevel)
-	var err error
-	loggingLevel, err = logrus.ParseLevel(logLevelArg)
-	if err != nil {
-		loggingLevel = logrus.DebugLevel
-	}
+	// Initialize configuration with default values
+	config := *&DefaultConfig
 
-	endpointHost := context.String(endpointHost)
-	if endpointHost == "" {
-		for {
-			endpointHost = LocalIP()
-			if endpointHost != "" {
-				break
-			}
-			logrus.Warn("Could not obtain local IP")
-			time.Sleep(time.Second * 10)
+	// Load configuration from file, if specified
+	if context.IsSet(configFlag) {
+		err := config.loadFromFile(context.String(configFlag))
+		if err != nil {
+			return nil, err
 		}
 	}
 
-	var name string
-	var tags []string
-
-	i := strings.Index(context.String(serviceName), ":")
-	if i == -1 {
-		name = context.String(serviceName)
-		tags = []string{}
-	} else {
-		name = context.String(serviceName)[:i]
-
-		tagsString := context.String(serviceName)[i+1:]
-		tags = strings.Split(tagsString, ",")
+	// Load configuration from context (commandline flags and environment variables)
+	err := config.loadFromContext(context)
+	if err != nil {
+		return nil, err
 	}
 
-	return &Config{
-		ServiceName:    name,
-		ServiceTags:    tags,
-		EndpointHost:   endpointHost,
-		EndpointPort:   context.Int(endpointPort),
-		EndpointType:   context.String(endpointType),
-		LogstashServer: context.String(logstashServer),
-		Register:       context.BoolT(register),
-		Proxy:          context.BoolT(proxy),
-		Log:            context.BoolT(log),
-		Supervise:      context.Bool(supervise),
-		Controller: Controller{
-			URL:   context.String(controllerURL),
-			Poll:  context.Duration(controllerPoll),
-			Token: context.String(controllerToken),
-		},
-		Tenant: Tenant{
-			TTL:       context.Duration(tenantTTL),
-			Heartbeat: context.Duration(tenantHeartbeat),
-		},
-		Registry: Registry{
-			URL:   context.String(registryURL),
-			Token: context.String(registryToken),
-			Poll:  context.Duration(registryPoll),
-		},
-		Nginx: Nginx{
-			Port: context.Int(nginxPort),
-		},
-		LogLevel: loggingLevel,
-		AppArgs:  context.Args(),
+	if config.Endpoint.Host == "" {
+		config.Endpoint.Host = waitForLocalIP()
 	}
+
+	return &config, nil
+}
+
+func (c *Config) loadFromFile(configFile string) error {
+	bytes, err := ioutil.ReadFile(configFile)
+	if err != nil {
+		return err
+	}
+
+	err = yaml.Unmarshal(bytes, c)
+	if err != nil {
+		return nil
+	}
+
+	return nil
+}
+
+func (c *Config) loadFromContext(context *cli.Context) error {
+	loadFromContextIfSet := func(ptr interface{}, flagName string) {
+		if !context.IsSet(flagName) {
+			return
+		}
+
+		configValue := reflect.ValueOf(ptr).Elem()
+		var flagValue interface{}
+		switch configValue.Kind() {
+		case reflect.Bool:
+			flagValue = context.Bool(flagName)
+		case reflect.String:
+			flagValue = context.String(flagName)
+		case reflect.Int:
+			flagValue = context.Int(flagName)
+		case reflect.Int64:
+			flagValue = context.Duration(flagName)
+		case reflect.Float64:
+			flagValue = context.Float64(flagName)
+		case reflect.Slice:
+			switch configValue.Type().Elem().Kind() {
+			case reflect.String:
+				flagValue = context.StringSlice(flagName)
+			case reflect.Int:
+				flagValue = context.IntSlice(flagName)
+			default:
+				logrus.Errorf("unsupported configuration type '%v' for '%v'", configValue.Kind(), flagName)
+			}
+		default:
+			logrus.Errorf("unsupported configuration type '%v' for '%v'", configValue.Kind(), flagName)
+		}
+
+		configValue.Set(reflect.ValueOf(flagValue))
+	}
+
+	loadFromContextIfSet(&c.Register, registerFlag)
+	loadFromContextIfSet(&c.Proxy, proxyFlag)
+	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
+	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
+	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
+	loadFromContextIfSet(&c.Registry.URL, registryURLFlag)
+	loadFromContextIfSet(&c.Registry.Token, registryTokenFlag)
+	loadFromContextIfSet(&c.Registry.Poll, registryPollFlag)
+	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
+	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
+	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.Supervise, superviseFlag)
+	loadFromContextIfSet(&c.Log, logFlag)
+	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
+	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
+
+	if context.IsSet(serviceFlag) {
+		name, tags := parseServiceNameAndTags(context.String(serviceFlag))
+		c.Service.Name = name
+		c.Service.Tags = tags
+	}
+
+	if context.Args().Present() {
+		c.App = context.Args()
+	}
+
+	return nil
 }
 
 // Validate the configuration
@@ -157,7 +193,7 @@ func (c *Config) Validate() error {
 	if c.Supervise {
 		validators = append(validators,
 			func() error {
-				if len(c.AppArgs) == 0 {
+				if len(c.App) == 0 {
 					return fmt.Errorf("Supervision mode requires application launch arguments")
 				}
 				return nil
@@ -176,18 +212,9 @@ func (c *Config) Validate() error {
 
 	if c.Register {
 		validators = append(validators,
-			func() error {
-				if c.Tenant.TTL.Seconds() < c.Tenant.Heartbeat.Seconds() {
-					return fmt.Errorf("Tenant TTL (%v) is less than heartbeat interval (%v)", c.Tenant.TTL, c.Tenant.Heartbeat)
-				}
-				return nil
-			},
-			IsNotEmpty("Service Name", c.ServiceName),
-			IsInRange("NGINX port", c.Nginx.Port, 1, 65535),
-			IsInRange("Service Endpoint Port", c.EndpointPort, 1, 65535),
-			IsInSet("Service Endpoint Type", c.EndpointType, []string{"http", "https", "tcp", "udp", "user"}),
-			IsInRangeDuration("Tenant TTL", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
-			IsInRangeDuration("Tenant heartbeat interval", c.Tenant.TTL, 5*time.Second, 1*time.Hour),
+			IsNotEmpty("Service Name", c.Service.Name),
+			IsInRange("Service Endpoint Port", c.Endpoint.Port, 1, 65535),
+			IsInSet("Service Endpoint Type", c.Endpoint.Type, []string{"http", "https", "tcp", "udp", "user"}),
 		)
 	}
 
@@ -202,8 +229,21 @@ func (c *Config) Validate() error {
 	return Validate(validators)
 }
 
-// LocalIP retrieves the IP address of the sidecar
-func LocalIP() string {
+// waitForLocalIP waits until a local IP is available
+func waitForLocalIP() string {
+	for {
+		ip := localIP()
+		if ip != "" {
+			break
+		}
+		logrus.Warn("Could not obtain local IP")
+		time.Sleep(time.Second * 10)
+	}
+	return ""
+}
+
+// localIP retrieves the IP address of the system
+func localIP() string {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return ""
@@ -219,4 +259,16 @@ func LocalIP() string {
 	}
 
 	return ""
+}
+
+func parseServiceNameAndTags(service string) (name string, tags []string) {
+	i := strings.Index(service, ":")
+	if i == -1 {
+		name = service
+		tags = []string{}
+	} else {
+		name = service[:i]
+		tags = strings.Split(service[i+1:], ",")
+	}
+	return
 }

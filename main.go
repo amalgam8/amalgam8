@@ -15,11 +15,10 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
-
-	"fmt"
 
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/controller/client"
@@ -30,7 +29,7 @@ import (
 	"github.com/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/sidecar/register"
 	"github.com/amalgam8/sidecar/supervisor"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 func main() {
@@ -43,31 +42,37 @@ func main() {
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
 	app.Version = "0.2.0"
-	app.Flags = config.TenantFlags
+	app.Flags = config.Flags
 	app.Action = sidecarCommand
 
 	err := app.Run(os.Args)
 	if err != nil {
-		logrus.WithError(err).Error("Failure running main")
+		logrus.WithError(err).Error("Failure launching sidecar")
 	}
 }
 
-func sidecarCommand(context *cli.Context) {
-	conf := config.New(context)
-	if err := sidecarMain(*conf); err != nil {
-		logrus.WithError(err).Error("Setup failed")
+func sidecarCommand(context *cli.Context) error {
+	conf, err := config.New(context)
+	if err != nil {
+		return err
 	}
+	return sidecarMain(*conf)
 }
 
 func sidecarMain(conf config.Config) error {
 	var err error
 
-	logrus.SetLevel(conf.LogLevel)
-
 	if err = conf.Validate(); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
 		return err
 	}
+
+	logrusLevel, err := logrus.ParseLevel(conf.LogLevel)
+	if err != nil {
+		logrus.WithError(err).Errorf("Failure parsing requested log level (%v)", conf.LogLevel)
+		logrusLevel = logrus.DebugLevel
+	}
+	logrus.SetLevel(logrusLevel)
 
 	if conf.Log {
 		//Replace the LOGSTASH_REPLACEME string in filebeat.yml with
@@ -111,12 +116,12 @@ func sidecarMain(conf config.Config) error {
 			return err
 		}
 
-		address := fmt.Sprintf("%v:%v", conf.EndpointHost, conf.EndpointPort)
+		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
 		serviceInstance := &registryclient.ServiceInstance{
-			ServiceName: conf.ServiceName,
-			Tags:        conf.ServiceTags,
+			ServiceName: conf.Service.Name,
+			Tags:        conf.Service.Tags,
 			Endpoint: registryclient.ServiceEndpoint{
-				Type:  conf.EndpointType,
+				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
 			TTL: 60,
@@ -135,7 +140,7 @@ func sidecarMain(conf config.Config) error {
 	}
 
 	if conf.Supervise {
-		supervisor.DoAppSupervision(conf.AppArgs)
+		supervisor.DoAppSupervision(conf.App)
 	} else {
 		select {}
 	}

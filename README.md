@@ -202,36 +202,69 @@ controller.
 
 ## Configuration options <a id="config"></a>
 
-Configuration options can be set through environment variables or command
-line flags.
+Configuration options can be set via environment variables, command line flags, or YAML configuration files.
+Order of precedence is command line flags first, then environmenmt variables, configuration files, and lastly default values.
 
 **Note:** Atleast one of `A8_REGISTER` or `A8_PROXY` must be true.
 
-| Environment Key | Flag Name                   | Description | Default Value |Required|
-|:----------------|:----------------------------|:------------|:--------------|--------|
-| A8_LOG_LEVEL | --log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
-| A8_SERVICE | --service | service name to register with | | yes |
-| A8_SERVICE_VERSION | --service_version | service version to register with. Service is UNVERSIONED by default |  | needed if you wish to register different versions under same name |
-| A8_ENDPOINT_HOST | --endpoint_host | service endpoint hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
-| A8_ENDPOINT_PORT | --endpoint_port | service endpoint port |  | yes |
-| A8_ENDPOINT_TYPE | --endpoint_type | service endpoint type (http, https, udp, tcp, user) | http | no |
-| A8_REGISTER | --register | enable automatic service registration and heartbeat | true | See note above |
-| A8_PROXY | --proxy | enable automatic service discovery and load balancing across services using NGINX |  | See note above |
-| A8_LOG | --log | enable logging of outgoing requests through proxy using FileBeat | true |  | no |
-| A8_SUPERVISE | --supervise | Manage application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation | true | no |
-| A8_CONTROLLER_TOKEN | --controller_token | Auth token for Controller instance |  | yes when `-proxy` is enabled |
-| A8_TENANT_TTL | --tenant_ttl | TTL for Registry | 60s | no |
-| A8_TENANT_HEARTBEAT | --tenant_heartbeat | tenant heartbeat interval to Registry | 45s | no |
-| A8_REGISTRY_URL | --registry_url | registry URL |  | yes if `-register` is enabled |
-| A8_REGISTRY_TOKEN | --registry_token | registry auth token | | yes if `-register` is enabled |
-| A8_REGISTRY_POLL | --registry_poll | interval for polling Registry | 15s | no |
-| A8_NGINX_PORT | --nginx_port | port for NGINX proxy. This port should be exposed in the Docker container. | 6379 | no |
-| A8_CONTROLLER_URL | --controller_url | controller URL |  | yes if `-proxy` is enabled |
-| A8_CONTROLLER_POLL | --controller_poll | interval for polling Controller | 15s | no |
-| A8_LOGSTASH_SERVER | --logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
+| Environment Variable | Flag Name                   | YAML Key | Description | Default Value |Required|
+|:---------------------|:----------------------------|:---------|:------------|:--------------|--------|
+| A8_CONFIG | --config | | Path to a file to load configuration from | | no |
+| A8_LOG_LEVEL | --log_level | log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
+| A8_SERVICE | --service | service.name & service.tags | service name to register with, optionally followed by a colon and a comma-separated list of tags | | yes |
+| A8_ENDPOINT_HOST | --endpoint_host | endpoint.host | service endpoint IP or hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
+| A8_ENDPOINT_PORT | --endpoint_port | endpoint.port | service endpoint port |  | yes |
+| A8_ENDPOINT_TYPE | --endpoint_type | endpoint.type | service endpoint type (http, https, udp, tcp, user) | http | no |
+| A8_REGISTER | --register | register | enable automatic service registration and heartbeat | false | See note above |
+| A8_PROXY | --proxy | proxy | enable automatic service discovery and load balancing across services using NGINX | false | See note above |
+| A8_LOG | --log | log | enable logging of outgoing requests through proxy using FileBeat | false | no |
+| A8_SUPERVISE | --supervise | supervise | Manage application process. If application dies, sidecar process is killed as well. All arguments provided after the flags will be considered as part of the application invocation | false | no |
+| A8_REGISTRY_URL | --registry_url | registry.url | registry URL |  | yes if `-register` is enabled |
+| A8_REGISTRY_TOKEN | --registry_token | registry.token | registry auth token | | yes if `-register` is enabled and an auth mode is set |
+| A8_REGISTRY_POLL | --registry_poll | registry.poll | interval for polling Registry | 15s | no |
+| A8_CONTROLLER_URL | --controller_url | controller.url | controller URL |  | yes if `-proxy` is enabled |
+| A8_CONTROLLER_TOKEN | --controller_token | controller.token | Auth token for Controller instance |  | yes if `-proxy` is enabled and an auth mode is set |
+| A8_CONTROLLER_POLL | --controller_poll | controller.poll | interval for polling Controller | 15s | no |
+| A8_LOGSTASH_SERVER | --logstash_server | logstash_server | logstash target for nginx logs |  | yes if `-log` is enabled |
 |  | --help, -h | show help | | |
 |  | --version, -v | print the version | | |
 
+### Configuration precedence
+
+### Example configuration file:
+```yaml
+register: true
+proxy: true
+
+service:
+  name: helloworld
+  tags: 
+    - v1
+    - somethingelse
+  
+endpoint:
+  host: 172.10.10.1
+  port: 9080
+  type: https
+
+registry:
+  url:   http://registry:8080
+  token: abcdef
+  poll:  10s
+  
+controller:
+  url:   http://controller:6379
+  token: abcdef
+  poll:  30s
+  
+supervise: true
+app: [ "python", "helloworld.py ]
+
+log: true
+logstash_server: logstash:8092
+
+log_level: debug
+```
 ---
 
 ## Building from source

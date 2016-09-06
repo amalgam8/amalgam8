@@ -23,6 +23,7 @@ local tostring = tostring
 local Amalgam8 = { _VERSION = '0.3.0' }
 
 local delay_action, abort_action, trace_action = 1, 2, 3
+local default_timeout, default_retries = 60, 0
 
 local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then
@@ -339,6 +340,7 @@ local function create_rule(rule, myname, mytags)
          ngx_log(ngx_ERR, "total weights has exceeded 1.0: " .. prev)
          return nil
       end
+
    end
 
    if rule.actions then
@@ -687,15 +689,6 @@ function Amalgam8:apply_rules()
          ngx.var.a8_upstream_host = selected_backend.host
       end
 
-      ---TODO: these two need to be used in balance_by_lua block. 
-      if selected_backend.timeout then
-         ngx.var.a8_upstream_timeout = selected_backend.timeout
-      end
-
-      if selected_backend.retries then
-         ngx.var.a8_upstream_retries = selected_backend.retries
-      end
-
       --set the version cookie      
       local selected_version =  create_cookie_version(selected_backend)
       if cookie_version then --delete old cookie
@@ -709,14 +702,14 @@ function Amalgam8:apply_rules()
       ngx.var.a8_upstream_name = destination
    end
 
-   --    --TODO: refactor. Need different LB functions
-   local upstream_instance = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_addr = upstream_instance.host
-   ngx.var.a8_upstream_port = upstream_instance.port
-   ngx.var.a8_upstream_tags = upstream_instance.tags
-   ngx.var.a8_service_type = upstream_instance.type
+   ngx.ctx.a8_backend = selected_backend
+   ngx.ctx.a8_upstreams = selected_instances
 
-   if actions then
+   -- We need to know if this is a http or https instance. And the assumption here is that all instances in the pool are of same type.
+   -- So pick the first instance and get its instance type. This variable will be used by the proxy_pass directive
+   ngx.var.a8_service_type = selected_instances[1].type
+
+   if selected_backend and actions then
       -- ngx_log(ngx_DEBUG, destination.." has actions "..tostring(#actions))
       for _, a in ipairs(actions) do --rules are ordered by decreasing priority
          if match_headers(headers, a) then
@@ -727,8 +720,10 @@ function Amalgam8:apply_rules()
       if not selected_actions then ngx.exit(0) end -- proceed to next stage
       -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
 
+      -- Actions are performed on the backends (not specific instances of the backend). It would be
+      -- nice to inject faults for specific instances but we can't do ngx.sleep in balancer_by_lua 
       for _,sa in ipairs(selected_actions) do
-         if not sa.tags or match_tags(upstream_instance.tags, sa.tags) then
+         if not sa.tags or match_tags(table.concat(selected_backend.tags), sa.tags) then
             -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
             if sa.action <= abort_action then
                -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
@@ -752,9 +747,48 @@ end
 
 
 function Amalgam8:load_balance()
-   --- TODO: Add failover logic. For the failover logic, need to know the backend block chosen in apply_rules()
-   local _, err = balancer.set_current_peer(ngx.var.a8_upstream_addr, ngx.var.a8_upstream_port)
-   if err then
+   local selected_instances = ngx.ctx.a8_upstreams
+   local selected_backend = ngx.ctx.a8_backend
+   local timeout = nil
+   local retries = nil
+
+   if selected_backend then
+      if selected_backend.timeout and selected_backend.timeout > 0 then
+         timeout = selected_backend.timeout
+         local ok, err = balancer.set_timeouts(timeout, timeout, timeout)
+         if not ok then
+            ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+            ngx_log(ngx_ERR, "failed to set timeouts"..err)
+            ngx.exit(ngx.status)
+         end
+      end
+
+      -- TODO: Failover and retries
+      -- if selected_backend.retries and selected_backend.retries > 0 then
+      --    retries = selected_backend.retries
+      --    if not ngx.ctx.tries then ngx.ctx.tries = 0 end
+      --    local state_name, status_code = balancer.get_last_failure()
+      --    ngx_log(ngx_DEBUG, "Setting retries to ",retries," attempts of which ",ngx.ctx.tries," attempts have been made with last status ",state_name," error code ",status_code)
+      --    if ngx.ctx.tries <= retries then
+      --       local ok, err = balancer.set_more_tries(1)
+      --       if err then
+      --          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+      --          ngx_log(ngx_ERR, "failed to set retries"..err)
+      --          ngx.exit(ngx.status)
+      --       end
+      --    else
+      --       ngx.exit(status_code)
+      --    end
+      --    ngx.ctx.tries = ngx.ctx.tries + 1
+      -- end
+   end
+
+   --TODO: refactor. Need different LB functions
+   local upstream = selected_instances[math.random(#selected_instances)]
+   ngx.var.a8_upstream_tags = upstream.tags
+   ngx_log(ngx_DEBUG, "Selecting instance "..upstream.host..":"..upstream.port)
+   ok, err = balancer.set_current_peer(upstream.host, upstream.port)
+   if not ok then
       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
       ngx_log(ngx_ERR, "failed to set current peer"..err)
       ngx.exit(ngx.status)

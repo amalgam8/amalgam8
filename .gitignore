@@ -1,0 +1,14 @@
+# Eclipse
+.project
+.settings/
+
+# Intellij
+.idea/
+*.iml
+
+# Build
+bin/
+release/
+
+# Logs
+*.log

@@ -24,13 +24,13 @@ EXAMPLESREPO=https://github.com/amalgam8/examples
 LOCALREPO=$EXAMPLESDIR
 
 # We do it this way so that we can abstract if from just git later on
-LOCALREPO_VC_DIR=$EXAMPLESREPO/.git
+LOCALREPO_VC_DIR=$LOCALREPO/.git
 
 if [ ! -d $LOCALREPO_VC_DIR ]
 then
     git clone $EXAMPLESREPO $EXAMPLESDIR
 else
-    cd $EXAMPLESDIR && git pull $EXAMPLESREPO
+    cd $EXAMPLESDIR && git pull
 fi
 
 cd $EXAMPLESDIR && git checkout master

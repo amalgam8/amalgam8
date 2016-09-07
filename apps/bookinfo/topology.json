@@ -1,0 +1,15 @@
+{
+    "services" : [
+        { "name": "gateway"},
+        { "name": "productpage:v1"},
+        { "name": "reviews:v2"},
+        { "name": "details:v1"},
+        { "name": "ratings:v1"}
+    ],
+
+    "dependencies" : {
+        "gateway" : ["productpage:v1"],
+        "productpage:v1" : ["reviews:v2", "details:v1"],
+        "reviews:v2" : ["ratings:v1"]
+    }
+}

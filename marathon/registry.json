@@ -1,0 +1,21 @@
+{
+    "id": "a8-registry",
+    "container": {
+	"type": "DOCKER",
+	"docker": {
+	    "image": "amalgam8/a8-registry",
+	    "network": "BRIDGE",
+	    "portMappings": [
+		{
+		    "containerPort": 8080,
+		    "hostPort": 31300,
+		    "protocol" : "tcp"
+		}
+	    ]
+	}
+    },
+    "args" : [],
+    "instances": 1,
+    "cpus": 0.1,
+    "mem": 128
+}

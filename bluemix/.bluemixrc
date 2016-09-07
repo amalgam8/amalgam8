@@ -1,0 +1,57 @@
+#################################################################################
+# Bluemix services enablement
+#################################################################################
+
+### Do not enable for 0.2.0
+ENABLE_SERVICEDISCOVERY=false
+
+#################################################################################
+# Image names
+#################################################################################
+
+PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar:v1-alpine
+DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar:v1-alpine
+RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar:v1-alpine
+REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-alpine
+REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-alpine
+REVIEWS_V3_IMAGE=a8-examples-bookinfo-reviews-sidecar:v3-alpine
+
+GATEWAY_IMAGE=a8-sidecar:latest
+CONTROLLER_IMAGE=a8-controller:latest
+REGISTRY_IMAGE=a8-registry:latest
+
+#################################################################################
+# Image registries
+#################################################################################
+
+BLUEMIX_REGISTRY_HOST=registry.ng.bluemix.net
+BLUEMIX_REGISTRY_NAMESPACE=__your_namespace__
+DOCKERHUB_NAMESPACE=amalgam8
+
+#################################################################################
+# Routes
+#################################################################################
+
+ROUTES_DOMAIN=mybluemix.net
+
+## Change accordingly.
+CONTROLLER_HOSTNAME=myamalgam8-controller
+REGISTRY_HOSTNAME=myamalgam8-registry
+BOOKINFO_HOSTNAME=myamalgam8-bookinfo
+
+###NOTE: Use HTTP and not HTTPS for the controller and registry URLs.
+CONTROLLER_URL=http://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
+REGISTRY_URL=http://${REGISTRY_HOSTNAME}.${ROUTES_DOMAIN}
+
+BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
+
+#################################################################################
+# Misc
+#################################################################################
+
+### Please change these to sensible values as your app and controller will be public.
+### Note: when overiding these values, set the A8_CONTROLLER_TOKEN/A8_REGISTRY_TOKEN environment variables,
+### or set the --a8-token/--a8-registry-token flags for the a8ctl utility.
+# CONTROLLER_TENANT_ID=local ##Do not use for 0.2.0
+CONTROLLER_TOKEN=local
+REGISTRY_TOKEN=local

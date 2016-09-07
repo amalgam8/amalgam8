@@ -1,0 +1,28 @@
+{
+    "checks" : [
+	    {
+	        "name" : "bounded_response_time",
+	        "source" : "gateway",
+	        "dest" : "productpage:v1",
+	        "max_latency" : "7s"
+	    },
+	    {
+	        "name" : "http_status",
+            "source" : "gateway",
+            "dest" : "productpage:v1",
+            "status" : [200, 302]
+	    },
+        {
+	        "name" : "http_status",
+            "source" : "productpage:v1",
+            "dest" : "reviews:v2",
+            "status" : 200
+	    },
+        {
+	        "name" : "http_status",
+            "source" : "reviews:v2",
+            "dest" : "ratings:v1",
+            "status" : 200
+	    }
+    ]
+}

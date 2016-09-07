@@ -1,0 +1,36 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+FROM amalgam8/a8-sidecar:alpine
+
+RUN apk add --no-cache \
+              bash \
+              python \
+              python-dev \
+              py-pip \
+  && pip install --upgrade pip \
+  && pip install Flask
+
+RUN cd /usr/bin \
+  && ln -sf easy_install-2.7 easy_install \
+  && ln -sf python2.7 python \
+  && ln -sf python2.7-config python-config \
+  && ln -sf pip2.7 pip
+
+RUN mkdir -p /opt/microservices
+ADD app.py /opt/microservices/
+EXPOSE 5000
+WORKDIR /opt/microservices
+
+ENTRYPOINT ["a8sidecar", "--proxy=false", "--log=false", "--supervise", "python", "-u", "app.py"]

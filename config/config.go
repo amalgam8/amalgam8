@@ -96,7 +96,9 @@ func New(context *cli.Context) (*Config, error) {
 	}
 
 	if config.Endpoint.Host == "" {
+		logrus.Infof("No hostname is configured. Using local IP instead...")
 		config.Endpoint.Host = waitForLocalIP()
+		logrus.Infof("Obtained local IP %s", config.Endpoint.Host)
 	}
 
 	return &config, nil
@@ -231,15 +233,16 @@ func (c *Config) Validate() error {
 
 // waitForLocalIP waits until a local IP is available
 func waitForLocalIP() string {
+	ip := ""
 	for {
-		ip := localIP()
+		ip = localIP()
 		if ip != "" {
 			break
 		}
 		logrus.Warn("Could not obtain local IP")
 		time.Sleep(time.Second * 10)
 	}
-	return ""
+	return ip
 }
 
 // localIP retrieves the IP address of the system

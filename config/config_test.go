@@ -17,6 +17,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"time"
 
@@ -49,7 +50,23 @@ var _ = Describe("Config", func() {
 		})
 
 		It("uses default config values", func() {
-			Expect(*c).To(Equal(DefaultConfig))
+			Expect(c.Register).To(Equal(DefaultConfig.Register))
+			Expect(c.Proxy).To(Equal(DefaultConfig.Proxy))
+			Expect(c.Service).To(Equal(DefaultConfig.Service))
+			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
+			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
+			Expect(c.Registry).To(Equal(DefaultConfig.Registry))
+			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
+			Expect(c.Supervise).To(Equal(DefaultConfig.Supervise))
+			Expect(c.App).To(Equal(DefaultConfig.App))
+			Expect(c.Log).To(Equal(DefaultConfig.Log))
+			Expect(c.LogstashServer).To(Equal(DefaultConfig.LogstashServer))
+			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
+		})
+
+		It("falls back to local IP when no hostname is specified", func() {
+			Expect(c.Endpoint.Host).To(Not(BeNil()))
+			Expect(net.ParseIP(c.Endpoint.Host)).To(Not(BeNil()))
 		})
 
 	})

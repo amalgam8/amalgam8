@@ -67,3 +67,6 @@ func (si *ServiceInstance) DeepClone() *ServiceInstance {
 	}
 	return &cloned
 }
+
+// ServiceInstanceMap is a map of ServiceInstances keyed by instance id and service name
+type ServiceInstanceMap map[DBKey]*ServiceInstance

@@ -57,22 +57,38 @@ func New(conf *Config) CatalogMap {
 		logger:   lentry,
 	}
 
-	// The InMemory catalog is the Read-Write catalog.
-	inmemConfig := &inMemoryConfig{
-		defaultTTL:        conf.DefaultTTL,
-		minimumTTL:        conf.MinimumTTL,
-		maximumTTL:        conf.MaximumTTL,
-		namespaceCapacity: conf.NamespaceCapacity,
+	if conf.Store == "redis" {
+		externalConfig := &externalConfig{
+			defaultTTL:        conf.DefaultTTL,
+			minimumTTL:        conf.MinimumTTL,
+			maximumTTL:        conf.MaximumTTL,
+			namespaceCapacity: conf.NamespaceCapacity,
+			store:             conf.Store,
+			address:           conf.StoreAddr,
+			password:          conf.StorePassword,
+			database:          conf.StoreDatabase,
+		}
+		externalFactory := newExternalFactory(externalConfig)
+		factory = externalFactory
+		conf.Replication = nil
+	} else {
+		// The InMemory catalog is the Read-Write catalog.
+		inmemConfig := &inMemoryConfig{
+			defaultTTL:        conf.DefaultTTL,
+			minimumTTL:        conf.MinimumTTL,
+			maximumTTL:        conf.MaximumTTL,
+			namespaceCapacity: conf.NamespaceCapacity,
+		}
+		inmemFactory := newInMemoryFactory(inmemConfig)
+		factory = inmemFactory
 	}
-	inmemFactory := newInMemoryFactory(inmemConfig)
-	factory = inmemFactory
 
 	if conf.Replication != nil {
 		repConfig := &replicatedConfig{
 			syncWaitTime: conf.SyncWaitTime,
 			rep:          conf.Replication,
 			catalogMap:   cmap,
-			localFactory: inmemFactory,
+			localFactory: factory,
 		}
 		repFactory := newReplicatedFactory(repConfig)
 		defer repFactory.activate()

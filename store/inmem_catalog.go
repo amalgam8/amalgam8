@@ -15,9 +15,6 @@
 package store
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"strings"
 	"sync"
 	"time"
 
@@ -26,22 +23,6 @@ import (
 
 	"github.com/amalgam8/registry/auth"
 	"github.com/amalgam8/registry/utils/logging"
-)
-
-const (
-	serviceNameMaxLength int = 64
-	valueMaxLength       int = 64
-	statusMaxLength      int = 32
-	metadataMaxLength    int = 1024
-
-	instancesMetricName  = "store.instances.count"
-	expirationMetricName = "store.instances.expiration"
-	lifetimeMetricName   = "store.instances.lifetime"
-
-	metadataLengthMetricName    = "store.metadata.length"
-	metadataInstancesMetricName = "store.metadata.instances"
-	tagsLengthMetricName        = "store.tags.length"
-	tagsInstancesMetricName     = "store.tags.instances"
 )
 
 var defaultInMemoryConfig = &inMemoryConfig{DefaultConfig.DefaultTTL, DefaultConfig.MinimumTTL, DefaultConfig.MaximumTTL, DefaultConfig.NamespaceCapacity}
@@ -110,17 +91,6 @@ func newInMemoryCatalog(conf *inMemoryConfig) *inMemoryCatalog {
 		tagsInstancesMetric:     metrics.GetOrRegister(tagsInstancesMetricName, counterFactory).(metrics.Counter),
 	}
 	return catalog
-}
-
-func computeInstanceID(si *ServiceInstance) string {
-	// The ID is deterministically computed for each catalog,
-	// This is necessary to support replication, and duplicate registration request accross nodes in the sd cluster
-	hash := sha256.New()
-	hash.Write([]byte(strings.Join([]string{si.ServiceName, si.Endpoint.Type, si.Endpoint.Value}, "/")))
-	//hash.Write([]byte(time.Now().String()))
-	md := hash.Sum(nil)
-	mdStr := hex.EncodeToString(md)
-	return mdStr[:16]
 }
 
 func (imc *inMemoryCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {

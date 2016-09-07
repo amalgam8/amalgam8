@@ -50,6 +50,10 @@ const (
 	K8sTokenFlag = "k8s_token"
 
 	FSCatalogFlag = "fs_catalog"
+
+	StoreFlag         = "store"
+	StoreAddrFlag     = "store_address"
+	StorePasswordFlag = "store_password"
 )
 
 // Flags represents the set of supported flags
@@ -172,6 +176,26 @@ var Flags = []cli.Flag{
 		Name:   FSCatalogFlag,
 		EnvVar: envVarFromFlag(FSCatalogFlag),
 		Usage:  "Enable FileSystem catalog and specify the name of the data file",
+	},
+
+	cli.StringFlag{
+		Name:   StoreFlag,
+		EnvVar: envVarFromFlag(StoreFlag),
+		Value:  "inmem",
+		Usage:  "Backing store. Supported values are: 'inmem', 'redis'",
+	},
+
+	cli.StringFlag{
+		Name:   StoreAddrFlag,
+		EnvVar: envVarFromFlag(StoreAddrFlag),
+		Value:  "",
+		Usage:  "Store address",
+	},
+	cli.StringFlag{
+		Name:   StorePasswordFlag,
+		EnvVar: envVarFromFlag(StorePasswordFlag),
+		Value:  "",
+		Usage:  "Store password",
 	},
 }
 

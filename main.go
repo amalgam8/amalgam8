@@ -81,36 +81,47 @@ func registryMain(conf *config.Values) error {
 		return err
 	}
 
+	// Redis store requires an address and password
+	if conf.Store == "redis" {
+		if conf.StoreAddr == "" {
+			return fmt.Errorf("Address required for Redis store")
+		}
+	}
+
 	var rep replication.Replication
-	if conf.Replication {
 
-		// Wait for private network to become available
-		// In some cloud environments, that may take several seconds
-		networkAvailable := network.WaitForPrivateNetwork()
-		if !networkAvailable {
-			return fmt.Errorf("No private network is available within defined timeout")
-		}
+	// Don't need replication if using a store that's not in memory
+	if conf.Store == "inmem" {
+		if conf.Replication {
 
-		// Configure and create the cluster module
-		clConfig := &cluster.Config{
-			BackendType: cluster.FilesystemBackend,
-			Directory:   conf.ClusterDirectory,
-			Size:        conf.ClusterSize,
-		}
-		cl, err := cluster.New(clConfig)
-		if err != nil {
-			return fmt.Errorf("Failed to create the cluster module: %s", err)
-		}
+			// Wait for private network to become available
+			// In some cloud environments, that may take several seconds
+			networkAvailable := network.WaitForPrivateNetwork()
+			if !networkAvailable {
+				return fmt.Errorf("No private network is available within defined timeout")
+			}
 
-		// Configure and create the replication module
-		self := cluster.NewMember(network.GetPrivateIP(), conf.ReplicationPort)
-		repConfig := &replication.Config{
-			Membership:  cl.Membership(),
-			Registrator: cl.Registrator(self),
-		}
-		rep, err = replication.New(repConfig)
-		if err != nil {
-			return fmt.Errorf("Failed to create the replication module: %s", err)
+			// Configure and create the cluster module
+			clConfig := &cluster.Config{
+				BackendType: cluster.FilesystemBackend,
+				Directory:   conf.ClusterDirectory,
+				Size:        conf.ClusterSize,
+			}
+			cl, err := cluster.New(clConfig)
+			if err != nil {
+				return fmt.Errorf("Failed to create the cluster module: %s", err)
+			}
+
+			// Configure and create the replication module
+			self := cluster.NewMember(network.GetPrivateIP(), conf.ReplicationPort)
+			repConfig := &replication.Config{
+				Membership:  cl.Membership(),
+				Registrator: cl.Registrator(self),
+			}
+			rep, err = replication.New(repConfig)
+			if err != nil {
+				return fmt.Errorf("Failed to create the replication module: %s", err)
+			}
 		}
 	}
 
@@ -166,6 +177,9 @@ func registryMain(conf *config.Values) error {
 		NamespaceCapacity: conf.NamespaceCapacity,
 		Replication:       rep,
 		Extensions:        catalogsExt,
+		Store:             conf.Store,
+		StoreAddr:         conf.StoreAddr,
+		StorePassword:     conf.StorePassword,
 	}
 	cm := store.New(cmConfig)
 

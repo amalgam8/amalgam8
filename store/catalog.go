@@ -14,6 +14,12 @@
 
 package store
 
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"strings"
+)
+
 // Predicate for filtering returned instances
 type Predicate func(si *ServiceInstance) bool
 
@@ -27,4 +33,31 @@ type Catalog interface {
 	Instance(instanceID string) (*ServiceInstance, error)
 	List(serviceName string, predicate Predicate) ([]*ServiceInstance, error)
 	ListServices(predicate Predicate) []*Service
+}
+
+const (
+	serviceNameMaxLength int = 64
+	valueMaxLength       int = 64
+	statusMaxLength      int = 32
+	metadataMaxLength    int = 1024
+
+	instancesMetricName  = "store.instances.count"
+	expirationMetricName = "store.instances.expiration"
+	lifetimeMetricName   = "store.instances.lifetime"
+
+	metadataLengthMetricName    = "store.metadata.length"
+	metadataInstancesMetricName = "store.metadata.instances"
+	tagsLengthMetricName        = "store.tags.length"
+	tagsInstancesMetricName     = "store.tags.instances"
+)
+
+func computeInstanceID(si *ServiceInstance) string {
+	// The ID is deterministically computed for each catalog,
+	// This is necessary to support replication, and duplicate registration request accross nodes in the sd cluster
+	hash := sha256.New()
+	hash.Write([]byte(strings.Join([]string{si.ServiceName, si.Endpoint.Type, si.Endpoint.Value}, "/")))
+	//hash.Write([]byte(time.Now().String()))
+	md := hash.Sum(nil)
+	mdStr := hex.EncodeToString(md)
+	return mdStr[:16]
 }

@@ -42,3 +42,6 @@ import:
 
 - package: github.com/stretchr/testify
   version: 9f9027faeb0dad515336ed2f28317f9f8f527ab4
+
+- package: github.com/garyburd/redigo
+  version: 1.0.0

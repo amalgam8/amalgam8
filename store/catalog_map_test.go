@@ -170,7 +170,7 @@ func TestIncomingReplication(t *testing.T) {
 	inst := newServiceInstance("Calc1", "192.168.0.1", 9080)
 	payload, _ := json.Marshal(inst)
 	data, _ := json.Marshal(&replicatedMsg{RepType: REGISTER, Payload: payload})
-	rep.(*mockupReplication).NotifyChannel <- &replication.InMessage{cluster.MemberID("192.1.1.3:6100"), ns, data}
+	rep.(*mockupReplication).NotifyChannel <- &replication.InMessage{MemberID: cluster.MemberID("192.1.1.3:6100"), Namespace: ns, Data: data}
 
 	catalog, err := cm.GetCatalog(auth.NamespaceFrom("ns1"))
 

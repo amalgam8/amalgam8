@@ -27,7 +27,7 @@ func TestConfigMinimumEqualMaximum(t *testing.T) {
 	min := time.Duration(15) * time.Second
 	max := time.Duration(15) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 
 	assert.NotNil(t, c)
 	assert.Equal(t, def, c.DefaultTTL)
@@ -42,7 +42,7 @@ func TestConfigMinimumSmallerThanMaximum(t *testing.T) {
 	min := time.Duration(10) * time.Second
 	max := time.Duration(20) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 
 	assert.NotNil(t, c)
 	assert.Equal(t, def, c.DefaultTTL)
@@ -62,7 +62,7 @@ func TestConfigMinimumLargerThanMaximum(t *testing.T) {
 	min := time.Duration(20) * time.Second
 	max := time.Duration(10) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 	assert.Fail(t, "Expected panic but got %v", c)
 
 }
@@ -73,7 +73,7 @@ func TestConfigDefaultIsMinimum(t *testing.T) {
 	min := time.Duration(10) * time.Second
 	max := time.Duration(20) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 
 	assert.NotNil(t, c)
 	assert.Equal(t, def, c.DefaultTTL)
@@ -88,7 +88,7 @@ func TestConfigDefaultIsMaximum(t *testing.T) {
 	min := time.Duration(10) * time.Second
 	max := time.Duration(20) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 
 	assert.NotNil(t, c)
 	assert.Equal(t, def, c.DefaultTTL)
@@ -108,7 +108,7 @@ func TestConfigDefaultSmallerThanMinimum(t *testing.T) {
 	min := time.Duration(20) * time.Second
 	max := time.Duration(10) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 	assert.Fail(t, "Expected panic but got %v", c)
 
 }
@@ -124,7 +124,7 @@ func TestConfigDefaultLargerThanMaximum(t *testing.T) {
 	min := time.Duration(20) * time.Second
 	max := time.Duration(10) * time.Second
 
-	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil)
+	c := NewConfig(def, min, max, defaultNamespaceCapacity, nil, nil, "", "", "", nil)
 	assert.Fail(t, "Expected panic but got %v", c)
 
 }
@@ -136,7 +136,7 @@ func TestConfigCapacityNotValid(t *testing.T) {
 		assert.NotNil(t, err)
 	}()
 
-	c := NewConfig(defaultDefaultTTL, defaultMinimumTTL, defaultMaximumTTL, -2, nil, nil)
+	c := NewConfig(defaultDefaultTTL, defaultMinimumTTL, defaultMaximumTTL, -2, nil, nil, "", "", "", nil)
 
 	assert.Fail(t, "Expected panic but got %v", c)
 }

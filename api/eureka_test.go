@@ -64,7 +64,7 @@ func newCreateEurekaTestCase(hostname, appid, ipaddr, vipaddr, port string, meta
 }
 
 func (s createEurekaTestCase) toByteswithFaultyMetadata() []byte {
-	b, err := json.Marshal(&eureka.InstanceWrapper{&s.instance})
+	b, err := json.Marshal(&eureka.InstanceWrapper{Inst: &s.instance})
 	if err != nil {
 		return nil
 	}
@@ -91,7 +91,7 @@ func TestEurekaInstancesCreate(t *testing.T) {
 
 	for _, tc := range cases {
 		recorder := httptest.NewRecorder()
-		b, err := json.Marshal(&eureka.InstanceWrapper{&tc.instance})
+		b, err := json.Marshal(&eureka.InstanceWrapper{Inst: &tc.instance})
 		assert.NoError(t, err)
 
 		if reflect.DeepEqual(tc.instance.Metadata, invalidMetadata) {

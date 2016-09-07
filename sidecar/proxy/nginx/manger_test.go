@@ -17,8 +17,8 @@ package nginx
 import (
 	"errors"
 
-	"github.com/amalgam8/controller/rules"
-	registryclient "github.com/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

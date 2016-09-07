@@ -17,7 +17,7 @@ package store
 import (
 	"time"
 
-	"github.com/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/replication"
 )
 
 const (

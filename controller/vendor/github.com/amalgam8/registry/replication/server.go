@@ -28,11 +28,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/cluster"
-	"github.com/amalgam8/registry/utils/channels"
-	"github.com/amalgam8/registry/utils/health"
-	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/cluster"
+	"github.com/amalgam8/amalgam8/registry/utils/channels"
+	"github.com/amalgam8/amalgam8/registry/utils/health"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
 const (

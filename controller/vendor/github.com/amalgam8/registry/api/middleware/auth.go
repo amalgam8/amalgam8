@@ -20,9 +20,9 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/api/env"
-	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/utils/i18n"
+	"github.com/amalgam8/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 )
 
 // AuthMiddleware provides a generic authentication middleware

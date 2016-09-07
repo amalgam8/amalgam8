@@ -15,7 +15,7 @@
 package store
 
 import (
-	"github.com/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/auth"
 )
 
 const (

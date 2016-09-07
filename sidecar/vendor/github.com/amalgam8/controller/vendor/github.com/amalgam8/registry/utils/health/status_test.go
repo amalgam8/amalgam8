@@ -22,7 +22,7 @@ import (
 
 	"encoding/json"
 
-	"github.com/amalgam8/registry/utils/health"
+	"github.com/amalgam8/amalgam8/registry/utils/health"
 )
 
 //-----------------------------------------------------------------------------

@@ -25,7 +25,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/rcrowley/go-metrics"
 	"github.com/stretchr/testify/assert"
 )

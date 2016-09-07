@@ -17,7 +17,7 @@ package store
 import (
 	"fmt"
 
-	"github.com/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/auth"
 )
 
 // ExternalRegistry calls to manage the instances in an external store

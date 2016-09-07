@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/client"
 )
 
 func TestCatalogComparison(t *testing.T) {

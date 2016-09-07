@@ -17,8 +17,8 @@
 set -x
 set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/examples
-EXAMPLESREPO=https://github.com/amalgam8/examples
+EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/amalgam8/examples
+EXAMPLESREPO=https://github.com/amalgam8/amalgam8/examples
 
 #from https://gist.github.com/nicferrier/2277987
 LOCALREPO=$EXAMPLESDIR

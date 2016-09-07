@@ -25,12 +25,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/registry/api"
-	"github.com/amalgam8/registry/api/protocol/amalgam8"
-	"github.com/amalgam8/registry/cluster"
-	"github.com/amalgam8/registry/replication"
-	"github.com/amalgam8/registry/store"
-	"github.com/amalgam8/registry/utils/network"
+	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/cluster"
+	"github.com/amalgam8/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/utils/network"
 )
 
 const (

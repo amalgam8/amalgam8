@@ -19,7 +19,7 @@ There are 3 versions of the reviews microservice:
 * Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
 * Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
 
-![Microservice dependencies](https://github.com/amalgam8/examples/blob/master/apps/bookinfo/dependencies.jpg)
+![Microservice dependencies](https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/dependencies.jpg)
 
 ## Running the bookinfo demo
 
@@ -38,7 +38,7 @@ In this demo, we will use Amalgam8's control plane to accomplish the following t
    increasing traffic from an old to a new version of an internal
    microservice.
 
-Before you begin, follow the environment set up instructions at https://github.com/amalgam8/examples/blob/master/README.md
+Before you begin, follow the environment set up instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/README.md
 
 Confirm that the microservices are running, using the following command:
 

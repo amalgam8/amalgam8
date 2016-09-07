@@ -2,8 +2,8 @@
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/registry
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/registry
+[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/registry
+[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/registry
 [Travis]: https://travis-ci.org/amalgam8/registry
 [Travis Widget]: https://travis-ci.org/amalgam8/registry.svg?branch=master
 
@@ -136,7 +136,7 @@ To build the docker image for the Amalgam8 Registry service, run the
 following commands:
 
 ```bash
-cd $GOPATH/src/github.com/amalgam8/registry
+cd $GOPATH/src/github.com/amalgam8/amalgam8/registry
 make build docker
 ```
 
@@ -151,7 +151,7 @@ development or easier integration with your local Go tools.
 The following commands will build and run it as a Go binary:
 
 ```
-cd $GOPATH/src/github.com/amalgam8/registry
+cd $GOPATH/src/github.com/amalgam8/amalgam8/registry
 make build
 ./bin/registry
 ```
@@ -208,7 +208,7 @@ This section includes instructions for working with releases, and is intended fo
 
 1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
 
-1.  Edit the [GitHub release object](https://github.com/amalgam8/registry/releases), and add a title and description (according to `CHANGELOG.md`).
+1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/registry/releases), and add a title and description (according to `CHANGELOG.md`).
 
 ## License
 Copyright 2016 IBM Corporation
@@ -223,4 +223,4 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 Contributions and feedback are welcome! 
 Proposals and pull requests will be considered. 
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.

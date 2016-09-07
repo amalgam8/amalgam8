@@ -17,8 +17,8 @@ package replication
 import (
 	"fmt"
 
-	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/cluster"
+	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/cluster"
 )
 
 type outMessage struct {

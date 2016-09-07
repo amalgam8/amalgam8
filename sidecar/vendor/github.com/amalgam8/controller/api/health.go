@@ -17,7 +17,7 @@ package api
 import (
 	"net/http"
 
-	"github.com/amalgam8/controller/metrics"
+	"github.com/amalgam8/amalgam8/controller/metrics"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 

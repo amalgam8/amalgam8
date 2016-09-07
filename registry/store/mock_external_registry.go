@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/auth"
 )
 
 type mockExternalRegistry struct {

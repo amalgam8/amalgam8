@@ -15,7 +15,7 @@
 // Package cluster defines and implements types related to service discovery clustering.
 package cluster
 
-import "github.com/amalgam8/registry/utils/health"
+import "github.com/amalgam8/amalgam8/registry/utils/health"
 
 // Module name to be used in logging
 const module = "CLUSTER"

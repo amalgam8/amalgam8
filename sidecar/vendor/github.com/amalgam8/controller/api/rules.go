@@ -20,9 +20,9 @@ import (
 	"errors"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/metrics"
-	"github.com/amalgam8/controller/rules"
-	"github.com/amalgam8/controller/util/i18n"
+	"github.com/amalgam8/amalgam8/controller/metrics"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 

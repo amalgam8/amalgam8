@@ -2,8 +2,8 @@
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/sidecar
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/sidecar
+[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/sidecar
+[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/sidecar
 [Travis]: https://travis-ci.org/amalgam8/sidecar
 [Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
 
@@ -38,7 +38,7 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
     [http://localhost:6379/\<serviceName\>/\<endpoint\>]()
 
 * Control traffic to different versions of microservices using the
-[a8ctl](https://github.com/amalgam8/a8ctl) utility
+[a8ctl](https://github.com/amalgam8/amalgam8/a8ctl) utility
 
     ```bash
     a8ctl route-set serviceName --default v1 --selector 'v2(user="Alice")' --selector 'v3(user="Bob")'
@@ -63,7 +63,7 @@ RUN wget -qO- https://git.io/a8sidecar.sh | sh
 
 The above URL points to the latest stable release of Amalgam8 sidecar. If
 you would like to install a specific release, replace the URL with 
-`https://github.com/amalgam8/sidecar/releases/download/${VERSION}/install-a8sidecar.sh`
+`https://github.com/amalgam8/amalgam8/sidecar/releases/download/${VERSION}/install-a8sidecar.sh`
 where `${VERSION}` is the version of the sidecar that you wish to install.
 
 **Optional app supervision:** The sidecar can serve as a supervisor process that
@@ -101,7 +101,7 @@ installations. There are two modes for running the sidecar:
 
 <!-- An exhaustive list of configuration options can be found in the -->
 <!-- [Configuration](#config) section. For a quick start, take a look at the -->
-<!-- [examples apps](https://github.com/amalgam8/examples) to get an idea of the -->
+<!-- [examples apps](https://github.com/amalgam8/amalgam8/examples) to get an idea of the -->
 <!-- required environment variables needed by Amalgam8. -->
 
 
@@ -281,7 +281,7 @@ source.
 
 Clone the repository manually, or use `go get`:
 
-```go get github.com/amalgam8/sidecar```
+```go get github.com/amalgam8/amalgam8/sidecar```
 
 ### Make targets
 
@@ -326,7 +326,7 @@ This section includes instructions for working with releases, and is intended fo
 
 1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
 
-1.  Edit the [GitHub release object](https://github.com/amalgam8/sidecar/releases), and add a title and description (according to `CHANGELOG.md`).
+1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/sidecar/releases), and add a title and description (according to `CHANGELOG.md`).
 
 ## License
 Copyright 2016 IBM Corporation
@@ -341,6 +341,6 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 Contributions and feedback are welcome!
 Proposals and pull requests will be considered. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md)
+[CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md)
 file for more information.
 

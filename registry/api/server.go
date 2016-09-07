@@ -22,12 +22,12 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/api/middleware"
-	"github.com/amalgam8/registry/api/protocol/amalgam8"
-	"github.com/amalgam8/registry/api/protocol/eureka"
-	"github.com/amalgam8/registry/api/uptime"
-	"github.com/amalgam8/registry/store"
-	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/api/middleware"
+	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/api/protocol/eureka"
+	"github.com/amalgam8/amalgam8/registry/api/uptime"
+	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
 const (

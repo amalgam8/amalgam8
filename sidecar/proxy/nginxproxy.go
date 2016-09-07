@@ -18,10 +18,10 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/rules"
-	"github.com/amalgam8/registry/client"
-	"github.com/amalgam8/sidecar/proxy/monitor"
-	"github.com/amalgam8/sidecar/proxy/nginx"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 )
 
 // NGINXProxy updates NGINX to reflect changes in the A8 controller and A8 registry

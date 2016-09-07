@@ -12,31 +12,31 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-package: github.com/amalgam8/registry
+package: github.com/amalgam8/amalgam8/registry
 
 import:
-    
+
 - package: github.com/Sirupsen/logrus
   version: 0.8.7
   subpackages:
   - formatters/logstash
-  
+
 - package: github.com/ant0ine/go-json-rest
   version: 3.2.0
   subpackages:
   - rest
-  
+
 - package: github.com/codegangsta/cli
   version: bca61c476e3c752594983e4c9bcd5f62fb09f157
-  
+
 - package: github.com/dgrijalva/jwt-go
   version: 2.3.0
-  
+
 - package: github.com/nicksnyder/go-i18n
   version: 1.4.0
   subpackages:
   - i18n
-  
+
 - package: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 

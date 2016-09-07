@@ -15,7 +15,7 @@
 package middleware
 
 import (
-	"github.com/amalgam8/controller/util"
+	"github.com/amalgam8/amalgam8/controller/util"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/pborman/uuid"
 )

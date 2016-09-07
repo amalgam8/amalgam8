@@ -20,8 +20,8 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/api/env"
-	"github.com/amalgam8/registry/utils/i18n"
+	"github.com/amalgam8/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 )
 
 func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {

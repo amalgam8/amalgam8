@@ -1,7 +1,7 @@
 hash: a863aa349f9b36003af76e9f3c302160d4b2dc43d5849f3bcd7d2219e56ba317
 updated: 2016-08-15T19:15:27.680623017+01:00
 imports:
-- name: github.com/amalgam8/registry
+- name: github.com/amalgam8/amalgam8/registry
   version: c05befcf46763f9b896e13014db2c945fe593b10
   subpackages:
   - api/env

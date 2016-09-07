@@ -17,7 +17,7 @@ package protocol
 import (
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/registry/api/env"
 )
 
 // Operation represents an operation exposed by the Service Discovery API.

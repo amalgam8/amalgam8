@@ -23,7 +23,7 @@ import (
 	"sync"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/amalgam8/registry/cluster"
+	"github.com/amalgam8/amalgam8/registry/cluster"
 )
 
 type syncClient struct {

@@ -9,8 +9,8 @@ import (
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/rules"
-	"github.com/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/registry/api/env"
 )
 
 // RuleResponse is the information returned from a rule query.

@@ -23,8 +23,8 @@ import (
 	"errors"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/rules"
-	registryclient "github.com/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	registryclient "github.com/amalgam8/amalgam8/registry/client"
 )
 
 // Client for NGINX

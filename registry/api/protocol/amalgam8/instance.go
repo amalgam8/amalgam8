@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/amalgam8/registry/utils/reflection"
+	"github.com/amalgam8/amalgam8/registry/utils/reflection"
 )
 
 // InstanceRegistration encapsulates information needed for a service instance registration request

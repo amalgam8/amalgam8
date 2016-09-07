@@ -21,14 +21,14 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	controllerclient "github.com/amalgam8/controller/client"
-	registryclient "github.com/amalgam8/registry/client"
-	"github.com/amalgam8/sidecar/config"
-	"github.com/amalgam8/sidecar/proxy"
-	"github.com/amalgam8/sidecar/proxy/monitor"
-	"github.com/amalgam8/sidecar/proxy/nginx"
-	"github.com/amalgam8/sidecar/register"
-	"github.com/amalgam8/sidecar/supervisor"
+	controllerclient "github.com/amalgam8/amalgam8/controller/client"
+	registryclient "github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/sidecar/config"
+	"github.com/amalgam8/amalgam8/sidecar/proxy"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
+	"github.com/amalgam8/amalgam8/sidecar/register"
+	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/urfave/cli"
 )
 

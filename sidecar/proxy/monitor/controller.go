@@ -18,8 +18,8 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/client"
-	"github.com/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/controller/rules"
 )
 
 // ControllerListener is notified of changes to controller

@@ -2,8 +2,8 @@
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/controller
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/controller
+[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/controller
+[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/controller
 [Travis]: https://travis-ci.org/amalgam8/controller
 [Travis Widget]: https://travis-ci.org/amalgam8/controller.svg?branch=master
 
@@ -14,8 +14,8 @@ microservice API calls, etc., based on various request-level attributes.
 
 In addition to route management, the Amalgam8 Controller automatically synchronizes
 service instance information from the
-[Amalgam8 Registry](https://github.com/amalgam8/registry) and updates the
-[Amalgam8 Sidecars](https://github.com/amalgam8/sidecar) attached to each
+[Amalgam8 Registry](https://github.com/amalgam8/amalgam8/registry) and updates the
+[Amalgam8 Sidecars](https://github.com/amalgam8/amalgam8/sidecar) attached to each
 microservice.
 
 By default, the Amalgam8 Controller operates without any authentication. It also
@@ -80,7 +80,7 @@ To build the docker image for the Amalgam8 Controller service, run the
 following commands:
 
 ```bash
-cd $GOPATH/src/github.com/amalgam8/controller
+cd $GOPATH/src/github.com/amalgam8/amalgam8/controller
 make build docker
 ```
 
@@ -95,7 +95,7 @@ development or easier integration with your local Go tools.
 The following commands will build and run it as a Go binary:
 
 ```
-cd $GOPATH/src/github.com/amalgam8/controller
+cd $GOPATH/src/github.com/amalgam8/amalgam8/controller
 make build
 ./bin/controller
 ```
@@ -153,7 +153,7 @@ This section includes instructions for working with releases, and is intended fo
 
 1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
 
-1.  Edit the [GitHub release object](https://github.com/amalgam8/controller/releases), and add a title and description (according to `CHANGELOG.md`).
+1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/controller/releases), and add a title and description (according to `CHANGELOG.md`).
 
 ## License
 Copyright 2016 IBM Corporation
@@ -168,4 +168,4 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 Contributions and feedback are welcome!
 Proposals and pull requests will be considered.
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.

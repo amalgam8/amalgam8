@@ -12,8 +12,8 @@
 package nginx
 
 import (
-	"github.com/amalgam8/controller/rules"
-	registryclient "github.com/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/controller/rules"
+	registryclient "github.com/amalgam8/amalgam8/registry/client"
 )
 
 // MockClient mocks NGINX Client interface

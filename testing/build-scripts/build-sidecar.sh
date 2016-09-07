@@ -18,7 +18,7 @@
 set -x
 
 #SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$GOPATH/src/github.com/amalgam8/sidecar/
+MAKEDIR=$GOPATH/src/github.com/amalgam8/amalgam8/sidecar/
 
 make -C $MAKEDIR build GOOS=linux GOARCH=amd64
 STATUS=$?

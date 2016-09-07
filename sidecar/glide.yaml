@@ -12,13 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-package: github.com/amalgam8/sidecar
+package: github.com/amalgam8/amalgam8/sidecar
 
 import:
 
-- package: github.com/amalgam8/registry
+- package: github.com/amalgam8/amalgam8/registry
 
-- package: github.com/amalgam8/controller
+- package: github.com/amalgam8/amalgam8/controller
   version: fb49ab33cdd904afc04e0045a2dffb1f144c1882
 
 - package: github.com/Sirupsen/logrus

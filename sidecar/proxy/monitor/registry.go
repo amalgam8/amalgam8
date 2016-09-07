@@ -21,7 +21,7 @@ import (
 	"sort"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/client"
 )
 
 // RegistryListener is notified of changes to the registry catalog

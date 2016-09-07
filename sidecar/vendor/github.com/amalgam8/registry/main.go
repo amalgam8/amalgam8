@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package main // import "github.com/amalgam8/registry"
+package main // import "github.com/amalgam8/amalgam8/registry"
 
 import (
 	"fmt"
@@ -21,19 +21,19 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 
-	"github.com/amalgam8/registry/api"
-	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/cluster"
-	"github.com/amalgam8/registry/config"
-	"github.com/amalgam8/registry/replication"
-	"github.com/amalgam8/registry/store"
-	"github.com/amalgam8/registry/store/filesystem"
-	"github.com/amalgam8/registry/store/kubernetes"
-	"github.com/amalgam8/registry/utils/i18n"
-	"github.com/amalgam8/registry/utils/logging"
-	"github.com/amalgam8/registry/utils/metrics"
-	"github.com/amalgam8/registry/utils/network"
-	"github.com/amalgam8/registry/utils/version"
+	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/cluster"
+	"github.com/amalgam8/amalgam8/registry/config"
+	"github.com/amalgam8/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/store/filesystem"
+	"github.com/amalgam8/amalgam8/registry/store/kubernetes"
+	"github.com/amalgam8/amalgam8/registry/utils/i18n"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/utils/metrics"
+	"github.com/amalgam8/amalgam8/registry/utils/network"
+	"github.com/amalgam8/amalgam8/registry/utils/version"
 )
 
 func main() {

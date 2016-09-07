@@ -18,7 +18,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 
-	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
 type redisDB struct {

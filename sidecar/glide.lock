@@ -1,13 +1,13 @@
 hash: bbbc2c438a22325818ff1bf84a4ce7c66d81c4b4da48be8ba2aab0e17a2dd26d
 updated: 2016-09-05T14:36:01.092879408+03:00
 imports:
-- name: github.com/amalgam8/controller
+- name: github.com/amalgam8/amalgam8/controller
   version: fb49ab33cdd904afc04e0045a2dffb1f144c1882
   subpackages:
   - client
   - rules
   - util/encryption
-- name: github.com/amalgam8/registry
+- name: github.com/amalgam8/amalgam8/registry
   version: bee64788030c6730b5694f3a756cceacbad53aba
   subpackages:
   - client

@@ -20,12 +20,12 @@ before_install:
     - curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > docker-compose
     - chmod +x docker-compose
     - sudo mv docker-compose /usr/local/bin
-    - sudo pip install git+https://github.com/amalgam8/a8ctl@master
+    - sudo pip install git+https://github.com/amalgam8/amalgam8/a8ctl@master
 
 install:
-    - go get github.com/amalgam8/controller
-    - go get github.com/amalgam8/registry
-    - go get github.com/amalgam8/sidecar
+    - go get github.com/amalgam8/amalgam8/controller
+    - go get github.com/amalgam8/amalgam8/registry
+    - go get github.com/amalgam8/amalgam8/sidecar
 
 script:
     # Need to set explicitly, as these are unset by 'gimme'

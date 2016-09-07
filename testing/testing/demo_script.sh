@@ -19,7 +19,7 @@ set -x
 set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-RECIPE_PATH=$GOPATH/src/github.com/amalgam8/examples/apps/bookinfo
+RECIPE_PATH=$GOPATH/src/github.com/amalgam8/amalgam8/examples/apps/bookinfo
 a8ctl service-list
 sleep 2
 a8ctl rule-clear

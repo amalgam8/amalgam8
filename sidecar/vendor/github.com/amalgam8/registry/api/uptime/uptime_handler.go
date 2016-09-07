@@ -22,8 +22,8 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/utils/health"
-	"github.com/amalgam8/registry/utils/version"
+	"github.com/amalgam8/amalgam8/registry/utils/health"
+	"github.com/amalgam8/amalgam8/registry/utils/version"
 )
 
 func uptimeHandler(w rest.ResponseWriter, r *rest.Request) {

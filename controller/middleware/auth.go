@@ -19,9 +19,9 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/controller/auth"
-	"github.com/amalgam8/controller/util"
-	"github.com/amalgam8/controller/util/i18n"
+	"github.com/amalgam8/amalgam8/controller/auth"
+	"github.com/amalgam8/amalgam8/controller/util"
+	"github.com/amalgam8/amalgam8/controller/util/i18n"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 

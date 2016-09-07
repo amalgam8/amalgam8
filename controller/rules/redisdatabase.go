@@ -24,7 +24,7 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/util/encryption"
+	"github.com/amalgam8/amalgam8/controller/util/encryption"
 	"github.com/garyburd/redigo/redis"
 )
 

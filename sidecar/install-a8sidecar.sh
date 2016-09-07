@@ -20,7 +20,7 @@ set -e
 A8SIDECAR_RELEASE=v0.2.0
 OPENRESTY_RELEASE=1.9.15.1
 FILEBEAT_RELEASE=1.2.2
-DOWNLOAD_URL=https://github.com/amalgam8/sidecar/releases/download/${A8SIDECAR_RELEASE}
+DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/sidecar/releases/download/${A8SIDECAR_RELEASE}
 
 apt-get -y update && apt-get -y install libreadline-dev libncurses5-dev libpcre3-dev \
     libssl-dev perl make build-essential curl wget

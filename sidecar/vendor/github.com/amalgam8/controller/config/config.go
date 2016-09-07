@@ -21,7 +21,7 @@ import (
 	"net/url"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/controller/util"
+	"github.com/amalgam8/amalgam8/controller/util"
 	"github.com/codegangsta/cli"
 )
 

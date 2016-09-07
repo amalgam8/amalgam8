@@ -15,8 +15,8 @@
 package kubernetes
 
 import (
-	"github.com/amalgam8/registry/auth"
-	"github.com/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/registry/store"
 )
 
 // K8sConfig encapsulates K8s configuration parameters

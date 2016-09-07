@@ -21,8 +21,8 @@ import (
 
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/registry/store"
-	"github.com/amalgam8/registry/utils/reflection"
+	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/utils/reflection"
 )
 
 type selectCriteria struct {

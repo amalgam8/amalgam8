@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-package: github.com/amalgam8/controller
+package: github.com/amalgam8/amalgam8/controller
 
 import:
 
@@ -21,7 +21,7 @@ import:
 - package: github.com/xeipuuv/gojsonschema
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 
-- package: github.com/amalgam8/registry
+- package: github.com/amalgam8/amalgam8/registry
 
 - package: github.com/Shopify/sarama
   version: 89bd629b50e1a69c40d40ded1c82a767b4859442

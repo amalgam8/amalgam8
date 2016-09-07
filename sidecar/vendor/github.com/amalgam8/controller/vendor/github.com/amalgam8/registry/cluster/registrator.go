@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/registry/utils/logging"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
 // Registrator enables a member node to join and leave the cluster

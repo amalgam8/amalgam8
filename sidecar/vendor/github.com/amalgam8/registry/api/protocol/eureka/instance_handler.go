@@ -25,9 +25,9 @@ import (
 
 	"strings"
 
-	"github.com/amalgam8/registry/api/env"
-	"github.com/amalgam8/registry/store"
-	"github.com/amalgam8/registry/utils/i18n"
+	"github.com/amalgam8/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 )
 
 func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {

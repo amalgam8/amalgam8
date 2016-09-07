@@ -58,7 +58,7 @@ sudo curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-co
 sudo chmod +x /usr/local/bin/docker-compose
 
 # Install Amalgam8 CLI
-sudo pip install git+https://github.com/amalgam8/a8ctl@master
+sudo pip install git+https://github.com/amalgam8/amalgam8/a8ctl@master
 
 SCRIPT
 
@@ -67,30 +67,30 @@ Vagrant.configure('2') do |config|
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-  config.vm.synced_folder ".", "/home/vagrant/sandbox/src/github.com/amalgam8/examples"
+  config.vm.synced_folder ".", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/examples"
 
   if FileTest::directory?("../sidecar")
-    config.vm.synced_folder "../sidecar", "/home/vagrant/sandbox/src/github.com/amalgam8/sidecar"
+    config.vm.synced_folder "../sidecar", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/sidecar"
   end
 
   if FileTest::directory?("../controller")
-    config.vm.synced_folder "../controller", "/home/vagrant/sandbox/src/github.com/amalgam8/controller"
+    config.vm.synced_folder "../controller", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/controller"
   end
 
   if FileTest::directory?("../registry")
-    config.vm.synced_folder "../registry", "/home/vagrant/sandbox/src/github.com/amalgam8/registry"
+    config.vm.synced_folder "../registry", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/registry"
   end
 
   if FileTest::directory?("../a8ctl")
-    config.vm.synced_folder "../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/a8ctl"
+    config.vm.synced_folder "../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/a8ctl"
   end
 
   if FileTest::directory?("../console")
-    config.vm.synced_folder "../console", "/home/vagrant/sandbox/src/github.com/amalgam8/console"
+    config.vm.synced_folder "../console", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/console"
   end
 
   if FileTest::directory?("../testing")
-    config.vm.synced_folder "../testing", "/home/vagrant/sandbox/src/github.com/amalgam8/testing"
+    config.vm.synced_folder "../testing", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8/testing"
   end
 
   config.vm.provider :virtualbox do |vb|

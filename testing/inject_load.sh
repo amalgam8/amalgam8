@@ -70,4 +70,4 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 echoend "works!"
-sleep 10
+sleep 15

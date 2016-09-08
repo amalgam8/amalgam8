@@ -105,6 +105,18 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		return
+	}
+
+	ext, err := buildExtensionFromInstance(inst)
+	if err != nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     err,
+		}).Errorf("Failed to register instance %+v", inst)
+
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
 		return
 	}
 
@@ -115,7 +127,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		Status:      inst.Status,
 		TTL:         time.Duration(ttl) * time.Second,
 		Metadata:    inst.Metadata,
-		Extension:   buildExtensionFromInstance(inst)}
+		Extension:   ext}
 
 	var sir *store.ServiceInstance
 
@@ -307,6 +319,7 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 
 	r.Env[env.ServiceInstance] = si
 	inst := buildInstanceFromRegistry(si)
+
 	err = w.WriteJson(&InstanceWrapper{inst})
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
@@ -408,83 +421,36 @@ func buildUniqueInstanceID(appid, iid string) string {
 	return fmt.Sprintf("%s.%s", appid, iid)
 }
 
-func buildExtensionFromInstance(inst *Instance) map[string]interface{} {
-	extension := map[string]interface{}{
-		"HostName":   inst.HostName,
-		"VipAddress": inst.VIPAddr,
-		"IPAddr":     inst.IPAddr,
-		"Port":       inst.Port,
-		"CountryId":  inst.CountryID,
+func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) {
+	copyInst := *inst
+
+	// Clear all fields that we want to override later
+	copyInst.Status = ""
+	copyInst.OvrStatus = ""
+	copyInst.ActionType = ""
+	copyInst.Metadata = nil
+	copyInst.LastUpdatedTs = nil
+	copyInst.LastDirtyTs = nil
+	if copyInst.Lease != nil {
+		copyInst.Lease.RegistrationTs = 0
+		copyInst.Lease.LastRenewalTs = 0
 	}
-	if inst.ID != "" {
-		extension["ID"] = inst.ID
+
+	ext, err := json.Marshal(copyInst)
+	if err != nil {
+		return nil, err
 	}
-	if inst.GroupName != "" {
-		extension["GroupName"] = inst.GroupName
-	}
-	if inst.SecVIPAddr != "" {
-		extension["SecVIPAddr"] = inst.SecVIPAddr
-	}
-	if inst.SecPort != nil {
-		extension["SecPort"] = inst.SecPort
-	}
-	if inst.HomePage != "" {
-		extension["HomePage"] = inst.HomePage
-	}
-	if inst.StatusPage != "" {
-		extension["StatusPage"] = inst.StatusPage
-	}
-	if inst.HealthCheck != "" {
-		extension["HealthCheck"] = inst.HealthCheck
-	}
-	if inst.Datacenter != nil {
-		extension["Datacenter"] = inst.Datacenter
-	}
-	if inst.Lease != nil {
-		extension["Lease"] = inst.Lease
-	}
-	return extension
+
+	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
 }
 
 func buildInstanceFromRegistry(si *store.ServiceInstance) *Instance {
 	inst := buildDefaultInstance(si)
 
 	if si.Extension != nil {
-		inst.HostName = si.Extension["HostName"].(string)
-		inst.IPAddr = si.Extension["VipAddress"].(string)
-		inst.IPAddr = si.Extension["IPAddr"].(string)
-		inst.Port = si.Extension["Port"].(*Port)
-		inst.CountryID = si.Extension["CountryId"].(int)
-
-		if value, ok := si.Extension["ID"]; ok {
-			inst.ID = value.(string)
+		if ext, ok := si.Extension[extEureka]; ok {
+			json.Unmarshal([]byte(ext.(string)), &inst)
 		}
-		if value, ok := si.Extension["GroupName"]; ok {
-			inst.GroupName = value.(string)
-		}
-		if value, ok := si.Extension["SecVIPAddr"]; ok {
-			inst.SecVIPAddr = value.(string)
-		}
-		if value, ok := si.Extension["SecPort"]; ok {
-			inst.SecPort = value.(*Port)
-		}
-		if value, ok := si.Extension["HomePage"]; ok {
-			inst.HomePage = value.(string)
-		}
-		if value, ok := si.Extension["StatusPage"]; ok {
-			inst.StatusPage = value.(string)
-		}
-		if value, ok := si.Extension["HealthCheck"]; ok {
-			inst.HealthCheck = value.(string)
-		}
-		if value, ok := si.Extension["Datacenter"]; ok {
-			inst.Datacenter = value.(*DatacenterInfo)
-		}
-		if value, ok := si.Extension["Lease"]; ok {
-			li := value.(*LeaseInfo)
-			inst.Lease.RenewalInt = li.RenewalInt
-		}
-		inst.Metadata = si.Metadata
 	}
 
 	return inst
@@ -511,6 +477,7 @@ func buildDefaultInstance(si *store.ServiceInstance) *Instance {
 		OvrStatus:     "UNKNOWN",
 		LastDirtyTs:   fmt.Sprintf("%d", si.RegistrationTime.Unix()),
 		LastUpdatedTs: fmt.Sprintf("%d", si.RegistrationTime.Unix()),
+		Metadata:      si.Metadata,
 	}
 
 	if si.Endpoint != nil && len(si.Endpoint.Value) > 0 {

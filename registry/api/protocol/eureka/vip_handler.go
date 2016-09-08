@@ -76,7 +76,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 
 		app := &Application{Name: svc.ServiceName, Instances: make([]*Instance, 0, len(insts))}
 		for _, inst := range insts {
-			if vipaddr, ok := inst.Extension["VipAddress"]; ok {
+			if vipaddr, ok := inst.Extension[extVIP]; ok {
 				if vipaddr == vip {
 					app.Instances = append(app.Instances, buildInstanceFromRegistry(inst))
 					instsCount++

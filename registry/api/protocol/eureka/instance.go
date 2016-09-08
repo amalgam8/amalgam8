@@ -21,6 +21,8 @@ import (
 
 const (
 	defaultDurationInt uint32 = 90
+	extEureka                 = "eureka"
+	extVIP                    = "vipAddress"
 )
 
 // Port encapsulates information needed for a port information
@@ -64,7 +66,7 @@ type Instance struct {
 	Datacenter    *DatacenterInfo `json:"dataCenterInfo,omitempty"`
 	Lease         *LeaseInfo      `json:"leaseInfo,omitempty"`
 	Metadata      json.RawMessage `json:"metadata,omitempty"`
-	CordServer    interface{}     `json:"isCoordinatingDiscoveryServer"`
+	CordServer    interface{}     `json:"isCoordinatingDiscoveryServer,omitempty"`
 	LastUpdatedTs interface{}     `json:"lastUpdatedTimestamp,omitempty"`
 	LastDirtyTs   interface{}     `json:"lastDirtyTimestamp,omitempty"`
 	ActionType    string          `json:"actionType,omitempty"`

@@ -16,7 +16,7 @@ FROM scratch
 
 WORKDIR /opt/a8registry
 COPY bin/a8registry       /opt/a8registry/
-COPY messages        /opt/a8registry/locales
+COPY registry/messages    /opt/a8registry/locales
 
 EXPOSE 8080
 

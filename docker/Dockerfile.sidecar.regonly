@@ -14,9 +14,6 @@
 
 FROM ubuntu:14.04
 
-ADD /bin/a8sidecar /usr/bin/a8sidecar
-#COPY /locale /locale
+ADD bin/a8sidecar /usr/bin/a8sidecar
 
 ENTRYPOINT ["/usr/bin/a8sidecar", "--proxy=false", "--log=false", "--supervise=false"]
-
-#EXPOSE 8080

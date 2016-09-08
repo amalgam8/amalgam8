@@ -13,14 +13,21 @@ env:
     # Platforms to build for
     - PLATFORM=linux/amd64
 
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
+
 script:
     # Need to set explicitly, as these are unset by 'gimme'
     - export GOOS=${PLATFORM%/*}
     - export GOARCH=${PLATFORM#*/}
     
-    # Analyze, test and build the code, and then package the binary
-    - make verify release APP_VER=$TRAVIS_TAG
+    # Analyze, test and build the code
+    - make verify
 
+before_deploy: 
+    - make release
+    
 deploy:
     
     # Upload files to GitHub as release attachments
@@ -37,7 +44,7 @@ deploy:
         # Trigger only when building a tagged commit, on the origin repo
         on:
             tags: true
-            repo: amalgam8/registry
+            repo: amalgam8/amalgam8
 
     # Push images to Docker Hub
     -   provider: script
@@ -49,7 +56,7 @@ deploy:
         # Trigger only when building a version-tagged commit, on the origin repo
         on:
             tags: true
-            repo: amalgam8/registry
+            repo: amalgam8/amalgam8
             condition: $TRAVIS_TAG =~ v[0-9]+\.[0-9]+\.[0-9]+
 
 # Configure notifications
@@ -59,7 +66,7 @@ notifications:
         on_failure: always
     slack:
         rooms:
-            - secure: "hwJrBzRlHbS0VAyQTzuu14ibVrzxBUuuKunuVXu9uMYlFac42ZvhGes7exsohE57Q5xlVmkOVLxrRG0EazC4PmLRL34tNJOwADCa3YiO0LoErJO0sHXSHpJ0o1RTBh5TnXL84h9LmjbMM5bIPPbWUEg2MjPSIS26+Dc/DjAHdhP9dg5alfz7xvffiwIdPLL0gZZl9sZ1qA2zlZVaugrCIYGqSXdXiEbVGg+WgDFUM3rAe+r5tlaRM9UHXjySRCtxIf/aQK497FEhAtLNNG/Uf4zn18E4dOkcaQtLKmexi35cS42wgIkcPlqrgE10uRhsrw+32zltPVudj9s9oZJ8bNpLAczUZ2r+2Pxzur8DOZK0+R4SBq9SAfmQqXqWm21x2QuifR/74AO1k1xisG8Y5Y5Vzx4vfetcUko0IeadWMEMI2HCHcH+Q/XKLq+BDHHpjH01RKV6tlr/XQp/zU08XpZ8wDnjDSuWObmpRcfckiCRlXhG1v0XNdwMUkuZI0KgW7aQBTL5GgDhFjOvMfbXvP+tz5VhDrV85zCU13zL0+yqalHNEpjtExFS7yR8OgjqmDmTxwoQRputcW1V741tREGJ2FrVlrFLufiig2+qC1D4NA9npnUE3cLlMT6fMNFqxxDxV2u56EPxEMRdQBlRxtXJvRCV69dEjFHiusDn868="
+            - secure: "cq6+EH9bcPx2KkW8NW5gNj+KPJi0edXbVHr1gvfFsRhMWYkOjXgsJobErB1QRqXA3tsrmdJcxm1NYy/qM/Kr5zZ6dgW9+tvZwRPEEvrxA7W43ZF/lCdN6xQWiB7KW0/dXJtrJ3nWl0pczVSTeM+3jHCHdimFe/thYZNkR3e20brd4pJfCdV8gY5QhICXbodKdohUrkSNGYl4tzpUmjRUUUIbBXP2dEZQFUZDBDZexbPNLJfExouWj3ypeYySKyHAhXNQO4lLOcDETOU82e1WPjccAMdSn9BQzW7yXNxl/OJX9r0hr+BLVGe5ri2xdG9LyQ771EeO48deNabEpl78YCLzUV99dPvjcCithvNTwwBKQ2+z5u6jopHUzSY21B/O/ynfocw4aeMWoJR3dDC6tXdvAsb+LBtdNbSPwdI6fE6HthZb7U1IRm2izl6WgLyaDJDCM0PoJFNVcaL1XskHfm9C2wQX3Z3JFbfTtKsyMLImNQLTkJpyDqVPZTpz7jjDuNLvBGh4MM81Rgdcv9pCzz3QkSKtVTxZSAtCjym0xMhRjDu1MqWZDrg2j8iLzciQaB4I7EuB6/HPx0TNPRjwKG/V0hHn+FSoW4UsLxnmmORScsBL40ZViagFo3HgLrGn/tjlXx5rGKFwxPHRJCHLPkD4/N172XT8WBMV9H1qcBA="
         on_success: always
         on_failure: always
         on_pull_requests: true

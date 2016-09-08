@@ -42,9 +42,9 @@ REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
 
-REGISTRY_IMAGE_NAME		:= a8-registry:latest
-CONTROLLER_IMAGE_NAME	:= a8-controller:latest
-SIDECAR_IMAGE_NAME		:= a8-sidecar:latest
+REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
+CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
+SIDECAR_IMAGE_NAME		:= amalgam8/a8-sidecar:latest
 
 REGISTRY_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.controller
@@ -80,19 +80,19 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build-registry build-controller build-sidecar compile clean
+.PHONY: build build.registry build.controller build.sidecar compile clean
 
-build: build-registry build-controller build-sidecar
+build: build.registry build.controller build.sidecar
 	
-build-registry:
+build.registry:
 	@echo "--> building registry"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(REGISTRY_APP_NAME) ./cmd/registry/
 
-build-controller:
+build.controller:
 	@echo "--> building controller"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(CONTROLLER_APP_NAME) ./cmd/controller/
 
-build-sidecar:
+build.sidecar:
 	@echo "--> building sidecar"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
 	
@@ -159,19 +159,19 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize-registry dockerize-controller dockerize-sidecar
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar
 
-dockerize: dockerize-registry dockerize-controller dockerize-sidecar
+dockerize: dockerize.registry dockerize.controller dockerize.sidecar
 	
-dockerize-registry:
+dockerize.registry:
 	@echo "--> building registry docker image"
 	@docker build -t $(REGISTRY_IMAGE_NAME) -f $(REGISTRY_DOCKERFILE) .
 	
-dockerize-controller:
+dockerize.controller:
 	@echo "--> building controller docker image"
 	@docker build -t $(CONTROLLER_IMAGE_NAME) -f $(CONTROLLER_DOCKERFILE) .
 		
-dockerize-sidecar:
+dockerize.sidecar:
 	@echo "--> building sidecar docker image"
 	@docker build -t $(SIDECAR_IMAGE_NAME) -f $(SIDECAR_DOCKERFILE) .
 			
@@ -179,21 +179,21 @@ dockerize-sidecar:
 #-- release
 #---------------
 	
-.PHONY: release release-registry release-controller release-sidecar
+.PHONY: release release.registry release.controller release.sidecar
 	
-release: release-registry release-controller release-sidecar
+release: release.registry release.controller release.sidecar
 
-release-registry:
+release.registry:
 	@echo "--> packaging registry for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(REGISTRY_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(REGISTRY_APP_NAME) README.md LICENSE
 		
-release-controller:
+release.controller:
 	@echo "--> packaging controller for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 			
-release-sidecar:
+release.sidecar:
 	@echo "--> building sidecar docker image"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/opt/a8_lualib \

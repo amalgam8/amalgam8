@@ -6,7 +6,7 @@ the [examples](https://github.com/amalgam8/amalgam8/examples) project. However, 
 checkout the master branch and pull more git repos before doing the "vagrant up".
 
 Alternatively you can set up the required prerequisites that are described in the 
-[Vagrantfile](https://github.com/amalgam8/amalgam8/examples/blob/master/Vagrantfile) by yourself,
+[Vagrantfile](https://github.com/amalgam8/amalgam8/blob/master/examples/Vagrantfile) by yourself,
 and then run the samples on your own machine of choice.
 
 To get started using the provided Vagrant file, run the following commands:
@@ -35,7 +35,7 @@ vagrant ssh
 cd $GOPATH/src/github.com/amalgam8/amalgam8/examples
 ```
 
-In this environment, you can run all the same samples and demos that are described in https://github.com/amalgam8/amalgam8/examples/blob/master/README.md,
+In this environment, you can run all the same samples and demos that are described in https://github.com/amalgam8/amalgam8/blob/master/examples/README.md,
 and you have the ability to also compile the code and build the images locally.
 
 If you need to use the latest (potentially unreleased) version of the Amalgam8 CLI, run the following commands:

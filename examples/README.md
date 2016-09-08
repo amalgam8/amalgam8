@@ -15,8 +15,8 @@ the samples to other environments as well.
 
 The following samples are available for Amalgam8:
 
-* [Helloworld](https://github.com/amalgam8/amalgam8/examples/blob/master/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
-* [Bookinfo](https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
+* [Helloworld](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
+* [Bookinfo](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
 
 ### Setup
 
@@ -33,7 +33,7 @@ Before running the samples, you need to setup the requisite environment.
   * [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/)
 
 * *Development Mode*: If you'd like to also be able to change and compile the code, or build the images,
-refer the [Developer Instructions](https://github.com/amalgam8/amalgam8/examples/blob/master/development.md).
+refer the [Developer Instructions](https://github.com/amalgam8/amalgam8/blob/master/examples/development.md).
 
 ### Deployment Options
 
@@ -177,7 +177,7 @@ provided.
     docker-compose -f docker/helloworld.yaml scale helloworld-v2=2
     ```
         
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/helloworld/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/helloworld/README.md
 
     * To shutdown the helloworld instances, run the following commands:
    
@@ -194,7 +194,7 @@ provided.
     docker-compose -f docker/bookinfo.yaml up -d
     ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md
 
     * To shutdown the bookinfo instances, run the following commands:
     
@@ -316,7 +316,7 @@ The following setup has been tested with Kubernetes v1.2.3.
         kubectl create -f kubernetes/helloworld.yaml
         ```
         
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/helloworld/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/helloworld/README.md
  
     * To shutdown the helloworld instances, run the following command:
     
@@ -332,7 +332,7 @@ The following setup has been tested with Kubernetes v1.2.3.
         kubectl create -f kubernetes/bookinfo.yaml
         ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md
     
     * To shutdown the bookinfo instances, run the following command:
     
@@ -408,7 +408,7 @@ starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
     marathon/run-component.sh helloworld start
     ```
         
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/helloworld/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/helloworld/README.md
 
     * To shutdown the helloworld instances, run the following commands:
    
@@ -424,7 +424,7 @@ starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
     marathon/run-component.sh bookinfo start
     ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md
+    * Follow the instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md
 
     * To shutdown the bookinfo instances, run the following commands:
     
@@ -440,7 +440,7 @@ starting with `config.vm.network "private_network", ip: "192.168.33.33/24"`.
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
 
-To run the [Bookinfo sample app](https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md)
+To run the [Bookinfo sample app](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md)
 on Bluemix, follow the instructions below.
 If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.net/).
 
@@ -513,7 +513,7 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
     +-------------+---------------------+
      ```
 
-1. Follow the [Bookinfo sample app](https://github.com/amalgam8/amalgam8/examples/blob/master/apps/bookinfo/README.md) instructions for the rest of the demo.
+1. Follow the [Bookinfo sample app](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md) instructions for the rest of the demo.
     When you reach the part where it instructs you to open, in your browser, the bookinfo application at
     http://localhost:32000/productpage/productpage, make sure to change "http://localhost:32000" to the value of the `BOOKINFO_URL`
     environment variable that you defined in your `.bluemixrc` file.

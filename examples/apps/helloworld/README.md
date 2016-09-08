@@ -7,7 +7,7 @@ incoming traffic between the two versions. You can define the proportion of traf
 
 ## Running the helloworld demo
 
-Before you begin, follow the environment set up instructions at https://github.com/amalgam8/amalgam8/examples/blob/master/README.md
+Before you begin, follow the environment set up instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/README.md
 
 1. Confirm that the microservices are running, by running the following command:
 

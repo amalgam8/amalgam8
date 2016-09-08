@@ -18,8 +18,8 @@
 set -x
 set -o errexit
 
-#SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$GOPATH/src/github.com/amalgam8/amalgam8/examples/apps/bookinfo
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+MAKEDIR=$SCRIPTDIR/../../examples/apps/bookinfo
 
 pushd $MAKEDIR/productpage
   docker build -t amalgam8/a8-examples-bookinfo-productpage:v1 .

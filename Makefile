@@ -73,7 +73,7 @@ LDFLAGS		+= -X $(BUILD_SYM).goVersion=$(word 3,$(shell go version))
 
 # to be run by CI to verify validity of code changes
 verify: check build test
-	
+
 # to be run by developer before checking-in code changes
 precommit: format verify
 
@@ -83,7 +83,7 @@ precommit: format verify
 .PHONY: build build.registry build.controller build.sidecar compile clean
 
 build: build.registry build.controller build.sidecar
-	
+
 build.registry:
 	@echo "--> building registry"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(REGISTRY_APP_NAME) ./cmd/registry/
@@ -95,7 +95,7 @@ build.controller:
 build.sidecar:
 	@echo "--> building sidecar"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
-	
+
 compile:
 	@echo "--> compiling packages"
 	@go build $(GOPKGS)
@@ -151,48 +151,48 @@ lint: tools.golint
 depend.update: tools.glide
 	@echo "--> updating dependencies from glide.yaml"
 	@glide update --strip-vcs --update-vendored
-	
+
 depend.install:	tools.glide
 	@echo "--> installing dependencies from glide.lock "
 	@glide install --strip-vcs --update-vendored
-	
+
 #---------------
 #-- dockerize
 #---------------
 .PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar
 
 dockerize: dockerize.registry dockerize.controller dockerize.sidecar
-	
+
 dockerize.registry:
 	@echo "--> building registry docker image"
 	@docker build -t $(REGISTRY_IMAGE_NAME) -f $(REGISTRY_DOCKERFILE) .
-	
+
 dockerize.controller:
 	@echo "--> building controller docker image"
 	@docker build -t $(CONTROLLER_IMAGE_NAME) -f $(CONTROLLER_DOCKERFILE) .
-		
+
 dockerize.sidecar:
 	@echo "--> building sidecar docker image"
 	@docker build -t $(SIDECAR_IMAGE_NAME) -f $(SIDECAR_DOCKERFILE) .
-			
+
 #---------------
 #-- release
 #---------------
-	
+
 .PHONY: release release.registry release.controller release.sidecar
-	
+
 release: release.registry release.controller release.sidecar
 
 release.registry:
 	@echo "--> packaging registry for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(REGISTRY_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(REGISTRY_APP_NAME) README.md LICENSE
-		
+
 release.controller:
 	@echo "--> packaging controller for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
-			
+
 release.sidecar:
 	@echo "--> building sidecar docker image"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
@@ -208,7 +208,7 @@ release.sidecar:
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
 	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/install-a8sidecar.sh > $(RELEASEDIR)/install-a8sidecar.sh
-				
+
 #---------------
 #-- tools
 #---------------
@@ -218,25 +218,25 @@ tools: tools.goimports tools.golint tools.govet tools.glide
 
 tools.goimports:
 	@command -v goimports >/dev/null ; if [ $$? -ne 0 ]; then \
-    	echo "--> installing goimports"; \
-    	go get golang.org/x/tools/cmd/goimports; \
+		echo "--> installing goimports"; \
+		go get golang.org/x/tools/cmd/goimports; \
     fi
 
 tools.govet:
 	@go tool vet 2>/dev/null ; if [ $$? -eq 3 ]; then \
 		echo "--> installing govet"; \
- 		go get golang.org/x/tools/cmd/vet; \
- 	fi
+		go get golang.org/x/tools/cmd/vet; \
+	fi
 
 tools.golint:
 	@command -v golint >/dev/null ; if [ $$? -ne 0 ]; then \
-    	echo "--> installing golint"; \
-    	go get github.com/golang/lint/golint; \
+		echo "--> installing golint"; \
+		go get github.com/golang/lint/golint; \
     fi
-	
+
 tools.glide:
 	@command -v glide >/dev/null ; if [ $$? -ne 0 ]; then \
-    	echo "--> installing glide"; \
+		echo "--> installing glide"; \
 		mkdir -p /tmp/glide-0.10.2-linux-amd64; \
 		wget -qO- https://github.com/Masterminds/glide/releases/download/0.10.2/glide-0.10.2-linux-amd64.tar.gz | tar xz -C /tmp/glide-0.10.2-linux-amd64; \
 		cp /tmp/glide-0.10.2-linux-amd64/linux-amd64/glide ~/bin; \

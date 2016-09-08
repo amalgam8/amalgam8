@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package main // import "github.com/amalgam8/amalgam8/registry"
+package main
 
 import (
 	"fmt"

@@ -21,7 +21,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/replication"
 )

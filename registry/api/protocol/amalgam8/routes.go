@@ -22,7 +22,7 @@ import (
 
 	"github.com/amalgam8/amalgam8/registry/api/env"
 	"github.com/amalgam8/amalgam8/registry/api/protocol"
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"

@@ -21,7 +21,7 @@ import (
 
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/stretchr/testify/assert"
 )
 

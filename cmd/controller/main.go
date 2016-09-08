@@ -21,7 +21,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/api"
-	"github.com/amalgam8/amalgam8/controller/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/controller/config"
 	"github.com/amalgam8/amalgam8/controller/metrics"
 	"github.com/amalgam8/amalgam8/controller/middleware"

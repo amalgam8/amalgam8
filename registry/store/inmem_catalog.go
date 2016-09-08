@@ -21,7 +21,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/rcrowley/go-metrics"
 
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 

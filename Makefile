@@ -19,41 +19,52 @@
 #------------------------------------------------------------------------------
 
 SHELL 		:= /bin/bash
-APP_NAME	:= a8registry
-APP_VER		:= v0.2.0
 BINDIR		:= bin
+BUILDDIR    := build
+DOCKERDIR	:= docker
 RELEASEDIR  := release
-IMAGE_NAME  := a8-registry:latest
-
-GO			:= GO15VENDOREXPERIMENT=1 go
 
 ifndef GOOS
-    GOOS := $(shell $(GO) env GOHOSTOS)
+    GOOS := $(shell go env GOHOSTOS)
 endif
 
 ifndef GOARCH
-	GOARCH := $(shell $(GO) env GOHOSTARCH)
+	GOARCH := $(shell go env GOHOSTARCH)
 endif
 
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-GODIRS		= $(shell $(GO) list -f '{{.Dir}}' ./... | grep -vxFf <($(GO) list -f '{{.Dir}}' ./vendor/...))
-GOPKGS		= $(shell $(GO) list ./... | grep -vxFf <($(GO) list ./vendor/...))
+GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vxFf <(go list -f '{{.Dir}}' ./vendor/...))
+GOPKGS		= $(shell go list ./... | grep -vxFf <(go list ./vendor/...))
 
-RELEASE_NAME := $(APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
-	
+APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
+
+REGISTRY_APP_NAME		:= a8registry
+CONTROLLER_APP_NAME		:= a8controller
+SIDECAR_APP_NAME		:= a8sidecar
+
+REGISTRY_IMAGE_NAME		:= a8-registry:latest
+CONTROLLER_IMAGE_NAME	:= a8-controller:latest
+SIDECAR_IMAGE_NAME		:= a8-sidecar:latest
+
+REGISTRY_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.registry
+CONTROLLER_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.controller
+SIDECAR_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
+
+REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
+CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
+SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
+
 # build flags to create a statically linked binary (required for scratch-based image)
 BUILDFLAGS	:= -a -installsuffix nocgo -tags netgo
 
 # linker flags to set build info variables
-# note #1: -ldflags requires using the symbol name(s) as reported by 'go tool nm <binary object>'. Struct fields are not supported.
-# note #2: buildDate is using Golang RFC 3339 time format - version.go relies on this format
-BUILD_SYM	:= $(shell $(GO) list -f '{{ .ImportComment }}')/utils/version
+BUILD_SYM	:= github.com/amalgam8/amalgam8/pkg/version
 LDFLAGS		+= -X $(BUILD_SYM).version=$(APP_VER)
 LDFLAGS		+= -X $(BUILD_SYM).gitRevision=$(shell git rev-parse --short HEAD 2> /dev/null  || echo unknown)
 LDFLAGS		+= -X $(BUILD_SYM).branch=$(shell git rev-parse --abbrev-ref HEAD 2> /dev/null  || echo unknown)
 LDFLAGS		+= -X $(BUILD_SYM).buildUser=$(shell whoami || echo nobody)@$(shell hostname -f || echo builder)
 LDFLAGS		+= -X $(BUILD_SYM).buildDate=$(shell date +%Y-%m-%dT%H:%M:%S%:z)
-LDFLAGS		+= -X $(BUILD_SYM).goVersion=$(word 3,$(shell $(GO) version))
+LDFLAGS		+= -X $(BUILD_SYM).goVersion=$(word 3,$(shell go version))
 
 #--------------
 #-- high-level
@@ -69,20 +80,31 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build compile clean
+.PHONY: build build-registry build-controller build-sidecar compile clean
 
-build:
-	@echo "--> building executable"
-	@$(GO) build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(APP_NAME)
+build: build-registry build-controller build-sidecar
+	
+build-registry:
+	@echo "--> building registry"
+	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(REGISTRY_APP_NAME) ./cmd/registry/
 
+build-controller:
+	@echo "--> building controller"
+	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(CONTROLLER_APP_NAME) ./cmd/controller/
+
+build-sidecar:
+	@echo "--> building sidecar"
+	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
+	
 compile:
 	@echo "--> compiling packages"
-	@$(GO) build $(GOPKGS)
+	@go build $(GOPKGS)
 
 clean:
 	@echo "--> cleaning compiled objects and binaries"
-	@$(GO) clean -tags netgo -i $(GOPKGS)
+	@go clean -tags netgo -i $(GOPKGS)
 	@rm -rf $(BINDIR)/*
+	@rm -rf $(BUILDDIR)/*
 	@rm -rf $(RELEASEDIR)/*
 
 #--------
@@ -92,11 +114,11 @@ clean:
 
 test:
 	@echo "--> running unit tests, excluding long tests"
-	@$(GO) test -v $(GOPKGS) -short
+	@go test -v $(GOPKGS) -short
 
 test.all:
 	@echo "--> running unit tests, including long tests"
-	@$(GO) test -v $(GOPKGS)
+	@go test -v $(GOPKGS)
 
 #---------------
 #-- checks
@@ -115,7 +137,7 @@ format.check: tools.goimports
 
 vet: tools.govet
 	@echo "--> checking code correctness with 'go vet' tool"
-	@$(GO) vet $(GOPKGS)
+	@go vet $(GOPKGS)
 
 lint: tools.golint
 	@echo "--> checking code style with 'golint' tool"
@@ -134,20 +156,59 @@ depend.install:	tools.glide
 	@echo "--> installing dependencies from glide.lock "
 	@glide install --strip-vcs --update-vendored
 	
-#----------
-#-- artifacts
-#----------
-.PHONY: docker release
+#---------------
+#-- dockerize
+#---------------
+.PHONY: dockerize dockerize-registry dockerize-controller dockerize-sidecar
 
-docker:
-	@echo "--> building docker image"
-	@docker build -t $(IMAGE_NAME) .
+dockerize: dockerize-registry dockerize-controller dockerize-sidecar
 	
-release:
-	@echo "--> packaging release"
-	@mkdir -p $(RELEASEDIR) 
-	@tar -czf $(RELEASEDIR)/$(RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(APP_NAME) README.md LICENSE
+dockerize-registry:
+	@echo "--> building registry docker image"
+	@docker build -t $(REGISTRY_IMAGE_NAME) -f $(REGISTRY_DOCKERFILE) .
+	
+dockerize-controller:
+	@echo "--> building controller docker image"
+	@docker build -t $(CONTROLLER_IMAGE_NAME) -f $(CONTROLLER_DOCKERFILE) .
 		
+dockerize-sidecar:
+	@echo "--> building sidecar docker image"
+	@docker build -t $(SIDECAR_IMAGE_NAME) -f $(SIDECAR_DOCKERFILE) .
+			
+#---------------
+#-- release
+#---------------
+	
+.PHONY: release release-registry release-controller release-sidecar
+	
+release: release-registry release-controller release-sidecar
+
+release-registry:
+	@echo "--> packaging registry for release"
+	@mkdir -p $(RELEASEDIR) 
+	@tar -czf $(RELEASEDIR)/$(REGISTRY_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(REGISTRY_APP_NAME) README.md LICENSE
+		
+release-controller:
+	@echo "--> packaging controller for release"
+	@mkdir -p $(RELEASEDIR) 
+	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
+			
+release-sidecar:
+	@echo "--> building sidecar docker image"
+	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
+		$(BUILDDIR)/opt/a8_lualib \
+		$(BUILDDIR)/etc/filebeat \
+		$(BUILDDIR)/etc/nginx \
+		$(BUILDDIR)/usr/bin \
+		$(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
+	@cp sidecar/nginx/conf/*.conf $(BUILDDIR)/etc/nginx/
+	@cp sidecar/nginx/lua/*.lua $(BUILDDIR)/opt/a8_lualib/
+	@cp $(DOCKERDIR)/filebeat.yml $(BUILDDIR)/etc/filebeat/
+	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
+	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
+	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
+	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/install-a8sidecar.sh > $(RELEASEDIR)/install-a8sidecar.sh
+				
 #---------------
 #-- tools
 #---------------
@@ -158,19 +219,19 @@ tools: tools.goimports tools.golint tools.govet tools.glide
 tools.goimports:
 	@command -v goimports >/dev/null ; if [ $$? -ne 0 ]; then \
     	echo "--> installing goimports"; \
-    	$(GO) get golang.org/x/tools/cmd/goimports; \
+    	go get golang.org/x/tools/cmd/goimports; \
     fi
 
 tools.govet:
 	@go tool vet 2>/dev/null ; if [ $$? -eq 3 ]; then \
 		echo "--> installing govet"; \
- 		$(GO) get golang.org/x/tools/cmd/vet; \
+ 		go get golang.org/x/tools/cmd/vet; \
  	fi
 
 tools.golint:
 	@command -v golint >/dev/null ; if [ $$? -ne 0 ]; then \
     	echo "--> installing golint"; \
-    	$(GO) get github.com/golang/lint/golint; \
+    	go get github.com/golang/lint/golint; \
     fi
 	
 tools.glide:

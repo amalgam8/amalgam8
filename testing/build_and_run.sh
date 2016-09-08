@@ -16,29 +16,13 @@
 
 set -x
 set -o errexit
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-EXAMPLESDIR=$GOPATH/src/github.com/amalgam8/amalgam8/examples
-EXAMPLESREPO=https://github.com/amalgam8/amalgam8/examples
-
-#from https://gist.github.com/nicferrier/2277987
-LOCALREPO=$EXAMPLESDIR
-
-# We do it this way so that we can abstract if from just git later on
-LOCALREPO_VC_DIR=$LOCALREPO/.git
-
-if [ ! -d $LOCALREPO_VC_DIR ]
-then
-    git clone $EXAMPLESREPO $EXAMPLESDIR
-else
-    cd $EXAMPLESDIR && git pull
-fi
-
-cd $EXAMPLESDIR && git checkout master
-# End
+EXAMPLESDIR=$SCRIPTDIR/../examples
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
 
-#######Test Docker setup
+####### Test Docker setup
 echo "Testing docker-based deployment.."
 $EXAMPLESDIR/docker/run-controlplane-docker.sh start
 sleep 5
@@ -51,8 +35,7 @@ echo "Docker tests successful. Cleaning up.."
 $EXAMPLESDIR/docker/cleanup.sh
 sleep 10
 
-
-#######Test Kubernetes setup
+####### Test Kubernetes setup
 echo "Testing kubernetes-based deployment.."
 sudo $EXAMPLESDIR/kubernetes/install-kubernetes.sh
 sleep 15

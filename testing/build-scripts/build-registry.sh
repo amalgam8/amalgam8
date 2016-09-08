@@ -17,17 +17,17 @@
 
 set -x
 
-#SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$GOPATH/src/github.com/amalgam8/amalgam8/registry/
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+MAKEDIR=$SCRIPTDIR/../../
 
-make -C $MAKEDIR build GOOS=linux GOARCH=amd64
+make -C $MAKEDIR build.registry GOOS=linux GOARCH=amd64
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: make failed for registry.\n***********\n"
     exit $STATUS
 fi
 
-make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-registry
+make -C $MAKEDIR dockerize.registry
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for registry.\n***********\n"

@@ -17,24 +17,17 @@
 
 set -x
 
-#SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$GOPATH/src/github.com/amalgam8/amalgam8/sidecar/
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+MAKEDIR=$SCRIPTDIR/../../
 
-make -C $MAKEDIR build GOOS=linux GOARCH=amd64
+make -C $MAKEDIR build.sidecar GOOS=linux GOARCH=amd64
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: make failed for sidecar.\n***********\n"
     exit $STATUS
 fi
 
-# make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:latest DOCKERFILE=./docker/Dockerfile.ubuntu
-# STATUS=$?
-# if [ $STATUS -ne 0 ]; then
-#     echo -e "\n***********\nFAILED: docker build failed for sidecar (ubuntu version)\n***********\n"
-#     exit $STATUS
-# fi
-
-make -C $MAKEDIR docker IMAGE_NAME=amalgam8/a8-sidecar:alpine DOCKERFILE=./docker/Dockerfile.alpine
+make -C $MAKEDIR dockerize.sidecar IMAGE_NAME=amalgam8/a8-sidecar:alpine DOCKERFILE=$MAKEDIR/docker/Dockerfile.sidecar.alpine
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"

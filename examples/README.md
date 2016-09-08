@@ -584,4 +584,4 @@ If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.
 
 Contributions and feedback are welcome!
 Proposals and pull requests will be considered. 
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md) file for more information.

@@ -168,4 +168,4 @@ Unless required by applicable law or agreed to in writing, software distributed 
 
 Contributions and feedback are welcome!
 Proposals and pull requests will be considered.
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/amalgam8.github.io/blob/master/CONTRIBUTING.md) file for more information.
+Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md) file for more information.

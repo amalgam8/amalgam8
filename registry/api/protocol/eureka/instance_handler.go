@@ -105,6 +105,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -115,6 +116,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     err,
 		}).Errorf("Failed to register instance %+v", inst)
 
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
 		return
 	}
 
@@ -316,7 +318,6 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	r.Env[env.ServiceInstance] = si
-	inst := buildInstanceFromRegistry(si)
 	err = w.WriteJson(&InstanceWrapper{inst})
 	if err != nil {
 		routes.logger.WithFields(log.Fields{

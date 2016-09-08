@@ -318,6 +318,8 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	r.Env[env.ServiceInstance] = si
+	inst := buildInstanceFromRegistry(si)
+
 	err = w.WriteJson(&InstanceWrapper{inst})
 	if err != nil {
 		routes.logger.WithFields(log.Fields{

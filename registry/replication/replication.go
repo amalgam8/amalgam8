@@ -17,7 +17,7 @@ package replication
 import (
 	"time"
 
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 )
 
 // Replication - interface for replication between registry cluster peers

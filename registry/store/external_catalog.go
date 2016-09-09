@@ -24,7 +24,7 @@ import (
 	"github.com/garyburd/redigo/redis"
 	"github.com/rcrowley/go-metrics"
 
-	"github.com/amalgam8/amalgam8/registry/auth"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/utils/database"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )

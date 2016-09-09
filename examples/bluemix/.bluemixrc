@@ -49,9 +49,10 @@ BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
 # Misc
 #################################################################################
 
-### Please change these to sensible values as your app and controller will be public.
-### Note: when overiding these values, set the A8_CONTROLLER_TOKEN/A8_REGISTRY_TOKEN environment variables,
-### or set the --a8-token/--a8-registry-token flags for the a8ctl utility.
-# CONTROLLER_TENANT_ID=local ##Do not use for 0.2.0
-CONTROLLER_TOKEN=local
-REGISTRY_TOKEN=local
+### Auth tokens when running in multi-tenant mode. Note that when deploying the 
+### control plane in multi tenant mode, you need to provide these authentication tokens to
+### the bookinfo services and also set the A8_CONTROLLER_TOKEN and A8_REGISTRY_TOKEN for the
+### a8ctl CLI
+
+#CONTROLLER_TOKEN=local
+#REGISTRY_TOKEN=local

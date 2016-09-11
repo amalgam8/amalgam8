@@ -24,18 +24,18 @@ import (
 type ExternalRegistry interface {
 	ReadKeys(namespace auth.Namespace) ([]string, error)
 	ReadServiceInstanceByInstID(namespace auth.Namespace, instanceID string) (*ServiceInstance, error)
-	ListServiceInstancesByKey(namespace auth.Namespace, key string) (map[string]*ServiceInstance, error)
+	ListServiceInstancesByName(namespace auth.Namespace, name string) (map[string]*ServiceInstance, error)
 	ListAllServiceInstances(namespace auth.Namespace) (map[string]ServiceInstanceMap, error)
 	InsertServiceInstance(namespace auth.Namespace, instance *ServiceInstance) error
-	DeleteServiceInstance(namespace auth.Namespace, key string) (int, error)
+	DeleteServiceInstance(key string) (int, error)
 }
 
 // DBKey represents the service instance key
 type DBKey struct {
-	InstanceID  string
-	ServiceName string
+	Namespace  string
+	InstanceID string
 }
 
 func (dbk *DBKey) String() string {
-	return fmt.Sprintf("%s.%s", dbk.InstanceID, dbk.ServiceName)
+	return fmt.Sprintf("%s%s%s", dbk.InstanceID, keySeparator, dbk.Namespace)
 }

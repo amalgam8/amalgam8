@@ -16,7 +16,6 @@ package store
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 )
@@ -54,30 +53,13 @@ func (mer *mockExternalRegistry) ReadServiceInstanceByInstID(namespace auth.Name
 	return &ServiceInstance{}, nil
 }
 
-func (mer *mockExternalRegistry) ListServiceInstancesByKey(namespace auth.Namespace, key string) (map[string]*ServiceInstance, error) {
-	instanceID := strings.SplitN(key, ".", 2)[0]
-	serviceName := strings.SplitN(key, ".", 2)[1]
+func (mer *mockExternalRegistry) ListServiceInstancesByName(namespace auth.Namespace, name string) (map[string]*ServiceInstance, error) {
 	siMap := make(map[string]*ServiceInstance)
 
 	for _, instance := range mer.mockServiceInstances {
-		if instanceID == "*" && serviceName == "*" {
+		if name == instance.ServiceName {
 			siMap[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = instance.DeepClone()
 			continue
-		}
-		if instanceID == "*" {
-			if serviceName == instance.ServiceName {
-				siMap[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = instance.DeepClone()
-			}
-			continue
-		}
-		if serviceName == "*" {
-			if instanceID == instance.ID {
-				siMap[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = instance.DeepClone()
-			}
-			continue
-		}
-		if instanceID == instance.ID && serviceName == instance.ServiceName {
-			siMap[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = instance.DeepClone()
 		}
 	}
 	return siMap, nil
@@ -105,11 +87,11 @@ func (mer *mockExternalRegistry) ListAllServiceInstances(namespace auth.Namespac
 
 func (mer *mockExternalRegistry) InsertServiceInstance(namespace auth.Namespace, instance *ServiceInstance) error {
 	si := instance.DeepClone()
-	mer.mockServiceInstances[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = si
+	mer.mockServiceInstances[fmt.Sprintf("%s%s%s", instance.ID, keySeparator, namespace.String())] = si
 	return nil
 }
 
-func (mer *mockExternalRegistry) DeleteServiceInstance(namespace auth.Namespace, key string) (int, error) {
+func (mer *mockExternalRegistry) DeleteServiceInstance(key string) (int, error) {
 	var count int
 
 	// Don't need to loop to delete, but need a count of instances deleted

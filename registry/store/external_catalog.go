@@ -16,7 +16,6 @@ package store
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 	"time"
 
@@ -142,14 +141,6 @@ func newExternalCatalog(conf *externalConfig, namespace auth.Namespace, pool *re
 		tagsInstancesMetric:     metrics.GetOrRegister(tagsInstancesMetricName, counterFactory).(metrics.Counter),
 	}
 
-	// Need to check if any entries in the DB have expired
-	go func(namespace auth.Namespace, db database.Database, catalog *externalCatalog) {
-		hashKeys, _ := db.ReadKeys(namespace.String())
-		for _, value := range hashKeys {
-			catalog.checkIfExpired(strings.Split(string(value), ".")[0])
-		}
-	}(namespace, db, catalog)
-
 	return catalog, nil
 }
 
@@ -230,8 +221,6 @@ func (ec *externalCatalog) Register(si *ServiceInstance) (*ServiceInstance, erro
 		return nil, err
 	}
 
-	ec.renew(newSI)
-
 	metadataLength := len(newSI.Metadata)
 	tagsLength := len(newSI.Tags)
 
@@ -306,8 +295,6 @@ func (ec *externalCatalog) Renew(instanceID string) (*ServiceInstance, error) {
 		return nil, err
 	}
 
-	ec.renew(si)
-
 	return si.DeepClone(), nil
 }
 
@@ -329,8 +316,6 @@ func (ec *externalCatalog) SetStatus(instanceID, status string) (*ServiceInstanc
 		return nil, err
 	}
 
-	ec.renew(si)
-
 	return si.DeepClone(), nil
 }
 
@@ -338,9 +323,7 @@ func (ec *externalCatalog) List(serviceName string, predicate Predicate) ([]*Ser
 	ec.RLock()
 	defer ec.RUnlock()
 
-	siKey := fmt.Sprintf("*.%s", serviceName)
-
-	service, err := ec.db.ListServiceInstancesByKey(ec.namespace, siKey)
+	service, err := ec.db.ListServiceInstancesByName(ec.namespace, serviceName)
 	if err != nil {
 		return nil, err
 	}
@@ -396,43 +379,6 @@ func (ec *externalCatalog) ListServices(predicate Predicate) []*Service {
 	return services
 }
 
-func (ec *externalCatalog) checkIfExpired(instanceID string) {
-	ec.Lock()
-	defer ec.Unlock()
-
-	instance, err := ec.db.ReadServiceInstanceByInstID(ec.namespace, instanceID)
-	if err != nil {
-		ec.logger.Debugf("Error reading instance data for instance ID %s", instanceID)
-		return
-	}
-	if instance == nil {
-		ec.logger.Debugf("Instance data not found for instance ID %s", instanceID)
-		return
-	}
-
-	// If the status is OUT_OF_SERVICE do not expire
-	if instance.Status == OutOfService {
-		return
-	}
-
-	timeSinceHeartbeat := time.Now().Sub(instance.LastRenewal)
-	if timeSinceHeartbeat > instance.TTL {
-		// Since timeSinceHeartbeat was calculated based
-		// on a possibly stale value of inst.LastRenewal,
-		// we sync our goroutine and then recalculate it.
-		// This should hopefully sync other goroutines running on the same CPU.
-
-		timeSinceHeartbeat = time.Now().Sub(instance.LastRenewal)
-		if timeSinceHeartbeat <= instance.TTL {
-			return
-		}
-
-		ec.logger.Debugf("Instance ID %s is expired", instance.ID)
-		ec.delete(instanceID)
-		ec.expirationMetric.Mark(1)
-	}
-}
-
 // delete deletes the specified instanceID from the catalog internal datastructures.
 // It assumes the catalog's write-lock is acquired by the calling goroutine.
 func (ec *externalCatalog) delete(instanceID string) *ServiceInstance {
@@ -441,7 +387,7 @@ func (ec *externalCatalog) delete(instanceID string) *ServiceInstance {
 		return nil
 	}
 
-	hDel, _ := ec.db.DeleteServiceInstance(ec.namespace, fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName))
+	hDel, _ := ec.db.DeleteServiceInstance(fmt.Sprintf("%s%s%s", instance.ID, keySeparator, ec.namespace.String()))
 	if hDel == 0 {
 		return nil
 	}
@@ -461,12 +407,4 @@ func (ec *externalCatalog) delete(instanceID string) *ServiceInstance {
 
 	ec.instancesMetric.Dec(1)
 	return instance
-}
-
-func (ec *externalCatalog) renew(instance *ServiceInstance) {
-	instance.LastRenewal = time.Now()
-
-	time.AfterFunc(instance.TTL, func() {
-		ec.checkIfExpired(instance.ID)
-	})
 }

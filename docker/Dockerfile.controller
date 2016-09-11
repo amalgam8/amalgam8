@@ -12,13 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM alpine:latest
-
-EXPOSE 6379
+FROM scratch
 
 WORKDIR /opt/a8controller
 COPY bin/a8controller /opt/a8controller/a8controller
 COPY controller/locales /opt/a8controller/locales
 COPY controller/schema.json /opt/a8controller/schema.json
+
+EXPOSE 8080
 
 ENTRYPOINT ["/opt/a8controller/a8controller"]

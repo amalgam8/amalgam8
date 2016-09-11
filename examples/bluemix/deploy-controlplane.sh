@@ -29,7 +29,7 @@ done
 
 echo "Starting controller"
 bluemix ic group-create --name amalgam8_controller \
-  --publish 6379 --memory 256 --auto \
+  --publish 8080 --memory 256 --auto \
   --min 1 --max 2 --desired 1 \
   --hostname $CONTROLLER_HOSTNAME \
   --domain $ROUTES_DOMAIN \

@@ -7,7 +7,7 @@
 	    "network": "BRIDGE",
 	    "portMappings": [
 		{
-		    "containerPort": 6379,
+		    "containerPort": 8080,
 		    "hostPort": 31200,
 		    "protocol" : "tcp"
 		}

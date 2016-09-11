@@ -48,7 +48,7 @@ registry:
 controller:
   image: amalgam8/a8-controller
   ports:
-    - "31200:6379"
+    - "31200:8080"
   environment:
     - A8_LOG_LEVEL=info
     - A8_DATABASE_TYPE=redis

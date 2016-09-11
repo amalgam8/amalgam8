@@ -41,5 +41,4 @@ ADD bin/a8sidecar /usr/bin/a8sidecar
 
 ENTRYPOINT ["/usr/bin/a8sidecar", "--supervise=false"]
 
-# 6379 is for NGINX must match with variable in Controller
 EXPOSE 6379

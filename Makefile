@@ -207,7 +207,7 @@ release.sidecar:
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
-	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/install-a8sidecar.sh > $(RELEASEDIR)/install-a8sidecar.sh
+	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar.sh > $(RELEASEDIR)/a8sidecar.sh
 
 #---------------
 #-- tools

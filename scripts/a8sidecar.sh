@@ -18,7 +18,7 @@ set -x
 set -e
 
 A8SIDECAR_RELEASE=v0.2.0
-OPENRESTY_RELEASE=1.9.15.1
+OPENRESTY_RELEASE=1.11.2.1
 FILEBEAT_RELEASE=1.2.2
 DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/releases/download/${A8SIDECAR_RELEASE}
 
@@ -35,7 +35,7 @@ mkdir /var/log/nginx
 cd /tmp && \
     tar -xzf /tmp/openresty-${OPENRESTY_RELEASE}.tar.gz && \
     cd /tmp/openresty-${OPENRESTY_RELEASE} && \
-    ./configure --with-pcre-jit --with-cc-opt='-O3' --with-luajit-xcflags='-O3' --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid --user=nginx && \
+    ./configure --with-pcre-jit --with-cc-opt='-O3' --with-luajit-xcflags='-O3' --conf-path=/etc/nginx/nginx.conf --pid-path=/var/run/nginx.pid && \
     make -j2 && \
     make install && \
     ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \

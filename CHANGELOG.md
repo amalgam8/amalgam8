@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3-rc1 (September 1, 2016)
+## 0.3.0 (September 12, 2016)
 
 - The controller API has been overhauled to support a wider range of routing and fault injection rules.
 
@@ -13,6 +13,8 @@
 - NGINX Lua code overhauled to support new rules API format from controller.
 
 - Options for sidecar to proxy, register, and log are now default `false`.
+
+- The default controller port is now 8080 instead of 6379.
 
 - `A8_SERVICE` is now in the form of `<service_name>:<tag1>,<tag2>,...,<tagN>` 
 where `<tagN>` can be a version number or any other tag.  Sidecar will register

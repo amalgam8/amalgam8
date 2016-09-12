@@ -9,81 +9,30 @@
 
 ## TL;DR
 
-1. Watch this YouTube video:
+1. The following whiteboard animation video provides a quick intro to Amalgam8
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=gvjhrxwX7S8" target="_blank"><img
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
-Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"
-/></a>
+Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
-2. [Try the demo application](examples/) in an container runtime of your
-choice (Docker, Kubernetes, Marathon).
+1. [Try the sample applications](examples/) in an container runtime of your
+   choice (Docker, Kubernetes, Marathon).
 
-3. [Integrate the sidecar](https://www.amalgam8.io/docs/content/getting-started-with-amalgam8.html) into your existing apps and start using Amalgam8!
+1. [Integrate the sidecar](https://www.amalgam8.io/docs/content/getting-started-with-amalgam8.html)
+   into your existing application to start using Amalgam8.
 
-## What is Amalgam8 ?
+---
 
-Amalgam8 is a platform for building polyglot microservice applications that
-enables you to route requests between microservices in a *content-based*
-and *version-based* manner, independent of the underlying container
-orchestration layer
-([Docker Swarm](https://www.docker.com/products/docker-swarm),
-[Kubernetes](https://kubernetes.io),
-[Marathon](https://mesosphere.github.io/marathon/)) or the cloud platform
-(Amazon AWS, IBM Bluemix, Google Cloud Platform, Microsoft Azure, etc.
-
-Amalgam8 uses the sidecar model or the Ambassador pattern for building
-microservices applications. The sidecar runs as in independent process and
-takes care of service registration, discovery and request routing to
-various microservices. The sidecar model simplifies development of polyglot
-applications.
-
-The Amalgam8 control plane dynamically programs the sidecars in each
-microservice and provides you with a single pane of glass through which you
-can control how requests are routed between microservices. Using the
-control plane API, you can easily build tools for various DevOps tasks such
-as simple A/B testing, internal releases and dark launches, canary
-rollouts, red/black deployments, resilience testing, etc.
-
-
-## Is this some new fangled stuff for microservices?
-
-Absolutely not. In fact, this is exactly what you need in order to conduct
-all sorts of smart experiments to measure user feedback, minimize risk
-through smart rollout strategies, test your application's response to
-failures, etc. To use more familiar terms, we are talking about simple A/B
-testing, internal releases and dark launches, canary rollouts, red/black
-deployments, and so on. Isn't this why you moved to the microservices
-architecture in the first place?
-
-Based on our experiences deploying and operating microservices inside IBM
-at various scales, we realized that there are plenty of really cool 
-tools out there that simplify service discovery and load balancing,
-configuration management, secret storage, etc. There are even solutions for
-API management for services exposed to end users, for tasks such as rate
-limiting, authentication, subscription, etc.
-
-But none of them were really addressing our core needs: **control how
-microservices talk to each other**, so that we can quickly experiment
-with different features, safely rollout new versions and test our
-microservices in production confidently without worrying about bringing
-down the entire infrastructure. We ended up writing automated tools that
-achieved these tasks through clunky scripts, ugly DNS tricks, meddling with
-the autoscaler just to achieve the right distribution of traffic between
-the new and the old version.
-
-
-## What is content and version-based routing? Why do I need it?
+## What is content and version-based routing?
 
 In any realistic production deployment, there are typically multiple
 versions of microservices running at the same time, as you might be testing
-out a new version, trouble shooting an old version, or simply keeping the
+out a new version, troubleshooting an old version, or simply keeping the
 old version around just in case.
 
 *Content-based routing* allows you to route requests between microservices
 based on the content of the request, such as the URL, HTTP headers,
-etc. This is very similar to the `location` blocks in Nginx, except more
-powerful. For example, imagine being able to do something like this:
+etc. For example,
 
 ```
 from microservice A, if request has "X-User-Id: QA", route to instance of
@@ -98,23 +47,135 @@ from microservice A:v2 route all requests to B:v2
 from microservice A:v1 route 10% of requests to B:v2 and 90% to B:v1
 ```
 
-You can program such rules for routing traffic between microservices using
-the Amalgam8 Control Plane API.
+A simple way to accomplish these functions is by controlling how
+microservices can talk to each other.
+
+## What is Amalgam8 ?
+
+Amalgam8 is a platform for building polyglot microservice applications that
+enables you to route requests between microservices in a *content-based*
+and *version-based* manner, independent of the underlying container
+orchestration layer
+([Docker Swarm](https://www.docker.com/products/docker-swarm),
+[Kubernetes](https://kubernetes.io),
+[Marathon](https://mesosphere.github.io/marathon/)) or the cloud platform
+(Amazon AWS, IBM Bluemix, Google Cloud Platform, Microsoft Azure, etc.
+
+Amalgam8 uses the sidecar model or the ambassador pattern for building
+microservices applications. The sidecar runs as in independent process and
+takes care of service registration, discovery and request routing to
+various microservices. The sidecar model simplifies development of polyglot
+applications.
+
+Through the Amalgam8 Control Plane, you can dynamically program the
+sidecars in each microservice and control how requests are routed between
+microservices. The control plane provides REST APIs that serve as the basis
+for building tools for various DevOps tasks such as A/B testing, internal
+releases and dark launches, canary rollouts, red/black deployments,
+resilience testing, etc.
 
 ---
 
-## Structure of the repo
+## Amalgam8 - Components
 
-* The [examples](examples/) folder has some cool demo apps with detailed
-  instructions to set up Amalgam8 in an container environment of your
-  choice.
+* The Amalgam8 control plane consists of two multi-tenant components:
+    * [Service Registry](registry/)
+    * [Route Controller](controller/)
+  The registry and the controller store their state in a Redis backend.
 
-* Swagger documentation for the route controller can be found
-  [here](controller/swagger.json). You can use these APIs to quickly build
-  tools for canary deployments, failure recovery testing, etc.
+* In the data plane, the [Amalgam8 sidecar](sidecar/) runs alongside each
+  microservice instance. The sidecar is an
+  [Nginx/OpenResty](https://openresty.org) reverse proxy. In addition to proxying
+  requests to other microservices, the sidecar is responsible for service
+  registration, heartbeat, service discovery, load balancing, intelligent
+  request routing, and fault injection.
+  
+  Microservices communicate with the sidecar via the loopback socket at
+  http://localhost:6379 . For e.g., to make an API call to serviceB, the
+  application would use the following URL:
+  http://localhost:6379/serviceB/apiEndpoint . The sidecar in-turn forwards
+  the API call to an instance of service B.
+  
+  **Note**: You can enable HTTPS between microservices by customizing the
+  Nginx config files in `/etc/nginx/amalgam8-services.conf`. For more
+  information on setting up HTTPS with Nginx, please refer to the official
+  [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
-* Swagger documentation for the service registry can be found
-  [here](registry/swagger.json)
+---
 
-* The [devel](devel/) folder has the developer guide for those who wish to
-  contribute features and bug fixes to Amalgam8
+## Amalgam8 - Sample Applications
+
+To get started with Amalgam8, we suggest exploring some of the sample
+applications in the [examples](examples/) folder. These examples
+demonstrate some of Amalgam8's features. Detailed instructions are
+available for different container runtimes and cloud platforms.
+
+---
+
+## Building from source
+
+To build from source, clone this repository, and follow the instructions in
+the [developer guide](devel/).
+
+### Continuous Integration with Travis CI
+
+Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
+
+---
+
+## Release Workflow
+
+This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
+
+### Creating a release
+
+1.  Set a version for the release, by incrementing the current version
+    according to the [semantic versioning](https://semver.org/)
+    guidelines. For example,
+
+    ```bash
+    export VERSION=v0.1.0
+    ```
+
+1.  Update the APP_VER variable in the Makefile such that it matches with
+    the VERSION variable above.
+
+1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
+   
+    ```bash
+    git tag -a -m "Release $VERSION" $VERSION [commit id]
+    ```
+
+    The `[commit id]` argument is optional. If not specified, HEAD is used.
+   
+1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
+
+    ```bash
+    git push upstream $VERSION
+    ```
+   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
+   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
+
+1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
+
+1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/releases), and add a title and description (according to `CHANGELOG.md`).
+
+---
+
+## License
+
+Copyright 2016 IBM Corporation
+
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+
+---
+
+## Contributing
+
+Contributions and feedback are welcome! 
+Proposals and pull requests will be considered. 
+Please see the [CONTRIBUTING.md](CONTRIBUTING.md) file for more information.

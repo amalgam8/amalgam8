@@ -16,7 +16,7 @@
 gateway:
   image: amalgam8/a8-sidecar:alpine
   environment:
-    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_CONTROLLER_URL=http://controller:8080
     - A8_REGISTRY_URL=http://registry:8080
     - A8_PROXY=true
     - A8_LOG=true

@@ -253,7 +253,7 @@ registry:
   poll:  10s
   
 controller:
-  url:   http://controller:6379
+  url:   http://controller:8080
   token: abcdef
   poll:  30s
   

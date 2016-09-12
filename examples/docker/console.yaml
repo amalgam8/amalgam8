@@ -16,7 +16,7 @@
 console:
   image: amalgam8/console-0.3-dev
   environment:
-    - A8_CONTROLLER_URL=http://controller:6379
+    - A8_CONTROLLER_URL=http://controller:8080
     - A8_REGISTRY_URL=http://registry:8080
     - A8_LOG_SERVER=elasticsearch:9200
     - PYTHONUNBUFFERED=0

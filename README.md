@@ -1,4 +1,4 @@
-# Amalgam8
+# Amalgam8 - Content and version-based routing for microservices
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 
@@ -47,10 +47,10 @@ from microservice A:v2 route all requests to B:v2
 from microservice A:v1 route 10% of requests to B:v2 and 90% to B:v1
 ```
 
-A simple way to accomplish these functions is by controlling how
-microservices can talk to each other.
+*A simple way to accomplish these functions is to control how
+microservices can talk to each other.*
 
-## Amalgam8 - A content and version-based routing framework for microservices
+# What is Amalgam8 ?
 
 Amalgam8 is a platform for building polyglot microservice applications that
 enables you to route requests between microservices in a *content-based*
@@ -74,9 +74,8 @@ for building tools for various DevOps tasks such as A/B testing, internal
 releases and dark launches, canary rollouts, red/black deployments,
 resilience testing, etc.
 
----
 
-## Amalgam8 - Components
+### Amalgam8 - Components
 
 * The Amalgam8 control plane consists of two multi-tenant components:
     * [Service Registry](registry/)
@@ -102,7 +101,7 @@ resilience testing, etc.
   [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
 
-## Amalgam8 - Sample Applications
+### Amalgam8 - Sample Applications
 
 To get started with Amalgam8, we suggest exploring some of the sample
 applications in the [examples](examples/) folder. These examples
@@ -158,7 +157,6 @@ This section includes instructions for working with releases, and is intended fo
 
 1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/releases), and add a title and description (according to `CHANGELOG.md`).
 
----
 
 ## License
 

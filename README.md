@@ -1,4 +1,4 @@
-# Amalgam8 - Content and version-based routing for microservices
+# Amalgam8 - Microservice Routing Fabric
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
 

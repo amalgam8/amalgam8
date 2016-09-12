@@ -44,7 +44,7 @@ The following environment variables are available. All of them are optional.
 
 | Environment Key | Flag Name                   | Description | Default Value |
 |:----------------|:----------------------------|:------------|:--------------|
-| A8_API_PORT | --api_port | API port | 6379 |
+| A8_API_PORT | --api_port | API port | 8080 |
 | A8_CONTROL_TOKEN | --control_token | Controller API authentication token | ABCDEFGHIJKLMNOP |
 | A8_ENCRYPTION_KEY | --encryption_key | secret key | abcdefghijklmnop |
 | A8_DATABASE_TYPE |  --database_type |	database type | memory |

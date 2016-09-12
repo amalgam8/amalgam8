@@ -33,7 +33,7 @@ const (
 	requireHTTPSFlag = "require_https"
 )
 
-const apiPort = 6379
+const apiPort = 8080
 
 // Flags command line args for Controller
 var Flags = []cli.Flag{

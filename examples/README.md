@@ -4,8 +4,6 @@ Sample microservice-based applications and local sandbox environment for Amalgam
 
 An overview of Amalgam8 can be found at www.amalgam8.io.
 
-[//]: # (**Note:** This is an unstable branch. If you are experimenting with Amalgam8 for the first time, please use the stable branch (`git checkout -b 0.1.0 origin/0.1.0`) and use this [README](https://github.com/amalgam8/amalgam8/examples/blob/0.2.0/README.md) from the stable branch.)
-
 ## Overview <a id="overview"></a>
 
 This project includes a number of Amalgam8 sample programs, scripts and a preconfigured environment to allow
@@ -256,8 +254,6 @@ The following setup has been tested with Kubernetes v1.2.3.
     
     You can also access the registry at `http://localhost:31300` from the host machine
     (outside the Vagrant box), and the controller at `http://localhost:31200` .
-    To access the control plane details of tenant *local*, access
-    http://localhost:31200/v1/tenants/local from your browser.
 
 
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:

@@ -194,9 +194,10 @@ release.controller:
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
 release.sidecar:
-	@echo "--> building sidecar docker image"
+	@echo "--> packaging sidecar for release"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/opt/a8_lualib \
+		$(BUILDDIR)/opt/openresty_debs \
 		$(BUILDDIR)/etc/filebeat \
 		$(BUILDDIR)/etc/nginx \
 		$(BUILDDIR)/usr/bin \
@@ -206,6 +207,7 @@ release.sidecar:
 	@cp $(DOCKERDIR)/filebeat.yml $(BUILDDIR)/etc/filebeat/
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
+	@cp openresty/*.deb $(BUILDDIR)/opt/openresty_debs/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
 	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar.sh > $(RELEASEDIR)/a8sidecar.sh
 

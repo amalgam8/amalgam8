@@ -54,6 +54,7 @@ const (
 	EurekaErrorApplicationEnumeration       = "eureka_error_application_enumeration"
 	EurekaErrorApplicationIdentifierMissing = "eureka_error_application_id_missing"
 	EurekaErrorApplicationNotFound          = "eureka_error_application_not_found"
+	EurekaErrorApplicationMismatch          = "eureka_error_application_mismatch"
 	EurekaErrorDashboardGeneration          = "eureka_error_dashboard_generation"
 	EurekaErrorRequiredFieldsMissing        = "eureka_error_required_fields_missing"
 	EurekaErrorStatusMissing                = "eureka_error_status_missing"

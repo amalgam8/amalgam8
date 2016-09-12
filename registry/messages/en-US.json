@@ -116,6 +116,10 @@
     "translation": "Failed to look-up application"
   },
   {
+    "id": "eureka_error_application_mismatch",
+    "translation": "Application name mismatch"
+  },
+  {
     "id": "eureka_error_dashboard_generation",
     "translation": "Failed to generate dashboard"
   },

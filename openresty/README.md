@@ -1,6 +1,7 @@
 # OpenResty Debian packages
 
-This folder contains Debian packages for OpenResty 1.11.2.1. They were
-created using the `fpm` tool from their respective rpm counterparts hosted
-at
-[OpenResty's fedora repo](https://copr-be.cloud.fedoraproject.org/results/openresty/openresty/fedora-24-x86_64/).
+This folder contains the binary tarball for OpenResty 1.11.2.1, compiled on
+Ubuntu 14.04 using the commands in
+[OpenResty's Dockerfile](https://github.com/openresty/docker-openresty/blob/master/trusty/Dockerfile)
+for ubuntu. Just untar the tarball from the root directory to install the
+files in the necessary path.

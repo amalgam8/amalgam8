@@ -27,8 +27,15 @@ type ExternalRegistry interface {
 	ListServiceInstancesByName(namespace auth.Namespace, name string) (map[string]*ServiceInstance, error)
 	ListAllServiceInstances(namespace auth.Namespace) (map[string]ServiceInstanceMap, error)
 	InsertServiceInstance(namespace auth.Namespace, instance *ServiceInstance) error
-	DeleteServiceInstance(key string) (int, error)
+	DeleteServiceInstance(namespace auth.Namespace, instanceID string) (int, error)
 }
+
+const (
+	registryRecordKey = "reg"
+	namespaceKey      = "ns"
+	instanceKey       = "inst"
+	keySeparator      = ":"
+)
 
 // DBKey represents the service instance key
 type DBKey struct {
@@ -36,6 +43,8 @@ type DBKey struct {
 	InstanceID string
 }
 
+// Database key format:
+// reg:inst:<instance id>:ns:<namespace>
 func (dbk *DBKey) String() string {
-	return fmt.Sprintf("%s%s%s", dbk.InstanceID, keySeparator, dbk.Namespace)
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s", registryRecordKey, keySeparator, instanceKey, keySeparator, dbk.InstanceID, keySeparator, namespaceKey, keySeparator, dbk.Namespace)
 }

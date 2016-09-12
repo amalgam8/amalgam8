@@ -41,8 +41,6 @@ const (
 	statusMaxLength      int = 32
 	metadataMaxLength    int = 1024
 
-	keySeparator = ":"
-
 	instancesMetricName  = "store.instances.count"
 	expirationMetricName = "store.instances.expiration"
 	lifetimeMetricName   = "store.instances.lifetime"

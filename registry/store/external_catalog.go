@@ -387,7 +387,7 @@ func (ec *externalCatalog) delete(instanceID string) *ServiceInstance {
 		return nil
 	}
 
-	hDel, _ := ec.db.DeleteServiceInstance(fmt.Sprintf("%s%s%s", instance.ID, keySeparator, ec.namespace.String()))
+	hDel, _ := ec.db.DeleteServiceInstance(ec.namespace, instance.ID)
 	if hDel == 0 {
 		return nil
 	}

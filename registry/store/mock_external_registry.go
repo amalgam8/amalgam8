@@ -15,8 +15,6 @@
 package store
 
 import (
-	"fmt"
-
 	"github.com/amalgam8/amalgam8/pkg/auth"
 )
 
@@ -58,7 +56,8 @@ func (mer *mockExternalRegistry) ListServiceInstancesByName(namespace auth.Names
 
 	for _, instance := range mer.mockServiceInstances {
 		if name == instance.ServiceName {
-			siMap[fmt.Sprintf("%s.%s", instance.ID, instance.ServiceName)] = instance.DeepClone()
+			dbKey := DBKey{InstanceID: instance.ID, Namespace: namespace.String()}
+			siMap[dbKey.String()] = instance.DeepClone()
 			continue
 		}
 	}
@@ -87,19 +86,21 @@ func (mer *mockExternalRegistry) ListAllServiceInstances(namespace auth.Namespac
 
 func (mer *mockExternalRegistry) InsertServiceInstance(namespace auth.Namespace, instance *ServiceInstance) error {
 	si := instance.DeepClone()
-	mer.mockServiceInstances[fmt.Sprintf("%s%s%s", instance.ID, keySeparator, namespace.String())] = si
+	dbKey := DBKey{InstanceID: instance.ID, Namespace: namespace.String()}
+	mer.mockServiceInstances[dbKey.String()] = si
 	return nil
 }
 
-func (mer *mockExternalRegistry) DeleteServiceInstance(key string) (int, error) {
+func (mer *mockExternalRegistry) DeleteServiceInstance(namespace auth.Namespace, instanceID string) (int, error) {
 	var count int
 
+	dbKey := DBKey{InstanceID: instanceID, Namespace: namespace.String()}
 	// Don't need to loop to delete, but need a count of instances deleted
 	for index := range mer.mockServiceInstances {
-		if index == key {
+		if index == dbKey.String() {
 			count++
 			// Remove the instance from the slice
-			delete(mer.mockServiceInstances, key)
+			delete(mer.mockServiceInstances, dbKey.String())
 		}
 	}
 	return count, nil

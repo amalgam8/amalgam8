@@ -1,5 +1,9 @@
 #!/bin/bash
-BUILD_BASE=${HOME}/openresty
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+BUILD_BASE=${SCRIPTDIR}/openresty
+DEST=${SCRIPTDIR}/dist
+OS="linux"
+ARCH="amd64"
 RESTY_VERSION="1.11.2.1"
 RESTY_LUAROCKS_VERSION="2.3.0"
 RESTY_OPENSSL_VERSION="1.0.2h"
@@ -43,7 +47,8 @@ RESTY_CONFIG_OPTIONS="\
     --conf-path=/etc/nginx/nginx.conf
     "
 _RESTY_CONFIG_DEPS="--with-openssl=${BUILD_BASE}/openssl-${RESTY_OPENSSL_VERSION} --with-pcre=${BUILD_BASE}/pcre-${RESTY_PCRE_VERSION}"
-DEBIAN_FRONTEND=noninteractive apt-get update && \
+DEBIAN_FRONTEND=noninteractive apt-get -y update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y rubygems-integration ruby-dev gcc make && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
@@ -58,7 +63,8 @@ DEBIAN_FRONTEND=noninteractive apt-get update && \
     perl \
     unzip \
     zlib1g-dev \
-    && pushd ${BUILD_BASE} \
+    && mkdir -p ${BUILD_BASE} \
+    && cd ${BUILD_BASE} \
     && curl -fSL https://www.openssl.org/source/openssl-${RESTY_OPENSSL_VERSION}.tar.gz -o openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && tar xzf openssl-${RESTY_OPENSSL_VERSION}.tar.gz \
     && curl -fSL https://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-${RESTY_PCRE_VERSION}.tar.gz -o pcre-${RESTY_PCRE_VERSION}.tar.gz \
@@ -68,6 +74,12 @@ DEBIAN_FRONTEND=noninteractive apt-get update && \
     && cd ${BUILD_BASE}/openresty-${RESTY_VERSION} \
     && ./configure -j${RESTY_J} ${_RESTY_CONFIG_DEPS} ${RESTY_CONFIG_OPTIONS} \
     && make -j${RESTY_J} \
+    && mkdir ${DEST} \
+    && DESTDIR=${DEST} make install \
+    && cd ${SCRIPTDIR} \
+	&& tar -C ${DEST} -czf ${SCRIPTDIR}/openresty-${RESTY_VERSION}-bin-${OS}-${ARCH}.tar.gz --transform 's:^./::' .
+
+
     # && make -j${RESTY_J} install \
     # && cd /tmp \
     # && rm -rf \
@@ -89,11 +101,11 @@ DEBIAN_FRONTEND=noninteractive apt-get update && \
     # && rm -rf luarocks-${RESTY_LUAROCKS_VERSION} luarocks-${RESTY_LUAROCKS_VERSION}.tar.gz \
     # && DEBIAN_FRONTEND=noninteractive apt-get autoremove -y \
 
-    && fpm -s dir -t deb -n openresty -v ${RESTY_VERSION} -C ${BUILD_BASE}/build/root -p openresty_VERSION_ARCH.deb \
-        --description "A high performance web server and a reverse proxy server with Openresty extensions"  --url 'http://openresty.org/' \
-        --category httpd -d libncurses5 -d libreadline6 -d libpcre3 -d ca-certificates \
-        -m 'Amalgam8 Team' --vendor "Amalgam8 Team" \
-        --replaces 'nginx-full' --provides 'nginx-full' \
-        --conflicts 'nginx-full' --replaces 'nginx-common' --provides 'nginx-common' --conflicts 'nginx-common' \
-        --provides 'nginx-core' --conflicts 'nginx-core' \
-        --deb-build-depends build-essential
+    # && fpm -s dir -t deb -n openresty -v ${RESTY_VERSION} -C ${BUILD_BASE}/build/root -p openresty_VERSION_ARCH.deb \
+    #     --description "A high performance web server and a reverse proxy server with Openresty extensions"  --url 'http://openresty.org/' \
+    #     --category httpd -d libncurses5 -d libreadline6 -d ca-certificates \
+    #     -m 'Amalgam8 Team' --vendor "Amalgam8 Team" \
+    #     --replaces 'nginx-full' --provides 'nginx-full' \
+    #     --conflicts 'nginx-full' --replaces 'nginx-common' --provides 'nginx-common' --conflicts 'nginx-common' \
+    #     --provides 'nginx-core' --conflicts 'nginx-core' \
+    #     --deb-build-depends build-essential

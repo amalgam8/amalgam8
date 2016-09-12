@@ -9,3 +9,6 @@ release/
 
 # Logs
 *.log
+
+#Vagrant folders
+.vagrant

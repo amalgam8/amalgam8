@@ -57,11 +57,13 @@ func newExternalFactory(conf *externalConfig) CatalogFactory {
 				if err != nil {
 					return nil, err
 				}
-				if _, err := c.Do("AUTH", conf.password); err != nil {
-					c.Close()
-					return nil, err
+				if conf.password != "" {
+					if _, err := c.Do("AUTH", conf.password); err != nil {
+						c.Close()
+						return nil, err
+					}
 				}
-				return c, err
+				return c, nil
 			},
 			TestOnBorrow: func(c redis.Conn, t time.Time) error {
 				if time.Since(t) < time.Minute {

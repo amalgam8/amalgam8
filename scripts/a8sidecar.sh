@@ -22,18 +22,39 @@ set -e
 A8SIDECAR_RELEASE=v0.2.0
 FILEBEAT_RELEASE=1.2.2
 DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/releases/download/${A8SIDECAR_RELEASE}
+HAVE_WGET=0
+HAVE_CURL=0
 
-wget -O /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
-wget -O /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+curl --version >/dev/null 2>&1
+if [ $? == 0 ]; then
+    HAVE_CURL=1
+fi
 
+wget --version >/dev/null 2>&1
+if [ $? == 0 ]; then
+    HAVE_WGET=1
+fi
+
+if [ $HAVE_CURL == 0 -a $HAVE_WGET == 0 ]; then
+    apt-get -y update && apt-get -y install curl
+    HAVE_CURL=1
+fi
+
+if [ $HAVE_WGET == 1 ]; then
+    wget -O /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+    wget -O /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+else
+    curl -o /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+    curl -o /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+fi
+  
 ##Install OpenResty
 mkdir /var/log/nginx
+A8TMP="/tmp/a8tmp"
 
-mkdir -p /tmp/a8tmp && \
-    cd /tmp/a8tmp && \
-    tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz && \
-    dpkg -i /tmp/a8tmp/openresty_debs/*.deb && \
-    apt-get -y update && apt-get -f install \
+mkdir -p $A8TMP && \
+    tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz && -C $A8TMP \
+    tar -xzf $A8TMP/opt/openresty_dist/*.tar.gz -C / && \
     ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     mkdir -p /etc/nginx && cp /usr/local/openresty/nginx/conf/* /etc/nginx/ && \
     ln -s /usr/local/openresty/nginx/logs /var/log/nginx
@@ -45,6 +66,6 @@ dpkg -i /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
 tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C /
 
 #Cleanup
-rm -rf /tmp/a8tmp
+rm -rf ${A8TMP}
 rm /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
 rm /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz

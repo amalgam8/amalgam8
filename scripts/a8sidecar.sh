@@ -25,22 +25,24 @@ DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/releases/download/${A8SIDECAR_
 HAVE_WGET=0
 HAVE_CURL=0
 
+set +e
 curl --version >/dev/null 2>&1
-if [ $? == 0 ]; then
+if [ $? -eq 0 ]; then
     HAVE_CURL=1
 fi
 
 wget --version >/dev/null 2>&1
-if [ $? == 0 ]; then
+if [ $? -eq 0 ]; then
     HAVE_WGET=1
 fi
 
-if [ $HAVE_CURL == 0 -a $HAVE_WGET == 0 ]; then
-    apt-get -y update && apt-get -y install curl
+set -e
+if [ $HAVE_CURL -eq 0 -a $HAVE_WGET -eq 0 ]; then
+    DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install curl
     HAVE_CURL=1
 fi
 
-if [ $HAVE_WGET == 1 ]; then
+if [ $HAVE_WGET -eq 1 ]; then
     wget -O /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
     wget -O /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 else
@@ -48,16 +50,15 @@ else
     curl -o /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 fi
   
-##Install OpenResty
-mkdir /var/log/nginx
-A8TMP="/tmp/a8tmp"
+##Install OpenResty from Amalgam8 repo
+## Compared to OpenResty stock configuration, this binary has been compiled to place config files in /etc/nginx,
+## log files in /var/log/nginx and nginx binary in /usr/sbin/nginx.
 
-mkdir -p $A8TMP && \
-    tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz && -C $A8TMP \
-    tar -xzf $A8TMP/opt/openresty_dist/*.tar.gz -C / && \
-    ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
-    mkdir -p /etc/nginx && cp /usr/local/openresty/nginx/conf/* /etc/nginx/ && \
-    ln -s /usr/local/openresty/nginx/logs /var/log/nginx
+A8TMP="/tmp/a8tmp"
+mkdir -p $A8TMP
+
+tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C $A8TMP
+tar -xzf $A8TMP/opt/openresty_dist/*.tar.gz -C /
 
 #Install Filebeat
 dpkg -i /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb

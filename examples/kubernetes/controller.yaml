@@ -23,7 +23,7 @@ metadata:
     name: controller
 spec:
   ports:
-  - port: 6080
+  - port: 8080
     targetPort: 8080
     nodePort: 31200
     protocol: TCP

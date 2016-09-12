@@ -9,21 +9,21 @@
 
 ## TL;DR
 
-1. The following whiteboard animation video provides a quick intro to Amalgam8
+1. A quick intro video to Amalgam8
 
 <a href="http://www.youtube.com/watch?feature=player_embedded&v=gvjhrxwX7S8" target="_blank"><img
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
 Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
-1. [Try the sample applications](examples/) in an container runtime of your
-   choice (Docker, Kubernetes, Marathon).
+1. [Try the sample applications](examples/) with a container orchestration
+   framework of your choice.
 
 1. [Integrate the sidecar](https://www.amalgam8.io/docs/content/getting-started-with-amalgam8.html)
    into your existing application to start using Amalgam8.
 
 ---
 
-## What is content and version-based routing?
+## Content and version-based routing - 101
 
 In any realistic production deployment, there are typically multiple
 versions of microservices running at the same time, as you might be testing
@@ -50,7 +50,7 @@ from microservice A:v1 route 10% of requests to B:v2 and 90% to B:v1
 A simple way to accomplish these functions is by controlling how
 microservices can talk to each other.
 
-## What is Amalgam8 ?
+## Amalgam8 - A content and version-based routing framework for microservices
 
 Amalgam8 is a platform for building polyglot microservice applications that
 enables you to route requests between microservices in a *content-based*
@@ -101,7 +101,6 @@ resilience testing, etc.
   information on setting up HTTPS with Nginx, please refer to the official
   [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
----
 
 ## Amalgam8 - Sample Applications
 
@@ -121,7 +120,6 @@ the [developer guide](devel/).
 
 Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
 
----
 
 ## Release Workflow
 
@@ -172,7 +170,6 @@ http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
----
 
 ## Contributing
 

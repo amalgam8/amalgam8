@@ -75,12 +75,13 @@ releases and dark launches, canary rollouts, red/black deployments,
 resilience testing, etc.
 
 
-### Amalgam8 - Components
+## Amalgam8 - Components
 
 * The Amalgam8 control plane consists of two multi-tenant components:
     * [Service Registry](registry/)
     * [Route Controller](controller/)
-  The registry and the controller store their state in a Redis backend.
+
+    The registry and the controller store their state in a Redis backend.
 
 * In the data plane, the [Amalgam8 sidecar](sidecar/) runs alongside each
   microservice instance. The sidecar is an
@@ -101,14 +102,13 @@ resilience testing, etc.
   [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
 
-### Amalgam8 - Sample Applications
+## Amalgam8 - Sample Applications
 
 To get started with Amalgam8, we suggest exploring some of the sample
 applications in the [examples](examples/) folder. These examples
 demonstrate some of Amalgam8's features. Detailed instructions are
 available for different container runtimes and cloud platforms.
 
----
 
 ## Building from source
 

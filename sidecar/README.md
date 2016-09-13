@@ -11,16 +11,26 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
 
 ## TL;DR
 
-* Install the sidecar in your Dockerized microservice.
+* Install the sidecar in your Dockerized microservice
 
     ```Dockerfile
-    RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/$VERSION/a8sidecar.sh | sh
+    RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
     ```
 
 * Launch your app via the sidecar
 
     ```Dockerfile
-    ENTRYPOINT ["a8sidecar", "--supervise", "YOURAPP", "YOURAPP_ARG", "YOURAPP_ARG"]
+    ENTRYPOINT ["a8sidecar", "--register", "--proxy", "--supervise", "YOURAPP", "YOURAPP_ARG", "YOURAPP_ARG"]
+    ```
+
+* Inject environment variables into your container
+
+    ```bash
+    A8_SERVICE=service_name:service_tags
+    A8_ENDPOINT_PORT=port_where_service_is_listening
+    A8_ENDPOINT_TYPE=http|https
+    A8_REGISTRY_URL=http://a8registryURL
+    A8_CONTROLLER_URL=http://a8controllerURL
     ```
 
 * Make API calls to other microservices via the sidecar
@@ -42,19 +52,16 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
 Add the following line to your `Dockerfile` to install the sidecar in your docker container:
 
 ```Dockerfile
-RUN curl -sSL https://git.io/a8sidecar.sh | sh
+RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
 ```
 
 or
 
 ```Dockerfile
-RUN wget -qO- https://git.io/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
 ```
 
-The above URL points to the latest stable release of Amalgam8 sidecar. If
-you would like to install a specific release, replace the URL with 
-`https://github.com/amalgam8/amalgam8/sidecar/releases/download/${VERSION}/install-a8sidecar.sh`
-where `${VERSION}` is the version of the sidecar that you wish to install.
+Replace ${VERSION} with the specific version of Amalgam8 you would like. The set of releases are available [here](https://github.com/amalgam8/amalgam8/releases).
 
 **Optional app supervision:** The sidecar can serve as a supervisor process that
 automatically starts up your application in addition to the Nginx proxy. To
@@ -107,7 +114,7 @@ A8_PROXY=false
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
 #A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
-A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
+#A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
 A8_ENDPOINT_TYPE=http|https|tcp|udp|user
@@ -123,7 +130,7 @@ version-aware routing are required.
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
 #A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
-A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
+#A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
 A8_ENDPOINT_TYPE=http|https|tcp|udp|user
@@ -132,7 +139,7 @@ A8_PROXY=true
 A8_LOG=false
 A8_CONTROLLER_URL=http://a8controllerURL
 #A8_CONTROLLER_TOKEN=a8controller_auth_token #if controller is used in multi-tenant mode
-A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
+#A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
 ```
 
 **Update propagation**: The sidecar will periodically poll the Amalgam8

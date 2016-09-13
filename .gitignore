@@ -10,5 +10,8 @@ release/
 # Logs
 *.log
 
-#Vagrant folders
+# Vagrant folders
 .vagrant
+
+# Gradle folders
+.gradle

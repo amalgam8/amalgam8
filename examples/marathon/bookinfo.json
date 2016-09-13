@@ -59,7 +59,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v1",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -84,7 +84,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v2",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -113,7 +113,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine",
+			                "image": "amalgam8/a8-examples-bookinfo-reviews-sidecar:v3",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {
@@ -142,7 +142,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine",
+			                "image": "amalgam8/a8-examples-bookinfo-productpage-sidecar:v1",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {

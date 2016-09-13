@@ -33,7 +33,7 @@ ratings-v1:
     - registry
 
 reviews-v1:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v1
@@ -43,7 +43,7 @@ reviews-v1:
     - registry
 
 reviews-v2:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2
   environment:
     - A8_LOG=true
     - A8_REGISTER=true
@@ -61,7 +61,7 @@ reviews-v2:
     - registry
 
 reviews-v3:
-  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine
+  image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3
   environment:
     - A8_LOG=true
     - A8_REGISTER=true

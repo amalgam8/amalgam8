@@ -1,21 +1,11 @@
 # Sidecar
 
-[![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
-
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/sidecar
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/sidecar
-[Travis]: https://travis-ci.org/amalgam8/sidecar
-[Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
-
 Ambassador pattern for microservices made simple and powerful. The Amalgam8
 sidecar enables intelligent request routing while automating service
 registration, discovery, and client-side load-balancing. The Amalgam8
 sidecar is based on Go+Nginx and follows an architecture similar to
 [Netflix Prana sidecar](http://techblog.netflix.com/2014/11/prana-sidecar-for-your-netflix-paas.html) 
 or [AirBnB Smartstack](http://nerds.airbnb.com/smartstack-service-discovery-cloud/).
-
-
-An overview of the Amalgam8 project is available here: https://amalgam8.io/
 
 Documentation related to the sidecar can be found at https://amalgam8.io/docs
 
@@ -24,7 +14,7 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
 * Install the sidecar in your Dockerized microservice.
 
     ```Dockerfile
-    RUN curl -sSL https://git.io/a8sidecar.sh | sh
+    RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/$VERSION/a8sidecar.sh | sh
     ```
 
 * Launch your app via the sidecar
@@ -269,19 +259,32 @@ log_level: debug
 
 ## Building from source
 
-The following sections describe options for building the sidecar from
-source.
+Please refer to the [developer guide](../devel/) for prerequisites and
+instructions on how to setup the development environment.
 
-### Preprequisites
+### Building a Docker Image
 
-* Docker 1.8 or higher
-* Go 1.6
+To build the docker image for the Amalgam8 Sidecar, run the
+following commands:
 
-### Clone
+```bash
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build dockerize.sidecar
+```
 
-Clone the repository manually, or use `go get`:
+You should now have a docker image tagged `a8-controller:latest`.
 
-```go get github.com/amalgam8/amalgam8/sidecar```
+
+### Building an Executable
+
+The sidecar can also be run as a standalone binary for debugging purposes.
+The following commands will build and run it as a Go binary:
+
+```bash
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build.sidecar
+./bin/a8sidecar [args]
+```
 
 ### Make targets
 
@@ -292,55 +295,3 @@ The following targets are available. Each may be run with `make <target>`.
 | `release`        | *(Default)* `release` builds the sidecar within a docker container and packages it into an image |
 | `test`           | `test` runs all tests using `go test` |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
-
-## Release Workflow
-
-This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
-
-### Creating a release
-
-1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
-   
-    ```bash
-    export VERSION=v0.1.0
-    ```
-
-1.  Update the APP_VER variable in the Makefile such that it matches with
-    the VERSION variable above.
-
-1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
-   
-    ```bash
-    git tag -a -m "Release $VERSION" $VERSION [commit id]
-    ```
-
-    The `[commit id]` argument is optional. If not specified, HEAD is used.
-   
-1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
-
-    ```bash
-    git push upstream $VERSION
-    ```
-   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
-   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
-
-1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
-
-1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/sidecar/releases), and add a title and description (according to `CHANGELOG.md`).
-
-## License
-Copyright 2016 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-## Contributing
-
-Contributions and feedback are welcome!
-Proposals and pull requests will be considered. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md)
-file for more information.
-

@@ -106,7 +106,7 @@ sidecar container inside kubernetes
 A8_PROXY=false
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
-A8_REGISTRY_TOKEN=a8registry_auth_token
+#A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
 A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
@@ -122,7 +122,7 @@ version-aware routing are required.
 ```bash
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
-A8_REGISTRY_TOKEN=a8registry_auth_token
+#A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
 A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
@@ -131,7 +131,7 @@ A8_ENDPOINT_TYPE=http|https|tcp|udp|user
 A8_PROXY=true
 A8_LOG=false
 A8_CONTROLLER_URL=http://a8controllerURL
-A8_CONTROLLER_TOKEN=a8controller_auth_token
+#A8_CONTROLLER_TOKEN=a8controller_auth_token #if controller is used in multi-tenant mode
 A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
 ```
 

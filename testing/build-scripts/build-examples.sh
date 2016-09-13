@@ -32,15 +32,19 @@ pushd $MAKEDIR/details
 popd
 
 pushd $MAKEDIR/reviews
-  #plain build -- no ratings
-  docker build -t amalgam8/a8-examples-bookinfo-reviews:v1 .
-  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v1-alpine -f Dockerfile.sidecar .
-  #with ratings black stars
-  docker build -t amalgam8/a8-examples-bookinfo-reviews:v2 --build-arg enable_ratings=true .
-  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v2-alpine --build-arg enable_ratings=true -f Dockerfile.sidecar .
-  #with ratings red stars
-  docker build -t amalgam8/a8-examples-bookinfo-reviews:v3 --build-arg enable_ratings=true --build-arg star_color=red .
-  docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v3-alpine --build-arg enable_ratings=true --build-arg star_color=red -f Dockerfile.sidecar .
+  #java build the app.
+  docker run --rm -v `pwd`:/usr/bin/app:rw niaquinto/gradle clean build
+  pushd reviews-wlpcfg
+    #plain build -- no ratings
+    docker build -t amalgam8/a8-examples-bookinfo-reviews:v1 --build-arg service_version=v1 .
+    docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v1 --build-arg service_version=v1 -f Dockerfile.sidecar .
+    #with ratings black stars
+    docker build -t amalgam8/a8-examples-bookinfo-reviews:v2 --build-arg service_version=v2 --build-arg enable_ratings=true .
+    docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v2 --build-arg service_version=v2 --build-arg enable_ratings=true -f Dockerfile.sidecar .
+    #with ratings red stars
+    docker build -t amalgam8/a8-examples-bookinfo-reviews:v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red .
+    docker build -t amalgam8/a8-examples-bookinfo-reviews-sidecar:v3 --build-arg service_version=v3 --build-arg enable_ratings=true --build-arg star_color=red -f Dockerfile.sidecar .
+  popd
 popd
 
 pushd $MAKEDIR/ratings

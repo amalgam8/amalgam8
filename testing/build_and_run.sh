@@ -29,7 +29,7 @@ sleep 5
 docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
 sleep 5
 docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
-sleep 10
+sleep 60
 $SCRIPTDIR/testing/demo_script.sh
 echo "Docker tests successful. Cleaning up.."
 $EXAMPLESDIR/docker/cleanup.sh

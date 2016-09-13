@@ -102,6 +102,8 @@ resilience testing, etc.
   [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
 
+# Getting Started
+
 ## Amalgam8 - Sample Applications
 
 To get started with Amalgam8, we suggest exploring some of the sample
@@ -109,13 +111,19 @@ applications in the [examples](examples/) folder. These examples
 demonstrate some of Amalgam8's features. Detailed instructions are
 available for different container runtimes and cloud platforms.
 
+## Slack Channel
 
-## Building from source
+If you have any questions or feedback, you can reach us via our public
+Slack channel (#amalgam8). To join this channel, please use the following
+self invite URL: https://amalgam8-slack-invite.mybluemix.net
+
+
+# Development Process
 
 To build from source, clone this repository, and follow the instructions in
 the [developer guide](devel/).
 
-### Continuous Integration with Travis CI
+## Travis CI
 
 Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
 
@@ -158,7 +166,7 @@ This section includes instructions for working with releases, and is intended fo
 1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/releases), and add a title and description (according to `CHANGELOG.md`).
 
 
-## License
+# License
 
 Copyright 2016 IBM Corporation
 
@@ -169,7 +177,7 @@ http://www.apache.org/licenses/LICENSE-2.0
 Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
 
 
-## Contributing
+# Contributing
 
 Contributions and feedback are welcome! 
 Proposals and pull requests will be considered. 

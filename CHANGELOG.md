@@ -8,11 +8,11 @@
 
 - Sidecar now polls controller for rule changes and registry for service instance changes.
 
-- Controller now has support for Redis persistent storage.
+- Controller and Registry now have support for Redis persistent storage.
 
-- NGINX Lua code overhauled to support new rules API format from controller.
+- NGINX Lua code has been overhauled to support the new rules API format from controller.
 
-- Options for sidecar to proxy, register, and log are now default `false`.
+- Options for sidecar to proxy, register, and log now default to `false`.
 
 - The default controller port is now 8080 instead of 6379.
 

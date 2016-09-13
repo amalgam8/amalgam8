@@ -1,34 +1,33 @@
-# Amalgam8 Controller
+# Amalgam8 Route Controller
 
-[![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
+The Amalgam8 Route Controller is a multi-tenant, highly-available service
+for managing routing across microservices via the
+[sidecars](../sidecar/). Routes programmed at the controller are percolated
+down to the sidecars periodically. Routing rules can be based on the
+content of the requests and the version of microservices sending and
+receiving the requests. In addition to routing, rules can also be expressed
+for injecting faults into microservice API calls.
 
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/controller
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/controller
-[Travis]: https://travis-ci.org/amalgam8/controller
-[Travis Widget]: https://travis-ci.org/amalgam8/controller.svg?branch=master
+**High Availability:** The Route Controller supports a Redis backend for
+storing routing information. In this mode, the Controller instances are
+stateless and can be scaled using standard autoscaling techniques. In
+tandem, the data store backend, i.e., Redis, needs to be deployed in HA
+mode. Please refer to the
+[Redis Clustering](http://redis.io/topics/cluster-tutorial) documentation
+for details on setting up a highly available Redis backend.
 
-The Amalgam8 Controller serves as a central configuration service in the Amalgam8
-platform that allows one to setup rules for routing traffic across
-different microservice versions, rules for injecting faults into
-microservice API calls, etc., based on various request-level attributes.
-
-In addition to route management, the Amalgam8 Controller automatically synchronizes
-service instance information from the
-[Amalgam8 Registry](https://github.com/amalgam8/amalgam8/registry) and updates the
-[Amalgam8 Sidecars](https://github.com/amalgam8/amalgam8/sidecar) attached to each
-microservice.
-
-By default, the Amalgam8 Controller operates without any authentication. It also
+**Authentication & Multi-tenancy:** By default, the Controller operates in
+a single-tenant mode without any authentication. In multi-tenant mode, it
 supports two authentication mechanisms: a trusted auth mode for local
-testing and development, and a JWT auth mode for production deployments.
+testing and development purposes, and a JWT auth mode for production
+deployments.
 
-See https://www.amalgam8.io for an overview of the Amalgam8 project
-and https://www.amalgam8.io/docs for detailed documentation.
+See https://www.amalgam8.io/docs for detailed documentation.
 
 ## Usage
 
-To get started, use the current stable version of the Amalgam8 Controller from Docker
-Hub.
+To get started, use the current stable version of the Amalgam8 Controller
+from Docker Hub.
 
 ```bash
 docker run amalgam8/a8-controller:latest
@@ -60,44 +59,39 @@ The following environment variables are available. All of them are optional.
 
 ## REST API
 
-The documentation for
-[Amalgam8 Controller's REST API](https://amalgam8.io/controller) is
-available in Swagger format.
+Amalgam8 Route Controller
+[API documentation](../api/swagger-spec/controller.json) is available in
+Swagger format.
 
 ## Building from source
 
-To build from source, clone this repository, and follow the instructions below.
-
-### Pre-requisites
-
-* Docker engine >=1.10
-* Go toolchain (tested with 1.6.x). See [Go downloads](https://golang.org/dl/) and [installation instructions](https://golang.org/doc/install).
-
+Please refer to the [developer guide](../devel/) for prerequisites and
+instructions on how to setup the development environment.
 
 ### Building a Docker Image
 
-To build the docker image for the Amalgam8 Controller service, run the
+To build the docker image for the Amalgam8 Route Controller service, run the
 following commands:
 
 ```bash
-cd $GOPATH/src/github.com/amalgam8/amalgam8/controller
-make build docker
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build dockerize.controller
 ```
 
 You should now have a docker image tagged `a8-controller:latest`.
 
 ### Building an Executable
 
-The Amalgam8 Controller can also be run outside of a docker container as a Go
-binary.  This is not recommended for production, but it can be useful for
-development or easier integration with your local Go tools.
+The Amalgam8 Route Controller can also be run outside of a docker container
+as a Go binary.  This is not recommended for production, but it can be
+useful for development or easier integration with your local Go tools.
 
 The following commands will build and run it as a Go binary:
 
-```
-cd $GOPATH/src/github.com/amalgam8/amalgam8/controller
-make build
-./bin/controller
+```bash
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build.controller
+./bin/a8controller
 ```
 
 ### Makefile Targets
@@ -112,60 +106,3 @@ The following Makefile targets are available.
 | `docker`         | `docker` packages the binary in a docker container |
 | `release`        | `release` builds a tarball with the Controller binary |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
-
-
-### Continuous Integration with Travis CI
-
-Continuous builds are run on Travis CI. These builds use the `.travis.yml` configuration.
-
-## Release Workflow
-
-This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
-
-### Creating a release
-
-1.  Set a version for the release, by incrementing the current version
-    according to the [semantic versioning](https://semver.org/)
-    guidelines. For example,
-
-    ```bash
-    export VERSION=v0.1.0
-    ```
-
-1.  Update the APP_VER variable in the Makefile such that it matches with
-    the VERSION variable above.
-
-1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
-
-    ```bash
-    git tag -a -m "Release $VERSION" $VERSION [commit id]
-    ```
-
-    The `[commit id]` argument is optional. If not specified, HEAD is used.
-
-1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
-
-    ```bash
-    git push upstream $VERSION
-    ```
-   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
-   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
-
-1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
-
-1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/controller/releases), and add a title and description (according to `CHANGELOG.md`).
-
-## License
-Copyright 2016 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-## Contributing
-
-Contributions and feedback are welcome!
-Proposals and pull requests will be considered.
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md) file for more information.

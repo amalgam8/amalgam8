@@ -29,7 +29,7 @@ sleep 5
 docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
 sleep 5
 docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
-sleep 60
+sleep 120
 $SCRIPTDIR/testing/demo_script.sh
 echo "Docker tests successful. Cleaning up.."
 $EXAMPLESDIR/docker/cleanup.sh
@@ -45,7 +45,7 @@ kubectl create -f $EXAMPLESDIR/kubernetes/gateway.yaml
 sleep 15
 kubectl create -f $EXAMPLESDIR/kubernetes/bookinfo.yaml
 echo "Waiting for the services to come online.."
-sleep 60
+sleep 150
 $SCRIPTDIR/testing/demo_script.sh
 echo "Kubernetes tests successful. Cleaning up.."
 $EXAMPLESDIR/kubernetes/cleanup.sh

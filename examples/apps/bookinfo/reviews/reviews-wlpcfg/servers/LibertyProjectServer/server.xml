@@ -13,18 +13,21 @@
   limitations under the License.-->
 <server description="Sample Liberty server">
 
-  <featureManager>
-    <feature>jaxrs-2.0</feature>
-    <feature>ssl-1.0</feature>
-    <feature>jsonp-1.0</feature>
-  </featureManager>
+    <featureManager>
+        <feature>jaxrs-2.0</feature>
+        <feature>jsonp-1.0</feature>
+    </featureManager>
 
-   <httpEndpoint host="*" httpPort="9080" httpsPort="-1"
-        id="defaultHttpEndpoint" />
+    <httpEndpoint host="*" httpPort="9080" httpsPort="-1"
+                  id="defaultHttpEndpoint"/>
 
-   <applicationMonitor dropinsEnabled="false" updateTrigger="mbean"/>
-   <config updateTrigger="mbean" />
+    <webContainer deferServletLoad="false"/>
+    <applicationMonitor dropinsEnabled="false" updateTrigger="mbean"/>
+    <config updateTrigger="mbean"/>
 
-   <webApplication contextRoot="/" id="reviews-app" location="reviews-application-1.0.war" name="reviews-app"/>
+
+    <executor coreThreads="5"/>
+
+    <webApplication contextRoot="/" id="reviews-app" location="reviews-application-1.0.war" name="reviews-app"/>
 
 </server>

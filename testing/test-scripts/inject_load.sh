@@ -29,10 +29,19 @@ echostart() {
 echoend() {
     echoerr $@;
 }
+jsondiff() {
+    # Sort JSON fields, or fallback to original text
+    file1=$(jq -S . $1 2> /dev/null) || arg1=$(cat $1)
+    file2=$(jq -S . $2 2> /dev/null) || arg1=$(cat $2)
+    
+    # Diff, but ignore whitespace
+    diff -EZb <(echo $file1) <(echo $file2)
+}
+
 sleep 10
 echostart "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.html
+curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.json
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -42,7 +51,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-diff -u $SCRIPTDIR/productpage_v1.html /tmp/productpage_no_rulematch.html 1>&2
+jsondiff $SCRIPTDIR/productpage_v1.json /tmp/productpage_no_rulematch.json 1>&2
 if [ $? -gt 0 ]; then
     echoerr "failed"
     echoerr "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in gremlin test phase"
@@ -53,7 +62,7 @@ echoend "works!"
 ####For jason
 echostart "injecting traffic for user=jason, expecting 'reviews unavailable' message in approx 7s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.html
+curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.json
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -63,10 +72,10 @@ if [ $delta -gt 8 -o $delta -lt 5 ]; then
     exit 1
 fi
 
-diff -u $SCRIPTDIR/productpage_rulematch.html /tmp/productpage_rulematch.html 1>&2
+jsondiff $SCRIPTDIR/productpage_rulematch.json /tmp/productpage_rulematch.json 1>&2
 if [ $? -gt 0 ]; then
     echoerr "failed"
-    echoerr "Productpage does not match productpage_rulematch.html after injecting fault rule for user=jason in gremlin test phase"
+    echoerr "Productpage does not match productpage_rulematch.json after injecting fault rule for user=jason in gremlin test phase"
     exit 1
 fi
 echoend "works!"

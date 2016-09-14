@@ -18,7 +18,24 @@ set -x
 set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXAMPLESDIR=$SCRIPTDIR/../../examples
 
-$SCRIPTDIR/build-scripts/build-amalgam8.sh
-$SCRIPTDIR/test-scripts/test-docker.sh
-$SCRIPTDIR/test-scripts/test-kubernetes.sh
+echo "Testing docker-based deployment.."
+
+$EXAMPLESDIR/docker/run-controlplane-docker.sh start
+sleep 5
+
+docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
+sleep 5
+
+docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml up -d
+sleep 10
+
+# Run the actual test workload
+$SCRIPTDIR/demo_script.sh
+
+echo "Docker tests successful. Cleaning up.."
+$EXAMPLESDIR/docker/cleanup.sh
+docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml kill
+docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml rm -f
+sleep 10

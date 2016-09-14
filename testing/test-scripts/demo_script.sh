@@ -18,6 +18,15 @@
 set -x
 set -o errexit
 
+jsondiff() {
+    # Sort JSON fields, or fallback to original text
+    file1=$(jq -S . $1 2> /dev/null) || arg1=$(cat $1)
+    file2=$(jq -S . $2 2> /dev/null) || arg1=$(cat $2)
+    
+    # Diff, but ignore whitespace
+    diff -EZb <(echo $file1) <(echo $file2)
+}
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 RECIPE_PATH=$GOPATH/src/github.com/amalgam8/amalgam8/examples/apps/bookinfo
 a8ctl service-list
@@ -33,9 +42,9 @@ a8ctl route-set --default v1 --selector 'v2(user="jason")' reviews
 sleep 10
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v1.html
+curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v1.json
 
-diff -u $SCRIPTDIR/productpage_v1.html /tmp/productpage_v1.html
+jsondiff $SCRIPTDIR/productpage_v1.json /tmp/productpage_v1.json
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
@@ -44,9 +53,9 @@ fi
 echo "works!"
 
 echo -n "injecting traffic for user=jason, expecting productpage_v2.."
-curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.html
+curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.json
 
-diff -u $SCRIPTDIR/productpage_v2.html /tmp/productpage_v2.html
+jsondiff $SCRIPTDIR/productpage_v2.json /tmp/productpage_v2.json
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
@@ -62,7 +71,7 @@ sleep 10
 ###For shriram
 echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.html
+curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.json
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -72,7 +81,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-diff -u $SCRIPTDIR/productpage_v1.html /tmp/productpage_no_rulematch.html
+jsondiff $SCRIPTDIR/productpage_v1.json /tmp/productpage_no_rulematch.json
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
@@ -83,7 +92,7 @@ echo "works!"
 ####For jason
 echo -n "injecting traffic for user=jason, expecting 'reviews unavailable' message in approx 7s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.html
+curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.json
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -93,10 +102,10 @@ if [ $delta -gt 8 -o $delta -lt 5 ]; then
     exit 1
 fi
 
-diff -u $SCRIPTDIR/productpage_rulematch.html /tmp/productpage_rulematch.html
+jsondiff $SCRIPTDIR/productpage_rulematch.json /tmp/productpage_rulematch.json
 if [ $? -gt 0 ]; then
     echo "failed"
-    echo "Productpage does not match productpage_rulematch.html after injecting fault rule for user=jason in fault injection test phase"
+    echo "Productpage does not match productpage_rulematch.json after injecting fault rule for user=jason in fault injection test phase"
     exit 1
 fi
 echo "works!"
@@ -108,7 +117,7 @@ sleep 10
 
 echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.html
+curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.json
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -118,10 +127,10 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-diff -u $SCRIPTDIR/productpage_v2.html /tmp/productpage_v2.html
+jsondiff $SCRIPTDIR/productpage_v2.json /tmp/productpage_v2.json
 if [ $? -gt 0 ]; then
     echo "failed"
-    echo "Productpage does not match productpage_v2.html after clearing fault rules for user=jason in fault injection test phase"
+    echo "Productpage does not match productpage_v2.json after clearing fault rules for user=jason in fault injection test phase"
     exit 1
 fi
 echo "works!"

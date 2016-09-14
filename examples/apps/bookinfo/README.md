@@ -220,8 +220,7 @@ Inject test requests with HTTP header Cookie: value, where value matches the pat
 When done, press Enter key to continue to validation phase
 ```
 
-* Inject load into the application. When logged in as user `jason`, reload the `productpage` web page to once again. Wait a few seconds
-  seconds to let the logs propagate from the app/sidecar containers to the logstash server and finally to elasticsearch. Then, press Enter on the console where the above command was run.
+* Inject load into the application. When logged in as user `jason`, *reload* the `productpage` web page. Wait a few seconds to let the     logs propagate from the app/sidecar containers to the logstash server and finally to elasticsearch. Then, press Enter on the console     where the above command was run.
 
   *This form of manual load injection is for the purpose of demonstration only. Ideally, you should use automated load injection tools during this phase of testing.*
 

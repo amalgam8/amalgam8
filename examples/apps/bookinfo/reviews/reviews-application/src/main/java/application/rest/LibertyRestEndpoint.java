@@ -41,7 +41,7 @@ public class LibertyRestEndpoint extends Application {
 
     private final static Boolean ratings_enabled = Boolean.valueOf(System.getenv("ENABLE_RATINGS"));
     private final static String star_color = System.getenv("STAR_COLOR") == null ? "black" : System.getenv("STAR_COLOR");
-    private final static String ratings_service = "http://127.0.0.1:6379/ratings/ratings";
+    private final static String ratings_service = System.getenv("PROXY_SERVICE") == null ? "http://127.0.0.1:6379/ratings/ratings" : System.getenv("PROXY_SERVICE")+"/ratings/ratings";
 
     private final static String review_resp = ""+
       "<blockquote>"+
@@ -81,7 +81,7 @@ public class LibertyRestEndpoint extends Application {
            JsonObjectBuilder jb = Json.createObjectBuilder();
            for(String key : j.keySet()){
              int count = j.getInt(key);
-             String stars = "<font color\""+ star_color +"\">";
+             String stars = "<font color=\""+ star_color +"\">";
              for(int i=0; i<count; i++){
                stars += "<span class=\"glyphicon glyphicon-star\"></span>";
              }

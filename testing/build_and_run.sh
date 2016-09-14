@@ -28,7 +28,7 @@ $EXAMPLESDIR/docker/run-controlplane-docker.sh start
 sleep 5
 docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
 sleep 5
-docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
+docker-compose -f $SCRIPTDIR/build-scripts/docker.yaml up -d
 sleep 10
 $SCRIPTDIR/testing/demo_script.sh
 echo "Docker tests successful. Cleaning up.."
@@ -43,7 +43,7 @@ $EXAMPLESDIR/kubernetes/run-controlplane-local-k8s.sh start
 sleep 15
 kubectl create -f $EXAMPLESDIR/kubernetes/gateway.yaml
 sleep 15
-kubectl create -f $EXAMPLESDIR/kubernetes/bookinfo.yaml
+kubectl create -f $SCRIPTDIR/build-scripts/kubernetes.yaml
 echo "Waiting for the services to come online.."
 sleep 60
 $SCRIPTDIR/testing/demo_script.sh

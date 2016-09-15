@@ -110,16 +110,20 @@ clean:
 #--------
 #-- test
 #--------
-.PHONY: test test.all
+.PHONY: test test.long test.integration
 
 test:
 	@echo "--> running unit tests, excluding long tests"
 	@go test -v $(GOPKGS) -short
 
-test.all:
+test.long:
 	@echo "--> running unit tests, including long tests"
 	@go test -v $(GOPKGS)
 
+test.integration:
+	@echo "--> running integration tests"
+	@testing/build_and_run.sh
+	
 #---------------
 #-- checks
 #---------------

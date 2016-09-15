@@ -10,7 +10,7 @@ ENABLE_SERVICEDISCOVERY=false
 #################################################################################
 
 PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar:v1-alpine
-DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar:v1-alpine
+DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar:v1
 RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar:v1-alpine
 REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-alpine
 REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-alpine

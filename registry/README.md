@@ -118,13 +118,14 @@ Amalgam8 Registry supports a Redis backend for storing instance information as a
 #### Catalog Extensions
 
 The Amalgam8 Registry supports read-only catalogs extensions. 
-The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, FileSystem, etc) is read by the Registry and
+The content of each catalog extension (e.g., Kubernetes, Docker-Swarm, Eureka, FileSystem, etc) is read by the Registry and
 returned to the user along with the content of the Registry itself.
 
 | Environment Variable | Flag Name                   | Description | Default Value |
 |:---------------------|:----------------------------|:------------|:--------------|
 | `A8_K8S_URL` | `--k8s_url` | Enable kubernetes catalog and specify the API server | (none) |
 | `A8_K8S_TOKEN` | `--k8s_token` | Kubernetes API token | (none) |
+| `A8_EUREKA_URL` | `--eureka_url` | Enable eureka catalog and specify the API server(s) | (none) |
 | `A8_FS_CATALOG` | `--fs_catalog` | Enable FileSystem catalog and specify the directory of the config files. The format of the file names in the directory should be `<namespace>.conf`. See [FileSystem catalog documentation](doc/filesystem_catalog.md) for more information | (none) |
 
 

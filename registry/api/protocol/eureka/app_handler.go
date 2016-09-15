@@ -33,6 +33,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Error("Failed to list applications")
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -53,14 +54,9 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 
 	for index, svc := range services {
 		insts, err := catalog.List(svc.ServiceName, nil)
+		// The service might be removed by other user in the middle
 		if err != nil {
-			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env[env.Namespace],
-				"error":     err,
-			}).Errorf("Failed to lookup application %s", svc.ServiceName)
-
-			i18n.Error(r, w, http.StatusInternalServerError, i18n.EurekaErrorApplicationEnumeration)
-			return
+			continue
 		}
 
 		app := &Application{Name: svc.ServiceName, Instances: make([]*Instance, len(insts))}
@@ -106,6 +102,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to lookup application %s", appid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 

@@ -23,13 +23,13 @@ EXAMPLESDIR=$SCRIPTDIR/../../examples
 echo "Testing docker-based deployment.."
 
 $EXAMPLESDIR/docker/run-controlplane-docker.sh start
-sleep 5
+sleep 2
 
 docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
-sleep 5
+sleep 2
 
 docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml up -d
-sleep 10
+sleep 2
 
 # Run the actual test workload
 $SCRIPTDIR/demo_script.sh
@@ -38,4 +38,4 @@ echo "Docker tests successful. Cleaning up.."
 $EXAMPLESDIR/docker/cleanup.sh
 docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml kill
 docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml rm -f
-sleep 10
+sleep 2

@@ -38,7 +38,7 @@ jsondiff() {
     diff -EZb <(echo $file1) <(echo $file2)
 }
 
-sleep 10
+sleep 5
 echostart "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
 before=$(date +"%s")
 curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.json
@@ -79,4 +79,4 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 echoend "works!"
-sleep 15
+sleep 10

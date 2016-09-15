@@ -33,8 +33,6 @@ bluemix ic group-create --name amalgam8_controller \
   --min 1 --max 2 --desired 1 \
   --hostname $CONTROLLER_HOSTNAME \
   --domain $ROUTES_DOMAIN \
-  --env A8_POLL_INTERVAL=5s \
-  --env A8_LOG_LEVEL=debug \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${CONTROLLER_IMAGE}
 
 echo "Starting registry"
@@ -43,7 +41,6 @@ bluemix ic group-create --name amalgam8_registry \
   --min 1 --max 2 --desired 1 \
   --hostname $REGISTRY_HOSTNAME \
   --domain $ROUTES_DOMAIN \
-  --env A8_AUTH_MODE=trusted \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE}
 
 # if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then

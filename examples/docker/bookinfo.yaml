@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 details-v1:
-  image: amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine
+  image: amalgam8/a8-examples-bookinfo-details-sidecar:v1
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=details:v1

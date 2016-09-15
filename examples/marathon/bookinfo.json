@@ -9,7 +9,7 @@
 		            "container": {
 			            "type": "DOCKER",
 			            "docker": {
-			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine",
+			                "image": "amalgam8/a8-examples-bookinfo-details-sidecar:v1",
 			                "network": "BRIDGE",
 			                "portMappings": [
 				                {

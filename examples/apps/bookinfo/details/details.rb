@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/ruby
 #
 # Copyright 2016 IBM Corporation
 #
@@ -14,16 +14,20 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+require 'webrick'
 
-from flask import Flask, request
-import simplejson as json
-import requests
-import sys
-from json2html import *
+if ARGV.length < 1 then
+    puts "usage: #{$PROGRAM_NAME} port"
+    exit(-1)
+end
 
-app = Flask(__name__)
+port = Integer(ARGV[0])
 
-details_resp="""
+server = WEBrick::HTTPServer.new :BindAddress => '0.0.0.0', :Port => port
+
+trap 'INT' do server.shutdown end
+
+details_resp = '
 <h4 class="text-center text-primary">Book Details</h4>
 <dl>
 <dt>Paperback:</dt>200 pages
@@ -32,18 +36,15 @@ details_resp="""
 <dt>ISBN-10:</dt>1234567890
 <dt>ISBN-13:</dt>123-1234567980
 </dl>
-"""
+'
 
-@app.route('/details')
-def bookDetails():
-    global details_resp
-    return details_resp
+server.mount_proc '/details' do |req, res|
+    res.body = details_resp
+    res['Content-Type'] = 'text/html'
+end
 
-@app.route('/')
-def index():
-    """ Display frontpage with normal user and test user buttons"""
-
-    top = """
+server.mount_proc '/' do |req, res|
+  res.body = '
     <html>
     <head>
     <meta charset="utf-8">
@@ -69,16 +70,8 @@ def index():
     <div>%s</div>
     </body>
     </html>
-    """ % (details_resp)
-    return top
+  ' % [details_resp]
+  res['Content-Type'] = 'text/html'
+end
 
-proxyurl=None
-if __name__ == '__main__':
-    # To run the server, type-in $ python server.py
-    if len(sys.argv) < 2:
-        print "usage: %s port proxyurl" % (sys.argv[0])
-        sys.exit(-1)
-
-    p = int(sys.argv[1])
-    proxyurl = sys.argv[2]
-    app.run(host='0.0.0.0', port=p, debug = False)
+server.start

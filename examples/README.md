@@ -437,7 +437,7 @@ cf create-route <your bluemix space> mybluemix.net -n <your bookinfo route>
 where `<your bluemix space>` is the name of your Bluemix space and `<your route ...>` is a unique route name for `registry`, `controller` and `bookinfo`. For example `my-space-name-a8-registry`, `my-space-name-a8-controller`, etc. Make a note of the route names you choose for the next step.
     
 
-1. Customize the [bluemixrc](bluemix/.bluemixrc) file in the following manner:
+1. Customize the `amalgam8/examples/bluemix/.bluemixrc` file as follows:
     * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```bluemix ic namespace-get```
     * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
     * REGISTRY_HOSTNAME should be the route name assigned to the registry in the previous step

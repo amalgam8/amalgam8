@@ -598,6 +598,20 @@
           "minimum": 0,
           "exclusiveMinimum": true
         },
+        "retries": {
+          "description": "Number of times to retry request or re-establish connectivity",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "failover": {
+          "description": "When requests to this backend fail, fallback to provided backends",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/basicBackend"
+          }
+        }
       },
       "required": [
         "tags"

@@ -136,7 +136,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -232,6 +232,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 			"error":     "catalog is nil",
 		}).Errorf("Failed to deregister instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -285,6 +286,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -334,6 +336,7 @@ func (routes *Routes) getInstanceByAppAndID(w rest.ResponseWriter, r *rest.Reque
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -383,6 +386,7 @@ func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -399,14 +403,9 @@ func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
 
 	for _, svc := range services {
 		insts, err := catalog.List(svc.ServiceName, nil)
+		// The service might be removed by other user in the middle
 		if err != nil {
-			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env[env.Namespace],
-				"error":     err,
-			}).Errorf("Failed to query instance %s", uid)
-
-			i18n.Error(r, w, http.StatusInternalServerError, i18n.EurekaErrorApplicationEnumeration)
-			return
+			continue
 		}
 
 		for _, si := range insts {
@@ -478,6 +477,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to set instance %s status", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 

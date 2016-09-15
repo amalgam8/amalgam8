@@ -43,36 +43,6 @@ bluemix ic group-create --name amalgam8_registry \
   --domain $ROUTES_DOMAIN \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE}
 
-# if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
-#     cf service sd &> /dev/null
-#     if [ $? -ne 0 ]; then
-#         echo "Creating a Service Discovery instance..."
-#         cf create-service service_discovery free sd
-#     else
-#         echo "Found an existing Service Discovery instance"
-#     fi
-
-#     if [ $(cf service-key sd sdkey | grep -ic "No service key") -gt 0 ]; then
-#         echo "Creating Service Discovery credentials"
-#         cf create-service-key sd sdkey
-#     else
-#         echo "Found existing Service Discovery credentials"
-#     fi
-
-#     SDKEY=$(cf service-key sd sdkey | tail -n +3)
-#     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
-#     REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
-# else
-#     echo "Starting registry"
-#     bluemix ic group-create --name amalgam8_registry \
-#             --publish 8080 --memory 256 --auto \
-#             --min 1 --max 2 --desired 1 \
-#             --hostname $REGISTRY_HOSTNAME \
-#             --domain $ROUTES_DOMAIN \
-#             --env A8_AUTH_MODE=trusted \
-#             ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REGISTRY_IMAGE}
-# fi
-
 # Wait for controller route to set up
 echo "Waiting for controller route to set up"
 attempt=0

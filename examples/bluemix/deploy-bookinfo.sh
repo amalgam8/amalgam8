@@ -28,18 +28,6 @@ for image in ${REQUIRED_IMAGES[@]}; do
     fi
 done
 
-# #################################################################################
-# # Fetch registry credentials
-# #################################################################################
-
-# if [ "$ENABLE_SERVICEDISCOVERY" = true ]; then
-#     SDKEY=$(cf service-key sd sdkey | tail -n +3)
-#     REGISTRY_URL=$(echo "$SDKEY" | jq -r '.url')
-#     REGISTRY_TOKEN=$(echo "$SDKEY" | jq -r '.auth_token')
-# fi
-# # else use local registry credentials set in .bluemixrc
-
-
 #################################################################################
 # start the productpage microservice instances
 #################################################################################

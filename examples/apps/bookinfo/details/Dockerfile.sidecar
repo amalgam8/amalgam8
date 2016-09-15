@@ -12,32 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM amalgam8/a8-sidecar:alpine
-
-RUN apk add --no-cache \
-              bash \
-              python \
-              python-dev \
-              py-pip \
-  && pip install --upgrade pip \
-  && pip install Flask
-
-RUN cd /usr/bin \
-  && ln -sf easy_install-2.7 easy_install \
-  && ln -sf python2.7 python \
-  && ln -sf python2.7-config python-config \
-  && ln -sf pip2.7 pip
+FROM ruby:2.1
 
 RUN mkdir -p /opt/microservices
-
-ADD requirements.txt /opt
-RUN apk add --no-cache --virtual .build-deps \
-    build-base \
-    && pip install -r /opt/requirements.txt \
-    && apk del .build-deps
-
 COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices
 
-ENTRYPOINT ["a8sidecar", "--proxy=false", "--log=false", "--supervise", "python", "details.py", "9080", "http://localhost:6379"]
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.3.0/a8sidecar.sh | sh
+
+ENTRYPOINT ["a8sidecar", "--supervise", "ruby", "details.rb", "9080", "http://localhost:6379"]

@@ -23,7 +23,7 @@ end
 
 port = Integer(ARGV[0])
 
-server = WEBrick::HTTPServer.new :Port => port
+server = WEBrick::HTTPServer.new :BindAddress => '0.0.0.0', :Port => port
 
 trap 'INT' do server.shutdown end
 
@@ -40,6 +40,7 @@ details_resp = '
 
 server.mount_proc '/details' do |req, res|
     res.body = details_resp
+    res['Content-Type'] = 'text/html'
 end
 
 server.mount_proc '/' do |req, res|
@@ -70,6 +71,7 @@ server.mount_proc '/' do |req, res|
     </body>
     </html>
   ' % [details_resp]
+  res['Content-Type'] = 'text/html'
 end
 
 server.start

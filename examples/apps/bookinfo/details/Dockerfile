@@ -12,10 +12,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM jfloff/alpine-python:2.7-onbuild
+FROM ruby:2.1
 
 RUN mkdir -p /opt/microservices
 COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices
-CMD python details.py 9080 http://localhost:6379
+
+CMD ruby details.rb 9080 http://localhost:6379
+
+

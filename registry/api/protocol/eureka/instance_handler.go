@@ -106,27 +106,15 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	// Get the instance ID
-	// In the old eureka client versions (1.1.x) the instance ID is NOT explicitly set in the request data,
-	// but it is part of the DatacenterInfo class.
-	iid := inst.ID
-	if iid == "" {
-		iid, err = getInstanceID(inst)
-		if err != nil {
-			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env[env.Namespace],
-				"error":     err,
-			}).Warnf("Failed to register instance %+v", inst)
+	si, err := BuildA8Instance(inst)
+	if err != nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     err,
+		}).Warnf("Failed to register instance %+v", inst)
 
-			i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
-			return
-		}
-	}
-	uid := buildUniqueInstanceID(inst.Application, iid)
-
-	ttl := defaultDurationInt
-	if inst.Lease != nil && inst.Lease.DurationInt > 0 {
-		ttl = inst.Lease.DurationInt
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
+		return
 	}
 
 	catalog := routes.catalog(w, r)
@@ -136,29 +124,9 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
-
-	ext, err := buildExtensionFromInstance(inst)
-	if err != nil {
-		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env[env.Namespace],
-			"error":     err,
-		}).Errorf("Failed to register instance %+v", inst)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
-		return
-	}
-
-	si := &store.ServiceInstance{
-		ID:          uid,
-		ServiceName: inst.Application,
-		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
-		Status:      inst.Status,
-		TTL:         time.Duration(ttl) * time.Second,
-		Metadata:    inst.Metadata,
-		Extension:   ext}
 
 	var sir *store.ServiceInstance
 
@@ -250,7 +218,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 			"error":     "catalog is nil",
 		}).Errorf("Failed to deregister instance %s", uid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -304,7 +272,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", uid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -354,7 +322,7 @@ func (routes *Routes) getInstanceByAppAndID(w rest.ResponseWriter, r *rest.Reque
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -404,7 +372,7 @@ func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -495,7 +463,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to set instance %s status", uid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -563,6 +531,47 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
 }
 
+func BuildA8Instance(inst *Instance) (*store.ServiceInstance, error) {
+	var err error
+
+	// Get the instance ID
+	// In the old eureka client versions (1.1.x) the instance ID is NOT explicitly set in the request data,
+	// but it is part of the DatacenterInfo class.
+	id := inst.ID
+	if id == "" {
+		id, err = resolveInstanceID(inst)
+		if err != nil {
+			return nil, err
+		}
+	}
+	uid := buildUniqueInstanceID(inst.Application, id)
+
+	ext, err := buildExtensionFromInstance(inst)
+	if err != nil {
+		return nil, err
+	}
+
+	ttl := defaultDurationInt
+	var lastRenewal time.Time
+	if inst.Lease != nil && inst.Lease.DurationInt > 0 {
+		ttl = inst.Lease.DurationInt
+		lastRenewal = time.Unix(inst.Lease.LastRenewalTs/1e3, (inst.Lease.LastRenewalTs%1e3)*1e6)
+	}
+
+	si := &store.ServiceInstance{
+		ID:          uid,
+		ServiceName: inst.Application,
+		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
+		Status:      inst.Status,
+		TTL:         time.Duration(ttl) * time.Second,
+		LastRenewal: lastRenewal,
+		Metadata:    inst.Metadata,
+		Extension:   ext,
+	}
+
+	return si, nil
+}
+
 func buildInstanceFromRegistry(si *store.ServiceInstance) *Instance {
 	inst := buildDefaultInstance(si)
 
@@ -594,8 +603,8 @@ func buildDefaultInstance(si *store.ServiceInstance) *Instance {
 		CordServer:    "false",
 		ActionType:    "ADDED",
 		OvrStatus:     "UNKNOWN",
-		LastDirtyTs:   fmt.Sprintf("%d", si.RegistrationTime.Unix()),
-		LastUpdatedTs: fmt.Sprintf("%d", si.RegistrationTime.Unix()),
+		LastDirtyTs:   fmt.Sprintf("%d", si.RegistrationTime.UnixNano()/int64(time.Millisecond)),
+		LastUpdatedTs: fmt.Sprintf("%d", si.RegistrationTime.UnixNano()/int64(time.Millisecond)),
 		Metadata:      si.Metadata,
 	}
 

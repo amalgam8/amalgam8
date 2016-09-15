@@ -14,6 +14,10 @@
 
 package eureka
 
+import (
+	"fmt"
+)
+
 const (
 	softlayerInstanceID = "getId"
 )
@@ -28,5 +32,13 @@ func (softlayer *softlayerInfo) GetID(dcinfo *DatacenterInfo) string {
 	}
 
 	uid := dcinfo.Metadata[softlayerInstanceID]
-	return uid
+
+	switch v := uid.(type) {
+	case float32, float64:
+		return fmt.Sprintf("%.0f", v)
+	case string:
+		return v
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }

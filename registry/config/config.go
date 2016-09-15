@@ -46,6 +46,8 @@ type Values struct {
 	K8sURL   string
 	K8sToken string
 
+	EurekaURLs []string
+
 	FSCatalog string
 
 	Store         string
@@ -79,6 +81,8 @@ func NewValuesFromContext(context *cli.Context) *Values {
 
 		K8sURL:   context.String(K8sURLFlag),
 		K8sToken: context.String(K8sTokenFlag),
+
+		EurekaURLs: context.StringSlice(EurekaURLsFlag),
 
 		FSCatalog: context.String(FSCatalogFlag),
 

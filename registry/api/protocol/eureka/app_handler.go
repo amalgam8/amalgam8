@@ -33,7 +33,7 @@ func (routes *Routes) listApps(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Error("Failed to list applications")
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -102,7 +102,7 @@ func (routes *Routes) listAppInstances(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to lookup application %s", appid)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 

@@ -28,7 +28,7 @@ type UniqueIdentifier interface {
 var amzInfo amazonInfo
 var slInfo softlayerInfo
 
-func getInstanceID(inst *Instance) (string, error) {
+func resolveInstanceID(inst *Instance) (string, error) {
 	var id string
 
 	if inst == nil {

@@ -27,6 +27,6 @@ func (amazon *amazonInfo) GetID(dcinfo *DatacenterInfo) string {
 		return ""
 	}
 
-	uid := dcinfo.Metadata[amazonInstanceID]
+	uid := dcinfo.Metadata[amazonInstanceID].(string)
 	return uid
 }

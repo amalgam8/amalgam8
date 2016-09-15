@@ -44,7 +44,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to list vip %s", vip)
 
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
 		return
 	}
 

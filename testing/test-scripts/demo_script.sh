@@ -20,8 +20,8 @@ set -o errexit
 
 jsondiff() {
     # Sort JSON fields, or fallback to original text
-    file1=$(jq -S . $1 2> /dev/null) || arg1=$(cat $1)
-    file2=$(jq -S . $2 2> /dev/null) || arg1=$(cat $2)
+    file1=$(jq -S . $1 2> /dev/null) || file1=$(cat $1)
+    file2=$(jq -S . $2 2> /dev/null) || file2=$(cat $2)
     
     # Diff, but ignore whitespace
     diff -EZb <(echo $file1) <(echo $file2)

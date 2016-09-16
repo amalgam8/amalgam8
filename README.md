@@ -59,7 +59,7 @@ orchestration layer
 ([Docker Swarm](https://www.docker.com/products/docker-swarm),
 [Kubernetes](https://kubernetes.io),
 [Marathon](https://mesosphere.github.io/marathon/)) or the cloud platform
-(Amazon AWS, IBM Bluemix, Google Cloud Platform, Microsoft Azure, etc.
+(Amazon AWS, IBM Bluemix, Google Cloud Platform, Microsoft Azure, etc.)
 
 Amalgam8 uses the sidecar model or the ambassador pattern for building
 microservices applications. The sidecar runs as in independent process and

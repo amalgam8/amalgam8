@@ -22,13 +22,13 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 echo "Testing docker-based deployment.."
 
 $SCRIPTDIR/run-controlplane-docker.sh start
-sleep 2
+sleep 5
 
 docker-compose -f $SCRIPTDIR/gateway.yaml up -d
-sleep 2
+sleep 5
 
 docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
-sleep 2
+sleep 10
 
 # Run the actual test workload
 $SCRIPTDIR/../test-scripts/demo_script.sh
@@ -36,4 +36,4 @@ $SCRIPTDIR/../test-scripts/demo_script.sh
 echo "Docker tests successful. Cleaning up.."
 $SCRIPTDIR/cleanup.sh
 
-sleep 2
+sleep 10

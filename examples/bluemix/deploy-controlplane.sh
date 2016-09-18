@@ -47,7 +47,7 @@ bluemix ic group-create --name amalgam8_registry \
 echo "Waiting for controller route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" "${CONTROLLER_URL}/health" -o /dev/null)
+    code=$(curl -w "%{http_code}" --max-time 10 "${CONTROLLER_URL}/health" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Controller route is set to '$CONTROLLER_URL'"
         break
@@ -66,7 +66,7 @@ done
 echo "Waiting for registry route to set up"
 attempt=0
 while true; do
-    code=$(curl -w "%{http_code}" "${REGISTRY_URL}/uptime" -o /dev/null)
+    code=$(curl -w "%{http_code}" --max-time 10 "${REGISTRY_URL}/uptime" -o /dev/null)
     if [ "$code" = "200" ]; then
         echo "Registry route is set to '$REGISTRY_URL'"
         break

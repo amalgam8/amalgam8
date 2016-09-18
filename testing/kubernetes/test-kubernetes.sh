@@ -19,6 +19,25 @@ set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-$SCRIPTDIR/build-scripts/build-amalgam8.sh
-$SCRIPTDIR/docker/test-docker.sh
-$SCRIPTDIR/kubernetes/test-kubernetes.sh
+echo "Testing kubernetes-based deployment.."
+
+sudo $SCRIPTDIR/install-kubernetes.sh
+sleep 5
+
+$SCRIPTDIR/run-controlplane-kubernetes.sh start
+sleep 5
+
+kubectl create -f $SCRIPTDIR/gateway.yaml
+sleep 5
+
+kubectl create -f $SCRIPTDIR/bookinfo.yaml
+echo "Waiting for the services to come online.."
+sleep 5
+
+# Run the actual test workload
+$SCRIPTDIR/../test-scripts/demo_script.sh
+
+echo "Kubernetes tests successful. Cleaning up.."
+$SCRIPTDIR/cleanup.sh
+sleep 2
+sudo $SCRIPTDIR/uninstall-kubernetes.sh

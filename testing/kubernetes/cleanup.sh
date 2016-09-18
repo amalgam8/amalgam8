@@ -15,10 +15,10 @@
 #   limitations under the License.
 
 set -x
-set -o errexit
-
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-$SCRIPTDIR/build-scripts/build-amalgam8.sh
-$SCRIPTDIR/docker/test-docker.sh
-$SCRIPTDIR/kubernetes/test-kubernetes.sh
+kubectl delete -f $SCRIPTDIR/gateway.yaml
+sleep 2
+kubectl delete -f $SCRIPTDIR/bookinfo.yaml
+sleep 2
+$SCRIPTDIR/run-controlplane-kubernetes.sh stop

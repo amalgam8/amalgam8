@@ -28,7 +28,6 @@ jsondiff() {
 }
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-RECIPE_PATH=$GOPATH/src/github.com/amalgam8/amalgam8/examples/apps/bookinfo
 a8ctl service-list
 a8ctl rule-clear
 
@@ -133,25 +132,3 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 echo "works!"
-
-#######Gremlin
-echo "Testing gremlin recipe.."
-a8ctl recipe-run --topology $RECIPE_PATH/topology.json --scenarios $RECIPE_PATH/gremlins.json --checks $RECIPE_PATH/checklist.json --run-load-script $SCRIPTDIR/inject_load.sh --header 'Cookie' --pattern='user=jason' > /tmp/gremlin_results.txt
-if [ $? -gt 0 ]; then
-    echo "a8ctl recipe-run exited with non-zero status. Either load injection failed or there was an error in a8ctl"
-    exit 1
-fi
-
-passes=$(grep "PASS" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
-if [ "$passes" != "3" ]; then
-    echo "Gremlin tests failed: result does not have the expected number of passing assertions"
-    cat /tmp/gremlin_results.txt
-    exit 1
-fi
-failures=$(grep "FAIL" /tmp/gremlin_results.txt | wc -l|tr -d ' ')
-if [ "$failures" != "1" ]; then
-    echo "Gremlin tests failed: result does not have the expected number of failing assertions"
-    cat /tmp/gremlin_results.txt
-    exit 1
-fi
-echo "Gremlin tests were successful.."

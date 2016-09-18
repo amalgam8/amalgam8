@@ -14,28 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-set -x
-set -o errexit
-
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-EXAMPLESDIR=$SCRIPTDIR/../../examples
 
-echo "Testing docker-based deployment.."
-
-$EXAMPLESDIR/docker/run-controlplane-docker.sh start
-sleep 2
-
-docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
-sleep 2
-
-docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml up -d
-sleep 2
-
-# Run the actual test workload
-$SCRIPTDIR/demo_script.sh
-
-echo "Docker tests successful. Cleaning up.."
-$EXAMPLESDIR/docker/cleanup.sh
-docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml kill
-docker-compose -f $SCRIPTDIR/../build-scripts/docker.yaml rm -f
-sleep 2
+sudo umount `cat /proc/mounts | grep /var/lib/kubelet | awk '{print $2}'` >/dev/null 2>&1
+sudo rm -rf /var/lib/kubelet
+docker rm -f $(docker ps -aq)

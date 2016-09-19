@@ -317,6 +317,12 @@ local function create_rule(rule, myname, mytags)
       local prev = 0.0
       local unweighted = 0
       for _, b in ipairs(rule.route.backends) do
+         -- add a name to every backend, so that the cookie_version_name is created properly.
+         -- otherwise, we will end up having cookie_version names like -v1, -v2, which will not
+         -- match any backend name stored in the browser's version cookie.
+         if not b.name then
+            b.name = rule.destination
+         end
          if b.weight then
             sum = sum + b.weight
          else

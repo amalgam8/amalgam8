@@ -643,7 +643,9 @@ function Amalgam8:apply_rules()
                break
             end
          end
-      else
+      end
+
+      if not selected_backend then -- cookie_version did not match any backend
          local weight = math.random()
          for _,b in ipairs(selected_route.backends) do --backends are ordered by increasing weight
             if weight < b.weight_order then

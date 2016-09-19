@@ -14,28 +14,26 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
 set -x
+set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+echo "Testing docker-based deployment.."
+
+$SCRIPTDIR/run-controlplane-docker.sh start
+sleep 5
+
+docker-compose -f $SCRIPTDIR/gateway.yaml up -d
+sleep 5
+
+docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
+sleep 10
+
+# Run the actual test workload
+$SCRIPTDIR/../test-scripts/demo_script.sh
+
+echo "Docker tests successful. Cleaning up.."
+$SCRIPTDIR/cleanup.sh
+
+sleep 10

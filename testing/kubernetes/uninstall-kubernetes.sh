@@ -14,28 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
-set -x
-
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+sudo umount `cat /proc/mounts | grep /var/lib/kubelet | awk '{print $2}'` >/dev/null 2>&1
+sudo rm -rf /var/lib/kubelet
+docker rm -f $(docker ps -aq)

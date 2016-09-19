@@ -16,26 +16,12 @@
 
 
 set -x
+set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+APPSDIR=$SCRIPTDIR/../apps
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+make -C $APPSDIR/productpage build dockerize clean
+make -C $APPSDIR/details build dockerize clean
+make -C $APPSDIR/ratings build dockerize clean
+make -C $APPSDIR/reviews build dockerize clean

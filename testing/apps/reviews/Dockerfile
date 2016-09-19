@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # Copyright 2016 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,28 +12,16 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+FROM scratch
 
-set -x
+WORKDIR /opt/microservices
+COPY reviews /opt/microservices/
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+ARG enable_ratings
+ARG star_color
+ENV ENABLE_RATINGS ${enable_ratings:-false}
+ENV STAR_COLOR ${star_color:-black}
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+EXPOSE 9080
+
+ENTRYPOINT ["/opt/microservices/reviews", "9080", "http://localhost:6379"]

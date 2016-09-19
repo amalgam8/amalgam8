@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # Copyright 2016 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,28 +12,11 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+FROM amalgam8/a8-sidecar:alpine
 
-set -x
+WORKDIR /opt/microservices
+COPY details /opt/microservices/
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXPOSE 9080
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+ENTRYPOINT ["a8sidecar", "/opt/microservices/details", "9080" ]

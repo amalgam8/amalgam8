@@ -14,8 +14,16 @@ env:
     - PLATFORM=linux/amd64
 
 before_install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine
+    # Prepare for integration test (upgrade docker/docker-compose, and install a8ctl)
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        sudo apt-get update -qq;
+        sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y docker-engine;
+        sudo rm /usr/local/bin/docker-compose || exit 0;
+        curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > docker-compose;
+        chmod +x docker-compose;
+        sudo mv docker-compose /usr/local/bin;
+        sudo pip install git+https://github.com/amalgam8/a8ctl@master;
+      fi
 
 script:
     # Need to set explicitly, as these are unset by 'gimme'
@@ -25,6 +33,13 @@ script:
     # Analyze, test and build the code
     - make verify
 
+    # Run the integration test (master and PRs-to-master only)
+    - if [ "$TRAVIS_BRANCH" == "master" ]; then
+        export A8_CONTROLLER_URL=http://localhost:31200;
+        export A8_REGISTRY_URL=http://localhost:31300;
+        make test.integration;
+      fi
+      
 before_deploy: 
     - make release
     

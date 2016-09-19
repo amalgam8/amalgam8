@@ -14,28 +14,13 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
 set -x
-
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-$SCRIPTDIR/build-sidecar.sh
-if [ $? -ne 0 ]; then
-    echo "Sidecar failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-registry.sh
-if [ $? -ne 0 ]; then
-    echo "Registry failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-controller.sh
-if [ $? -ne 0 ]; then
-    echo "Controller failed to compile"
-    exit 1
-fi
-$SCRIPTDIR/build-apps.sh
-if [ $? -ne 0 ]; then
-    echo "Failed to build apps images"
-    exit 1
-fi
+docker-compose -f $SCRIPTDIR/bookinfo.yaml kill
+docker-compose -f $SCRIPTDIR/bookinfo.yaml rm -f
+
+docker-compose -f $SCRIPTDIR/gateway.yaml kill
+docker-compose -f $SCRIPTDIR/gateway.yaml rm -f
+
+$SCRIPTDIR/run-controlplane-docker.sh stop

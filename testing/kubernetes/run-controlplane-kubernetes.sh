@@ -18,26 +18,24 @@
 set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-#MYIP=`ip addr show eth0 | awk '$1 == "inet" {gsub(/\/.*$/, "", $2); print $2}'`
-MYIP=192.168.33.33
-cp $SCRIPTDIR/marathon.yaml /tmp/marathon.yaml
-sed -i "s/__REPLACEME__/${MYIP}/" /tmp/marathon.yaml
+
+rfile="registry.yaml"
+cfile="controller.yaml"
+rdsfile="redis.yaml"
 
 if [ "$1" == "start" ]; then
-    echo "starting Marathon/Mesos cluster with ELK stack"
-    docker-compose -f /tmp/marathon.yaml up -d
-    echo "waiting for the cluster to initialize.."
-    sleep 60
-    echo "Starting redis storage backend"
-    cat $SCRIPTDIR/redis.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
+    echo "Starting redis storage"
+    kubectl create -f $SCRIPTDIR/$rdsfile
     echo "Starting multi-tenant service registry"
-    cat $SCRIPTDIR/registry.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
+    kubectl create -f $SCRIPTDIR/$rfile
     echo "Starting multi-tenant controller"
-    cat $SCRIPTDIR/controller.json|curl -X POST -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps -d@-
-    echo "Waiting for controller to initialize..."
-    sleep 20
-    REGISTRY_URL="http://${MYIP}:31300"
-    CONTROLLER_URL="http://${MYIP}:31200"
+    kubectl create -f $SCRIPTDIR/$cfile
+
+    echo "Waiting for control plane to initialize..."
+
+    sleep 10
+    REGISTRY_URL=http://localhost:31300
+    CONTROLLER_URL=http://localhost:31200
 
     # Wait for controller route to set up
     echo "Waiting for controller route to set up"
@@ -79,12 +77,11 @@ if [ "$1" == "start" ]; then
 
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-redis
-    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-controller
-    curl -X DELETE -H "Content-Type: application/json" http://${MYIP}:8080/v2/apps/a8-registry
-    sleep 10
-    docker-compose -f /tmp/marathon.yaml kill
-    docker-compose -f /tmp/marathon.yaml rm -f
+    kubectl delete -f $SCRIPTDIR/$cfile
+    sleep 3
+    kubectl delete -f $SCRIPTDIR/$rfile
+    sleep 3
+    kubectl delete -f $SCRIPTDIR/$rdsfile
 else
     echo "usage: $0 start|stop"
     exit 1

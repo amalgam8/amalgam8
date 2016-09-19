@@ -47,8 +47,8 @@ if ! grep -Fq "/usr/local/go/bin" /home/vagrant/.profile; then
 	echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /home/vagrant/.profile
 fi
 mkdir -p /home/vagrant/sandbox/src/github.com/amalgam8
-git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/
-git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/
+git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/amalgam8
+git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/a8ctl
 
 chown -R vagrant:vagrant /home/vagrant/sandbox
 SCRIPT

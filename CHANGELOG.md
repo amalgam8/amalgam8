@@ -30,7 +30,7 @@ provided to the sidecar.
 
 ## 0.2.1 (August 1, 2016)
 
-- Fixed [#33](https://github.com/amalgam8/registry/issues/33): Panic during synchronization of the Registry's store 
+- Fixed [#33](https://github.com/amalgam8/amalgam8/issues/162): Panic during synchronization of the Registry's store 
 
 - Fixed bug where controller did not send rule updates to sidecar in
   polling mode.

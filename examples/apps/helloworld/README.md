@@ -103,7 +103,7 @@ Before you begin, follow the environment set up instructions at https://github.c
 
     Note: if you use a browser instead of cURL to access the service and continually refresh the page, 
     it will always return the same version (v1 or v2), because a cookie is set to maintain version affinity.
-    However, the browser still alternates in a random manner between the instances of the specific version.
+    However, the browser still alternates in a random manner between instances of the specific version.
 
 ## Using the Amalgam8 REST API
 

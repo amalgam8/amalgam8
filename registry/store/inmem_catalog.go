@@ -96,23 +96,23 @@ func newInMemoryCatalog(conf *inMemoryConfig) *inMemoryCatalog {
 func (imc *inMemoryCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
 	serviceName := si.ServiceName
 	if serviceName == "" {
-		return nil, NewError(ErrorBadRequest, "Empty service name", "")
+		return nil, NewError(ErrorNoInstanceServiceName, "Service name value was not specified", "")
 	}
 
-	if len(serviceName) > serviceNameMaxLength {
-		return nil, NewError(ErrorBadRequest, "Service name length too long", "")
+	if len(serviceName) > ServiceNameMaxLength {
+		return nil, NewError(ErrorInstanceServiceNameTooLong, "Service name value length too long", "")
 	}
 
-	if si.Endpoint != nil && len(si.Endpoint.Value) > valueMaxLength {
-		return nil, NewError(ErrorBadRequest, "Endpoint value length too long", "")
+	if si.Endpoint != nil && len(si.Endpoint.Value) > ValueMaxLength {
+		return nil, NewError(ErrorInstanceEndpointValueTooLong, "Endpoint value length too long", "")
 	}
 
-	if len(si.Status) > statusMaxLength {
-		return nil, NewError(ErrorBadRequest, "Status length too long", "")
+	if len(si.Status) > StatusMaxLength {
+		return nil, NewError(ErrorInstanceStatusLengthTooLong, "Status value length too long", "")
 	}
 
-	if si.Metadata != nil && len(si.Metadata) > metadataMaxLength {
-		return nil, NewError(ErrorBadRequest, "Metadata length too long", "")
+	if si.Metadata != nil && len(si.Metadata) > MetadataMaxLength {
+		return nil, NewError(ErrorInstanceMetaDataTooLong, "Metadata value length too long", "")
 	}
 
 	instanceID := si.ID

@@ -28,6 +28,11 @@ const (
 	ErrorNoSuchServiceInstance
 	ErrorNamespaceQuotaExceeded
 	ErrorInternalServerError
+	ErrorNoInstanceServiceName
+	ErrorInstanceServiceNameTooLong
+	ErrorInstanceEndpointValueTooLong
+	ErrorInstanceStatusLengthTooLong
+	ErrorInstanceMetaDataTooLong
 )
 
 // Error is an error implementation that is associated with an ErrorCode

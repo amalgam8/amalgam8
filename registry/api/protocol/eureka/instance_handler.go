@@ -168,7 +168,22 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     err,
 		}).Warnf("Failed to register instance %+v", inst)
 
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
+		if regerr, ok := err.(*store.Error); ok {
+			switch regerr.Code {
+			case store.ErrorNoInstanceServiceName:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNoServiceName)
+			case store.ErrorInstanceServiceNameTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorServiceNameTooLong, serviceNameMaxLength)
+			case store.ErrorInstanceEndpointValueTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorEndpointValueTooLong, valueMaxLength)
+			case store.ErrorInstanceStatusLengthTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorStatusLengthTooLong, statusMaxLength)
+			case store.ErrorInstanceMetaDataTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorMetaDataTooLong, metadataMaxLength)
+			default:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
+			}
+		}
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{

@@ -37,7 +37,7 @@ type Catalog interface {
 
 const (
 	serviceNameMaxLength int = 64
-	valueMaxLength       int = 64
+	valueMaxLength       int = 128
 	statusMaxLength      int = 32
 	metadataMaxLength    int = 1024
 

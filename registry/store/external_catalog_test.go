@@ -105,7 +105,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err := catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorNoInstanceServiceName, extractErrorCode(err))
 	assert.EqualValues(t, "Service name value was not specified", err.(*Error).Message)
 
 	// Error when Service Name is too long (>64 bytes)
@@ -114,7 +114,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorInstanceServiceNameTooLong, extractErrorCode(err))
 	assert.EqualValues(t, "Service name value length too long", err.(*Error).Message)
 
 	// Error when Endpoint value too long (>128 bytes)
@@ -126,7 +126,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorInstanceEndpointValueTooLong, extractErrorCode(err))
 	assert.EqualValues(t, "Endpoint value length too long", err.(*Error).Message)
 
 	// Error when status too long (>32 bytes)
@@ -139,7 +139,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorInstanceStatusLengthTooLong, extractErrorCode(err))
 	assert.EqualValues(t, "Status value length too long", err.(*Error).Message)
 
 	// Error when metadata too long (>1024 bytes)
@@ -152,7 +152,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorInstanceMetaDataTooLong, extractErrorCode(err))
 	assert.EqualValues(t, "Metadata value length too long", err.(*Error).Message)
 }
 

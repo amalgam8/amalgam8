@@ -161,19 +161,19 @@ func (ec *externalCatalog) Register(si *ServiceInstance) (*ServiceInstance, erro
 		return nil, NewError(ErrorNoInstanceServiceName, "Service name value was not specified", "")
 	}
 
-	if len(serviceName) > serviceNameMaxLength {
+	if len(serviceName) > ServiceNameMaxLength {
 		return nil, NewError(ErrorInstanceServiceNameTooLong, "Service name value length too long", "")
 	}
 
-	if si.Endpoint != nil && len(si.Endpoint.Value) > valueMaxLength {
+	if si.Endpoint != nil && len(si.Endpoint.Value) > ValueMaxLength {
 		return nil, NewError(ErrorInstanceEndpointValueTooLong, "Endpoint value length too long", "")
 	}
 
-	if len(si.Status) > statusMaxLength {
+	if len(si.Status) > StatusMaxLength {
 		return nil, NewError(ErrorInstanceStatusLengthTooLong, "Status value length too long", "")
 	}
 
-	if si.Metadata != nil && len(si.Metadata) > metadataMaxLength {
+	if si.Metadata != nil && len(si.Metadata) > MetadataMaxLength {
 		return nil, NewError(ErrorInstanceMetaDataTooLong, "Metadata value length too long", "")
 	}
 

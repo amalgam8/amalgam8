@@ -173,13 +173,13 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			case store.ErrorNoInstanceServiceName:
 				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNoServiceName)
 			case store.ErrorInstanceServiceNameTooLong:
-				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorServiceNameTooLong, serviceNameMaxLength)
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorServiceNameTooLong, store.ServiceNameMaxLength)
 			case store.ErrorInstanceEndpointValueTooLong:
-				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorEndpointValueTooLong, valueMaxLength)
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorEndpointValueTooLong, store.ValueMaxLength)
 			case store.ErrorInstanceStatusLengthTooLong:
-				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorStatusLengthTooLong, statusMaxLength)
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorStatusLengthTooLong, store.StatusMaxLength)
 			case store.ErrorInstanceMetaDataTooLong:
-				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorMetaDataTooLong, metadataMaxLength)
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorMetaDataTooLong, store.MetadataMaxLength)
 			default:
 				i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
 			}

@@ -1,10 +1,11 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Controller API for Amalgam8",
+    "title": "Amalgam8 Route Controller REST API",
     "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc.",
-    "version": "0.3"
+    "version": "1.0.0"
   },
+  "basePath": "/",
   "schemes": [
     "http",
     "https"
@@ -596,20 +597,6 @@
           "type": "number",
           "minimum": 0,
           "exclusiveMinimum": true
-        },
-        "retries": {
-          "description": "Number of times to retry request or re-establish connectivity",
-          "type": "number",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        },
-        "failover": {
-          "description": "When requests to this backend fail, fallback to provided backends",
-          "type": "array",
-          "minItems": 1,
-          "items": {
-            "$ref": "#/definitions/basicBackend"
-          }
         }
       },
       "required": [

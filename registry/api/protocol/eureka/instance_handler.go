@@ -122,6 +122,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			return
 		}
 	}
+	uid := buildUniqueInstanceID(inst.Application, iid)
 
 	ttl := defaultDurationInt
 	if inst.Lease != nil && inst.Lease.DurationInt > 0 {
@@ -135,7 +136,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
 
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
@@ -151,7 +152,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	si := &store.ServiceInstance{
-		ID:          iid,
+		ID:          uid,
 		ServiceName: inst.Application,
 		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
 		Status:      inst.Status,
@@ -222,23 +223,25 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
 		return
 	}
+	uid := buildUniqueInstanceID(appid, iid)
 
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to deregister instance %s", iid)
+		}).Errorf("Failed to deregister instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
-	si, err := catalog.Deregister(iid)
+	si, err := catalog.Deregister(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to deregister instance %s", iid)
+		}).Warnf("Failed to deregister instance %s", uid)
 
 		i18n.Error(r, w, http.StatusGone, i18n.ErrorInstanceNotFound)
 		return
@@ -246,7 +249,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 
 	routes.logger.WithFields(log.Fields{
 		"namespace": r.Env[env.Namespace],
-	}).Infof("Instance id %s deregistered", iid)
+	}).Infof("Instance id %s deregistered", uid)
 
 	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
@@ -274,23 +277,25 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
 		return
 	}
+	uid := buildUniqueInstanceID(appid, iid)
 
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to renew instance %s", iid)
+		}).Errorf("Failed to renew instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
-	si, err := catalog.Renew(iid)
+	si, err := catalog.Renew(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to renew instance %s", iid)
+		}).Warnf("Failed to renew instance %s", uid)
 
 		i18n.Error(r, w, http.StatusGone, i18n.ErrorInstanceNotFound)
 		return
@@ -300,7 +305,18 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
+func (routes *Routes) getInstanceByAppAndID(w rest.ResponseWriter, r *rest.Request) {
+	appid := r.PathParam(RouteParamAppID)
+	if appid == "" {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "application id is required",
+		}).Warn("Failed to query instance")
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorApplicationIdentifierMissing)
+		return
+	}
+
 	iid := r.PathParam(RouteParamInstanceID)
 	if iid == "" {
 		routes.logger.WithFields(log.Fields{
@@ -311,23 +327,25 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
 		return
 	}
+	uid := buildUniqueInstanceID(appid, iid)
 
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to renew instance %s", iid)
+		}).Errorf("Failed to query instance %s", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
-	si, err := catalog.Instance(iid)
+	si, err := catalog.Instance(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to query instance %s", iid)
+		}).Warnf("Failed to query instance %s", uid)
 
 		i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
 		return
@@ -341,11 +359,80 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warn("Failed to encode instance")
+		}).Warnf("Failed to encode instance %s", uid)
 
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
 		return
 	}
+}
+
+func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
+	iid := r.PathParam(RouteParamInstanceID)
+	if iid == "" {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "instance id is required",
+		}).Warn("Failed to query instance")
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
+		return
+	}
+	uid := buildUniqueInstanceID("", iid)
+
+	catalog := routes.catalog(w, r)
+	if catalog == nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "catalog is nil",
+		}).Errorf("Failed to query instance %s", uid)
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		return
+	}
+
+	services := catalog.ListServices(nil)
+	if services == nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "services list is nil",
+		}).Warnf("Failed to query instance %s", uid)
+
+		i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
+		return
+	}
+
+	for _, svc := range services {
+		insts, err := catalog.List(svc.ServiceName, nil)
+		// The service might be removed by other user in the middle
+		if err != nil {
+			continue
+		}
+
+		for _, si := range insts {
+			if strings.HasSuffix(si.ID, uid) {
+				r.Env[env.ServiceInstance] = si
+				inst := buildInstanceFromRegistry(si)
+
+				err = w.WriteJson(&InstanceWrapper{inst})
+				if err != nil {
+					routes.logger.WithFields(log.Fields{
+						"namespace": r.Env[env.Namespace],
+						"error":     err,
+					}).Warnf("Failed to encode instance %s", si.ID)
+
+					i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
+				}
+				return
+			}
+		}
+	}
+
+	routes.logger.WithFields(log.Fields{
+		"namespace": r.Env[env.Namespace],
+		"error":     "no such instance",
+	}).Errorf("Failed to query instance %s", uid)
+
+	i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
 }
 
 func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
@@ -370,6 +457,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
 		return
 	}
+	uid := buildUniqueInstanceID(appid, iid)
 
 	status := r.URL.Query().Get("value")
 	if status == "" {
@@ -387,17 +475,18 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to set instance %s status", iid)
+		}).Errorf("Failed to set instance %s status", uid)
 
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
 		return
 	}
 
-	si, err := catalog.Instance(iid)
+	si, err := catalog.Instance(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to set instance %s status", iid)
+		}).Warnf("Failed to set instance %s status", uid)
 
 		i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
 		return
@@ -407,18 +496,18 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "Application id does not match",
-		}).Warnf("Failed to set instance %s status. service_name: %s", iid, si.ServiceName)
+		}).Warnf("Failed to set instance %s status. service_name: %s", uid, si.ServiceName)
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceNotFound)
 		return
 	}
 
-	si, err = catalog.SetStatus(iid, status)
+	si, err = catalog.SetStatus(uid, status)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to set instance %s status", iid)
+		}).Warnf("Failed to set instance %s status", uid)
 
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceNotFound)
 		return
@@ -426,10 +515,14 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 
 	routes.logger.WithFields(log.Fields{
 		"namespace": r.Env[env.Namespace],
-	}).Infof("Instance %s status was changed. old: %s, new: %s", iid, si.Status, status)
+	}).Infof("Instance %s status was changed. old: %s, new: %s", uid, si.Status, status)
 
 	r.Env[env.ServiceInstance] = si
 	w.WriteHeader(http.StatusOK)
+}
+
+func buildUniqueInstanceID(appid, iid string) string {
+	return fmt.Sprintf("%s:%s", appid, iid)
 }
 
 func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) {
@@ -442,10 +535,7 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	copyInst.Metadata = nil
 	copyInst.LastUpdatedTs = nil
 	copyInst.LastDirtyTs = nil
-	if copyInst.Lease != nil {
-		copyInst.Lease.RegistrationTs = 0
-		copyInst.Lease.LastRenewalTs = 0
-	}
+	copyInst.Lease = nil
 
 	ext, err := json.Marshal(copyInst)
 	if err != nil {

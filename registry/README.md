@@ -90,7 +90,7 @@ Authorization: Bearer jwt.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...wifQ.Gbz4G_
 
 Amalgam8 Registry uses a memory only storage solution, without persistency (although different storage 
 backends can be implemented). To provide HA and scale, the Registry can be run in a cluster and supports replication
-between cluster members.
+between cluster members. To use a persistent storage backend, see the section `Persistent Backend Storage`.
 
 Peer discovery currently uses a shared volume between all members. The
 volume must be mounted RW into each container.  We are exploring
@@ -104,6 +104,16 @@ alternative discovery mechanisms.
 | `A8_REPLICATION` | `--replication` | Enable replication between cluster members | `false` |
 | `A8_REPLICATION_PORT` | `--replication_port` | Replication port number | 6100 |
 | `A8_SYNC_TIMEOUT` | `--sync_timeout` | Timeout for establishing connections to peers for replication | 30s |
+
+#### Persistent Backend Storage
+
+Amalgam8 Registry supports a Redis backend for storing instance information as an alternative to the memory only clustering and replication option.
+
+| Environment Variable | Flag Name                   | Description | Default Value |
+|:---------------------|:----------------------------|:------------|:--------------|
+| `A8_STORE` | `--store` | Backing store to use to persist Registry instance information. Supported values are: `redis`, `inmem`  | inmem (in memory) |
+| `A8_STORE_ADDRESS` | `--store_address` | Address of the Redis server | none, must be specified to use a Redis store |
+| `A8_STORE_PASSWORD` | `--store_password` | Password for the Redis backend | none, assumes no password set for the Redis server |
 
 #### Catalog Extensions
 

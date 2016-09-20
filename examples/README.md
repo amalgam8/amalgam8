@@ -20,12 +20,12 @@ The following samples are available for Amalgam8:
 
 Before running the samples, you need to setup the requisite environment.
 
-* *Vagrant sandbox*: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
+* *Vagrant sandbox*: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
 
 * *Custom setup*: If you are not using the vagrant environment, then install the following pre-requisites:
   * Amalgam8 python CLI
    ```bash
-   sudo pip install git+https://github.com/amalgam8/amalgam8/a8ctl
+   sudo pip install git+https://github.com/amalgam8/a8ctl
    ```
   * [Docker 1.10 or later](https://docs.docker.com/engine/installation/)
   * [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/)
@@ -418,7 +418,7 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 
     Once inside the vagrant box, install the following additional dependencies:
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-    [Bluemix CLI 0.3.3 or later](https://clis.ng.bluemix.net/),
+    [Bluemix CLI 0.4.1 or later](https://clis.ng.bluemix.net/),
 
 1. Switch to the Amalgam8 examples folder
 
@@ -429,12 +429,15 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 1. Login to Bluemix and initialize the container environment using ```bluemix login``` and ```bluemix ic init```
 
 1. Create Bluemix routes (DNS names) for the registry, controller and the bookinfo app's gateway:  
-    ```cf create-route myspace mybluemix.net -n mya8-registry```
-    ```cf create-route myspace mybluemix.net -n mya8-controller```
-    ```cf create-route myspace mybluemix.net -n mya8-bookinfo```
+    ```bash
+cf create-route <your bluemix space> mybluemix.net -n <your registry route>
+cf create-route <your bluemix space> mybluemix.net -n <your controller route>
+cf create-route <your bluemix space> mybluemix.net -n <your bookinfo route>
+```
+where `<your bluemix space>` is the name of your Bluemix space and `<your route ...>` is a unique route name for `registry`, `controller` and `bookinfo`. For example `my-space-name-a8-registry`, `my-space-name-a8-controller`, etc. Make a note of the route names you choose for the next step.
     
 
-1. Customize the [bluemixrc](bluemix/.bluemixrc) file in the following manner:
+1. Customize the `amalgam8/examples/bluemix/.bluemixrc` file as follows:
     * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```bluemix ic namespace-get```
     * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
     * REGISTRY_HOSTNAME should be the route name assigned to the registry in the previous step

@@ -25,7 +25,7 @@ popd
 
 pushd $SCRIPTDIR/details
   docker build -t amalgam8/a8-examples-bookinfo-details:v1 .
-  docker build -t amalgam8/a8-examples-bookinfo-details-sidecar:v1-alpine -f Dockerfile.sidecar .
+  docker build -t amalgam8/a8-examples-bookinfo-details-sidecar:v1 -f Dockerfile.sidecar .
 popd
 
 pushd $MAKEDIR/reviews

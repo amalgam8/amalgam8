@@ -18,36 +18,7 @@ set -x
 set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-EXAMPLESDIR=$SCRIPTDIR/../examples
 
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
-
-####### Test Docker setup
-echo "Testing docker-based deployment.."
-$EXAMPLESDIR/docker/run-controlplane-docker.sh start
-sleep 5
-docker-compose -f $EXAMPLESDIR/docker/gateway.yaml up -d
-sleep 5
-docker-compose -f $EXAMPLESDIR/docker/bookinfo.yaml up -d
-sleep 120
-$SCRIPTDIR/testing/demo_script.sh
-echo "Docker tests successful. Cleaning up.."
-$EXAMPLESDIR/docker/cleanup.sh
-sleep 10
-
-####### Test Kubernetes setup
-echo "Testing kubernetes-based deployment.."
-sudo $EXAMPLESDIR/kubernetes/install-kubernetes.sh
-sleep 15
-$EXAMPLESDIR/kubernetes/run-controlplane-local-k8s.sh start
-sleep 15
-kubectl create -f $EXAMPLESDIR/kubernetes/gateway.yaml
-sleep 15
-kubectl create -f $EXAMPLESDIR/kubernetes/bookinfo.yaml
-echo "Waiting for the services to come online.."
-sleep 150
-$SCRIPTDIR/testing/demo_script.sh
-echo "Kubernetes tests successful. Cleaning up.."
-$EXAMPLESDIR/kubernetes/cleanup.sh
-sleep 5
-sudo $EXAMPLESDIR/kubernetes/uninstall-kubernetes.sh
+$SCRIPTDIR/docker/test-docker.sh
+$SCRIPTDIR/kubernetes/test-kubernetes.sh

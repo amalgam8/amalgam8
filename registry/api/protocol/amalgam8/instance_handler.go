@@ -428,15 +428,15 @@ func statusCodeFromError(err error) int {
 			return http.StatusForbidden
 		case store.ErrorInternalServerError:
 			return http.StatusInternalServerError			
-	    case store.ErrorNoInstanceServiceName:
+		case store.ErrorNoInstanceServiceName:
 			return http.StatusBadRequest
-	    case store.ErrorInstanceServiceNameTooLong:
+		case store.ErrorInstanceServiceNameTooLong:
 			return http.StatusBadRequest
-	    case store.ErrorInstanceEndpointValueTooLong:
+		case store.ErrorInstanceEndpointValueTooLong:
 			return http.StatusBadRequest
-	    case store.ErrorInstanceStatusLengthTooLong:
+		case store.ErrorInstanceStatusLengthTooLong:
 			return http.StatusBadRequest
-	    case store.ErrorInstanceMetaDataTooLong:
+		case store.ErrorInstanceMetaDataTooLong:
 			return http.StatusBadRequest
 		default:
 			return http.StatusInternalServerError

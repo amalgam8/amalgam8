@@ -181,7 +181,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			case store.ErrorInstanceMetaDataTooLong:
 				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorMetaDataTooLong, metadataMaxLength)
 			default:
-				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
+				i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
 			}
 		}
 		return

@@ -17,7 +17,7 @@ package config
 import (
 	"strings"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 const (

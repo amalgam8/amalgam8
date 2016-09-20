@@ -16,7 +16,6 @@ package eureka
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"time"
 
@@ -32,8 +31,7 @@ import (
 )
 
 const (
-	connectTimeout = time.Duration(2) * time.Second
-	requestTimeout = time.Duration(30) * time.Second
+	requestTimeout = time.Duration(60) * time.Second
 )
 
 type eurekaClient struct {
@@ -61,8 +59,7 @@ func newEurekaClient(eurekaURLs []string) (*eurekaClient, error) {
 	}
 
 	hc := &http.Client{
-		Transport: &http.Transport{Dial: dialTimeout},
-		Timeout:   requestTimeout,
+		Timeout: requestTimeout,
 	}
 
 	return &eurekaClient{
@@ -70,10 +67,6 @@ func newEurekaClient(eurekaURLs []string) (*eurekaClient, error) {
 		eurekaURLs: urls,
 		logger:     logger,
 	}, nil
-}
-
-func dialTimeout(network, addr string) (net.Conn, error) {
-	return net.DialTimeout(network, addr, connectTimeout)
 }
 
 func (client *eurekaClient) getApplications(path string) (*eurekaapi.Applications, error) {

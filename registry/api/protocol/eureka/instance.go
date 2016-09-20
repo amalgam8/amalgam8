@@ -31,6 +31,7 @@ type Port struct {
 	Value   interface{} `json:"$,omitempty"`
 }
 
+// DatacenterMetadata encapsulates information needed for a datacenter metadata information
 type DatacenterMetadata map[string]interface{}
 
 // DatacenterInfo encapsulates information needed for a datacenter information

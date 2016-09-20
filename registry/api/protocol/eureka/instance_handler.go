@@ -531,6 +531,7 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
 }
 
+// BuildA8Instance builds A8 instance from eureka instance
 func BuildA8Instance(inst *Instance) (*store.ServiceInstance, error) {
 	var err error
 

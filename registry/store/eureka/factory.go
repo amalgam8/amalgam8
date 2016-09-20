@@ -19,8 +19,8 @@ import (
 	"github.com/amalgam8/amalgam8/registry/store"
 )
 
-// EurekaConfig encapsulates eureka configuration parameters
-type EurekaConfig struct {
+// Config encapsulates eureka configuration parameters
+type Config struct {
 	EurekaURLs []string
 }
 
@@ -29,7 +29,7 @@ type eurekaFactory struct {
 }
 
 // New creates and initializes a Eureka catalog factory
-func New(conf *EurekaConfig) (store.CatalogFactory, error) {
+func New(conf *Config) (store.CatalogFactory, error) {
 	client, err := newEurekaClient(conf.EurekaURLs)
 	if err != nil {
 		return nil, err

@@ -10,8 +10,6 @@ imports:
   version: 622d25e1032a3c551f821cf36267f2286c426531
   subpackages:
   - statsd
-- name: github.com/codegangsta/cli
-  version: bca61c476e3c752594983e4c9bcd5f62fb09f157
 - name: github.com/dgrijalva/jwt-go
   version: e5cb38552fb8426fe9f0f2b3bc8408f238b97b87
 - name: github.com/garyburd/redigo

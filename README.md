@@ -11,14 +11,14 @@
 
 1. A quick intro video to Amalgam8
 
-<a href="http://www.youtube.com/watch?feature=player_embedded&v=gvjhrxwX7S8" target="_blank"><img
+ <a href="http://www.youtube.com/watch?feature=player_embedded&v=gvjhrxwX7S8" target="_blank"><img
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
 Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
 1. [Try the sample applications](examples/) with a container orchestration
    framework of your choice.
 
-1. [Integrate the sidecar](https://www.amalgam8.io/docs/content/getting-started-with-amalgam8.html)
+1. [Integrate the sidecar](https://www.amalgam8.io/docs/getting-started/)
    into your existing application to start using Amalgam8.
 
 ---

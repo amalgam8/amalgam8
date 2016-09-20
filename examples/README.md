@@ -418,7 +418,7 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 
     Once inside the vagrant box, install the following additional dependencies:
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-    [Bluemix CLI 0.3.3 or later](https://clis.ng.bluemix.net/),
+    [Bluemix CLI 0.4.1 or later](https://clis.ng.bluemix.net/),
 
 1. Switch to the Amalgam8 examples folder
 

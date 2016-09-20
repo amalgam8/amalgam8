@@ -21,6 +21,8 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/urfave/cli"
+
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -29,7 +31,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
-	"github.com/urfave/cli"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable

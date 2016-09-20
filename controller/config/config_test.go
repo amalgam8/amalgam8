@@ -15,9 +15,9 @@
 package config
 
 import (
-	"github.com/codegangsta/cli"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/urfave/cli"
 )
 
 var _ = Describe("Config", func() {

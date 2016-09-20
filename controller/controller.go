@@ -20,16 +20,16 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/urfave/cli"
+
 	"github.com/amalgam8/amalgam8/controller/api"
 	"github.com/amalgam8/amalgam8/controller/config"
 	"github.com/amalgam8/amalgam8/controller/metrics"
 	"github.com/amalgam8/amalgam8/controller/middleware"
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/pkg/auth"
-
 	"github.com/amalgam8/amalgam8/controller/util/i18n"
-	"github.com/ant0ine/go-json-rest/rest"
-	"github.com/codegangsta/cli"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 )
 
 // Main is the entrypoint for the controller when running as an executable
@@ -40,7 +40,9 @@ func Main() {
 	app.Usage = "Amalgam8 Controller"
 	app.Version = "0.2.0"
 	app.Flags = config.Flags
-	app.Action = controllerCommand
+	app.Action = func(context *cli.Context) error {
+		return Run(config.New(context))
+	}
 
 	err := app.Run(os.Args)
 	if err != nil {
@@ -48,17 +50,8 @@ func Main() {
 	}
 }
 
-func controllerCommand(context *cli.Context) {
-	conf := config.New(context)
-	if err := Run(*conf); err != nil {
-		logrus.WithError(err).Error("Controller setup failed")
-		logrus.Warn("Simple error server running...")
-		select {}
-	}
-}
-
 // Run the controller with the given configuration
-func Run(conf config.Config) error {
+func Run(conf *config.Config) error {
 	var err error
 
 	logrus.ErrorKey = "error"
@@ -153,7 +146,7 @@ func Run(conf config.Config) error {
 	select {}
 }
 
-func setupAuthenticator(conf config.Config) (authenticator auth.Authenticator, err error) {
+func setupAuthenticator(conf *config.Config) (authenticator auth.Authenticator, err error) {
 	if len(conf.AuthModes) > 0 {
 		auths := make([]auth.Authenticator, len(conf.AuthModes))
 		for i, mode := range conf.AuthModes {

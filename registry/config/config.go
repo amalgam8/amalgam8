@@ -17,7 +17,7 @@ package config
 import (
 	"time"
 
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 // Values holds the actual configuration values used for the registry server

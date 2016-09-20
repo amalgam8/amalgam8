@@ -19,7 +19,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/api"
@@ -44,19 +44,13 @@ func Main() {
 	app.Usage = "Service Registry Server"
 	app.Version = version.Build.Version
 	app.Flags = config.Flags
-	app.Action = registryCommand
+	app.Action = func(context *cli.Context) error {
+		return Run(config.NewValuesFromContext(context))
+	}
 
 	err := app.Run(os.Args)
 	if err != nil {
 		fmt.Printf("failure running main: %s", err.Error())
-	}
-}
-
-func registryCommand(context *cli.Context) {
-	err := Run(config.NewValuesFromContext(context))
-	if err != nil {
-		// Unfortunately, cannot return an error without violating cli.App Action function definition
-		fmt.Printf("Error starting registry: %s\n", err.Error())
 	}
 }
 

@@ -145,18 +145,18 @@
   },  
   {
     "id": "error_instance_service_name_too_long",
-    "translation": "Failed to register the instance because service name value exceeded {{.Count}} characters"
+    "translation": "Failed to register the instance because service name value exceeded {{.Count}} bytes"
   },  
   {
     "id": "error_instance_endpoint_too_long",
-    "translation": "Failed to register the instance because endpoint value exceeded {{.Count}} characters"
+    "translation": "Failed to register the instance because endpoint value exceeded {{.Count}} bytes"
   },
   {
     "id": "error_instance_status_too_long",
-    "translation": "Failed to register the instance because status value exceeded {{.Count}} characters"
+    "translation": "Failed to register the instance because status value exceeded {{.Count}} bytes"
   },  
   {
     "id": "error_instance_meta_data_too_long",
-    "translation": "Failed to register the instance because metadata value exceeded {{.Count}} characters"
+    "translation": "Failed to register the instance because metadata value exceeded {{.Count}} bytes"
   }
 ]

@@ -8,15 +8,15 @@ separate files, and user-customizable part is now confined to location
 blocks in amalgam8-services.conf ([PR#278](https://github.com/amalgam8/amalgam8/pull/278))
 
 - Fixed invalid DNS config in kubernetes config that caused code compiled
-with Go 1.7.1 to fail ([PR#280](https://github.com/amalgam8/amalgam8/pull/271)).
+with Go 1.7.1 to fail ([PR#280](https://github.com/amalgam8/amalgam8/pull/280)).
 
 - Fixed bug in sidecar that caused HTTP 500 when version cookie did not
 match any backend in the route list ([PR#271](https://github.com/amalgam8/amalgam8/pull/271)).
 
 - Fixed bugs in bluemix deployment scripts and updated READMEs to point to
 the correct version of Bluemix CLI
-([PR#275](https://github.com/amalgam8/amalgam8/pull/271) and
-[PR#279](https://github.com/amalgam8/amalgam8/pull/271)).
+([PR#275](https://github.com/amalgam8/amalgam8/pull/275) and
+[PR#279](https://github.com/amalgam8/amalgam8/pull/279)).
 
 ## 0.3.0 (September 12, 2016)
 

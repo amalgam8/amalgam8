@@ -155,7 +155,7 @@ This section includes instructions for working with releases, and is intended fo
 1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
 
     ```bash
-    git push upstream $VERSION
+    git push origin $VERSION
     ```
    This command automatically creates a release object on GitHub, corresponding to the pushed tag.
    The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).

@@ -36,10 +36,10 @@ type Catalog interface {
 }
 
 const (
-	serviceNameMaxLength int = 64
-	valueMaxLength       int = 64
-	statusMaxLength      int = 32
-	metadataMaxLength    int = 1024
+	ServiceNameMaxLength int = 64
+	ValueMaxLength       int = 128
+	StatusMaxLength      int = 32
+	MetadataMaxLength    int = 1024
 
 	instancesMetricName  = "store.instances.count"
 	expirationMetricName = "store.instances.expiration"

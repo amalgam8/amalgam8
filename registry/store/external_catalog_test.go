@@ -96,6 +96,7 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 
 	string33 := "123456789012345678901234567890123"
 	string65 := "12345678901234567890123456789012345678901234567890123456789012345"
+	string129 := "123456789012345678901234567890123456789012345678901234567890123451234567890123456789012345678901234567890123456789012345678901234"
 	string1025 := "12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345"
 
 	// Error when no Service Name
@@ -104,8 +105,8 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err := catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
-	assert.EqualValues(t, "Empty service name", err.(*Error).Message)
+	assert.EqualValues(t, ErrorNoInstanceServiceName, extractErrorCode(err))
+	assert.EqualValues(t, "Service name value was not specified", err.(*Error).Message)
 
 	// Error when Service Name is too long (>64 bytes)
 	si = newServiceInstance(string65, "192.168.0.1", 9080)
@@ -113,19 +114,19 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
-	assert.EqualValues(t, "Service name length too long", err.(*Error).Message)
+	assert.EqualValues(t, ErrorInstanceServiceNameTooLong, extractErrorCode(err))
+	assert.EqualValues(t, "Service name value length too long", err.(*Error).Message)
 
-	// Error when Endpoint value too long (>64 bytes)
+	// Error when Endpoint value too long (>128 bytes)
 	si = &ServiceInstance{
 		ServiceName: "Calc",
-		Endpoint:    &Endpoint{Value: string65, Type: "tcp"},
+		Endpoint:    &Endpoint{Value: string129, Type: "tcp"},
 	}
 
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
+	assert.EqualValues(t, ErrorInstanceEndpointValueTooLong, extractErrorCode(err))
 	assert.EqualValues(t, "Endpoint value length too long", err.(*Error).Message)
 
 	// Error when status too long (>32 bytes)
@@ -138,8 +139,8 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
-	assert.EqualValues(t, "Status length too long", err.(*Error).Message)
+	assert.EqualValues(t, ErrorInstanceStatusLengthTooLong, extractErrorCode(err))
+	assert.EqualValues(t, "Status value length too long", err.(*Error).Message)
 
 	// Error when metadata too long (>1024 bytes)
 	si = &ServiceInstance{
@@ -151,8 +152,8 @@ func TestExternalRegisterValidateParams(t *testing.T) {
 	_, err = catalog.Register(si)
 
 	assert.Error(t, err)
-	assert.EqualValues(t, ErrorBadRequest, extractErrorCode(err))
-	assert.EqualValues(t, "Metadata length too long", err.(*Error).Message)
+	assert.EqualValues(t, ErrorInstanceMetaDataTooLong, extractErrorCode(err))
+	assert.EqualValues(t, "Metadata value length too long", err.(*Error).Message)
 }
 
 func TestExternalRegisterInstanceWithID(t *testing.T) {

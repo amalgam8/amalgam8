@@ -72,7 +72,22 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     err,
 		}).Warnf("Failed to register instance %+v", req)
 
-		i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorInstanceRegistrationFailed)
+		if regerr, ok := err.(*store.Error); ok {
+			switch regerr.Code {
+			case store.ErrorNoInstanceServiceName:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorNoServiceName)
+			case store.ErrorInstanceServiceNameTooLong:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorServiceNameTooLong, store.ServiceNameMaxLength)
+			case store.ErrorInstanceEndpointValueTooLong:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorEndpointValueTooLong, store.ValueMaxLength)
+			case store.ErrorInstanceStatusLengthTooLong:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorStatusLengthTooLong, store.StatusMaxLength)
+			case store.ErrorInstanceMetaDataTooLong:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorMetaDataTooLong, store.MetadataMaxLength)
+			default:
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorInstanceRegistrationFailed)
+			}
+		}
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{
@@ -413,6 +428,16 @@ func statusCodeFromError(err error) int {
 			return http.StatusForbidden
 		case store.ErrorInternalServerError:
 			return http.StatusInternalServerError
+		case store.ErrorNoInstanceServiceName:
+			return http.StatusBadRequest
+		case store.ErrorInstanceServiceNameTooLong:
+			return http.StatusBadRequest
+		case store.ErrorInstanceEndpointValueTooLong:
+			return http.StatusBadRequest
+		case store.ErrorInstanceStatusLengthTooLong:
+			return http.StatusBadRequest
+		case store.ErrorInstanceMetaDataTooLong:
+			return http.StatusBadRequest
 		default:
 			return http.StatusInternalServerError
 		}

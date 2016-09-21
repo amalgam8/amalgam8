@@ -138,5 +138,25 @@
   {
     "id": "eureka_error_vip_required",
     "translation": "vip is required"
+  },  
+  {
+    "id": "error_instance_service_name_not_specified",
+    "translation": "Failed to register instance because service name value was not specified"
+  },  
+  {
+    "id": "error_instance_service_name_too_long",
+    "translation": "Failed to register the instance because service name value exceeded {{.Count}} characters"
+  },  
+  {
+    "id": "error_instance_endpoint_too_long",
+    "translation": "Failed to register the instance because endpoint value exceeded {{.Count}} characters"
+  },
+  {
+    "id": "error_instance_status_too_long",
+    "translation": "Failed to register the instance because status value exceeded {{.Count}} characters"
+  },  
+  {
+    "id": "error_instance_meta_data_too_long",
+    "translation": "Failed to register the instance because metadata value exceeded {{.Count}} characters"
   }
 ]

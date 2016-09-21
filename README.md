@@ -134,6 +134,8 @@ This section includes instructions for working with releases, and is intended fo
 
 ### Creating a release
 
+1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
+
 1.  Set a version for the release, by incrementing the current version
     according to the [semantic versioning](https://semver.org/)
     guidelines. For example,
@@ -157,8 +159,6 @@ This section includes instructions for working with releases, and is intended fo
     ```
    This command automatically creates a release object on GitHub, corresponding to the pushed tag.
    The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
-
-1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
 
 1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/releases), and add a title and description (according to `CHANGELOG.md`).
 

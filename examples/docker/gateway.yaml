@@ -24,7 +24,6 @@ gateway:
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
-    - A8_LOG_LEVEL=debug
   ports:
     - "32000:6379"
   external_links:

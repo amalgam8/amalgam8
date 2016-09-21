@@ -39,17 +39,17 @@ var (
 	starColor     string
 )
 
-type Review struct {
+type review struct {
 	Text   string  `json:"text,omitempty"`
-	Rating *Rating `json:"rating,omitempty"`
+	Rating *rating `json:"rating,omitempty"`
 }
 
-type Rating struct {
+type rating struct {
 	Stars int    `json:"stars,omitempty"`
 	Color string `json:"color,omitempty"`
 }
 
-var Reviews = map[string]*Review{
+var reviews = map[string]*review{
 	"reviewer1": {
 		Text: "An extremely entertaining play by Shakespeare. The slapstick humour is refreshing!",
 	},
@@ -80,32 +80,32 @@ func main() {
 func reviewsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var ratings map[string]*Rating
+	var ratings map[string]*rating
 	if enableRatings {
 		ratings = getRatings(getForwardHeaders(r))
 	} else {
-		ratings = map[string]*Rating{}
+		ratings = map[string]*rating{}
 	}
 
-	reviews := make(map[string]*Review, len(Reviews))
-	for k, v := range Reviews {
-		reviews[k] = &Review{
+	ratedReviews := make(map[string]*review, len(reviews))
+	for k, v := range reviews {
+		ratedReviews[k] = &review{
 			Text:   v.Text,
 			Rating: ratings[k],
 		}
 	}
 
-	bytes, _ := json.Marshal(reviews)
+	bytes, _ := json.Marshal(ratedReviews)
 	w.Write(bytes)
 }
 
-func getRatings(forwardHeaders http.Header) map[string]*Rating {
+func getRatings(forwardHeaders http.Header) map[string]*rating {
 	timeout := 2500 * time.Millisecond
 	if starColor == defaultStarColor {
 		timeout = 10 * time.Second
 	}
 
-	ratings := map[string]*Rating{}
+	ratings := map[string]*rating{}
 
 	bytes, err := doRequest("/ratings/ratings", forwardHeaders, timeout)
 	if err != nil {

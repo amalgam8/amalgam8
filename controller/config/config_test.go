@@ -34,8 +34,9 @@ var _ = Describe("Config", func() {
 			app.Name = "controller"
 			app.Usage = "Amalgam8 Controller"
 			app.Flags = Flags
-			app.Action = func(context *cli.Context) {
+			app.Action = func(context *cli.Context) error {
 				c = New(context)
+				return nil
 			}
 
 			Expect(app.Run([]string{"cmd"})).NotTo(HaveOccurred())

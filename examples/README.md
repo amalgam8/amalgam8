@@ -175,6 +175,9 @@ provided.
     docker-compose -f docker/bookinfo.yaml up -d
     ```
 
+    This example is made up of services written in different languages. It
+    may take up to a minute to start running.
+
     * Follow the instructions for the [Bookinfo](apps/bookinfo/) example
 
     * To shutdown the bookinfo instances, run the following commands:

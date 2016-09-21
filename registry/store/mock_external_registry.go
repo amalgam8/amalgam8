@@ -75,7 +75,7 @@ func (mer *mockExternalRegistry) ListAllServiceInstances(namespace auth.Namespac
 	for sname, instances := range serviceList {
 		siMap := make(ServiceInstanceMap)
 		for _, inst := range instances {
-			dbKey := DBKey{inst.ID, inst.ServiceName}
+			dbKey := DBKey{InstanceID: inst.ID, Namespace: inst.ServiceName}
 			siMap[dbKey] = inst.DeepClone()
 		}
 		serviceInstances[sname] = siMap

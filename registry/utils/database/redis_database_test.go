@@ -147,10 +147,9 @@ func TestRedisDBReadAllEntries(t *testing.T) {
 
 	// Mock the scan for all keys for the namespace and the gets for the value
 	mockedConn.On("Do", "SCAN", []interface{}{int64(0), "MATCH", "*:test"}).Return(s, nil)
-	value := []byte("value1")
-	mockedConn.On("Do", "GET", []interface{}{"key1"}).Return(value, nil)
-	value2 := []byte("value2")
-	mockedConn.On("Do", "GET", []interface{}{"key2"}).Return(value2, nil)
+
+	values := []interface{}{[]byte("value1"), []byte("value2")}
+	mockedConn.On("Do", "MGET", []interface{}{"key1", "key2"}).Return(values, nil)
 
 	entries, err := db.ReadAllEntries("*:test")
 
@@ -183,4 +182,30 @@ func TestRedisDBDeleteEntry(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, del)
+}
+
+func TestRedisDBExpireEntry(t *testing.T) {
+	mockedConn := new(MockedConn)
+	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
+
+	ttl := time.Second * 120
+	mockedConn.On("Do", "EXPIRE", []interface{}{"inst-id", ttl.Seconds()}).Return([]byte("1"), nil)
+
+	err := db.Expire("inst-id", ttl)
+
+	assert.NoError(t, err)
+}
+
+func TestRedisDBExpireEntryError(t *testing.T) {
+	mockedConn := new(MockedConn)
+	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
+
+	expireError := fmt.Errorf("Expire error")
+	ttl := time.Second * 120
+	mockedConn.On("Do", "EXPIRE", []interface{}{"inst-id", ttl.Seconds()}).Return([]byte("1"), expireError)
+
+	err := db.Expire("inst-id", ttl)
+
+	assert.Error(t, err)
+	assert.Equal(t, expireError, err)
 }

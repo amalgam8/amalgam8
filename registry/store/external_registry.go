@@ -15,7 +15,7 @@
 package store
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 )
@@ -30,21 +30,16 @@ type ExternalRegistry interface {
 	DeleteServiceInstance(namespace auth.Namespace, instanceID string) (int, error)
 }
 
-const (
-	registryRecordKey = "reg"
-	namespaceKey      = "ns"
-	instanceKey       = "inst"
-	keySeparator      = ":"
-)
-
 // DBKey represents the service instance key
 type DBKey struct {
-	Namespace  string
-	InstanceID string
+	ComponentFlag string `json:"comp"`
+	Namespace     string `json:"ns"`
+	InstanceID    string `json:"iid"`
 }
 
-// Database key format:
-// reg:inst:<instance id>:ns:<namespace>
+// Database key as JSON string
 func (dbk *DBKey) String() string {
-	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s", registryRecordKey, keySeparator, instanceKey, keySeparator, dbk.InstanceID, keySeparator, namespaceKey, keySeparator, dbk.Namespace)
+	dbk.ComponentFlag = "reg"
+	dbKey, _ := json.Marshal(dbk)
+	return string(dbKey[:])
 }

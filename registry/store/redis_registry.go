@@ -16,7 +16,6 @@ package store
 
 import (
 	"encoding/json"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -53,10 +52,9 @@ func (rr *redisRegistry) ReadServiceInstanceByInstID(namespace auth.Namespace, i
 	if err != nil {
 		return nil, err
 	}
-	// If a key is not found, return an empty instance
+	// If a key is not found, return nil
 	if len(entry) == 0 {
-		var emptyServiceInstance ServiceInstance
-		return &emptyServiceInstance, nil
+		return nil, nil
 	}
 
 	var si ServiceInstance
@@ -68,7 +66,7 @@ func (rr *redisRegistry) ReadServiceInstanceByInstID(namespace auth.Namespace, i
 		}).Error("Unable to unmarshal json")
 	}
 
-	return si.DeepClone(), nil
+	return &si, nil
 }
 
 func (rr *redisRegistry) ListServiceInstancesByName(namespace auth.Namespace, name string) (map[string]*ServiceInstance, error) {
@@ -88,6 +86,7 @@ func (rr *redisRegistry) ListServiceInstancesByName(namespace auth.Namespace, na
 			rr.logger.WithFields(log.Fields{
 				"key": key,
 			}).Error("Unable to unmarshal json")
+			continue
 		}
 
 		if si.ServiceName == name {
@@ -117,14 +116,19 @@ func (rr *redisRegistry) ListAllServiceInstances(namespace auth.Namespace) (map[
 			// Skip this one
 			continue
 		}
-		// Make the service name the key of the map so there will only be one
-		siMap := make(ServiceInstanceMap)
-		siKey := DBKey{
-			InstanceID: strings.SplitN(key, keySeparator, 2)[0],
-			Namespace:  strings.SplitN(key, keySeparator, 2)[1],
+
+		var dbkey DBKey
+		err = json.Unmarshal([]byte(key), &dbkey)
+
+		// Check if there is already an entry in the name for this service
+		if existingMap, ok := serviceMap[si.ServiceName]; ok {
+			existingMap[dbkey] = &si
+			serviceMap[si.ServiceName] = existingMap
+		} else {
+			siMap := make(ServiceInstanceMap)
+			siMap[dbkey] = &si
+			serviceMap[si.ServiceName] = siMap
 		}
-		siMap[siKey] = &si
-		serviceMap[si.ServiceName] = siMap
 	}
 
 	return serviceMap, err
@@ -138,8 +142,13 @@ func (rr *redisRegistry) InsertServiceInstance(namespace auth.Namespace, instanc
 	err := rr.db.InsertEntry(siKey.String(), instanceJSON)
 
 	// If the status is OUT_OF_SERVICE do not expire
-	if instance.Status != OutOfService {
-		rr.db.Expire(siKey.String(), instance.TTL)
+	if err == nil && instance.Status != OutOfService {
+		err = rr.db.Expire(siKey.String(), instance.TTL)
+		if err != nil {
+			rr.logger.WithFields(log.Fields{
+				"key": siKey.String(),
+			}).Error("Failed to set expiration")
+		}
 	}
 
 	return err

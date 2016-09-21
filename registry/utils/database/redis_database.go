@@ -134,15 +134,20 @@ func (rdb *redisDB) ReadAllEntries(match string) (map[string]string, error) {
 
 	matches, err := rdb.scan(conn, match)
 
-	for _, value := range matches {
-		entry, err := redis.String(conn.Do("GET", value))
-		if err != nil {
-			return nil, err
-		}
-		entries[value] = entry
+	var args []interface{}
+	for _, k := range matches {
+		args = append(args, k)
+	}
+	values, err := redis.Strings(conn.Do("MGET", args...))
+	if err != nil {
+		return nil, err
 	}
 
-	return entries, err
+	for i, value := range values {
+		entries[matches[i]] = value
+	}
+
+	return entries, nil
 }
 
 func (rdb *redisDB) InsertEntry(key string, entry []byte) error {

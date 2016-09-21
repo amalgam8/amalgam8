@@ -197,7 +197,7 @@ func (ec *externalCatalog) Register(si *ServiceInstance) (*ServiceInstance, erro
 		return nil, err
 	}
 	var alreadyExists bool
-	if instance.ID != "" {
+	if instance != nil && instance.ID != "" {
 		alreadyExists = true
 		ec.logger.Debugf("Overwriting existing instance ID %s due to re-registration", instanceID)
 	}
@@ -372,6 +372,8 @@ func (ec *externalCatalog) ListServices(predicate Predicate) []*Service {
 		for _, instance := range service {
 			if predicate == nil || predicate(instance) {
 				services = append(services, &Service{ServiceName: serviceName})
+				// Only add a particular service once
+				break
 			}
 		}
 	}

@@ -427,7 +427,7 @@ func statusCodeFromError(err error) int {
 		case store.ErrorNamespaceQuotaExceeded:
 			return http.StatusForbidden
 		case store.ErrorInternalServerError:
-			return http.StatusInternalServerError			
+			return http.StatusInternalServerError
 		case store.ErrorNoInstanceServiceName:
 			return http.StatusBadRequest
 		case store.ErrorInstanceServiceNameTooLong:

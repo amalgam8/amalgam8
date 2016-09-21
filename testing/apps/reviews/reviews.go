@@ -87,15 +87,15 @@ func reviewsHandler(w http.ResponseWriter, r *http.Request) {
 		ratings = map[string]*rating{}
 	}
 
-	reviews := make(map[string]*review, len(reviews))
+	ratedReviews := make(map[string]*review, len(reviews))
 	for k, v := range reviews {
-		reviews[k] = &review{
+		ratedReviews[k] = &review{
 			Text:   v.Text,
 			Rating: ratings[k],
 		}
 	}
 
-	bytes, _ := json.Marshal(reviews)
+	bytes, _ := json.Marshal(ratedReviews)
 	w.Write(bytes)
 }
 

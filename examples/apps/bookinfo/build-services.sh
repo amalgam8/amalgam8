@@ -28,7 +28,7 @@ pushd $SCRIPTDIR/details
   docker build -t amalgam8/a8-examples-bookinfo-details-sidecar:v1 -f Dockerfile.sidecar .
 popd
 
-pushd $MAKEDIR/reviews
+pushd $SCRIPTDIR/reviews
   #java build the app.
   docker run --rm -v `pwd`:/usr/bin/app:rw niaquinto/gradle clean build
   pushd reviews-wlpcfg

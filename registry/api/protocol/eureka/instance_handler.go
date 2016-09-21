@@ -183,7 +183,10 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			default:
 				i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
 			}
+		} else {
+			i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
 		}
+
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{

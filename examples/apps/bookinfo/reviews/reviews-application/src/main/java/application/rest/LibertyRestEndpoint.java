@@ -85,6 +85,7 @@ public class LibertyRestEndpoint extends Application {
              for(int i=0; i<count; i++){
                stars += "<span class=\"glyphicon glyphicon-star\"></span>";
              }
+             stars += "</font>";
              if(count<5){
                for(int i=0; i<(5-count); i++){
                  stars += "<span class=\"glyphicon glyphicon-star-empty\"></span>";

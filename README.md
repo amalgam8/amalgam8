@@ -142,9 +142,6 @@ This section includes instructions for working with releases, and is intended fo
     export VERSION=v0.1.0
     ```
 
-1.  Update the APP_VER variable in the Makefile such that it matches with
-    the VERSION variable above.
-
 1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
    
     ```bash

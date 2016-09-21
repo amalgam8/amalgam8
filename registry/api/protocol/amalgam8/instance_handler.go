@@ -79,7 +79,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			case store.ErrorInstanceServiceNameTooLong:
 				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorServiceNameTooLong, store.ServiceNameMaxLength)
 			case store.ErrorInstanceEndpointValueTooLong:
-				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorEndpointValueTooLong, store.ValueMaxLength)
+				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorEndpointValueTooLong, store.EndpointValueMaxLength)
 			case store.ErrorInstanceStatusLengthTooLong:
 				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorStatusLengthTooLong, store.StatusMaxLength)
 			case store.ErrorInstanceMetaDataTooLong:

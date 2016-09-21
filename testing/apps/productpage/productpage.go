@@ -32,17 +32,17 @@ const (
 // Globals
 var proxyURL = ""
 
-type ProductPage struct {
+type productPage struct {
 	Details map[string]string  `json:"details,omitempty"`
-	Reviews map[string]*Review `json:"reviews,omitempty"`
+	Reviews map[string]*review `json:"reviews,omitempty"`
 }
 
-type Review struct {
+type review struct {
 	Text   string  `json:"text,omitempty"`
-	Rating *Rating `json:"rating,omitempty"`
+	Rating *rating `json:"rating,omitempty"`
 }
 
-type Rating struct {
+type rating struct {
 	Stars int    `json:"stars,omitempty"`
 	Color string `json:"color,omitempty"`
 }
@@ -67,7 +67,7 @@ func productpageHandler(w http.ResponseWriter, r *http.Request) {
 	details := getDetails(headers)
 	reviews := getReviews(headers)
 
-	page := ProductPage{
+	page := productPage{
 		Details: details,
 		Reviews: reviews,
 	}
@@ -96,7 +96,7 @@ func getDetails(forwardHeaders http.Header) map[string]string {
 	return details
 }
 
-func getReviews(forwardHeaders http.Header) map[string]*Review {
+func getReviews(forwardHeaders http.Header) map[string]*review {
 	const attempts = 2
 	const timeout = 3 * time.Second
 
@@ -106,7 +106,7 @@ func getReviews(forwardHeaders http.Header) map[string]*Review {
 		return nil
 	}
 
-	reviews := map[string]*Review{}
+	reviews := map[string]*review{}
 	err = json.Unmarshal(bytes, &reviews)
 	if err != nil {
 		log.Printf("Error unmarshaling reviews: %v", err)

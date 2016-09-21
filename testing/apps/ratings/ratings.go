@@ -21,11 +21,11 @@ import (
 	"os"
 )
 
-type Rating struct {
+type rating struct {
 	Stars int `json:"stars,omitempty"`
 }
 
-var Ratings = map[string]*Rating{
+var ratings = map[string]*rating{
 	"reviewer1": {
 		Stars: 5,
 	},
@@ -49,6 +49,6 @@ func main() {
 func ratingsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	bytes, _ := json.Marshal(Ratings)
+	bytes, _ := json.Marshal(ratings)
 	w.Write(bytes)
 }

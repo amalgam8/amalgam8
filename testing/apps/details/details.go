@@ -21,7 +21,7 @@ import (
 	"os"
 )
 
-var Details = map[string]string{
+var details = map[string]string{
 	"paperback": "200 pages",
 	"publisher": "PublisherA",
 	"language":  "English",
@@ -44,6 +44,6 @@ func main() {
 func detailsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	bytes, _ := json.Marshal(Details)
+	bytes, _ := json.Marshal(details)
 	w.Write(bytes)
 }

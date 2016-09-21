@@ -36,11 +36,21 @@ type Catalog interface {
 }
 
 const (
+	// ServiceNameMaxLength is the maximum length of a service instance name, specified in bytes
 	ServiceNameMaxLength int = 64
-	ValueMaxLength       int = 128
-	StatusMaxLength      int = 32
-	MetadataMaxLength    int = 1024
 
+	// EndpointValueMaxLength is the maximum length of a service instance endpoint value, specified in bytes
+	EndpointValueMaxLength int = 128
+
+	// StatusMaxLength is the maximum length of a service instance status field, specified in bytes
+	StatusMaxLength int = 32
+
+	// MetadataMaxLength is the maximum length of a service instance metadata, specifie in bytes
+	MetadataMaxLength int = 1024
+)
+
+// Metric objects names
+const (
 	instancesMetricName  = "store.instances.count"
 	expirationMetricName = "store.instances.expiration"
 	lifetimeMetricName   = "store.instances.lifetime"

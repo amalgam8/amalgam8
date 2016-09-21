@@ -165,7 +165,7 @@ func (ec *externalCatalog) Register(si *ServiceInstance) (*ServiceInstance, erro
 		return nil, NewError(ErrorInstanceServiceNameTooLong, "Service name value length too long", "")
 	}
 
-	if si.Endpoint != nil && len(si.Endpoint.Value) > ValueMaxLength {
+	if si.Endpoint != nil && len(si.Endpoint.Value) > EndpointValueMaxLength {
 		return nil, NewError(ErrorInstanceEndpointValueTooLong, "Endpoint value length too long", "")
 	}
 

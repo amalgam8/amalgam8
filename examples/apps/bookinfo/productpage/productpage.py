@@ -60,11 +60,11 @@ service_dict = {
 
 def getForwardHeaders(request):
     headers = {}
-    
+
     user_cookie = request.cookies.get("user")
     if user_cookie:
         headers['Cookie'] = 'user=' + user_cookie
-        
+
     reqTrackingHeader = request.headers.get('X-Request-ID')
     if reqTrackingHeader is not None:
         headers['X-Request-ID'] = reqTrackingHeader
@@ -81,6 +81,10 @@ def index():
                               table_attributes="class=\"table table-condensed table-bordered table-hover\"")
 
     return render_template('index.html', serviceTable=table)
+
+@app.route('/health')
+def health():
+    return 'Product page is healthy'
 
 @app.route('/login', methods=['POST'])
 def login():

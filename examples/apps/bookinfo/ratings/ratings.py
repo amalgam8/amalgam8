@@ -29,6 +29,10 @@ def bookReviews():
     global ratings_resp
     return jsonify(**ratings_resp)
 
+@app.route('/health')
+def health():
+    return 'Ratings is healthy', 200
+
 @app.route('/')
 def index():
     """ Display frontpage with normal user and test user buttons"""

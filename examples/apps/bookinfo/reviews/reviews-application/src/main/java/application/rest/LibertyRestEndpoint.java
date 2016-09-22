@@ -103,6 +103,12 @@ public class LibertyRestEndpoint extends Application {
     }
 
     @GET
+    @Path("/health")
+    public Response health() {
+        return Response.ok().type(MediaType.TEXT_HTML_TYPE).entity("Reviews is healthy").build();
+    }
+
+    @GET
     @Path("/reviews")
     public Response bookReviews(@HeaderParam("X-Request-ID") String xreq, @CookieParam("user") Cookie user) {
       String r1 = "";

@@ -1,0 +1,56 @@
+#################################################################################
+# Image names
+#################################################################################
+
+PRODUCTPAGE_IMAGE=a8-examples-bookinfo-productpage-sidecar:v1-alpine
+DETAILS_IMAGE=a8-examples-bookinfo-details-sidecar:v1
+RATINGS_IMAGE=a8-examples-bookinfo-ratings-sidecar:v1-alpine
+REVIEWS_V1_IMAGE=a8-examples-bookinfo-reviews-sidecar:v1-alpine
+REVIEWS_V2_IMAGE=a8-examples-bookinfo-reviews-sidecar:v2-alpine
+REVIEWS_V3_IMAGE=a8-examples-bookinfo-reviews-sidecar:v3-alpine
+
+GATEWAY_IMAGE=a8-sidecar:latest
+CONTROLLER_IMAGE=a8-controller:latest
+REGISTRY_IMAGE=a8-registry:latest
+
+#################################################################################
+# Image registries
+#################################################################################
+
+# BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This
+# needs to be set only if you're targeting a Bluemix region other than
+# US-South.
+BLUEMIX_REGISTRY_HOST=registry.ng.bluemix.net
+
+BLUEMIX_REGISTRY_NAMESPACE=__your_namespace__
+
+DOCKERHUB_NAMESPACE=amalgam8
+
+#################################################################################
+# Routes
+#################################################################################
+
+ROUTES_DOMAIN=mybluemix.net
+
+## Replace these with the your route names.
+CONTROLLER_HOSTNAME=__your_controller_route__
+REGISTRY_HOSTNAME=__your_registry_route__
+BOOKINFO_HOSTNAME=__your_bookinfo_route__
+
+###NOTE: Use HTTP and not HTTPS for the controller and registry URLs.
+CONTROLLER_URL=http://${CONTROLLER_HOSTNAME}.${ROUTES_DOMAIN}
+REGISTRY_URL=http://${REGISTRY_HOSTNAME}.${ROUTES_DOMAIN}
+
+BOOKINFO_URL=https://${BOOKINFO_HOSTNAME}.${ROUTES_DOMAIN}
+
+#################################################################################
+# Misc
+#################################################################################
+
+### Auth tokens when running in multi-tenant mode. Note that when deploying the
+### control plane in multi tenant mode, you need to provide these authentication tokens to
+### the bookinfo services and also set the A8_CONTROLLER_TOKEN and A8_REGISTRY_TOKEN for the
+### a8ctl CLI
+
+#CONTROLLER_TOKEN=local
+#REGISTRY_TOKEN=local

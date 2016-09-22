@@ -1,0 +1,52 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+gateway:
+  image: amalgam8/a8-sidecar:alpine
+  environment:
+    - A8_CONTROLLER_URL=http://controller:8080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_PROXY=true
+    - A8_LOG=true
+    - A8_SERVICE=gateway
+    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_CONTROLLER_POLL=5s
+    - A8_REGISTRY_POLL=5s
+  ports:
+    - "32000:6379"
+  external_links:
+    - logstash
+    - controller
+    - registry
+  container_name: gateway
+
+helloworld-v1:
+  image: amalgam8/a8-examples-helloworld-sidecar:v1-alpine
+  environment:
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_SERVICE=helloworld:v1
+    - A8_REGISTER=true
+    - A8_ENDPOINT_PORT=5000
+  external_links:
+    - registry
+
+helloworld-v2:
+  image: amalgam8/a8-examples-helloworld-sidecar:v2-alpine
+  environment:
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_SERVICE=helloworld:v2
+    - A8_REGISTER=true
+    - A8_ENDPOINT_PORT=5000
+  external_links:
+    - registry

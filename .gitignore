@@ -11,8 +11,8 @@ release/
 *.log
 
 # Vagrant folders
-.vagrant
+*.vagrant
 
 # Ignore Java build related files and folders
-.gradle
-.war
+*.gradle
+*.war

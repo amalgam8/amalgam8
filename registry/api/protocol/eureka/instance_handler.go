@@ -106,12 +106,12 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	si, err := BuildA8Instance(inst)
+	si, err := TranslateToA8Instance(inst)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warnf("Failed to register instance %+v", inst)
+		}).Errorf("Failed to register instance %+v", inst)
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
 		return
@@ -123,8 +123,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -217,8 +216,7 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to deregister instance %s", uid)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -271,8 +269,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", uid)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -321,8 +318,7 @@ func (routes *Routes) getInstanceByAppAndID(w rest.ResponseWriter, r *rest.Reque
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -371,8 +367,7 @@ func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to query instance %s", uid)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -462,8 +457,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to set instance %s status", uid)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -531,8 +525,8 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
 }
 
-// BuildA8Instance builds A8 instance from eureka instance
-func BuildA8Instance(inst *Instance) (*store.ServiceInstance, error) {
+// TranslateToA8Instance translates eureka instance into A8 instance
+func TranslateToA8Instance(inst *Instance) (*store.ServiceInstance, error) {
 	var err error
 
 	// Get the instance ID

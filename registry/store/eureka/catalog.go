@@ -40,6 +40,8 @@ type instanceMap map[string]*store.ServiceInstance // instance ID -> instance
 type serviceMap map[string]instanceMap             // service name -> instanceMap
 
 type eurekaCatalog struct {
+	sync.RWMutex
+
 	client *eurekaClient
 
 	services     serviceMap
@@ -47,7 +49,6 @@ type eurekaCatalog struct {
 	versionDelta int64
 
 	logger *log.Entry
-	sync.RWMutex
 }
 
 func newEurekaCatalog(client *eurekaClient) (*eurekaCatalog, error) {
@@ -178,7 +179,7 @@ func (ec *eurekaCatalog) getServices() (serviceMap, instanceMap, error) {
 			sname := app.Name
 			svcInstances := instanceMap{}
 			for _, inst := range app.Instances {
-				si, err := eurekaapi.BuildA8Instance(inst)
+				si, err := eurekaapi.TranslateToA8Instance(inst)
 				if err != nil {
 					ec.logger.WithFields(log.Fields{
 						"error": err,
@@ -221,10 +222,10 @@ func (ec *eurekaCatalog) getServicesDelta() (serviceMap, instanceMap) {
 		return services, instances
 	}
 
-	var updCount, delCount int
+	var updated, deleted int
 	for _, app := range apps.Application {
 		for _, inst := range app.Instances {
-			si, err := eurekaapi.BuildA8Instance(inst)
+			si, err := eurekaapi.TranslateToA8Instance(inst)
 			if err != nil {
 				ec.logger.WithFields(log.Fields{
 					"error": err,
@@ -241,7 +242,7 @@ func (ec *eurekaCatalog) getServicesDelta() (serviceMap, instanceMap) {
 						delete(services, si.ServiceName)
 					}
 				}
-				delCount++
+				deleted++
 			case actionAdded, actionModified:
 				if inst.Lease != nil && inst.Lease.RegistrationTs > 0 {
 					si.RegistrationTime = time.Unix(inst.Lease.LastRenewalTs/1e3, (inst.Lease.LastRenewalTs%1e3)*1e6)
@@ -253,10 +254,9 @@ func (ec *eurekaCatalog) getServicesDelta() (serviceMap, instanceMap) {
 					services[si.ServiceName] = insts
 				}
 				insts[si.ID] = si
-				updCount++
+				updated++
 			default:
 				ec.logger.Warnf("Unknown ActionType %s for instance %+v", inst.ActionType, si)
-
 			}
 		}
 	}
@@ -269,7 +269,7 @@ func (ec *eurekaCatalog) getServicesDelta() (serviceMap, instanceMap) {
 	}
 
 	ec.versionDelta = apps.VersionDelta
-	ec.logger.Infof("Delta update completed successfully (updated: %d, deleted: %d, version: %d)", updCount, delCount, apps.VersionDelta)
+	ec.logger.Infof("Delta update completed successfully (updated: %d, deleted: %d, version: %d)", updated, deleted, apps.VersionDelta)
 
 	return services, instances
 }
@@ -299,7 +299,6 @@ func calculateHashcode(instances instanceMap) string {
 	for _, status := range keys {
 		count := hashMap[status]
 		hashcode = hashcode + fmt.Sprintf("%s%s%d%s", status, hashcodeDelimiter, count, hashcodeDelimiter)
-
 	}
 
 	return hashcode

@@ -15,6 +15,7 @@
 package eureka
 
 import (
+	"crypto/tls"
 	"fmt"
 	"strings"
 	"time"
@@ -42,24 +43,35 @@ type eurekaClient struct {
 }
 
 func newEurekaClient(eurekaURLs []string) (*eurekaClient, error) {
-
+	var httpsRequired bool
 	logger := logging.GetLogger(module)
 
 	urls := make([]string, len(eurekaURLs))
-	for i, u := range eurekaURLs {
-		for strings.HasSuffix(u, "/") {
-			u = strings.TrimSuffix(u, "/")
+	for i, eu := range eurekaURLs {
+		for strings.HasSuffix(eu, "/") {
+			eu = strings.TrimSuffix(eu, "/")
 		}
 
-		if _, err := url.Parse(u); err != nil {
+		u, err := url.Parse(eu)
+		if err != nil {
 			return nil, err
 		}
 
-		urls[i] = u
+		if u.Scheme == "https" {
+			httpsRequired = true
+		}
+
+		urls[i] = eu
 	}
 
 	hc := &http.Client{
 		Timeout: requestTimeout,
+	}
+
+	if httpsRequired {
+		hc.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
 	}
 
 	return &eurekaClient{

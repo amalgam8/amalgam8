@@ -42,7 +42,7 @@ func (routes *Routes) getServiceInstances(w rest.ResponseWriter, r *rest.Request
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to lookup service %s", sname)
-		// error is set in routes.catalog()
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -101,7 +101,7 @@ func (routes *Routes) listServices(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Error("Failed to list services")
-		// error to user is already set in route.catalog()
+		// error response set by routes.catalog()
 		return
 	}
 

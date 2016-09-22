@@ -43,8 +43,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to list vip %s", vip)
-
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
 

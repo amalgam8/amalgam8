@@ -27,6 +27,7 @@ import (
 	"github.com/amalgam8/amalgam8/registry/config"
 	"github.com/amalgam8/amalgam8/registry/replication"
 	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/store/eureka"
 	"github.com/amalgam8/amalgam8/registry/store/filesystem"
 	"github.com/amalgam8/amalgam8/registry/store/kubernetes"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
@@ -153,6 +154,15 @@ func Run(conf *config.Values) error {
 			return err
 		}
 		catalogsExt = append(catalogsExt, k8sFactory)
+	}
+
+	// See whether eureka catalog is enabled
+	if len(conf.EurekaURLs) > 0 {
+		eurekaFactory, err := eureka.New(&eureka.Config{EurekaURLs: conf.EurekaURLs})
+		if err != nil {
+			return err
+		}
+		catalogsExt = append(catalogsExt, eurekaFactory)
 	}
 
 	// See whether FileSystem catalog is enabled

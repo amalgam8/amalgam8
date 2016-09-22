@@ -31,11 +31,14 @@ type Port struct {
 	Value   interface{} `json:"$,omitempty"`
 }
 
+// DatacenterMetadata encapsulates information needed for a datacenter metadata information
+type DatacenterMetadata map[string]interface{}
+
 // DatacenterInfo encapsulates information needed for a datacenter information
 type DatacenterInfo struct {
-	Class    string            `json:"@class,omitempty"`
-	Name     string            `json:"name,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
+	Class    string             `json:"@class,omitempty"`
+	Name     string             `json:"name,omitempty"`
+	Metadata DatacenterMetadata `json:"metadata,omitempty"`
 }
 
 // LeaseInfo encapsulates information needed for a lease information

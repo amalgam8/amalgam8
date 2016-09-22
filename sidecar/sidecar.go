@@ -43,7 +43,7 @@ func Main() {
 
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
-	app.Version = "0.2.0"
+	app.Version = "0.3.1"
 	app.Flags = config.Flags
 	app.Action = sidecarCommand
 
@@ -130,9 +130,16 @@ func Run(conf config.Config) error {
 			TTL: 60,
 		}
 
+		healthChecks, err := register.BuildHealthChecks(conf.HealthChecks)
+		if err != nil {
+			logrus.WithError(err).Error("Could not build health checks")
+			return err
+		}
+
 		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
 			Client:          registryClient,
 			ServiceInstance: serviceInstance,
+			HealthChecks:    healthChecks,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Could not create registry agent")

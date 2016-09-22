@@ -32,6 +32,7 @@ const DefaultReregistrationDelay = time.Duration(5) * time.Second
 type RegistrationConfig struct {
 	Client          client.Client
 	ServiceInstance *client.ServiceInstance
+	HealthChecks    []HealthCheck
 }
 
 // RegistrationAgent maintains a registration with registry.
@@ -82,12 +83,14 @@ func (agent *RegistrationAgent) Stop() {
 
 func (agent *RegistrationAgent) register() {
 	for {
-		registeredInstance, err := agent.config.Client.Register(agent.config.ServiceInstance)
-		if err == nil {
-			go agent.renew(registeredInstance)
-			return
+		if agent.checkAppHealth(DefaultReregistrationDelay) {
+			registeredInstance, err := agent.config.Client.Register(agent.config.ServiceInstance)
+			if err == nil {
+				go agent.renew(registeredInstance)
+				return
+			}
+			logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).Warn("Registration failed")
 		}
-		logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).Warn("Registration failed")
 
 		select {
 		case <-time.After(DefaultReregistrationDelay):
@@ -100,9 +103,26 @@ func (agent *RegistrationAgent) register() {
 
 func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 	interval := time.Duration(instance.TTL) * time.Second / DefaultHeartbeatsPerTTL
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
 	for {
 		select {
-		case <-time.After(interval):
+		case <-ticker.C:
+			if !agent.checkAppHealth(interval) {
+				logrus.Warn("De-registering service")
+				if err := agent.config.Client.Deregister(instance.ID); err != nil {
+					logrus.WithError(err).WithField("service_name", instance.ServiceName).Warn("Deregister failed")
+				}
+
+				select {
+				case <-time.After(DefaultReregistrationDelay):
+					go agent.register()
+					return
+				case <-agent.stop:
+					return
+				}
+			}
+
 			err := agent.config.Client.Renew(instance.ID)
 			if cErr, ok := err.(client.Error); ok && cErr.Code == client.ErrorCodeUnknownInstance {
 				logrus.WithError(cErr).WithField("service_name", instance.ServiceName).Warn("Heartbeat failed")
@@ -119,4 +139,37 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 func (agent *RegistrationAgent) deregister(instance *client.ServiceInstance) {
 	logrus.WithField("service_name", instance.ServiceName).Info("Deregistered")
 	agent.config.Client.Deregister(instance.ID)
+}
+
+func (agent *RegistrationAgent) checkAppHealth(timeout time.Duration) bool {
+	// Assume the app is healthy if we weren't give any checks.
+	if len(agent.config.HealthChecks) == 0 {
+		return true
+	}
+
+	// Provide space for each check to return it result.
+	errChan := make(chan error, len(agent.config.HealthChecks))
+
+	// Start the health checks.
+	for _, healthCheck := range agent.config.HealthChecks {
+		go healthCheck.Check(errChan, timeout)
+	}
+
+	// Capture the results. If any health check fails, short-circuit.
+	count := 0
+	for count < len(agent.config.HealthChecks) {
+		select {
+		case err := <-errChan:
+			if err != nil { // One of the health checks failed
+				logrus.WithError(err).Warn("App is unhealthy")
+				return false
+			}
+			count++
+		case <-agent.stop: // Agent is halting, stop waiting for health checks
+			return false
+		}
+	}
+
+	logrus.Debug("App is healthy")
+	return true
 }

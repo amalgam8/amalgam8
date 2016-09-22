@@ -66,8 +66,9 @@ type Config struct {
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise bool     `yaml:"supervise"`
-	App       []string `yaml:"app"`
+	Supervise    bool     `yaml:"supervise"`
+	App          []string `yaml:"app"`
+	HealthChecks []string `yaml:"healthchecks"`
 
 	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`
@@ -165,6 +166,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
+	loadFromContextIfSet(&c.HealthChecks, healthChecksFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)

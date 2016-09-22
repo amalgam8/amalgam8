@@ -36,6 +36,7 @@ const (
 	controllerTokenFlag = "controller_token"
 	controllerPollFlag  = "controller_poll"
 	superviseFlag       = "supervise"
+	healthChecksFlag    = "health_checks"
 	logFlag             = "log"
 	logstashServerFlag  = "logstash_server"
 	logLevelFlag        = "log_level"
@@ -112,6 +113,11 @@ var Flags = []cli.Flag{
 		Name:   superviseFlag,
 		EnvVar: envVar(superviseFlag),
 		Usage:  "Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation",
+	},
+	cli.StringSliceFlag{
+		Name:   healthChecksFlag,
+		EnvVar: envVar(healthChecksFlag),
+		Usage:  "List of health check URLs",
 	},
 	cli.BoolFlag{
 		Name:   logFlag,

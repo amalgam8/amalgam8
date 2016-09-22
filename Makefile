@@ -110,16 +110,20 @@ clean:
 #--------
 #-- test
 #--------
-.PHONY: test test.all
+.PHONY: test test.long test.integration
 
 test:
 	@echo "--> running unit tests, excluding long tests"
 	@go test -v $(GOPKGS) -short
 
-test.all:
+test.long:
 	@echo "--> running unit tests, including long tests"
 	@go test -v $(GOPKGS)
 
+test.integration:
+	@echo "--> running integration tests"
+	@testing/build_and_run.sh
+	
 #---------------
 #-- checks
 #---------------
@@ -194,9 +198,10 @@ release.controller:
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
 release.sidecar:
-	@echo "--> building sidecar docker image"
+	@echo "--> packaging sidecar for release"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/opt/a8_lualib \
+		$(BUILDDIR)/opt/openresty_dist \
 		$(BUILDDIR)/etc/filebeat \
 		$(BUILDDIR)/etc/nginx \
 		$(BUILDDIR)/usr/bin \
@@ -206,8 +211,9 @@ release.sidecar:
 	@cp $(DOCKERDIR)/filebeat.yml $(BUILDDIR)/etc/filebeat/
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
+	@cp openresty/*.tar.gz $(BUILDDIR)/opt/openresty_dist/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
-	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/install-a8sidecar.sh > $(RELEASEDIR)/install-a8sidecar.sh
+	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar.sh > $(RELEASEDIR)/a8sidecar.sh
 
 #---------------
 #-- tools

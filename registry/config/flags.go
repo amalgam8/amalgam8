@@ -15,12 +15,11 @@
 package config
 
 import (
+	"strings"
 	"time"
 
-	"strings"
-
 	"github.com/amalgam8/amalgam8/registry/cluster"
-	"github.com/codegangsta/cli"
+	"github.com/urfave/cli"
 )
 
 // Flag names
@@ -48,6 +47,8 @@ const (
 
 	K8sURLFlag   = "k8s_url"
 	K8sTokenFlag = "k8s_token"
+
+	EurekaURLsFlag = "eureka_url"
 
 	FSCatalogFlag = "fs_catalog"
 
@@ -170,6 +171,12 @@ var Flags = []cli.Flag{
 		Name:   K8sTokenFlag,
 		EnvVar: envVarFromFlag(K8sTokenFlag),
 		Usage:  "Kubernetes token API",
+	},
+
+	cli.StringSliceFlag{
+		Name:   EurekaURLsFlag,
+		EnvVar: envVarFromFlag(EurekaURLsFlag),
+		Usage:  "Enable eureka catalog and specify the eureka API server URLs",
 	},
 
 	cli.StringFlag{

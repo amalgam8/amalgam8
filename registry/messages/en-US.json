@@ -116,6 +116,10 @@
     "translation": "Failed to look-up application"
   },
   {
+    "id": "eureka_error_application_mismatch",
+    "translation": "Application name mismatch"
+  },
+  {
     "id": "eureka_error_dashboard_generation",
     "translation": "Failed to generate dashboard"
   },
@@ -134,5 +138,25 @@
   {
     "id": "eureka_error_vip_required",
     "translation": "vip is required"
+  },  
+  {
+    "id": "error_instance_service_name_not_specified",
+    "translation": "Failed to register instance because service name value was not specified"
+  },  
+  {
+    "id": "error_instance_service_name_too_long",
+    "translation": "Failed to register the instance because service name value exceeded {{.Count}} bytes"
+  },  
+  {
+    "id": "error_instance_endpoint_too_long",
+    "translation": "Failed to register the instance because endpoint value exceeded {{.Count}} bytes"
+  },
+  {
+    "id": "error_instance_status_too_long",
+    "translation": "Failed to register the instance because status value exceeded {{.Count}} bytes"
+  },  
+  {
+    "id": "error_instance_meta_data_too_long",
+    "translation": "Failed to register the instance because metadata value exceeded {{.Count}} bytes"
   }
 ]

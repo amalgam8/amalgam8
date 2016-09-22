@@ -96,14 +96,14 @@ func (routes *Routes) RouteHandlers(middlewares ...rest.Middleware) []*rest.Rout
 			Method:    "GET",
 			Protocol:  protocol.Eureka,
 			Operation: protocol.GetInstance,
-			Handler:   routes.getInstance,
+			Handler:   routes.getInstanceByAppAndID,
 		},
 		{
 			Path:      instanceQueryTemplateURL(),
 			Method:    "GET",
 			Protocol:  protocol.Eureka,
 			Operation: protocol.GetInstance,
-			Handler:   routes.getInstance,
+			Handler:   routes.getInstanceByID,
 		},
 		{
 			Path:      instanceStatusTemplateURL(),

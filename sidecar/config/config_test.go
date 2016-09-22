@@ -94,7 +94,7 @@ var _ = Describe("Config", func() {
 				"--registry_url=http://registry:8080",
 				"--registry_token=local",
 				"--registry_poll=5s",
-				"--controller_url=http://controller:6379",
+				"--controller_url=http://controller:8080",
 				"--controller_token=local",
 				"--controller_poll=5s",
 				"--supervise=true",
@@ -118,7 +118,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Controller.URL).To(Equal("http://controller:6379"))
+			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
@@ -151,7 +151,7 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_REGISTRY_URL", "http://registry:8080")
 			os.Setenv("A8_REGISTRY_TOKEN", "local")
 			os.Setenv("A8_REGISTRY_POLL", "5s")
-			os.Setenv("A8_CONTROLLER_URL", "http://controller:6379")
+			os.Setenv("A8_CONTROLLER_URL", "http://controller:8080")
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
 			os.Setenv("A8_SUPERVISE", "true")
@@ -195,7 +195,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Controller.URL).To(Equal("http://controller:6379"))
+			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
@@ -242,7 +242,7 @@ registry:
   poll:  5s
 
 controller:
-  url:   http://controller:6379
+  url:   http://controller:8080
   token: local
   poll:  5s
 
@@ -279,7 +279,7 @@ log_level: debug
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Controller.URL).To(Equal("http://controller:6379"))
+			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))

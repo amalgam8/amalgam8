@@ -14,6 +14,10 @@
 	    ]
 	}
     },
+	"env": {
+		"A8_STORE": "redis",
+		"A8_STORE_ADDRESS": "__REPLACEME__:31400"
+	},
     "args" : [],
     "instances": 1,
     "cpus": 0.1,

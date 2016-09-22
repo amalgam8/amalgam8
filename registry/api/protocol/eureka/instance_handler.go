@@ -46,13 +46,22 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	}
 
 	if err = r.DecodeJsonPayload(&reg); err != nil {
-
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
 		}).Warn("Failed to register instance")
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
+		return
+	}
+
+	if reg.Inst == nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "instance is required",
+		}).Warn("Failed to register instance")
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorRequiredFieldsMissing)
 		return
 	}
 
@@ -68,6 +77,16 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		}).Warnf("Failed to register instance %+v", inst)
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorRequiredFieldsMissing)
+		return
+	}
+
+	if appid != inst.Application {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "application name mismatch",
+		}).Warnf("Failed to register instance %+v", inst)
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorApplicationMismatch)
 		return
 	}
 
@@ -87,15 +106,15 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	// Get the instance ID
-	iid := inst.ID
-	if iid == "" {
-		iid = inst.HostName
-	}
+	si, err := TranslateToA8Instance(inst)
+	if err != nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     err,
+		}).Errorf("Failed to register instance %+v", inst)
 
-	ttl := defaultDurationInt
-	if inst.Lease != nil && inst.Lease.DurationInt > 0 {
-		ttl = inst.Lease.DurationInt
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceRegistrationFailed)
+		return
 	}
 
 	catalog := routes.catalog(w, r)
@@ -104,30 +123,9 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", inst)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorNamespaceNotFound)
+		// error response set by routes.catalog()
 		return
 	}
-
-	ext, err := buildExtensionFromInstance(inst)
-	if err != nil {
-		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env[env.Namespace],
-			"error":     err,
-		}).Errorf("Failed to register instance %+v", inst)
-
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
-		return
-	}
-
-	si := &store.ServiceInstance{
-		ID:          buildUniqueInstanceID(appid, iid),
-		ServiceName: inst.Application,
-		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
-		Status:      inst.Status,
-		TTL:         time.Duration(ttl) * time.Second,
-		Metadata:    inst.Metadata,
-		Extension:   ext}
 
 	var sir *store.ServiceInstance
 
@@ -137,7 +135,25 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"error":     err,
 		}).Warnf("Failed to register instance %+v", inst)
 
-		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
+		if regerr, ok := err.(*store.Error); ok {
+			switch regerr.Code {
+			case store.ErrorNoInstanceServiceName:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorNoServiceName)
+			case store.ErrorInstanceServiceNameTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorServiceNameTooLong, store.ServiceNameMaxLength)
+			case store.ErrorInstanceEndpointValueTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorEndpointValueTooLong, store.EndpointValueMaxLength)
+			case store.ErrorInstanceStatusLengthTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorStatusLengthTooLong, store.StatusMaxLength)
+			case store.ErrorInstanceMetaDataTooLong:
+				i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorMetaDataTooLong, store.MetadataMaxLength)
+			default:
+				i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
+			}
+		} else {
+			i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorInstanceRegistrationFailed)
+		}
+
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{
@@ -192,18 +208,18 @@ func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request)
 		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
 		return
 	}
+	uid := buildUniqueInstanceID(appid, iid)
 
 	catalog := routes.catalog(w, r)
 	if catalog == nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to deregister instance %s", iid)
-
+		}).Errorf("Failed to deregister instance %s", uid)
+		// error response set by routes.catalog()
 		return
 	}
 
-	uid := buildUniqueInstanceID(appid, iid)
 	si, err := catalog.Deregister(uid)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
@@ -252,8 +268,8 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to renew instance %s", iid)
-
+		}).Errorf("Failed to renew instance %s", uid)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -272,13 +288,13 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
+func (routes *Routes) getInstanceByAppAndID(w rest.ResponseWriter, r *rest.Request) {
 	appid := r.PathParam(RouteParamAppID)
 	if appid == "" {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "application id is required",
-		}).Warn("Failed to query instancee")
+		}).Warn("Failed to query instance")
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorApplicationIdentifierMissing)
 		return
@@ -301,8 +317,8 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
-		}).Errorf("Failed to renew instance %s", iid)
-
+		}).Errorf("Failed to query instance %s", uid)
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -325,11 +341,79 @@ func (routes *Routes) getInstance(w rest.ResponseWriter, r *rest.Request) {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
 			"error":     err,
-		}).Warn("Failed to encode instance")
+		}).Warnf("Failed to encode instance %s", uid)
 
 		i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
 		return
 	}
+}
+
+func (routes *Routes) getInstanceByID(w rest.ResponseWriter, r *rest.Request) {
+	iid := r.PathParam(RouteParamInstanceID)
+	if iid == "" {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "instance id is required",
+		}).Warn("Failed to query instance")
+
+		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceIdentifierMissing)
+		return
+	}
+	uid := buildUniqueInstanceID("", iid)
+
+	catalog := routes.catalog(w, r)
+	if catalog == nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "catalog is nil",
+		}).Errorf("Failed to query instance %s", uid)
+		// error response set by routes.catalog()
+		return
+	}
+
+	services := catalog.ListServices(nil)
+	if services == nil {
+		routes.logger.WithFields(log.Fields{
+			"namespace": r.Env[env.Namespace],
+			"error":     "services list is nil",
+		}).Warnf("Failed to query instance %s", uid)
+
+		i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
+		return
+	}
+
+	for _, svc := range services {
+		insts, err := catalog.List(svc.ServiceName, nil)
+		// The service might be removed by other user in the middle
+		if err != nil {
+			continue
+		}
+
+		for _, si := range insts {
+			if strings.HasSuffix(si.ID, uid) {
+				r.Env[env.ServiceInstance] = si
+				inst := buildInstanceFromRegistry(si)
+
+				err = w.WriteJson(&InstanceWrapper{inst})
+				if err != nil {
+					routes.logger.WithFields(log.Fields{
+						"namespace": r.Env[env.Namespace],
+						"error":     err,
+					}).Warnf("Failed to encode instance %s", si.ID)
+
+					i18n.Error(r, w, http.StatusInternalServerError, i18n.ErrorEncoding)
+				}
+				return
+			}
+		}
+	}
+
+	routes.logger.WithFields(log.Fields{
+		"namespace": r.Env[env.Namespace],
+		"error":     "no such instance",
+	}).Errorf("Failed to query instance %s", uid)
+
+	i18n.Error(r, w, http.StatusNotFound, i18n.ErrorInstanceNotFound)
 }
 
 func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
@@ -373,7 +457,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to set instance %s status", uid)
-
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -418,7 +502,7 @@ func (routes *Routes) setStatus(w rest.ResponseWriter, r *rest.Request) {
 }
 
 func buildUniqueInstanceID(appid, iid string) string {
-	return fmt.Sprintf("%s.%s", appid, iid)
+	return fmt.Sprintf("%s:%s", appid, iid)
 }
 
 func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) {
@@ -431,10 +515,7 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	copyInst.Metadata = nil
 	copyInst.LastUpdatedTs = nil
 	copyInst.LastDirtyTs = nil
-	if copyInst.Lease != nil {
-		copyInst.Lease.RegistrationTs = 0
-		copyInst.Lease.LastRenewalTs = 0
-	}
+	copyInst.Lease = nil
 
 	ext, err := json.Marshal(copyInst)
 	if err != nil {
@@ -442,6 +523,48 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	}
 
 	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
+}
+
+// TranslateToA8Instance translates eureka instance into A8 instance
+func TranslateToA8Instance(inst *Instance) (*store.ServiceInstance, error) {
+	var err error
+
+	// Get the instance ID
+	// In the old eureka client versions (1.1.x) the instance ID is NOT explicitly set in the request data,
+	// but it is part of the DatacenterInfo class.
+	id := inst.ID
+	if id == "" {
+		id, err = resolveInstanceID(inst)
+		if err != nil {
+			return nil, err
+		}
+	}
+	uid := buildUniqueInstanceID(inst.Application, id)
+
+	ext, err := buildExtensionFromInstance(inst)
+	if err != nil {
+		return nil, err
+	}
+
+	ttl := defaultDurationInt
+	var lastRenewal time.Time
+	if inst.Lease != nil && inst.Lease.DurationInt > 0 {
+		ttl = inst.Lease.DurationInt
+		lastRenewal = time.Unix(inst.Lease.LastRenewalTs/1e3, (inst.Lease.LastRenewalTs%1e3)*1e6)
+	}
+
+	si := &store.ServiceInstance{
+		ID:          uid,
+		ServiceName: inst.Application,
+		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
+		Status:      inst.Status,
+		TTL:         time.Duration(ttl) * time.Second,
+		LastRenewal: lastRenewal,
+		Metadata:    inst.Metadata,
+		Extension:   ext,
+	}
+
+	return si, nil
 }
 
 func buildInstanceFromRegistry(si *store.ServiceInstance) *Instance {
@@ -475,8 +598,8 @@ func buildDefaultInstance(si *store.ServiceInstance) *Instance {
 		CordServer:    "false",
 		ActionType:    "ADDED",
 		OvrStatus:     "UNKNOWN",
-		LastDirtyTs:   fmt.Sprintf("%d", si.RegistrationTime.Unix()),
-		LastUpdatedTs: fmt.Sprintf("%d", si.RegistrationTime.Unix()),
+		LastDirtyTs:   fmt.Sprintf("%d", si.RegistrationTime.UnixNano()/int64(time.Millisecond)),
+		LastUpdatedTs: fmt.Sprintf("%d", si.RegistrationTime.UnixNano()/int64(time.Millisecond)),
 		Metadata:      si.Metadata,
 	}
 

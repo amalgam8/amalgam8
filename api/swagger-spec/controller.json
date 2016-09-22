@@ -1,0 +1,831 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Amalgam8 Route Controller REST API",
+    "description": "The controller provides APIs to the developer for configuring rules for request routing, fault injection, etc.",
+    "version": "1.0.0"
+  },
+  "basePath": "/",
+  "schemes": [
+    "http",
+    "https"
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/health": {
+      "parameters": [],
+      "get": {
+        "summary": "Status of the controller",
+        "description": "Returns status of the controller.",
+        "responses": {
+          "200": {
+            "description": "Controller is healthy."
+          },
+          "503": {
+            "description": "Controller is unhealthy."
+          }
+        }
+      }
+    },
+    "/v1/rules": {
+      "parameters": [],
+      "post": {
+        "summary": "Add rules to the controller.",
+        "description": "Transactionally add rules to the controller. All rules are validated\nagainst the rule schema.\n",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
+            }
+          },
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Get rules from the controller.",
+        "description": "Query for rules that pass the specified filters. Filters are specified using query parameters.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Set of rule IDs.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Set of tags each rule must contain.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "description": "Set of acceptable rule destinations.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            }
+          },
+          "404": {
+            "description": "Could not find rule(s).",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update rules in the controller.",
+        "description": "Transactionally update the specified rules. No rules are updated on failure.",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules have been updated successfully."
+          },
+          "404": {
+            "description": "Could not find all the rules.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove rules from the controller.",
+        "description": "Remove rules that pass the query criteria.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Set of rule IDs.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "description": "Set of tags each rule must contain.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          },
+          {
+            "name": "destination",
+            "in": "query",
+            "description": "Set of acceptable rule destinations.",
+            "required": false,
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "collectionFormat": "multi"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "404": {
+            "description": "Specified rules do not exist.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/routes": {
+      "get": {
+        "summary": "Get route rules",
+        "description": "Get rules that define a route keyed by destination.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/rulesByDestination"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/actions": {
+      "get": {
+        "summary": "Get action rules",
+        "description": "Get rules that define actions keyed by destination.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/rulesByDestination"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/routes/{destination}": {
+      "parameters": [
+        {
+          "name": "destination",
+          "in": "path",
+          "description": "Destination",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get route rules by destination.",
+        "description": "Get rules that define a route.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace route rules by destination.",
+        "description": "Transactionally replace all route rules by destination.",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
+            }
+          },
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove route rules by destination.",
+        "description": "Delete all rules that define a route by destination.",
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    },
+    "/v1/rules/actions/{destination}": {
+      "parameters": [
+        {
+          "name": "destination",
+          "in": "path",
+          "description": "Destination",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "get": {
+        "summary": "Get action rules by destination.",
+        "description": "Get rules that define actions.",
+        "responses": {
+          "200": {
+            "description": "Query was successful.",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Replace action rules by destination.",
+        "description": "Transactionally replace all action rules by destination.",
+        "parameters": [
+          {
+            "name": "rules",
+            "in": "body",
+            "description": "Rules to add",
+            "schema": {
+              "$ref": "#/definitions/ruleList"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successfully added rules.",
+            "schema": {
+              "$ref": "#/definitions/ids"
+            }
+          },
+          "400": {
+            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove action rules by destination.",
+        "description": "Delete all rules that define actions by destination.",
+        "responses": {
+          "200": {
+            "description": "Rules were deleted successfully."
+          },
+          "500": {
+            "description": "Request failed due to an internal server error.",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          },
+          "503": {
+            "description": "Dependency failure (database backend unreachable, etc.)            ",
+            "schema": {
+              "$ref": "#/definitions/error"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ids": {
+      "title": "IDs",
+      "description": "Rule IDs",
+      "type": "array",
+      "items": {
+        "title": "ID",
+        "description": "Rule ID",
+        "type": "string"
+      }
+    },
+    "tags": {
+      "title": "Tags",
+      "description": "An array of one or more unique service tags.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "minItems": 1
+    },
+    "source": {
+      "title": "Source",
+      "description": "Microservice where request originated from",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "headers": {
+      "title": "Headers",
+      "description": "Header key/value pairs",
+      "type": "object",
+      "additionalProperties": {
+        "title": "Header",
+        "type": "string"
+      },
+      "minProperties": 1
+    },
+    "match": {
+      "title": "Match",
+      "description": "Conditions that must be true to apply the action or routing",
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/source"
+        },
+        "headers": {
+          "$ref": "#/definitions/headers"
+        }
+      },
+      "additionalProperties": false,
+      "minProperties": 1
+    },
+    "basicBackend": {
+      "title": "Basic Backend",
+      "description": "Basic backend to route to",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "backend": {
+      "title": "Backend",
+      "description": "Backend to route to",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Service name",
+          "description": "The service name",
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "weight": {
+          "title": "Traffic weight",
+          "description": "Percentage of traffic to route to this backend.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "exclusiveMinimum": true,
+          "default": 1
+        },
+        "timeout": {
+          "description": "Request timeout or read/write timeout on the pipe in seconds",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "additionalProperties": false
+    },
+    "route": {
+      "type": "object",
+      "properties": {
+        "backends": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/backend"
+          }
+        }
+      },
+      "required": [
+        "backends"
+      ],
+      "additionalProperties": false
+    },
+    "probability": {
+      "title": "Probability",
+      "description": "Probability of executing action",
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "exclusiveMinimum": true,
+      "default": 1
+    },
+    "action": {
+      "title": "Action",
+      "description": "Action to apply to matching requests",
+      "type": "object",
+      "discriminator": "action",
+      "properties": {
+        "action": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "action"
+      ]
+    },
+    "delayAction": {
+      "title": "Delay",
+      "description": "Conditionally delay the request",
+      "properties": {
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of delay in seconds",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        }
+      },
+      "required": [
+        "duration"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "abortAction": {
+      "title": "Abort",
+      "description": "Conditionally abort the request",
+      "properties": {
+        "probability": {
+          "$ref": "#/definitions/probability"
+        },
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "return_code": {
+          "type": "number",
+          "description": "Return code",
+          "minimum": -5,
+          "maximum": 599
+        }
+      },
+      "required": [
+        "return_code"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "traceAction": {
+      "title": "Trace",
+      "description": "Trace request",
+      "properties": {
+        "tags": {
+          "$ref": "#/definitions/tags"
+        },
+        "log_key": {
+          "type": "string",
+          "default": "trace"
+        },
+        "log_value": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "$ref": "#/definitions/action"
+        }
+      ]
+    },
+    "rule": {
+      "title": "Rule",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "priority": {
+          "type": "number",
+          "default": 0
+        },
+        "destination": {
+          "type": "string"
+        },
+        "match": {
+          "type": "object",
+          "properties": {
+            "all": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "any": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "none": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "$ref": "#/definitions/match"
+              }
+            },
+            "source": {
+              "$ref": "#/definitions/source"
+            },
+            "headers": {
+              "$ref": "#/definitions/headers"
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "route": {
+          "$ref": "#/definitions/route"
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/action"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "destination"
+      ]
+    },
+    "ruleList": {
+      "title": "Rules",
+      "description": "Collection of rules",
+      "type": "object",
+      "properties": {
+        "rules": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/rule"
+          }
+        }
+      }
+    },
+    "rulesByDestination": {
+      "title": "Rules by destination",
+      "description": "Rules mapped by destination.",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ruleList"
+      }
+    },
+    "error": {
+      "title": "Error",
+      "description": "Error description",
+      "type": "object",
+      "properties": {
+        "error": {
+          "title": "Error",
+          "description": "The error type.",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "description": "Translated error message.",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

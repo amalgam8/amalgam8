@@ -4,8 +4,6 @@ Sample microservice-based applications and local sandbox environment for Amalgam
 
 An overview of Amalgam8 can be found at www.amalgam8.io.
 
-[//]: # (**Note:** This is an unstable branch. If you are experimenting with Amalgam8 for the first time, please use the stable branch (`git checkout -b 0.1.0 origin/0.1.0`) and use this [README](https://github.com/amalgam8/amalgam8/examples/blob/0.2.0/README.md) from the stable branch.)
-
 ## Overview <a id="overview"></a>
 
 This project includes a number of Amalgam8 sample programs, scripts and a preconfigured environment to allow
@@ -15,25 +13,25 @@ the samples to other environments as well.
 
 The following samples are available for Amalgam8:
 
-* [Helloworld](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/helloworld/README.md) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
-* [Bookinfo](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/README.md) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
+* [Helloworld](apps/helloworld/) is a single microservice app that demonstrates how to route traffic to different versions of the same microservice
+* [Bookinfo](apps/bookinfo/) is a multiple microservice app used to demonstrate and experiment with several Amalgam8 features
 
 ### Setup
 
 Before running the samples, you need to setup the requisite environment.
 
-* *Vagrant sandbox*: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
+* *Vagrant sandbox*: The repository's root directory includes a Vagrant file that provides an environment with everything needed to run, and build, the samples ([Go](http://golang.org/), [Docker](http://www.docker.com/), [Kubernetes](http://kubernetes.io/), [Amalgam8 CLI w/ Gremlin SDK](https://github.com/amalgam8/a8ctl) already installed. Depending on the runtime environement you want to try, using it may be the easiest way to get Amalgam8 up and running.
 
 * *Custom setup*: If you are not using the vagrant environment, then install the following pre-requisites:
   * Amalgam8 python CLI
    ```bash
-   sudo pip install git+https://github.com/amalgam8/amalgam8/a8ctl
+   sudo pip install git+https://github.com/amalgam8/a8ctl
    ```
   * [Docker 1.10 or later](https://docs.docker.com/engine/installation/)
   * [Docker Compose 1.5.1 or later](https://docs.docker.com/compose/install/)
 
 * *Development Mode*: If you'd like to also be able to change and compile the code, or build the images,
-refer to the [Developer Instructions](https://github.com/amalgam8/amalgam8/blob/master/devel/README.md).
+refer to the [Developer Instructions](../devel/).
 
 ### Deployment Options
 
@@ -60,7 +58,7 @@ The following instructions assume that you are using the Vagrant
 environment. Where appropriate, environment specific instructions are
 provided.
 
-1. Download the [Vagrantfile](https://github.com/amalgam8/amalgam8/blob/master/examples/Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
+1. Download the [Vagrantfile](Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
 
     ```bash
     vagrant up
@@ -141,10 +139,10 @@ provided.
     Usually, the API gateway is mapped to a DNS route. However, in our local
     standalone environment, you can access it at port 32000 on localhost.
     If you are using Docker directly, then the gateway should be
-    accessible at http://localhost:32000 or http://dockermachineip:32000.
+    accessible at `http://localhost:32000` or `http://dockermachineip:32000`.
 
 1. Confirm that the API gateway is running by accessing
-    http://localhost:32000 from your browser.
+    `http://localhost:32000` from your browser.
     If all is well, you should see a simple **Welcome to nginx!**
     page in your browser.
 
@@ -160,7 +158,7 @@ provided.
     docker-compose -f docker/helloworld.yaml scale helloworld-v2=2
     ```
         
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/tree/master/examples/apps/helloworld/
+    * Follow the instructions for the [Helloworld](apps/helloworld/) example
 
     * To shutdown the helloworld instances, run the following commands:
    
@@ -177,7 +175,10 @@ provided.
     docker-compose -f docker/bookinfo.yaml up -d
     ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/tree/master/examples/apps/bookinfo/
+    This example is made up of services written in different languages. It
+    may take up to a minute to start running.
+
+    * Follow the instructions for the [Bookinfo](apps/bookinfo/) example
 
     * To shutdown the bookinfo instances, run the following commands:
     
@@ -196,7 +197,7 @@ provided.
 
 The following setup has been tested with Kubernetes v1.2.3.
 
-1. Download the [Vagrantfile](https://github.com/amalgam8/amalgam8/blob/master/examples/Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
+1. Download the [Vagrantfile](Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
 
     ```bash
     vagrant up
@@ -254,10 +255,8 @@ The following setup has been tested with Kubernetes v1.2.3.
     This is usually fixed by waiting a minute or two, and then running `kubernetes/run-controlplane-local-k8s.sh stop` and then
     repeating the previous step.
     
-    You can also access the registry at http://localhost:31300 from the host machine
-    (outside the Vagrant box), and the controller at http://localhost:31200 .
-    To access the control plane details of tenant *local*, access
-    http://localhost:31200/v1/tenants/local from your browser.
+    You can also access the registry at `http://localhost:31300` from the host machine
+    (outside the Vagrant box), and the controller at `http://localhost:31200` .
 
 
 1. Run the [API Gateway](http://microservices.io/patterns/apigateway.html) with the following commands:
@@ -270,11 +269,11 @@ The following setup has been tested with Kubernetes v1.2.3.
     standalone environment, you can access it at port 32000 on localhost.
 
 1. Confirm that the API gateway is running by accessing
-    http://localhost:32000 from your browser. If all is well, you should
+    `http://localhost:32000` from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
 1. Visualize your deployment using Weave Scope by accessing
-   http://localhost:30040 . Click on `Pods` tab. You should see a graph of
+   `http://localhost:30040` . Click on `Pods` tab. You should see a graph of
    pods depicting the connectivity between them. As you create more apps
    and manipulate routing across microservices, the graph changes in
    real-time.
@@ -289,7 +288,7 @@ The following setup has been tested with Kubernetes v1.2.3.
         kubectl create -f kubernetes/helloworld.yaml
         ```
         
-    * Follow the instructions https://github.com/amalgam8/amalgam8/tree/master/examples/apps/helloworld/
+    * Follow the instructions for the [Helloworld](apps/helloworld/) example
  
     * To shutdown the helloworld instances, run the following command:
     
@@ -305,7 +304,7 @@ The following setup has been tested with Kubernetes v1.2.3.
         kubectl create -f kubernetes/bookinfo.yaml
         ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/tree/master/examples/apps/bookinfo/
+    * Follow the instructions for the [Bookinfo](apps/bookinfo/) example
     
     * To shutdown the bookinfo instances, run the following command:
     
@@ -323,7 +322,7 @@ The following setup has been tested with Kubernetes v1.2.3.
 
 The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
 
-1. Download the [Vagrantfile](https://github.com/amalgam8/amalgam8/blob/master/examples/Vagrantfile)
+1. Download the [Vagrantfile](Vagrantfile)
 2. **Edit the Vagrant file** and add the following line inside the `config.vm` block:
 
     ```ruby
@@ -351,7 +350,8 @@ The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
     marathon/run-controlplane-marathon.sh start
     ```
 
-    From your browser, confirm that the Marathon dashboard is accessible at http://192.168.33.33:8080 and the Mesos dashboard at http://192.168.33.33:5050
+    From your browser, confirm that the Marathon dashboard is accessible at
+    `http://192.168.33.33:8080` and the Mesos dashboard at `http://192.168.33.33:5050`
 
     Verify that the controller and registry are running via the Marathon dashboard.
 
@@ -364,7 +364,7 @@ The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
     ```
 
 1. Confirm that the API gateway is running by accessing the
-    http://192.168.33.33:32000 from your browser. If all is well, you should
+    `http://192.168.33.33:32000` from your browser. If all is well, you should
     see a simple **Welcome to nginx!** page in your browser.
 
 1. Follow the instructions for the sample that you want to run.
@@ -377,7 +377,7 @@ The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
     marathon/run-component.sh helloworld start
     ```
         
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/tree/master/examples/apps/helloworld/
+    * Follow the instructions for the [Helloworld](apps/helloworld/) example
 
     * To shutdown the helloworld instances, run the following commands:
    
@@ -393,7 +393,7 @@ The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
     marathon/run-component.sh bookinfo start
     ```
 
-    * Follow the instructions at https://github.com/amalgam8/amalgam8/tree/master/examples/apps/bookinfo/
+    * Follow the instructions for the [Bookinfo](apps/bookinfo/) example
 
     * To shutdown the bookinfo instances, run the following commands:
     
@@ -409,10 +409,10 @@ The following setup has been tested with Marathon 0.15.2 and Mesos 0.26.0.
 
 ## Amalgam8 on IBM Bluemix <a id="bluemix"></a>
 
-To run the [Bookinfo sample app](https://github.com/amalgam8/amalgam8/tree/master/examples/apps/bookinfo/README.md)
+To run the [Bookinfo sample app](apps/bookinfo/)
 on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, you can register at [bluemix.net](http://bluemix.net/).
 
-1. Download the [Vagrantfile](https://github.com/amalgam8/amalgam8/blob/master/examples/Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
+1. Download the [Vagrantfile](Vagrantfile) and start the Vagrant environment (or install and setup the equivalent dependencies manually).
 
     ```bash
     vagrant up
@@ -421,7 +421,7 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 
     Once inside the vagrant box, install the following additional dependencies:
     [CF CLI 6.12.0 or later](https://github.com/cloudfoundry/cli/releases),
-    [Bluemix CLI 0.3.3 or later](https://clis.ng.bluemix.net/),
+    [Bluemix CLI 0.4.1 or later](https://clis.ng.bluemix.net/),
 
 1. Switch to the Amalgam8 examples folder
 
@@ -432,12 +432,15 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 1. Login to Bluemix and initialize the container environment using ```bluemix login``` and ```bluemix ic init```
 
 1. Create Bluemix routes (DNS names) for the registry, controller and the bookinfo app's gateway:  
-    ```cf create-route myspace mybluemix.net -n mya8-registry```
-    ```cf create-route myspace mybluemix.net -n mya8-controller```
-    ```cf create-route myspace mybluemix.net -n mya8-bookinfo```
+    ```bash
+cf create-route <your bluemix space> mybluemix.net -n <your registry route>
+cf create-route <your bluemix space> mybluemix.net -n <your controller route>
+cf create-route <your bluemix space> mybluemix.net -n <your bookinfo route>
+```
+where `<your bluemix space>` is the name of your Bluemix space and `<your route ...>` is a unique route name for `registry`, `controller` and `bookinfo`. For example `my-space-name-a8-registry`, `my-space-name-a8-controller`, etc. Make a note of the route names you choose for the next step.
     
 
-1. Customize the [bluemixrc](bluemix/.bluemixrc) file in the following manner:
+1. Customize the `amalgam8/examples/bluemix/.bluemixrc` file as follows:
     * BLUEMIX_REGISTRY_NAMESPACE should be your Bluemix registry namespace, e.g. ```bluemix ic namespace-get```
     * BLUEMIX_REGISTRY_HOST should be the Bluemix registry hostname. This needs to be set only if you're targeting a Bluemix region other than US-South.
     * REGISTRY_HOSTNAME should be the route name assigned to the registry in the previous step
@@ -488,10 +491,10 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
     bluemix/deploy-bookinfo.sh
     ```
 
-    Follow the instructions at (https://github.com/amalgam8/amalgam8/tree/master/examples/apps/bookinfo/README.md)
+    Follow the instructions for the [Bookinfo](apps/bookinfo/) example
 
     **Note 1:** When you reach the part where the tutorial instructs you to open, in your browser, the bookinfo application at
-    http://localhost:32000/productpage/productpage, make sure to change "http://localhost:32000" to http://${BOOKINFO_HOSTNAME}.mybluemix.net (substitute BOOKINFO_HOSTNAME with the value defined in the `.bluemixrc` file).
+    `http://localhost:32000/productpage/productpage`, make sure to change `http://localhost:32000` to `http://${BOOKINFO_HOSTNAME}.mybluemix.net` (substitute BOOKINFO_HOSTNAME with the value defined in the `.bluemixrc` file).
 
     **Note 2:** The Bluemix version of the bookinfo sample app does not yet support running the Gremlin recipe.
     We are working on integrating the app with the Bluemix Logmet services (ELK stack), to enable support for running Gremlin recipes.
@@ -539,7 +542,7 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
     kubectl port-forward $(kubectl get pod --selector=weavescope-component=weavescope-app -o jsonpath={.items..metadata.name}) 4040
     ```
   
-    Open http://localhost:4040 on your browser to access the Scope UI. Click on `Pods` tab. 
+    Open `http://localhost:4040` on your browser to access the Scope UI. Click on `Pods` tab. 
     You should see a graph of pods depicting the connectivity between them. As you create 
     more apps and manipulate routing across microservices, the graph changes in real-time.
 
@@ -551,4 +554,4 @@ on IBM Bluemix, follow the instructions below. If you are not a Bluemix user, yo
 
 Contributions and feedback are welcome!
 Proposals and pull requests will be considered. 
-Please see the [CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md) file for more information.
+Please see the [CONTRIBUTING.md](../CONTRIBUTING.md) file for more information.

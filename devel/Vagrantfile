@@ -38,8 +38,8 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 # Install golang
 cd /tmp
-curl -O https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz
-tar -C /usr/local -xzf go1.6.2.linux-amd64.tar.gz
+curl -O https://storage.googleapis.com/golang/go1.6.3.linux-amd64.tar.gz
+tar -C /usr/local -xzf go1.6.3.linux-amd64.tar.gz
 if ! grep -Fq "/home/vagrant/sandbox" /home/vagrant/.profile; then
 	echo 'export GOPATH=/home/vagrant/sandbox' >> /home/vagrant/.profile
 fi
@@ -47,8 +47,8 @@ if ! grep -Fq "/usr/local/go/bin" /home/vagrant/.profile; then
 	echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /home/vagrant/.profile
 fi
 mkdir -p /home/vagrant/sandbox/src/github.com/amalgam8
-git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/
-git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/
+git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/amalgam8
+git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/a8ctl
 
 chown -R vagrant:vagrant /home/vagrant/sandbox
 SCRIPT

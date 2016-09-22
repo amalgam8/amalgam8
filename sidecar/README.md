@@ -1,12 +1,5 @@
 # Sidecar
 
-[![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]
-
-[GoReportCard]: https://goreportcard.com/report/github.com/amalgam8/amalgam8/sidecar
-[GoReportCard Widget]: https://goreportcard.com/badge/github.com/amalgam8/amalgam8/sidecar
-[Travis]: https://travis-ci.org/amalgam8/sidecar
-[Travis Widget]: https://travis-ci.org/amalgam8/sidecar.svg?branch=master
-
 Ambassador pattern for microservices made simple and powerful. The Amalgam8
 sidecar enables intelligent request routing while automating service
 registration, discovery, and client-side load-balancing. The Amalgam8
@@ -14,23 +7,30 @@ sidecar is based on Go+Nginx and follows an architecture similar to
 [Netflix Prana sidecar](http://techblog.netflix.com/2014/11/prana-sidecar-for-your-netflix-paas.html) 
 or [AirBnB Smartstack](http://nerds.airbnb.com/smartstack-service-discovery-cloud/).
 
-
-An overview of the Amalgam8 project is available here: https://amalgam8.io/
-
 Documentation related to the sidecar can be found at https://amalgam8.io/docs
 
 ## TL;DR
 
-* Install the sidecar in your Dockerized microservice.
+* Install the sidecar in your Dockerized microservice
 
     ```Dockerfile
-    RUN curl -sSL https://git.io/a8sidecar.sh | sh
+    RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
     ```
 
 * Launch your app via the sidecar
 
     ```Dockerfile
-    ENTRYPOINT ["a8sidecar", "--supervise", "YOURAPP", "YOURAPP_ARG", "YOURAPP_ARG"]
+    ENTRYPOINT ["a8sidecar", "--register", "--proxy", "--supervise", "YOURAPP", "YOURAPP_ARG", "YOURAPP_ARG"]
+    ```
+
+* Inject environment variables into your container
+
+    ```bash
+    A8_SERVICE=service_name:service_tags
+    A8_ENDPOINT_PORT=port_where_service_is_listening
+    A8_ENDPOINT_TYPE=http|https
+    A8_REGISTRY_URL=http://a8registryURL
+    A8_CONTROLLER_URL=http://a8controllerURL
     ```
 
 * Make API calls to other microservices via the sidecar
@@ -52,19 +52,16 @@ Documentation related to the sidecar can be found at https://amalgam8.io/docs
 Add the following line to your `Dockerfile` to install the sidecar in your docker container:
 
 ```Dockerfile
-RUN curl -sSL https://git.io/a8sidecar.sh | sh
+RUN curl -sSL https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
 ```
 
 or
 
 ```Dockerfile
-RUN wget -qO- https://git.io/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/${VERSION}/a8sidecar.sh | sh
 ```
 
-The above URL points to the latest stable release of Amalgam8 sidecar. If
-you would like to install a specific release, replace the URL with 
-`https://github.com/amalgam8/amalgam8/sidecar/releases/download/${VERSION}/install-a8sidecar.sh`
-where `${VERSION}` is the version of the sidecar that you wish to install.
+Replace ${VERSION} with the specific version of Amalgam8 you would like. The set of releases are available [here](https://github.com/amalgam8/amalgam8/releases).
 
 **Optional app supervision:** The sidecar can serve as a supervisor process that
 automatically starts up your application in addition to the Nginx proxy. To
@@ -116,8 +113,8 @@ sidecar container inside kubernetes
 A8_PROXY=false
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
-A8_REGISTRY_TOKEN=a8registry_auth_token
-A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
+#A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
+#A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
 A8_ENDPOINT_TYPE=http|https|tcp|udp|user
@@ -132,8 +129,8 @@ version-aware routing are required.
 ```bash
 A8_REGISTER=true
 A8_REGISTRY_URL=http://a8registryURL
-A8_REGISTRY_TOKEN=a8registry_auth_token
-A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
+#A8_REGISTRY_TOKEN=a8registry_auth_token #if registry is used in multi-tenant mode
+#A8_REGISTRY_POLL=polling_interval_between_sidecar_and_registry(5s)
 A8_SERVICE=service_name:service_tags
 A8_ENDPOINT_PORT=port_where_service_is_listening
 A8_ENDPOINT_TYPE=http|https|tcp|udp|user
@@ -141,8 +138,8 @@ A8_ENDPOINT_TYPE=http|https|tcp|udp|user
 A8_PROXY=true
 A8_LOG=false
 A8_CONTROLLER_URL=http://a8controllerURL
-A8_CONTROLLER_TOKEN=a8controller_auth_token
-A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
+#A8_CONTROLLER_TOKEN=a8controller_auth_token #if controller is used in multi-tenant mode
+#A8_CONTROLLER_POLL=polling_interval_between_sidecar_and_controller(5s)
 ```
 
 **Update propagation**: The sidecar will periodically poll the Amalgam8
@@ -178,7 +175,7 @@ The sidecar is independent of your application process. The communication
 model between a microservice, its sidecar and the target microservice is
 shown below:
 
-![Communication between app and sidecar](http://cdn.rawgit.com/amalgam8/sidecar/master/communication-model.svg)
+![Communication between app and sidecar](http://cdn.rawgit.com/amalgam8/amalgam8/master/sidecar/communication-model.svg)
 
 When you want to make API calls to other microservices from your
 application, you should call the sidecar at localhost:6379. 
@@ -253,7 +250,7 @@ registry:
   poll:  10s
   
 controller:
-  url:   http://controller:6379
+  url:   http://controller:8080
   token: abcdef
   poll:  30s
   
@@ -269,19 +266,32 @@ log_level: debug
 
 ## Building from source
 
-The following sections describe options for building the sidecar from
-source.
+Please refer to the [developer guide](../devel/) for prerequisites and
+instructions on how to setup the development environment.
 
-### Preprequisites
+### Building a Docker Image
 
-* Docker 1.8 or higher
-* Go 1.6
+To build the docker image for the Amalgam8 Sidecar, run the
+following commands:
 
-### Clone
+```bash
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build dockerize.sidecar
+```
 
-Clone the repository manually, or use `go get`:
+You should now have a docker image tagged `a8-controller:latest`.
 
-```go get github.com/amalgam8/amalgam8/sidecar```
+
+### Building an Executable
+
+The sidecar can also be run as a standalone binary for debugging purposes.
+The following commands will build and run it as a Go binary:
+
+```bash
+cd $GOPATH/src/github.com/amalgam8/amalgam8
+make build.sidecar
+./bin/a8sidecar [args]
+```
 
 ### Make targets
 
@@ -292,55 +302,3 @@ The following targets are available. Each may be run with `make <target>`.
 | `release`        | *(Default)* `release` builds the sidecar within a docker container and packages it into an image |
 | `test`           | `test` runs all tests using `go test` |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
-
-## Release Workflow
-
-This section includes instructions for working with releases, and is intended for the project's maintainers (requires write permissions)
-
-### Creating a release
-
-1.  Set a version for the release, by incrementing the current version according to the [semantic versioning](https://semver.org/) guidelines:
-   
-    ```bash
-    export VERSION=v0.1.0
-    ```
-
-1.  Update the APP_VER variable in the Makefile such that it matches with
-    the VERSION variable above.
-
-1.  Create an [annotated tag](https://git-scm.com/book/en/v2/Git-Basics-Tagging#Annotated-Tags) in your local copy of the repository:
-   
-    ```bash
-    git tag -a -m "Release $VERSION" $VERSION [commit id]
-    ```
-
-    The `[commit id]` argument is optional. If not specified, HEAD is used.
-   
-1.  Push the tag back to the Amalgam8 upstream repository on GitHub:
-
-    ```bash
-    git push upstream $VERSION
-    ```
-   This command automatically creates a release object on GitHub, corresponding to the pushed tag.
-   The release contains downloadable packages of the source code (both as `.zip` and `.tag.gz` archives).
-
-1.  Edit the `CHANGELOG.md` file, describing the changes included in this release.
-
-1.  Edit the [GitHub release object](https://github.com/amalgam8/amalgam8/sidecar/releases), and add a title and description (according to `CHANGELOG.md`).
-
-## License
-Copyright 2016 IBM Corporation
-
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-
-## Contributing
-
-Contributions and feedback are welcome!
-Proposals and pull requests will be considered. Please see the
-[CONTRIBUTING.md](https://github.com/amalgam8/amalgam8/blob/master/CONTRIBUTING.md)
-file for more information.
-

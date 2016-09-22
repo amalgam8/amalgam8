@@ -23,8 +23,8 @@ metadata:
     name: controller
 spec:
   ports:
-  - port: 6379
-    targetPort: 6379
+  - port: 6080
+    targetPort: 8080
     nodePort: 31200
     protocol: TCP
   selector:
@@ -58,4 +58,4 @@ spec:
         - name: A8_DATABASE_HOST
           value: redis://$(REDIS_SERVICE_HOST):$(REDIS_SERVICE_PORT)
         ports:
-        - containerPort: 6379
+        - containerPort: 8080

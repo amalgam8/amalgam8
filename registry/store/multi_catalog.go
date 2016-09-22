@@ -45,13 +45,14 @@ type multiCatalog struct {
 }
 
 func newMultiCatalog(namespace auth.Namespace, conf *multiConfig) (*multiCatalog, error) {
-	catalogs := make([]Catalog, len(conf.factories))
-	for i, factory := range conf.factories {
+	catalogs := make([]Catalog, 0, len(conf.factories))
+	for _, factory := range conf.factories {
 		catalog, err := factory.CreateCatalog(namespace)
 		if err != nil {
 			return nil, err
+		} else if catalog != nil {
+			catalogs = append(catalogs, catalog)
 		}
-		catalogs[i] = catalog
 	}
 
 	return &multiCatalog{catalogs: catalogs}, nil

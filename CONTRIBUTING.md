@@ -34,7 +34,7 @@ be run in an automated fashion by invoking
 make precommit
 ```
 You can install a git-hook into the local `.git/hooks/` directory, as a
-pre-commit ot pre-push hook.
+pre-commit or pre-push hook.
 
 <!-- and run the following tools against your Go code and fix all errors and warnings: -->
 <!-- - [golint](https://github.com/golang/lint) -->
@@ -43,7 +43,7 @@ pre-commit ot pre-push hook.
 
 #### Updating dependencies
 
-Whenver adding/removing/updating dependencies (`make depend.update`), make sure to do so in a single, isolated commit, that touches only `glide.*` and `vendor/*` files.  
+Whenever adding/removing/updating dependencies (`make depend.update`), make sure to do so in a single, isolated commit, that touches only `glide.*` and `vendor/*` files.
 This avoids polluting/obfuscating other commits in the same pull request, and keeps it easy to review.
   
 ## Legal stuff

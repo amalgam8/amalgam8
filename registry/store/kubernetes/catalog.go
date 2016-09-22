@@ -208,7 +208,7 @@ func (kc *k8sCatalog) getServices() (serviceMap, instanceMap, error) {
 
 func parseEndpoint(address EndpointAddress, port EndpointPort) (*store.Endpoint, error) {
 	var endpointType string
-	var endpointValue string = fmt.Sprintf("%s:%d", address.IP, port.Port)
+	endpointValue := fmt.Sprintf("%s:%d", address.IP, port.Port)
 
 	switch port.Protocol {
 	case ProtocolUDP:

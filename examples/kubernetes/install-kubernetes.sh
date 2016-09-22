@@ -19,8 +19,6 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 export K8S_VERSION="v1.2.3"
 export ARCH=amd64
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-
 docker run \
     --volume=/:/rootfs:ro \
     --volume=/sys:/sys:ro \
@@ -39,13 +37,7 @@ docker run \
         --address=0.0.0.0 \
         --api-servers=http://0.0.0.0:8080 \
         --config=/etc/kubernetes/manifests \
-        --allow-privileged=true --v=2 \
-  	    --cluster-dns=10.0.0.10 \
-        --cluster-domain=cluster.local
-# ##Make API server accessible on host OS
-#sleep 10
-#docker exec kubelet perl -pi -e 's/address=127.0.0.1/address=0.0.0.0/' /etc/kubernetes/manifests/master.json
-#docker restart kubelet
+        --allow-privileged=true --v=2
 
 # Install kubernetes CLI
 curl -L http://storage.googleapis.com/kubernetes-release/release/${K8S_VERSION}/bin/linux/${ARCH}/kubectl > /tmp/kubectl

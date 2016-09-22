@@ -58,7 +58,7 @@ Before you begin, follow the environment set up instructions at https://github.c
     **Note**: Replace GATEWAY_URL above with the appropriate URL of the gateway
     for your environment (for example, http://localhost:32000, http://192.168.33.33:32000, etc.).
 
-    You can see that the traffic is continually routed between the v1 instances only, in a round-robin fashion:
+    You can see that the traffic is continually routed between the v1 instances only, in a random fashion:
 
     ```
     $ curl http://localhost:32000/helloworld/hello
@@ -103,7 +103,7 @@ Before you begin, follow the environment set up instructions at https://github.c
 
     Note: if you use a browser instead of cURL to access the service and continually refresh the page, 
     it will always return the same version (v1 or v2), because a cookie is set to maintain version affinity.
-    However, the browser still round-robins between the specific version instances that it returns.
+    However, the browser still alternates in a random manner between instances of the specific version.
 
 ## Using the Amalgam8 REST API
 

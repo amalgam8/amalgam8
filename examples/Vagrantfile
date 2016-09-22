@@ -40,7 +40,7 @@ git clone https://github.com/amalgam8/amalgam8 /home/vagrant/amalgam8
 chown vagrant:vagrant /home/vagrant/amalgam8
 
 # Install Amalgam8 CLI
-sudo pip install git+https://github.com/amalgam8/amalgam8/a8ctl
+sudo pip install git+https://github.com/amalgam8/a8ctl
 
 SCRIPT
 

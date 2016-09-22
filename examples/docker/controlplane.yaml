@@ -44,11 +44,16 @@ registry:
   ports:
     - "31300:8080"
   container_name: registry
+  environment:
+    - A8_STORE=redis
+    - A8_STORE_ADDRESS=redis:6379
+  links:
+    - redis
 
 controller:
   image: amalgam8/a8-controller
   ports:
-    - "31200:6379"
+    - "31200:8080"
   environment:
     - A8_LOG_LEVEL=info
     - A8_DATABASE_TYPE=redis

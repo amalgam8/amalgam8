@@ -1,0 +1,61 @@
+# Copyright 2016 IBM Corporation
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
+
+##################################################################################################
+# Amalgam8 controller service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller
+  labels:
+    name: controller
+spec:
+  ports:
+  - port: 6080
+    targetPort: 8080
+    nodePort: 31200
+    protocol: TCP
+  selector:
+    name: controller
+  type: NodePort
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: controller
+  labels:
+    name: controller
+spec:
+  replicas: 1
+  selector:
+    name: controller
+  template:
+    metadata:
+      labels:
+        name: controller
+    spec:
+      containers:
+      - name: controller
+        image: amalgam8/a8-controller
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: A8_LOG_LEVEL
+          value: info
+        - name: A8_DATABASE_TYPE
+          value: redis
+        - name: A8_DATABASE_HOST
+          value: redis://$(REDIS_SERVICE_HOST):$(REDIS_SERVICE_PORT)
+        ports:
+        - containerPort: 8080

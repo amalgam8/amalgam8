@@ -56,11 +56,13 @@ func newExternalFactory(conf *externalConfig) CatalogFactory {
 				if err != nil {
 					return nil, err
 				}
-				if _, err := c.Do("AUTH", conf.password); err != nil {
-					c.Close()
-					return nil, err
+				if conf.password != "" {
+					if _, err := c.Do("AUTH", conf.password); err != nil {
+						c.Close()
+						return nil, err
+					}
 				}
-				return c, err
+				return c, nil
 			},
 			TestOnBorrow: func(c redis.Conn, t time.Time) error {
 				if time.Since(t) < time.Minute {
@@ -147,23 +149,23 @@ func newExternalCatalog(conf *externalConfig, namespace auth.Namespace, pool *re
 func (ec *externalCatalog) Register(si *ServiceInstance) (*ServiceInstance, error) {
 	serviceName := si.ServiceName
 	if serviceName == "" {
-		return nil, NewError(ErrorBadRequest, "Empty service name", "")
+		return nil, NewError(ErrorNoInstanceServiceName, "Service name value was not specified", "")
 	}
 
-	if len(serviceName) > serviceNameMaxLength {
-		return nil, NewError(ErrorBadRequest, "Service name length too long", "")
+	if len(serviceName) > ServiceNameMaxLength {
+		return nil, NewError(ErrorInstanceServiceNameTooLong, "Service name value length too long", "")
 	}
 
-	if si.Endpoint != nil && len(si.Endpoint.Value) > valueMaxLength {
-		return nil, NewError(ErrorBadRequest, "Endpoint value length too long", "")
+	if si.Endpoint != nil && len(si.Endpoint.Value) > EndpointValueMaxLength {
+		return nil, NewError(ErrorInstanceEndpointValueTooLong, "Endpoint value length too long", "")
 	}
 
-	if len(si.Status) > statusMaxLength {
-		return nil, NewError(ErrorBadRequest, "Status length too long", "")
+	if len(si.Status) > StatusMaxLength {
+		return nil, NewError(ErrorInstanceStatusLengthTooLong, "Status value length too long", "")
 	}
 
-	if si.Metadata != nil && len(si.Metadata) > metadataMaxLength {
-		return nil, NewError(ErrorBadRequest, "Metadata length too long", "")
+	if si.Metadata != nil && len(si.Metadata) > MetadataMaxLength {
+		return nil, NewError(ErrorInstanceMetaDataTooLong, "Metadata value length too long", "")
 	}
 
 	instanceID := si.ID

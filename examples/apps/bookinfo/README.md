@@ -19,7 +19,7 @@ There are 3 versions of the reviews microservice:
 * Version v2 calls the ratings service, and displays each rating as 1 to 5 black stars.
 * Version v3 calls the ratings service, and displays each rating as 1 to 5 red stars.
 
-![Microservice dependencies](https://github.com/amalgam8/amalgam8/blob/master/examples/apps/bookinfo/dependencies.jpg)
+![Bookinfo App - Microservice dependencies](http://cdn.rawgit.com/amalgam8/amalgam8/master/examples/apps/bookinfo/bookinfo-diagram.svg)
 
 ## Running the bookinfo demo
 
@@ -32,13 +32,13 @@ In this demo, we will use Amalgam8's control plane to accomplish the following t
 
    * *Ad-hoc*: Inject failures manually to the call path between two
    microservices while restricting the failure impact to a user. The user would notice in using the application that the application is failing in an unexpected way.
-   * *Systematic*: Use the Gremlin framework to automate injecting the same failure, and verify whether the microservices recover as expected.
+   * *Systematic*: Use the Gremlin framework that is part of Amalgam8 to automate injecting the same failure, and verify whether the microservices recover as expected.
 
 3. Demonstrate the version routing capabilities in Amalgam8 by gradually
    increasing traffic from an old to a new version of an internal
    microservice.
 
-Before you begin, follow the environment set up instructions at https://github.com/amalgam8/amalgam8/blob/master/examples/README.md
+Before you begin, follow the instructions for [setting up the prerequisites](../../)
 
 Confirm that the microservices are running, using the following command:
 
@@ -130,10 +130,9 @@ You should see the following output:
 Log in as user "jason" at the `productpage` web page.
 You should now see ratings (1-5 stars) next to each review.
 
-### Resilience Testing with Gremlin
+### Systematic Resilience Testing with Gremlin
 
-[Gremlin](https://github.com/ResilienceTesting/gremlinsdk-python) is a
-framework for systematically testing the ability of microservice-based
+Instead of taking a Chaos-based approach to resilience testing, Amalgam8 uses a systematic approach to test the resilience of microservices. We refer to this systematic resilience testing framework as [Gremlin](https://developer.ibm.com/open/2016/06/06/systematically-resilience-testing-of-microservices-with-gremlin/). The Gremlin framework can be used to test the ability of microservice-based
 applications to recover from user-defined failure scenarios. In addition to
 the fault injection, it allows the developer to script the set of
 assertions that must be satisfied by the application as a whole when
@@ -221,13 +220,9 @@ Inject test requests with HTTP header Cookie: value, where value matches the pat
 When done, press Enter key to continue to validation phase
 ```
 
-Normally, we would have automated tools to inject load into the
-application. In this case, for the purpose of this demo walkthrough, we
-will manually inject load into the application. When logged in as user
-`jason`, reload the `productpage` web page to once again. Wait a few seconds
-seconds to let the logs propagate from the app/sidecar containers to the
-logstash server and finally to elasticsearch. Then, press Enter on the console
-where the above command was run.
+* Inject load into the application. When logged in as user `jason`, *reload* the `productpage` web page. Wait a few seconds to let the     logs propagate from the app/sidecar containers to the logstash server and finally to elasticsearch. Then, press Enter on the console     where the above command was run.
+
+  *This form of manual load injection is for the purpose of demonstration only. Ideally, you should use automated load injection tools during this phase of testing.*
 
 Expected output:
 

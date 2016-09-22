@@ -43,7 +43,7 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to list vip %s", vip)
-
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -64,14 +64,9 @@ func (routes *Routes) listVips(w rest.ResponseWriter, r *rest.Request) {
 
 	for _, svc := range services {
 		insts, err := catalog.List(svc.ServiceName, nil)
+		// The service might be removed by other user in the middle
 		if err != nil {
-			routes.logger.WithFields(log.Fields{
-				"namespace": r.Env[env.Namespace],
-				"error":     err,
-			}).Errorf("Failed to list vips %s", vip)
-
-			i18n.Error(r, w, http.StatusInternalServerError, i18n.EurekaErrorVIPEnumeration)
-			return
+			continue
 		}
 
 		app := &Application{Name: svc.ServiceName, Instances: make([]*Instance, 0, len(insts))}

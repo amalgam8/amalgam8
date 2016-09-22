@@ -34,8 +34,8 @@ if [ $? -ne 0 ]; then
     echo "Controller failed to compile"
     exit 1
 fi
-$SCRIPTDIR/build-examples.sh
+$SCRIPTDIR/build-apps.sh
 if [ $? -ne 0 ]; then
-    echo "Failed to build example images"
+    echo "Failed to build apps images"
     exit 1
 fi

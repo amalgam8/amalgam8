@@ -1,6 +1,24 @@
 # Changelog
 
-## 0.3-rc1 (September 1, 2016)
+## 0.3.1 (September 20, 2016)
+
+- Amalgam8 nginx configuration files in the sidecar is now split into
+multiple files. Amalgam8 specific code has been abstracted away into
+separate files, and user-customizable part is now confined to location
+blocks in amalgam8-services.conf ([PR#278](https://github.com/amalgam8/amalgam8/pull/278))
+
+- Fixed invalid DNS config in kubernetes config that caused code compiled
+with Go 1.7.1 to fail ([PR#280](https://github.com/amalgam8/amalgam8/pull/280)).
+
+- Fixed bug in sidecar that caused HTTP 500 when version cookie did not
+match any backend in the route list ([PR#271](https://github.com/amalgam8/amalgam8/pull/271)).
+
+- Fixed bugs in bluemix deployment scripts and updated READMEs to point to
+the correct version of Bluemix CLI
+([PR#275](https://github.com/amalgam8/amalgam8/pull/275) and
+[PR#279](https://github.com/amalgam8/amalgam8/pull/279)).
+
+## 0.3.0 (September 12, 2016)
 
 - The controller API has been overhauled to support a wider range of routing and fault injection rules.
 
@@ -8,11 +26,13 @@
 
 - Sidecar now polls controller for rule changes and registry for service instance changes.
 
-- Controller now has support for Redis persistent storage.
+- Controller and Registry now have support for Redis persistent storage.
 
-- NGINX Lua code overhauled to support new rules API format from controller.
+- NGINX Lua code has been overhauled to support the new rules API format from controller.
 
-- Options for sidecar to proxy, register, and log are now default `false`.
+- Options for sidecar to proxy, register, and log now default to `false`.
+
+- The default controller port is now 8080 instead of 6379.
 
 - `A8_SERVICE` is now in the form of `<service_name>:<tag1>,<tag2>,...,<tagN>` 
 where `<tagN>` can be a version number or any other tag.  Sidecar will register
@@ -28,7 +48,7 @@ provided to the sidecar.
 
 ## 0.2.1 (August 1, 2016)
 
-- Fixed [#33](https://github.com/amalgam8/registry/issues/33): Panic during synchronization of the Registry's store 
+- Fixed [#33](https://github.com/amalgam8/amalgam8/issues/162): Panic during synchronization of the Registry's store 
 
 - Fixed bug where controller did not send rule updates to sidecar in
   polling mode.

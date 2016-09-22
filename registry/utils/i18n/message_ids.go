@@ -46,6 +46,11 @@ const (
 	ErrorServiceNameMissing                 = "error_service_name_missing"
 	ErrorServiceEnumeration                 = "error_service_enumeration"
 	ErrorServiceNotFound                    = "error_service_not_found"
+	ErrorNoServiceName                      = "error_no_service_name"
+	ErrorServiceNameTooLong                 = "error_service_name_too_long"
+	ErrorEndpointValueTooLong               = "error_instance_endpoint_too_long"
+	ErrorStatusLengthTooLong                = "error_status_too_long"
+	ErrorMetaDataTooLong                    = "error_meta_data_too_long"
 )
 
 // EurekaErrorApplicationEnumeration and other constants denote Eureka specific errors. In addition, Eureka API may
@@ -54,6 +59,7 @@ const (
 	EurekaErrorApplicationEnumeration       = "eureka_error_application_enumeration"
 	EurekaErrorApplicationIdentifierMissing = "eureka_error_application_id_missing"
 	EurekaErrorApplicationNotFound          = "eureka_error_application_not_found"
+	EurekaErrorApplicationMismatch          = "eureka_error_application_mismatch"
 	EurekaErrorDashboardGeneration          = "eureka_error_dashboard_generation"
 	EurekaErrorRequiredFieldsMissing        = "eureka_error_required_fields_missing"
 	EurekaErrorStatusMissing                = "eureka_error_status_missing"

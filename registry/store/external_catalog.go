@@ -387,12 +387,12 @@ func (ec *externalCatalog) ListServices(predicate Predicate) []*Service {
 // It assumes the catalog's write-lock is acquired by the calling goroutine.
 func (ec *externalCatalog) delete(instanceID string) *ServiceInstance {
 	instance, err := ec.db.ReadServiceInstanceByInstID(ec.namespace, instanceID)
-	if err != nil || instance.ID == "" {
+	if err != nil || instance == nil || instance.ID == "" {
 		return nil
 	}
 
-	hDel, _ := ec.db.DeleteServiceInstance(ec.namespace, instance.ID)
-	if hDel == 0 {
+	del, _ := ec.db.DeleteServiceInstance(ec.namespace, instance.ID)
+	if del == 0 {
 		return nil
 	}
 

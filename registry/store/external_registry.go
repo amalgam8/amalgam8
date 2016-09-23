@@ -15,9 +15,17 @@
 package store
 
 import (
-	"encoding/json"
+	"fmt"
+	"strings"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
+)
+
+const (
+	registryRecordKey = "reg"
+	namespaceKey      = "ns"
+	instanceKey       = "inst"
+	keySeparator      = ":"
 )
 
 // ExternalRegistry calls to manage the instances in an external store
@@ -32,14 +40,33 @@ type ExternalRegistry interface {
 
 // DBKey represents the service instance key
 type DBKey struct {
-	ComponentFlag string `json:"comp"`
-	Namespace     string `json:"ns"`
-	InstanceID    string `json:"iid"`
+	Namespace  string
+	InstanceID string
 }
 
 // Database key as JSON string
 func (dbk *DBKey) String() string {
-	dbk.ComponentFlag = "reg"
-	dbKey, _ := json.Marshal(dbk)
-	return string(dbKey[:])
+	parts := []string{registryRecordKey, namespaceKey, dbk.Namespace, instanceKey, dbk.InstanceID}
+	return strings.Join(parts, keySeparator)
+}
+
+// Return a DBKey from a string
+func parseStringIntoDBKey(key string) (*DBKey, error) {
+	// Validate the string is a DBKey
+	// Construct the prefix: reg:ns:
+	prefixParts := []string{registryRecordKey, namespaceKey, ""}
+	prefix := strings.Join(prefixParts, keySeparator)
+	// Construct the instance key with separators: :inst:
+	instParts := []string{keySeparator, instanceKey, keySeparator}
+	instKey := strings.Join(instParts, "")
+	if !strings.HasPrefix(key, prefix) || !strings.Contains(key, instKey) {
+		return nil, fmt.Errorf("Not a valid DBKey string")
+	}
+
+	// Remove the beginning reg:ns: key
+	parsed := strings.SplitN(key, prefix, 2)
+	// Split the namespace and instance id using :inst:
+	parsed = strings.SplitN(parsed[1], instKey, 2)
+
+	return &DBKey{Namespace: parsed[0], InstanceID: parsed[1]}, nil
 }

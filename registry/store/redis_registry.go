@@ -16,6 +16,8 @@ package store
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -40,7 +42,7 @@ func NewRedisRegistry(db database.Database) ExternalRegistry {
 }
 
 func (rr *redisRegistry) ReadKeys(namespace auth.Namespace) ([]string, error) {
-	dbKey := DBKey{InstanceID: "*", Namespace: namespace.String()}
+	dbKey := DBKey{InstanceID: "*", Namespace: escapeGlobCharacters(namespace.String())}
 	return rr.db.ReadKeys(dbKey.String())
 }
 
@@ -72,7 +74,7 @@ func (rr *redisRegistry) ReadServiceInstanceByInstID(namespace auth.Namespace, i
 func (rr *redisRegistry) ListServiceInstancesByName(namespace auth.Namespace, name string) (map[string]*ServiceInstance, error) {
 	var matchingKeys = make(map[string]*ServiceInstance)
 
-	dbKey := DBKey{InstanceID: "*", Namespace: namespace.String()}
+	dbKey := DBKey{InstanceID: "*", Namespace: escapeGlobCharacters(namespace.String())}
 	matches, err := rr.db.ReadAllEntries(dbKey.String())
 	if err != nil {
 		return matchingKeys, err
@@ -100,7 +102,7 @@ func (rr *redisRegistry) ListServiceInstancesByName(namespace auth.Namespace, na
 func (rr *redisRegistry) ListAllServiceInstances(namespace auth.Namespace) (map[string]ServiceInstanceMap, error) {
 	serviceMap := make(map[string]ServiceInstanceMap)
 
-	dbKey := DBKey{InstanceID: "*", Namespace: namespace.String()}
+	dbKey := DBKey{InstanceID: "*", Namespace: escapeGlobCharacters(namespace.String())}
 	registeredInstances, err := rr.db.ReadAllEntries(dbKey.String())
 	if err != nil {
 		return serviceMap, err
@@ -113,20 +115,28 @@ func (rr *redisRegistry) ListAllServiceInstances(namespace auth.Namespace) (map[
 		var si ServiceInstance
 		err = json.Unmarshal(instBytes, &si)
 		if err != nil {
+			rr.logger.WithFields(log.Fields{
+				"key": key,
+			}).Error("Error unmarshaling service instance")
 			// Skip this one
 			continue
 		}
 
-		var dbkey DBKey
-		err = json.Unmarshal([]byte(key), &dbkey)
+		dbkey, dbkeyerr := parseStringIntoDBKey(key)
+		if dbkeyerr != nil || dbkey == nil {
+			rr.logger.WithFields(log.Fields{
+				"key": key,
+			}).Error("Error parsing key string")
+			continue
+		}
 
 		// Check if there is already an entry in the name for this service
 		if existingMap, ok := serviceMap[si.ServiceName]; ok {
-			existingMap[dbkey] = &si
+			existingMap[*dbkey] = &si
 			serviceMap[si.ServiceName] = existingMap
 		} else {
 			siMap := make(ServiceInstanceMap)
-			siMap[dbkey] = &si
+			siMap[*dbkey] = &si
 			serviceMap[si.ServiceName] = siMap
 		}
 	}
@@ -157,4 +167,17 @@ func (rr *redisRegistry) InsertServiceInstance(namespace auth.Namespace, instanc
 func (rr *redisRegistry) DeleteServiceInstance(namespace auth.Namespace, instanceID string) (int, error) {
 	dbKey := DBKey{InstanceID: instanceID, Namespace: namespace.String()}
 	return rr.db.DeleteEntry(dbKey.String())
+}
+
+// Before doing a Redis scan need to make sure any of the glob chars that are part of the string are escaped
+// Currently, ReadKeys() and ReadAllEntries() do scans
+func escapeGlobCharacters(inputString string) string {
+	replaceCharacters := [4]string{"*", "?", "[", "]"}
+
+	outputString := inputString
+	for _, val := range replaceCharacters {
+		outputString = strings.Replace(outputString, val, fmt.Sprintf("\\%s", val), -1)
+	}
+
+	return outputString
 }

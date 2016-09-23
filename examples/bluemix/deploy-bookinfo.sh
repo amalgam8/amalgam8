@@ -29,13 +29,35 @@ for image in ${REQUIRED_IMAGES[@]}; do
 done
 
 #################################################################################
+# Container group names
+#################################################################################
+
+PRODUCT_PAGE_GROUP=bookinfo_productpage
+DETAILS_GROUP=bookinfo_details
+RATINGS_GROUP=bookinfo_ratings
+REVIEWS_V1_GROUP=bookinfo_reviews1
+REVIEWS_V2_GROUP=bookinfo_reviews2
+REVIEWS_V3_GROUP=bookinfo_reviews3
+GATEWAY_GROUP=bookinfo_gateway
+
+BOOKINFO_GROUPS=(
+    ${PRODUCT_PAGE_GROUP}
+    ${DETAILS_GROUP}
+    ${RATINGS_GROUP}
+    ${REVIEWS_V1_GROUP}
+    ${REVIEWS_V2_GROUP}
+    ${REVIEWS_V3_GROUP}
+    ${GATEWAY_GROUP}
+)
+
+#################################################################################
 # start the productpage microservice instances
 #################################################################################
 
 echo "Starting bookinfo productpage microservice (v1)"
 
-bluemix ic group-create --name bookinfo_productpage \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $PRODUCT_PAGE_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_POLL=5s \
@@ -54,8 +76,8 @@ bluemix ic group-create --name bookinfo_productpage \
 
 echo "Starting bookinfo details microservice (v1)"
 
-bluemix ic group-create --name bookinfo_details \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $DETAILS_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_SERVICE=details:v1 \
@@ -70,8 +92,8 @@ bluemix ic group-create --name bookinfo_details \
 
 echo "Starting bookinfo ratings microservice (v1)"
 
-bluemix ic group-create --name bookinfo_ratings \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $RATINGS_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_SERVICE=ratings:v1 \
@@ -86,8 +108,8 @@ bluemix ic group-create --name bookinfo_ratings \
 
 echo "Starting bookinfo reviews microservice (v1)"
 
-bluemix ic group-create --name bookinfo_reviews1 \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $REVIEWS_V1_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_POLL=5s \
@@ -102,8 +124,8 @@ bluemix ic group-create --name bookinfo_reviews1 \
 
 echo "Starting bookinfo reviews microservice (v2)"
 
-bluemix ic group-create --name bookinfo_reviews2 \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $REVIEWS_V2_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_POLL=5s \
@@ -118,8 +140,8 @@ bluemix ic group-create --name bookinfo_reviews2 \
 
 echo "Starting bookinfo reviews microservice (v3)"
 
-bluemix ic group-create --name bookinfo_reviews3 \
-  --publish 9080 --memory 256 --auto --anti \
+bluemix ic group-create --name $REVIEWS_V3_GROUP \
+  --publish 9080 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --env A8_REGISTRY_URL=$REGISTRY_URL \
   --env A8_REGISTRY_POLL=5s \
@@ -138,8 +160,8 @@ bluemix ic group-create --name bookinfo_reviews3 \
 
 echo "Starting bookinfo gateway"
 
-bluemix ic group-create --name bookinfo_gateway \
-  --publish 6379 --memory 256 --auto --anti \
+bluemix ic group-create --name $GATEWAY_GROUP \
+  --publish 6379 --memory 128 --auto --anti \
   --min 1 --max 2 --desired 1 \
   --hostname $BOOKINFO_HOSTNAME \
   --domain $ROUTES_DOMAIN \
@@ -151,4 +173,56 @@ bluemix ic group-create --name bookinfo_gateway \
   --env A8_PROXY=true \
   ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
-echo "Bookinfo app has been deployed successfully"
+#################################################################################
+# Check the deployment progress
+#################################################################################
+
+echo -e "Waiting for the container groups to be created:"
+
+attempt=0
+_wait=true
+
+while $_wait; do
+    # Sleep for 15s
+    for (( i = 0 ; i < 3 ; i++ )) do
+        sleep 5s
+        echo -n "."
+    done
+
+    EXISTING_GROUPS=$(bluemix ic groups)
+    counter=0
+    for group in ${BOOKINFO_GROUPS[@]}; do
+        status=$(echo "$EXISTING_GROUPS" | awk -v pattern="$group" '$0 ~ pattern { print $3; exit; }')
+        case "$status" in
+            "CREATE_FAILED")
+            _wait=false
+        ;;
+
+        "DELETE_FAILED")
+            _wait=false
+        ;;
+
+        "CREATE_COMPLETE")
+            ((counter++))
+        ;;
+        esac
+    done
+
+    if [ "$counter" -eq "${#BOOKINFO_GROUPS[@]}" ]; then
+        echo -e "\nBookinfo app has been deployed successfully!"
+        break
+    fi
+
+    ((attempt++))
+    if [ "$attempt" -gt 12 ]; then  # Timeout after 3min
+        echo -e "\nTimeout waiting for container groups to be created"
+        echo "Deploying bookinfo app has failed"
+        exit 1
+    fi
+
+    if [[ $_wait = false ]]; then
+        echo -e "\nDeploying bookinfo app has failed!\n"
+        echo -e "Getting the status of all container groups...\n"
+        bluemix ic groups
+    fi
+done

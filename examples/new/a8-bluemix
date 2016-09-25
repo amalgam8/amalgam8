@@ -19,8 +19,8 @@ if [ "$1" != "create" -a "$1" != "destroy" ]; then
     exit 1
 fi
 
-if [ "$2" != "controlplane" -a "$2" != "bookinfo" ]; then
-    echo "usage: $0 create|destroy controlplane|bookinfo"
+if [ "$2" != "controlplane" -a "$2" != "bookinfo" -a "$2" != "helloworld" ]; then
+    echo "usage: $0 create|destroy controlplane|bookinfo|helloworld"
     exit 1
 fi
 
@@ -58,6 +58,18 @@ BOOKINFO_IMAGES=(
     ${REVIEWS_V2_IMAGE}
     ${REVIEWS_V3_IMAGE}
     ${GATEWAY_IMAGE}
+)
+
+HELLOWORLD_IMAGES=(
+    ${HELLOWORLD_V1_IMAGE}
+    ${HELLOWORLD_V2_IMAGE}
+    ${GATEWAY_IMAGE}
+)
+
+HELLOWORLD_GROUPS=(
+    helloworld_v1
+    helloworld_v2
+    helloworld_gateway
 )
 
 
@@ -138,7 +150,7 @@ if [ "$ACTION" == "create" ]; then
         done
 
         echo "Controlplane has been deployed successfully"
-    else
+    elif [ "$COMPONENT" == "bookinfo" ]; then
 
 
         for image in ${BOOKINFO_IMAGES[@]}; do
@@ -273,6 +285,63 @@ if [ "$ACTION" == "create" ]; then
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
         echo "Bookinfo app has been deployed successfully"
+    else
+        for image in ${HELLOWORLD_IMAGES[@]}; do
+            echo "$BLUEMIX_IMAGES" | grep "$image" > /dev/null
+            if [ $? -ne 0 ]; then
+                echo "Copying ${DOCKERHUB_NAMESPACE}/$image from Dockerhub into ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image"
+                bluemix ic cpi ${DOCKERHUB_NAMESPACE}/$image ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$image
+            fi
+        done
+
+        #################################################################################
+        # start the helloworld (v1 and v2) microservice instances
+        #################################################################################
+
+        echo "Starting helloworld microservice (v1)"
+
+        bluemix ic group-create --name helloworld_v1 \
+                --publish 9080 --memory 128 --auto --anti \
+                --min 2 --max 2 --desired 2 \
+                --env A8_REGISTRY_URL=$REGISTRY_URL \
+                --env A8_SERVICE=helloworld:v1 \
+                --env A8_ENDPOINT_PORT=9080 \
+                --env A8_ENDPOINT_TYPE=http \
+                --env A8_REGISTER=true \
+                ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${HELLOWORLD_V1_IMAGE}
+
+        echo "Starting helloworld microservice (v2)"
+
+        bluemix ic group-create --name helloworld_v2 \
+                --publish 9080 --memory 128 --auto --anti \
+                --min 2 --max 2 --desired 2 \
+                --env A8_REGISTRY_URL=$REGISTRY_URL \
+                --env A8_SERVICE=helloworld:v1 \
+                --env A8_ENDPOINT_PORT=9080 \
+                --env A8_ENDPOINT_TYPE=http \
+                --env A8_REGISTER=true \
+                ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${HELLOWORLD_V2_IMAGE}
+
+        #################################################################################
+        # Start the gateway
+        #################################################################################
+
+        echo "Starting helloworld gateway"
+
+        bluemix ic group-create --name helloworld_gateway \
+                --publish 6379 --memory 128 --auto --anti \
+                --min 1 --max 2 --desired 1 \
+                --hostname $HELLOWORLD_HOSTNAME \
+                --domain $ROUTES_DOMAIN \
+                --env A8_REGISTRY_URL=$REGISTRY_URL \
+                --env A8_REGISTRY_POLL=5s \
+                --env A8_CONTROLLER_URL=$CONTROLLER_URL \
+                --env A8_CONTROLLER_POLL=5s \
+                --env A8_SERVICE=gateway \
+                --env A8_PROXY=true \
+                ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
+
+        echo "Helloworld app has been deployed successfully"
     fi
 else
     EXISTING_GROUPS=$(bluemix ic groups)
@@ -285,8 +354,16 @@ else
             fi
         done
 
-    else
+    elif [ "$COMPONENT" == "bookinfo" ]; then
         for group in ${BOOKINFO_GROUPS[@]}; do
+            echo $EXISTING_GROUPS | grep $group > /dev/null
+            if [ $? -eq 0 ]; then
+                echo "Requesting removal of $group container group"
+                bluemix ic group-remove $group
+            fi
+        done
+    else
+        for group in ${HELLOWORLD_GROUPS[@]}; do
             echo $EXISTING_GROUPS | grep $group > /dev/null
             if [ $? -eq 0 ]; then
                 echo "Requesting removal of $group container group"

@@ -15,7 +15,6 @@
 package database
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -82,9 +81,15 @@ func TestRedisDBReadKeys(t *testing.T) {
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HKEYS", []interface{}{"test"}).Return(expectedKeys, nil)
+	var s []interface{}
 
-	keys, err := db.ReadKeys("test")
+	b1 := []byte{'0'}
+	s = append(s, b1)
+	s = append(s, expectedKeys)
+
+	mockedConn.On("Do", "SCAN", []interface{}{int64(0), "MATCH", "*:test"}).Return(s, nil)
+
+	keys, err := db.ReadKeys("*:test")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, keys)
@@ -99,9 +104,9 @@ func TestRedisDBReadEntry(t *testing.T) {
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HGET", []interface{}{"test", key}).Return([]byte(value), nil)
+	mockedConn.On("Do", "GET", []interface{}{key}).Return([]byte(value), nil)
 
-	entry, err := db.ReadEntry("test", key)
+	entry, err := db.ReadEntry(key)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedValue, entry)
@@ -109,66 +114,48 @@ func TestRedisDBReadEntry(t *testing.T) {
 
 func TestRedisDBReadEntryErrorReturned(t *testing.T) {
 	key := "key1error"
-	hgetError := fmt.Errorf("Error calling HGET")
+	getError := fmt.Errorf("Error calling GET")
 
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HGET", []interface{}{"test", key}).Return(nil, hgetError)
+	mockedConn.On("Do", "GET", []interface{}{key}).Return(nil, getError)
 
-	_, err := db.ReadEntry("test", key)
+	_, err := db.ReadEntry(key)
 
 	assert.Error(t, err)
-	assert.Equal(t, hgetError, err)
+	assert.Equal(t, getError, err)
 }
 
 func TestRedisDBReadAllEntries(t *testing.T) {
+	// Setup the map that we expect to be returned from ReadlAllEntries
 	expectedMap := make(map[string]string)
 	expectedMap["key1"] = "value1"
 	expectedMap["key2"] = "value2"
-	expectedMap["key3"] = "value3"
-
-	var expectedValues []interface{}
-	expectedValues = append(expectedValues, []byte("key1"))
-	expectedValues = append(expectedValues, []byte("value1"))
-	expectedValues = append(expectedValues, []byte("key2"))
-	expectedValues = append(expectedValues, []byte("value2"))
-	expectedValues = append(expectedValues, []byte("key3"))
-	expectedValues = append(expectedValues, []byte("value3"))
 
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HGETALL", []interface{}{"test"}).Return(expectedValues, nil)
+	// Setup the keys we expect to be returned from the scan
+	var s, expectedKeys []interface{}
+	expectedKeys = append(expectedKeys, []byte("key1"))
+	expectedKeys = append(expectedKeys, []byte("key2"))
 
-	entries, err := db.ReadAllEntries("test")
+	b1 := []byte{'0'}
+	s = append(s, b1)
+	s = append(s, expectedKeys)
+
+	// Mock the scan for all keys for the namespace and the gets for the value
+	mockedConn.On("Do", "SCAN", []interface{}{int64(0), "MATCH", "*:test"}).Return(s, nil)
+
+	values := []interface{}{[]byte("value1"), []byte("value2")}
+	mockedConn.On("Do", "MGET", []interface{}{"key1", "key2"}).Return(values, nil)
+
+	entries, err := db.ReadAllEntries("*:test")
 
 	assert.NoError(t, err)
 	assert.NotNil(t, entries)
 	assert.Equal(t, expectedMap, entries)
-}
-
-func TestRedisDBReadAllMatchingEntries(t *testing.T) {
-	si := &ServiceInstance{
-		ServiceName: "Calc",
-		Endpoint:    &Endpoint{Value: "192.168.0.1", Type: "tcp"},
-	}
-
-	mockedConn := new(MockedConn)
-	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
-
-	s, _ := generateMockHScanCommandOutput("inst-id", si)
-
-	mockedConn.On("Do", "HSCAN", []interface{}{"test", int64(0), "MATCH", "inst-id"}).Return(s, nil)
-
-	instance, err := db.ReadAllMatchingEntries("test", "inst-id")
-	assert.NoError(t, err)
-
-	var actualSI ServiceInstance
-	err = json.Unmarshal([]byte(instance["inst-id"]), &actualSI)
-
-	assert.Equal(t, "inst-id", actualSI.ID)
-	assert.Equal(t, "Calc", actualSI.ServiceName)
 }
 
 func TestRedisDBInsertEntry(t *testing.T) {
@@ -178,9 +165,9 @@ func TestRedisDBInsertEntry(t *testing.T) {
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HSET", []interface{}{"test", key, entry}).Return(123, nil)
+	mockedConn.On("Do", "SET", []interface{}{key, entry}).Return(123, nil)
 
-	err := db.InsertEntry("test", key, entry)
+	err := db.InsertEntry(key, entry)
 
 	assert.NoError(t, err)
 }
@@ -189,36 +176,36 @@ func TestRedisDBDeleteEntry(t *testing.T) {
 	mockedConn := new(MockedConn)
 	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	mockedConn.On("Do", "HDEL", []interface{}{"test", "inst-id"}).Return([]byte("1"), nil)
+	mockedConn.On("Do", "DEL", []interface{}{"inst-id"}).Return([]byte("1"), nil)
 
-	hdel, err := db.DeleteEntry("test", "inst-id")
+	del, err := db.DeleteEntry("inst-id")
 
 	assert.NoError(t, err)
-	assert.Equal(t, 1, hdel)
+	assert.Equal(t, 1, del)
 }
 
-func generateMockHScanCommandOutput(instID string, instance *ServiceInstance) ([]interface{}, *ServiceInstance) {
-	if instID != "" {
-		instance.ID = instID
-	}
-	instanceJSON, _ := json.Marshal(instance)
+func TestRedisDBExpireEntry(t *testing.T) {
+	mockedConn := new(MockedConn)
+	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	var s, sBytes []interface{}
+	ttl := time.Second * 120
+	mockedConn.On("Do", "EXPIRE", []interface{}{"inst-id", ttl.Seconds()}).Return([]byte("1"), nil)
 
-	b1 := []byte{'0'}
-	s = append(s, b1)
+	err := db.Expire("inst-id", ttl)
 
-	var instanceData interface{}
-	instBytes := []byte(instID)
-	instanceData = instBytes
-	sBytes = append(sBytes, instanceData)
+	assert.NoError(t, err)
+}
 
-	instBytes = []byte(instanceJSON)
-	instanceData = instBytes
+func TestRedisDBExpireEntryError(t *testing.T) {
+	mockedConn := new(MockedConn)
+	db := NewRedisDBWithConn(mockedConn, "addr", "pass")
 
-	sBytes = append(sBytes, instanceData)
+	expireError := fmt.Errorf("Expire error")
+	ttl := time.Second * 120
+	mockedConn.On("Do", "EXPIRE", []interface{}{"inst-id", ttl.Seconds()}).Return([]byte("1"), expireError)
 
-	s = append(s, sBytes)
+	err := db.Expire("inst-id", ttl)
 
-	return s, instance
+	assert.Error(t, err)
+	assert.Equal(t, expireError, err)
 }

@@ -26,7 +26,7 @@ type appVersion struct {
 // Applications is an array of application objects
 type Applications struct {
 	appVersion
-	Application []*Application
+	Application []*Application `json:"application,omitempty"`
 }
 
 // UnmarshalJSON parses the JSON object of Applications struct.

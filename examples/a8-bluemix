@@ -28,7 +28,7 @@ ACTION=$1
 COMPONENT=$2
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-source $SCRIPTDIR/.bluemixrc
+source $SCRIPTDIR/bluemix.cfg
 
 CONTROLPLANE_IMAGES=(
     ${CONTROLLER_IMAGE}

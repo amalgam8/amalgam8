@@ -17,7 +17,9 @@ package eureka
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -106,7 +108,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		return
 	}
 
-	si, err := TranslateToA8Instance(inst)
+	si, err := Translate(inst)
 	if err != nil {
 		routes.logger.WithFields(log.Fields{
 			"namespace": r.Env[env.Namespace],
@@ -525,8 +527,8 @@ func buildExtensionFromInstance(inst *Instance) (map[string]interface{}, error) 
 	return map[string]interface{}{extEureka: string(ext), extVIP: copyInst.VIPAddr}, nil
 }
 
-// TranslateToA8Instance translates eureka instance into A8 instance
-func TranslateToA8Instance(inst *Instance) (*store.ServiceInstance, error) {
+// Translate translates eureka instance into store instance
+func Translate(inst *Instance) (*store.ServiceInstance, error) {
 	var err error
 
 	// Get the instance ID
@@ -553,10 +555,18 @@ func TranslateToA8Instance(inst *Instance) (*store.ServiceInstance, error) {
 		lastRenewal = time.Unix(inst.Lease.LastRenewalTs/1e3, (inst.Lease.LastRenewalTs%1e3)*1e6)
 	}
 
+	// Secure port is preferred over un-secure port.
+	endpoint := &store.Endpoint{Type: "tcp", Value: inst.HostName}
+	if inst.SecPort != nil && inst.SecPort.Enabled == "true" {
+		endpoint = &store.Endpoint{Type: "https", Value: fmt.Sprintf("%s:%v", inst.HostName, inst.SecPort.Value)}
+	} else if inst.Port != nil && inst.Port.Enabled == "true" {
+		endpoint = &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.HostName, inst.Port.Value)}
+	}
+
 	si := &store.ServiceInstance{
 		ID:          uid,
 		ServiceName: inst.Application,
-		Endpoint:    &store.Endpoint{Type: "tcp", Value: fmt.Sprintf("%s:%v", inst.IPAddr, inst.Port.Value)},
+		Endpoint:    endpoint,
 		Status:      inst.Status,
 		TTL:         time.Duration(ttl) * time.Second,
 		LastRenewal: lastRenewal,
@@ -604,12 +614,20 @@ func buildDefaultInstance(si *store.ServiceInstance) *Instance {
 	}
 
 	if si.Endpoint != nil && len(si.Endpoint.Value) > 0 {
-		pos := strings.LastIndex(si.Endpoint.Value, ":")
-		if pos > -1 {
-			inst.HostName = si.Endpoint.Value[:pos]
-			inst.Port = &Port{Enabled: "true", Value: si.Endpoint.Value[pos+1:]}
-		} else {
-			inst.HostName = si.Endpoint.Value
+		inst.HostName = si.Endpoint.Value
+		u, err := url.Parse(si.Endpoint.Value)
+		if err == nil {
+			host, port, _ := net.SplitHostPort(u.Host)
+			if port != "" {
+				if u.Scheme == "https" || si.Endpoint.Type == "https" {
+					inst.SecPort = &Port{Enabled: "true", Value: port}
+				} else {
+					inst.Port = &Port{Enabled: "true", Value: port}
+				}
+			}
+			if host != "" {
+				inst.HostName = host
+			}
 		}
 		inst.IPAddr = inst.HostName
 	}

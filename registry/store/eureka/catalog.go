@@ -179,7 +179,7 @@ func (ec *eurekaCatalog) getServices() (serviceMap, instanceMap, error) {
 			sname := app.Name
 			svcInstances := instanceMap{}
 			for _, inst := range app.Instances {
-				si, err := eurekaapi.TranslateToA8Instance(inst)
+				si, err := eurekaapi.Translate(inst)
 				if err != nil {
 					ec.logger.WithFields(log.Fields{
 						"error": err,
@@ -225,7 +225,7 @@ func (ec *eurekaCatalog) getServicesDelta() (serviceMap, instanceMap) {
 	var updated, deleted int
 	for _, app := range apps.Application {
 		for _, inst := range app.Instances {
-			si, err := eurekaapi.TranslateToA8Instance(inst)
+			si, err := eurekaapi.Translate(inst)
 			if err != nil {
 				ec.logger.WithFields(log.Fields{
 					"error": err,

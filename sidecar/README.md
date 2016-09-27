@@ -208,7 +208,7 @@ Order of precedence is command line flags first, then environmenmt variables, co
 |:---------------------|:----------------------------|:---------|:------------|:--------------|--------|
 | A8_CONFIG | --config | | Path to a file to load configuration from | | no |
 | A8_LOG_LEVEL | --log_level | log_level | Logging level (debug, info, warn, error, fatal, panic) | info | no |
-| A8_SERVICE | --service | service.name & service.tags | service name to register with, optionally followed by a colon and a comma-separated list of tags | | yes |
+| A8_SERVICE | --service | service.name & service.tags | name of the service provided by this application, optionally followed by a colon and a comma-separated list of tags | | yes |
 | A8_ENDPOINT_HOST | --endpoint_host | endpoint.host | service endpoint IP or hostname. Defaults to the IP (e.g., container) where the sidecar is running | optional |
 | A8_ENDPOINT_PORT | --endpoint_port | endpoint.port | service endpoint port |  | yes |
 | A8_ENDPOINT_TYPE | --endpoint_type | endpoint.type | service endpoint type (http, https, udp, tcp, user) | http | no |
@@ -279,7 +279,7 @@ cd $GOPATH/src/github.com/amalgam8/amalgam8
 make build dockerize.sidecar
 ```
 
-You should now have a docker image tagged `a8-controller:latest`.
+You should now have a docker image tagged `a8-sidecar:latest`.
 
 
 ### Building an Executable
@@ -292,13 +292,3 @@ cd $GOPATH/src/github.com/amalgam8/amalgam8
 make build.sidecar
 ./bin/a8sidecar [args]
 ```
-
-### Make targets
-
-The following targets are available. Each may be run with `make <target>`.
-
-| Make Target      | Description |
-|:-----------------|:------------|
-| `release`        | *(Default)* `release` builds the sidecar within a docker container and packages it into an image |
-| `test`           | `test` runs all tests using `go test` |
-| `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |

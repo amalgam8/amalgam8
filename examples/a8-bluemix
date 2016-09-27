@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 if [ "$1" != "create" -a "$1" != "destroy" ]; then
-    echo "usage: $0 create|destroy controlplane|bookinfo"
+    echo "usage: $0 create|destroy controlplane|bookinfo|helloworld"
     exit 1
 fi
 

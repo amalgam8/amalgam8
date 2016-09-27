@@ -54,7 +54,7 @@ REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 
-EXAMPLES_RELEASE_NAME	:= a8examples
+EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
 # build flags to create a statically linked binary (required for scratch-based image)
 BUILDFLAGS	:= -a -installsuffix nocgo -tags netgo

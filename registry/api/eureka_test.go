@@ -35,10 +35,10 @@ import (
 var eurekaInstances = []mockInstance{
 	{data: store.ServiceInstance{ID: "http:http-1", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.1:80", Type: "http"}, Status: "STARTING", TTL: 30 * time.Second, Metadata: metadata,
-		Extension: map[string]interface{}{"eureka": "{\"hostName\": \"localhost\", \"vipAddress\": \"http-vip\", \"ipAddr\": \"192.168.0.1\", \"port\": {\"@enabled\": true, \"$\": 80}, \"CountryId\": 1}"}}},
+		Extension: map[string]interface{}{"eureka": "{\"hostName\": \"192.168.0.1\", \"vipAddress\": \"http-vip\", \"ipAddr\": \"192.168.0.1\", \"port\": {\"@enabled\": true, \"$\": 80}, \"CountryId\": 1}"}}},
 	{data: store.ServiceInstance{ID: "http:http-2", ServiceName: "http",
 		Endpoint: &store.Endpoint{Value: "192.168.0.2:80", Type: "http"}, Status: "STARTING", TTL: 30 * time.Second, Metadata: metadata,
-		Extension: map[string]interface{}{"eureka": "{\"hostName\": \"localhost\", \"vipAddress\": \"http-vip\", \"ipAddr\": \"192.168.0.2\", \"port\": {\"@enabled\": true, \"$\": 80}, \"CountryId\": 1}"}}},
+		Extension: map[string]interface{}{"eureka": "{\"hostName\": \"192.168.0.2\", \"vipAddress\": \"http-vip\", \"ipAddr\": \"192.168.0.2\", \"port\": {\"@enabled\": true, \"$\": 80}, \"CountryId\": 1}"}}},
 }
 
 // instances:create

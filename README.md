@@ -20,7 +20,7 @@ Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
 1. [Integrate the sidecar](https://www.amalgam8.io/docs/sidecar/)
    into your existing application to start using Amalgam8.
-
+   
 ---
 
 ## Content and version-based routing - 101
@@ -95,22 +95,25 @@ resilience testing, etc.
   serviceB, the application would use the following URL:
   http://localhost:6379/serviceB/apiEndpoint . The sidecar in-turn forwards
   the API call to an instance of service B.
-  
-# Getting Started
 
-## Amalgam8 - Sample Applications
+## Documentation
+
+Detailed documentation on Amalgam8 can be found at [https://amalgam8.io/docs](https://amalgam8.io/docs). 
+
+## Demos
 
 To get started with Amalgam8, we suggest exploring some of the [demo
 applications](https://amalgam8.io/docs/demo). The walkthroughs 
 demonstrate some of Amalgam8's key features. Detailed instructions are
 available for different container runtimes and cloud platforms.
 
-## Slack Channel
+## Getting Help
 
 If you have any questions or feedback, you can reach us via our public
 Slack channel (#amalgam8). To join this channel, please use the following
 self invite URL: https://amalgam8-slack-invite.mybluemix.net
 
+---
 
 # Development Process
 

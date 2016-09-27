@@ -14,7 +14,7 @@ in this folder, followed by `vagrant ssh` to get started.
 If you plan on using [Kubernetes](https://kubernetes.io) for managing your
 containers, then a recent installation of kubernetes (v1.2.3 or higher) is
 needed. The accompanying helper script `devel/install-kubernetes.sh` can be
-used to install Kubernetes in the vagrant environment.
+used to install Kubernetes inside the vagrant environment.
 
 Once the prerequisites are installed or the Vagrant VM is up, source code
 related to Amalgam8 sidecar, controller and registry can be found under the
@@ -75,14 +75,21 @@ The following Makefile targets are available for the `amalgam8` repository.
 
 | Make Target      | Description |
 |:-----------------|:------------|
-| `build`          | *(Default)* builds the binaries for controller, registry and sidecar in the ./bin directory |
+| `build`          | *(Default)* invokes targets `build.controller`, `build.registry`, `build.sidecar` |
 | `build.controller`        | builds the controller binary in the ./bin directory |
 | `build.registry`          | builds the registry binary in the ./bin directory |
 | `build.sidecar`          |  builds the sidecar binary in the ./bin directory |
-| `precommit`      | `precommit` should be run by developers before committing code changes. It runs code formatting and checks. |
-| `test`           | `test` runs (short duration) tests using `go test`. You can also use `make test.long` to include long running tests. |
-| `docker`         | `docker` packages the binary in a docker container |
-| `release`        | `release` builds a tarball with the Controller binary |
+| `dockerize`         | invokes targets `dockerize.controller`, `dockerize.registry`, `dockerize.sidecar` |
+| `dockerize.controller`         | packages the controller binary into a docker container with tag `a8-controller:latest` |
+| `dockerize.registry`         | packages the registry binary into a docker container with tag `a8-registry:latest` |
+| `dockerize.sidecar`         | packages the sidecar binary into a docker container with tag `a8-sidecar:latest` |
+| `release`        | invokes targets `release.controller`, `release.registry`, `release.sidecar` |
+| `release.controller`        | creates a tarball with the controller binary |
+| `release.registry`        | creates a tarball with the registry binary |
+| `release.sidecar`        | creates a tarball with the sidecar binary, openresty binaries, and nginx configuration files required to run the sidecar|
+| `precommit`      | runs code formatting and checks. `make precommit` must be run before committing code changes and sending pull requests |
+| `test`           | runs (short duration) tests using `go test`. You can also use `make test.long` to include long running tests. |
+| `test.integration`           | runs end to end integration tests using docker-compose and kubernetes. The test scripts can be found under the testing folder relative to root of repository. |
 | `clean`          | `clean` removes build artifacts. *Note: this does not remove docker images* |
 
 

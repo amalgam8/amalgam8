@@ -46,17 +46,24 @@ fi
 if ! grep -Fq "/usr/local/go/bin" /home/vagrant/.profile; then
 	echo 'export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin' >> /home/vagrant/.profile
 fi
-mkdir -p /home/vagrant/sandbox/src/github.com/amalgam8
-git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/amalgam8
-git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/a8ctl
+
+#mkdir -p /home/vagrant/sandbox/src/github.com/amalgam8
+#git clone https://github.com/amalgam8/amalgam8 /home/vagrant/sandbox/src/github.com/amalgam8/amalgam8
+#git clone https://github.com/amalgam8/a8ctl /home/vagrant/sandbox/src/github.com/amalgam8/a8ctl
 
 chown -R vagrant:vagrant /home/vagrant/sandbox
+
 SCRIPT
 
 Vagrant.configure('2') do |config|
   config.vm.box = "ubuntu/trusty64"
 
   config.vm.synced_folder ".", "/vagrant", disabled: true
+  config.vm.synced_folder "..", "/home/vagrant/sandbox/src/github.com/amalgam8/amalgam8"
+  if FileTest::directory?("../../a8ctl")
+    config.vm.synced_folder "../../a8ctl", "/home/vagrant/sandbox/src/github.com/amalgam8/a8ctl"
+  end
+
   config.vm.provider :virtualbox do |vb|
     #vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
     vb.customize ['modifyvm', :id, '--memory', '4096']

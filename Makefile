@@ -54,6 +54,8 @@ REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 
+EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
+
 # build flags to create a statically linked binary (required for scratch-based image)
 BUILDFLAGS	:= -a -installsuffix nocgo -tags netgo
 
@@ -123,7 +125,7 @@ test.long:
 test.integration:
 	@echo "--> running integration tests"
 	@testing/build_and_run.sh
-	
+
 #---------------
 #-- checks
 #---------------
@@ -183,9 +185,9 @@ dockerize.sidecar:
 #-- release
 #---------------
 
-.PHONY: release release.registry release.controller release.sidecar
+.PHONY: release release.registry release.controller release.sidecar release.examples
 
-release: release.registry release.controller release.sidecar
+release: release.registry release.controller release.sidecar release.examples
 
 release.registry:
 	@echo "--> packaging registry for release"
@@ -214,6 +216,12 @@ release.sidecar:
 	@cp openresty/*.tar.gz $(BUILDDIR)/opt/openresty_dist/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
 	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar.sh > $(RELEASEDIR)/a8sidecar.sh
+
+release.examples:
+	@echo "--> packaging examples for release"
+	@mkdir -p $(RELEASEDIR)
+	@tar -czf $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).tar.gz --exclude examples/apps --exclude examples/.vagrant examples
+	@zip -9 -r --exclude=*apps* --exclude=*.vagrant*  $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).zip examples
 
 #---------------
 #-- tools

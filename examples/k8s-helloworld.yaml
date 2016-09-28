@@ -11,7 +11,64 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
+#####################
+###### Gateway ######
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    name: gateway
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    nodePort: 32000
+  selector:
+    name: gateway
+  type: NodePort
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: gateway
+  labels:
+    name: gateway
+spec:
+  replicas: 1
+  selector:
+    name: gateway
+  template:
+    metadata:
+      labels:
+        name: gateway
+    spec:
+      containers:
+      - name: gateway
+        image: amalgam8/a8-sidecar:alpine
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+        env:
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_LOG
+          value: "true"
+        - name: A8_CONTROLLER_URL
+          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
+        - name: A8_REGISTRY_URL
+          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: A8_SERVICE
+          value: gateway
+        - name: A8_LOGSTASH_SERVER
+          #filebeat YAML issue workaround
+          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+        - name: A8_CONTROLLER_POLL
+          value: 5s
+        - name: A8_REGISTRY_POLL
+          value: 5s
+---
 apiVersion: v1
 kind: ReplicationController
 metadata:

@@ -14,13 +14,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-kubectl delete -f $SCRIPTDIR/gateway.yaml
-sleep 2
-kubectl delete -f $SCRIPTDIR/bookinfo.yaml
-sleep 2
-kubectl delete -f $SCRIPTDIR/helloworld.yaml
-sleep 2
-$SCRIPTDIR/run-controlplane-local-k8s.sh stop
+sudo umount `cat /proc/mounts | grep /var/lib/kubelet | awk '{print $2}'` >/dev/null 2>&1
+sudo rm -rf /var/lib/kubelet
+docker rm -f $(docker ps -aq)

@@ -55,6 +55,49 @@ type Controller struct {
 	Poll  time.Duration `yaml:"poll"`
 }
 
+// HealthCheck configuration.
+type HealthCheck interface {
+	GetType() string
+	GetValue() string
+	GetInterval() time.Duration
+	GetTimeout() time.Duration
+}
+
+// BasicHealthCheck contains common health check attributes.
+type BasicHealthCheck struct {
+	Type     string
+	Value    string
+	Interval time.Duration
+	Timeout  time.Duration
+}
+
+// GetType returns the type of the health check.
+func (c *BasicHealthCheck) GetType() string {
+	return c.Type
+}
+
+// GetValue returns the value of the health check.
+func (c *BasicHealthCheck) GetValue() string {
+	return c.Value
+}
+
+// GetInterval returns the poll interval of the health check.
+func (c *BasicHealthCheck) GetInterval() time.Duration {
+	return c.Interval
+}
+
+// GetTimeout returns the timeout of the health check.
+func (c *BasicHealthCheck) GetTimeout() time.Duration {
+	return c.Timeout
+}
+
+// HTTPHealthCheck contains HTTP health check configuration options.
+type HTTPHealthCheck struct {
+	BasicHealthCheck
+	Method string
+	Code   int
+}
+
 // Config stores the various configuration options for the sidecar
 type Config struct {
 	Register bool `yaml:"register"`
@@ -66,9 +109,10 @@ type Config struct {
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise    bool     `yaml:"supervise"`
-	App          []string `yaml:"app"`
-	HealthChecks []string `yaml:"healthchecks"`
+	Supervise bool     `yaml:"supervise"`
+	App       []string `yaml:"app"`
+	//HealthChecks []string `yaml:"healthchecks"`
+	HealthChecks []HealthCheck
 
 	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`

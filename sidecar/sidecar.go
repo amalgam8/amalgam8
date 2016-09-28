@@ -130,23 +130,29 @@ func Run(conf config.Config) error {
 			TTL: 60,
 		}
 
-		healthChecks, err := register.BuildHealthChecks(conf.HealthChecks)
-		if err != nil {
-			logrus.WithError(err).Error("Could not build health checks")
-			return err
-		}
-
 		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
 			Client:          registryClient,
 			ServiceInstance: serviceInstance,
-			HealthChecks:    healthChecks,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Could not create registry agent")
 			return err
 		}
 
-		agent.Start()
+		healthChecks, err := register.BuildHealthChecks(conf.HealthChecks)
+		if err != nil {
+			logrus.WithError(err).Error("Could not build health checks")
+			return err
+		}
+
+		// Control the registration agent via the health checker if any health checks were provided. If no
+		// health checks are provided, just start the registration agent.
+		if len(healthChecks) > 0 {
+			checker := register.NewHealthChecker(agent, healthChecks)
+			checker.Start()
+		} else {
+			agent.Start()
+		}
 	}
 
 	if conf.Supervise {

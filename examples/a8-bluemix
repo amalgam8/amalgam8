@@ -122,7 +122,7 @@ if [ "$ACTION" == "create" ]; then
             fi
 
             attempt=$((attempt + 1))
-            if [ "$attempt" -gt 10 ]; then
+            if [ "$attempt" -gt 15 ]; then
                 echo "Timeout waiting for controller route: /health returned HTTP ${code}"
                 echo "Deploying the controlplane has failed"
                 exit 1
@@ -141,7 +141,7 @@ if [ "$ACTION" == "create" ]; then
             fi
 
             attempt=$((attempt + 1))
-            if [ "$attempt" -gt 10 ]; then
+            if [ "$attempt" -gt 15 ]; then
                 echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
                 echo "Deploying the controlplane has failed"
                 exit 1
@@ -284,61 +284,59 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_PROXY=true \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
-# #################################################################################
-# # Check the deployment progress
-# #################################################################################
+        #################################################################################
+        # Check the deployment progress
+        #################################################################################
 
-# echo -e "Waiting for the container groups to be created:"
+        echo -e "Waiting for the container groups to be created:"
 
-# attempt=0
-# _wait=true
+        attempt=0
+        _wait=true
 
-# while $_wait; do
-#     # Sleep for 15s
-#     for (( i = 0 ; i < 3 ; i++ )) do
-#         sleep 5s
-#         echo -n "."
-#     done
+        while $_wait; do
+            # Sleep for 15s
+            for (( i = 0 ; i < 3 ; i++ )); do
+                sleep 5s
+                echo -n "."
+            done
 
-#     EXISTING_GROUPS=$(bluemix ic groups)
-#     counter=0
-#     for group in ${BOOKINFO_GROUPS[@]}; do
-#         status=$(echo "$EXISTING_GROUPS" | awk -v pattern="$group" '$0 ~ pattern { print $3; exit; }')
-#         case "$status" in
-#             "CREATE_FAILED")
-#             _wait=false
-#         ;;
+            EXISTING_GROUPS=$(bluemix ic groups)
+            counter=0
+            for group in ${BOOKINFO_GROUPS[@]}; do
+                status=$(echo "$EXISTING_GROUPS" | awk -v pattern="$group" '$0 ~ pattern { print $3; exit; }')
+                case "$status" in
+                    "CREATE_FAILED")
+                        _wait=false
+                        ;;
 
-#         "DELETE_FAILED")
-#             _wait=false
-#         ;;
+                    "DELETE_FAILED")
+                        _wait=false
+                        ;;
 
-#         "CREATE_COMPLETE")
-#             ((counter++))
-#         ;;
-#         esac
-#     done
+                    "CREATE_COMPLETE")
+                        ((counter++))
+                        ;;
+                esac
+            done
 
-#     if [ "$counter" -eq "${#BOOKINFO_GROUPS[@]}" ]; then
-#         echo -e "\nBookinfo app has been deployed successfully!"
-#         break
-#     fi
+            if [ "$counter" -eq "${#BOOKINFO_GROUPS[@]}" ]; then
+                echo -e "\nBookinfo app has been deployed successfully!"
+                break
+            fi
 
-#     ((attempt++))
-#     if [ "$attempt" -gt 12 ]; then  # Timeout after 3min
-#         echo -e "\nTimeout waiting for container groups to be created"
-#         echo "Deploying bookinfo app has failed"
-#         exit 1
-#     fi
+            ((attempt++))
+            if [ "$attempt" -gt 12 ]; then  # Timeout after 3min
+                echo -e "\nTimeout waiting for container groups to be created"
+                echo "Deploying bookinfo app has failed"
+                exit 1
+            fi
 
-#     if [[ $_wait = false ]]; then
-#         echo -e "\nDeploying bookinfo app has failed!\n"
-#         echo -e "Getting the status of all container groups...\n"
-#         bluemix ic groups
-#     fi
-# done
-
-        echo "Bookinfo app has been deployed successfully"
+            if [[ $_wait = false ]]; then
+                echo -e "\nDeploying bookinfo app has failed!\n"
+                echo -e "Getting the status of all container groups...\n"
+                bluemix ic groups
+            fi
+        done
     else
         for image in ${HELLOWORLD_IMAGES[@]}; do
             echo "$BLUEMIX_IMAGES" | grep "$image" > /dev/null
@@ -395,7 +393,59 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_PROXY=true \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
-        echo "Helloworld app has been deployed successfully"
+        #################################################################################
+        # Check the deployment progress
+        #################################################################################
+
+        echo -e "Waiting for the container groups to be created:"
+
+        attempt=0
+        _wait=true
+
+        while $_wait; do
+            # Sleep for 15s
+            for (( i = 0 ; i < 3 ; i++ )); do
+                sleep 5s
+                echo -n "."
+            done
+
+            EXISTING_GROUPS=$(bluemix ic groups)
+            counter=0
+            for group in ${HELLOWORLD_GROUPS[@]}; do
+                status=$(echo "$EXISTING_GROUPS" | awk -v pattern="$group" '$0 ~ pattern { print $3; exit; }')
+                case "$status" in
+                    "CREATE_FAILED")
+                        _wait=false
+                        ;;
+
+                    "DELETE_FAILED")
+                        _wait=false
+                        ;;
+
+                    "CREATE_COMPLETE")
+                        ((counter++))
+                        ;;
+                esac
+            done
+
+            if [ "$counter" -eq "${#HELLOWORLD_GROUPS[@]}" ]; then
+                echo -e "\nHelloworld app has been deployed successfully!"
+                break
+            fi
+
+            ((attempt++))
+            if [ "$attempt" -gt 12 ]; then  # Timeout after 3min
+                echo -e "\nTimeout waiting for container groups to be created"
+                echo "Deploying helloworld app has failed"
+                exit 1
+            fi
+
+            if [[ $_wait = false ]]; then
+                echo -e "\nDeploying helloworld app has failed!\n"
+                echo -e "Getting the status of all container groups...\n"
+                bluemix ic groups
+            fi
+        done
     fi
 else
     EXISTING_GROUPS=$(bluemix ic groups)

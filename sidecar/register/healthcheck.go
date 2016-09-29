@@ -15,11 +15,12 @@
 package register
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"sync"
 	"time"
+
+	"net/url"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -29,24 +30,34 @@ import (
 func BuildHealthChecks(checkConfs []config.HealthCheck) ([]HealthCheck, error) {
 	healthChecks := make([]HealthCheck, len(checkConfs))
 	for i, conf := range checkConfs {
-		switch conf.GetType() {
-		case "http", "https": // TODO: constants
-			httpConf := conf.(*config.HTTPHealthCheck)
-
-			healthChecks[i] = &HTTPHealthCheck{
-				url: httpConf.GetValue(),
-				client: &http.Client{
-					Timeout: httpConf.GetTimeout(),
-				},
-				interval: httpConf.GetInterval(),
-				code:     httpConf.Code,
-				method:   httpConf.Method,
-			}
-		default:
-			return healthChecks, errors.New("Health check type not supported: " + conf.GetType())
+		healthCheck, err := BuildHealthCheck(conf)
+		if err != nil {
+			return nil, err
 		}
+		healthChecks[i] = healthCheck
 	}
 	return healthChecks, nil
+}
+
+// BuildHealthCheck builds a HealthCheck out of the given health check configuration
+func BuildHealthCheck(checkConf config.HealthCheck) (HealthCheck, error) {
+	hcType := checkConf.Type
+	if hcType == "" {
+		// Parse the healthcheck type from URL scheme
+		u, err := url.Parse(checkConf.Value)
+		if err != nil {
+			return nil, fmt.Errorf("Could not parse healthcheck value: '%s'", checkConf.Value)
+		}
+
+		hcType = u.Scheme
+	}
+
+	switch hcType {
+	case "http", "https": // TODO: constants (when extra types come)
+		return NewHTTPHealthCheck(checkConf)
+	default:
+		return nil, fmt.Errorf("Healthcheck type not supported: '%s'", hcType)
+	}
 }
 
 // HealthStatus is the reported health status reported by a health check.
@@ -72,6 +83,21 @@ type HTTPHealthCheck struct {
 	stop   chan interface{}
 	active bool
 	mutex  sync.Mutex
+}
+
+// NewHTTPHealthCheck creates a new HTTP health check from the given configuration
+func NewHTTPHealthCheck(checkConf config.HealthCheck) (*HTTPHealthCheck, error) {
+	// TODO: Validate and set defaults
+	// TODO: extract http health checks into http_healthcheck.go
+	return &HTTPHealthCheck{
+		url: checkConf.Value,
+		client: &http.Client{
+			Timeout: checkConf.Timeout,
+		},
+		interval: checkConf.Timeout,
+		method:   checkConf.Method,
+		code:     checkConf.Code,
+	}, nil
 }
 
 // Start HTTP health check.

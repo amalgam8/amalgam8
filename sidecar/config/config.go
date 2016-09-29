@@ -56,46 +56,13 @@ type Controller struct {
 }
 
 // HealthCheck configuration.
-type HealthCheck interface {
-	GetType() string
-	GetValue() string
-	GetInterval() time.Duration
-	GetTimeout() time.Duration
-}
-
-// BasicHealthCheck contains common health check attributes.
-type BasicHealthCheck struct {
-	Type     string
-	Value    string
-	Interval time.Duration
-	Timeout  time.Duration
-}
-
-// GetType returns the type of the health check.
-func (c *BasicHealthCheck) GetType() string {
-	return c.Type
-}
-
-// GetValue returns the value of the health check.
-func (c *BasicHealthCheck) GetValue() string {
-	return c.Value
-}
-
-// GetInterval returns the poll interval of the health check.
-func (c *BasicHealthCheck) GetInterval() time.Duration {
-	return c.Interval
-}
-
-// GetTimeout returns the timeout of the health check.
-func (c *BasicHealthCheck) GetTimeout() time.Duration {
-	return c.Timeout
-}
-
-// HTTPHealthCheck contains HTTP health check configuration options.
-type HTTPHealthCheck struct {
-	BasicHealthCheck
-	Method string
-	Code   int
+type HealthCheck struct {
+	Type     string        `yaml:"type"`
+	Value    string        `yaml:"value"`
+	Interval time.Duration `yaml:"interval"`
+	Timeout  time.Duration `yaml:"timeout"`
+	Method   string        `yaml:"method"`
+	Code     int           `yaml:"code"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -111,8 +78,8 @@ type Config struct {
 
 	Supervise bool     `yaml:"supervise"`
 	App       []string `yaml:"app"`
-	//HealthChecks []string `yaml:"healthchecks"`
-	HealthChecks []HealthCheck
+
+	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`
@@ -210,7 +177,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
-	loadFromContextIfSet(&c.HealthChecks, healthChecksFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
@@ -219,6 +185,19 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))
 		c.Service.Name = name
 		c.Service.Tags = tags
+	}
+
+	// For healthchecks flags, we take the raw flag value as the healthcheck value,
+	// and let the 'register.BuildHealthChecks' do the hard work and figure out what
+	// kind of healthcheck it is.
+	if context.IsSet(healthchecksFlag) {
+		hcValues := context.StringSlice(healthchecksFlag)
+		for _, hcValue := range hcValues {
+			hc := HealthCheck{
+				Value: hcValue,
+			}
+			c.HealthChecks = append(c.HealthChecks, hc)
+		}
 	}
 
 	if context.Args().Present() {

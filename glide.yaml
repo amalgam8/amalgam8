@@ -65,3 +65,6 @@ import:
 
 - package: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+
+- package: github.com/miekg/dns
+  version: db96a2b759cdef4f11a34506a42eb8d1290c598e

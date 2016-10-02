@@ -16,15 +16,22 @@ package register
 
 import (
 	"fmt"
-	"net/http"
-	"sync"
-	"time"
-
 	"net/url"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 )
+
+// HealthStatus is the reported health status reported by a health check.
+type HealthStatus struct {
+	HealthCheck HealthCheck
+	Error       error
+}
+
+// HealthCheck is an interface for performing a health check.
+type HealthCheck interface {
+	Start(statusChan chan HealthStatus)
+	Stop()
+}
 
 // BuildHealthChecks constructs health checks.
 func BuildHealthChecks(checkConfs []config.HealthCheck) ([]HealthCheck, error) {
@@ -57,111 +64,5 @@ func BuildHealthCheck(checkConf config.HealthCheck) (HealthCheck, error) {
 		return NewHTTPHealthCheck(checkConf)
 	default:
 		return nil, fmt.Errorf("Healthcheck type not supported: '%s'", hcType)
-	}
-}
-
-// HealthStatus is the reported health status reported by a health check.
-type HealthStatus struct {
-	HealthCheck HealthCheck
-	Error       error
-}
-
-// HealthCheck is an interface for performing a health check.
-type HealthCheck interface {
-	Start(statusChan chan HealthStatus)
-	Stop()
-}
-
-// HTTPHealthCheck performs periodic HTTP health checks.
-type HTTPHealthCheck struct {
-	url      string
-	client   *http.Client
-	interval time.Duration
-	method   string
-	code     int
-
-	stop   chan interface{}
-	active bool
-	mutex  sync.Mutex
-}
-
-// NewHTTPHealthCheck creates a new HTTP health check from the given configuration
-func NewHTTPHealthCheck(checkConf config.HealthCheck) (*HTTPHealthCheck, error) {
-	// TODO: Validate and set defaults
-	// TODO: extract http health checks into http_healthcheck.go
-	return &HTTPHealthCheck{
-		url: checkConf.Value,
-		client: &http.Client{
-			Timeout: checkConf.Timeout,
-		},
-		interval: checkConf.Timeout,
-		method:   checkConf.Method,
-		code:     checkConf.Code,
-	}, nil
-}
-
-// Start HTTP health check.
-func (c *HTTPHealthCheck) Start(statusChan chan HealthStatus) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	if c.active {
-		return
-	}
-	c.active = true
-
-	go c.check(statusChan)
-}
-
-// Stop HTTP health check.
-func (c *HTTPHealthCheck) Stop() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-
-	if !c.active {
-		return
-	}
-	c.active = false
-
-	c.stop <- struct{}{}
-}
-
-// Start periodic health checks of a HTTP address. Perform an HTTP operation on the URL and check the response code.
-func (c *HTTPHealthCheck) check(statusChan chan HealthStatus) {
-	ticker := time.NewTicker(c.interval)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			logrus.WithField("url", c.url).Debug("Performing HTTP/HTTPS health check")
-
-			status := HealthStatus{
-				HealthCheck: c,
-			}
-
-			req, err := http.NewRequest(c.method, c.url, nil)
-			if err != nil {
-				status.Error = err
-				statusChan <- status
-				continue
-			}
-
-			resp, err := c.client.Do(req)
-			if err != nil {
-				status.Error = err
-				statusChan <- status
-				continue
-			}
-
-			if resp.StatusCode != c.code {
-				status.Error = fmt.Errorf("HTTP/HTTPS health check expected %v, got %v", c.code, resp.StatusCode)
-				statusChan <- status
-				continue
-			}
-
-			statusChan <- status
-		case <-c.stop:
-			break
-		}
 	}
 }

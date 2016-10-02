@@ -23,7 +23,6 @@ import (
 
 	"strconv"
 	"sync"
-	"sync/atomic"
 
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/rcrowley/go-metrics"
@@ -429,55 +428,6 @@ func TestExternalListServices(t *testing.T) {
 	}
 }
 
-func TestExternalOutOfServiceDoesNotExpire(t *testing.T) {
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{testShortTTL, testShortTTL, maximumTTL, 50, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	instance1 := &ServiceInstance{
-		ServiceName: "Calc1",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.1:9080",
-			Type:  "tcp",
-		},
-		Status: "OUT_OF_SERVICE",
-	}
-	doRegister(catalog, instance1)
-
-	instance2 := &ServiceInstance{
-		ServiceName: "Calc1",
-		Endpoint: &Endpoint{
-			Value: "192.168.0.2:9080",
-			Type:  "tcp",
-		},
-		Status: "STARTING",
-	}
-	doRegister(catalog, instance2)
-
-	// Sleep past the ttl
-	time.Sleep(testShortTTL * 2)
-
-	instances, err := catalog.List("Calc1", nil)
-	assert.NoError(t, err)
-
-	// Should only have instance1.  Instance2 should have expired.
-	assert.Len(t, instances, 1)
-	assertContainsInstance(t, instances, instance1)
-
-	// One more time just to be sure
-	time.Sleep(testShortTTL * 2)
-
-	instances, err = catalog.List("Calc1", nil)
-	assert.NoError(t, err)
-
-	// Should only have instance1.  Instance2 should have expired.
-	assert.Len(t, instances, 1)
-	assertContainsInstance(t, instances, instance1)
-}
-
 func TestExternalReRegisterExpiredInstance(t *testing.T) {
 	serviceInstances := make(map[string]*ServiceInstance)
 
@@ -579,27 +529,6 @@ func TestExternalDeregisterInstanceAlreadyDeregistered(t *testing.T) {
 	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
 }
 
-func TestExternalDeregisterInstanceAlreadyExpired(t *testing.T) {
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{testShortTTL, testShortTTL, maximumTTL, 50, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	instance := newServiceInstance("Calc", "192.168.0.1", 9080)
-
-	id, _ := doRegister(catalog, instance)
-	time.Sleep(testShortTTL * 2)
-
-	dInstance, err := catalog.Deregister(id)
-
-	assert.Error(t, err)
-	assert.Nil(t, dInstance)
-	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
-
-}
-
 func TestExternalRenewInstance(t *testing.T) {
 	catalog := setupCatalogForTest()
 
@@ -633,26 +562,6 @@ func TestExternalRenewInstanceAlreadyDeregistered(t *testing.T) {
 
 	id, _ := doRegister(catalog, instance)
 	catalog.Deregister(id)
-	_, err := catalog.Renew(id)
-
-	assert.Error(t, err)
-	assert.EqualValues(t, ErrorNoSuchServiceInstance, extractErrorCode(err))
-
-}
-
-func TestExternalRenewInstanceAlreadyExpired(t *testing.T) {
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{testShortTTL, testShortTTL, maximumTTL, 50, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	instance := newServiceInstance("Calc", "192.168.0.1", 9080)
-
-	id, _ := doRegister(catalog, instance)
-	time.Sleep(testShortTTL * 2)
-
 	_, err := catalog.Renew(id)
 
 	assert.Error(t, err)
@@ -782,9 +691,6 @@ func TestExternalInstancesMetrics(t *testing.T) {
 
 	catalog.Deregister(instance1.ID)
 	assert.EqualValues(t, 2, instancesCount())
-
-	time.Sleep(testShortTTL * 2)
-	assert.EqualValues(t, 1, instancesCount())
 }
 
 func TestExternalAverageMetadataMetrics(t *testing.T) {
@@ -927,74 +833,6 @@ func TestExternalTagsInstancesMetrics(t *testing.T) {
 	assert.EqualValues(t, 0, tagsInstanceCount(), "De-registering an instance with tags should decrease tags count")
 }
 
-func TestExternalExpirationMetric(t *testing.T) {
-	metrics.DefaultRegistry.UnregisterAll()
-
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{testShortTTL, testShortTTL, maximumTTL, 10, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	expirationCount := func() int64 {
-		return metrics.DefaultRegistry.Get(expirationMetricName).(metrics.Meter).Count()
-	}
-	assert.EqualValues(t, 0, expirationCount())
-
-	catalog.Register(newServiceInstance("Calc", "192.168.0.1", 9080))
-	catalog.Register(newServiceInstance("Calc", "192.168.0.2", 9080))
-	catalog.Register(newServiceInstance("Calc", "192.168.0.3", 9080))
-	assert.EqualValues(t, 0, expirationCount())
-
-	time.Sleep(testShortTTL * 2)
-	assert.EqualValues(t, 3, expirationCount())
-}
-
-func TestExternalLifetimeMetric(t *testing.T) {
-	metrics.DefaultRegistry.UnregisterAll()
-
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{testShortTTL, testShortTTL, maximumTTL, 10, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	assertLifetime := func(d time.Duration) {
-		const margin = 50 * time.Millisecond
-		lifetime := time.Duration(metrics.DefaultRegistry.Get(lifetimeMetricName).(metrics.Histogram).Mean())
-
-		assert.True(t, lifetime > d-margin, "Actual lifetime (%s) is greater than expected (%ds) by more than the allowed margin (%s)", lifetime, d, margin)
-		assert.True(t, lifetime < d+margin, "Actual lifetime (%s) is lower than expected (%s) by more than the allowed margin (%s)", lifetime, d, margin)
-	}
-
-	assertLifetime(0)
-
-	instance1 := newServiceInstance("Calc", "192.168.0.1", 9080)
-	instance2 := newServiceInstance("Calc", "192.168.0.2", 9080)
-	instance3 := newServiceInstance("Calc", "192.168.0.3", 9080)
-
-	instance1.TTL = 1 * testShortTTL
-	instance2.TTL = 3 * testShortTTL
-	instance3.TTL = 100 * testShortTTL // but will be unregistered after 8 * testShortTTL
-
-	instance1, _ = catalog.Register(instance1)
-	instance2, _ = catalog.Register(instance2)
-	instance3, _ = catalog.Register(instance3)
-	assertLifetime(0)
-
-	time.Sleep(testShortTTL * 2)
-	assertLifetime(testShortTTL)
-
-	time.Sleep(testShortTTL * 2)
-	assertLifetime(2 * testShortTTL)
-
-	time.Sleep(testShortTTL * 4)
-	catalog.Deregister(instance3.ID)
-	assertLifetime(4 * testShortTTL)
-}
-
 func TestExternalMultiCatalogsMetrics(t *testing.T) {
 	metrics.DefaultRegistry.UnregisterAll()
 
@@ -1016,129 +854,6 @@ func TestExternalMultiCatalogsMetrics(t *testing.T) {
 	catalog2.Register(newServiceInstance("Calc", "192.168.0.2", 9080))
 
 	assert.EqualValues(t, 2, instancesCount())
-}
-
-func TestExternalInstanceExpiresDefaultTTL(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	ttl := DefaultConfig.DefaultTTL
-	catalog := setupCatalogForTest()
-
-	instance := newServiceInstance("Calc", "192.168.0.1", 9080)
-	instance, _ = catalog.Register(instance)
-
-	done := time.After(ttl)
-Outer:
-	for {
-		select {
-		case <-done:
-			break Outer
-		default:
-			{
-				instances, err := catalog.List("Calc", nil)
-				assert.NoError(t, err)
-				assertContainsInstance(t, instances, instance)
-				time.Sleep(1 * time.Second)
-			}
-		}
-	}
-
-	// Grace period
-	time.Sleep(1 * time.Second)
-
-	instances, err := catalog.List("Calc", nil)
-	assert.Error(t, err)
-	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
-	assert.Empty(t, instances)
-}
-
-func TestExternalInstanceExpiresCatalogTTL(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	ttl := time.Duration(5) * time.Second
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{ttl, testShortTTL, maximumTTL, 10, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	instance := newServiceInstance("Calc", "192.168.0.1", 9080)
-	instance, _ = catalog.Register(instance)
-
-	done := time.After(ttl)
-Outer:
-	for {
-		select {
-		case <-done:
-			break Outer
-		default:
-			{
-				instances, err := catalog.List("Calc", nil)
-				assert.NoError(t, err)
-				assertContainsInstance(t, instances, instance)
-				time.Sleep(1 * time.Second)
-			}
-		}
-	}
-
-	// Grace period
-	time.Sleep(1 * time.Second)
-
-	instances, err := catalog.List("Calc", nil)
-	assert.Error(t, err)
-	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
-	assert.Empty(t, instances)
-}
-
-func TestExternalInstanceExpireInstanceTTL(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	ttl := time.Duration(5) * time.Second
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{DefaultConfig.DefaultTTL, ttl, maximumTTL, 10, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	instance := &ServiceInstance{
-		ServiceName: "Calc",
-		Endpoint:    &Endpoint{Value: "192.168.0.1:9080", Type: "tcp"},
-		TTL:         ttl,
-	}
-	instance, _ = catalog.Register(instance)
-
-	done := time.After(ttl)
-Outer:
-	for {
-		select {
-		case <-done:
-			break Outer
-		default:
-			{
-				instances, err := catalog.List("Calc", nil)
-				assert.NoError(t, err)
-				assertContainsInstance(t, instances, instance)
-				time.Sleep(1 * time.Second)
-			}
-		}
-	}
-
-	// Grace period
-	time.Sleep(1 * time.Second)
-
-	instances, err := catalog.List("Calc", nil)
-	assert.Error(t, err)
-	assert.EqualValues(t, ErrorNoSuchServiceName, extractErrorCode(err))
-	assert.Empty(t, instances)
-
 }
 
 func TestExternalRegisterInstancesSameServiceConcurrently(t *testing.T) {
@@ -1465,87 +1180,6 @@ func TestExternalRenewInstancesConcurrently(t *testing.T) {
 	instances, err := catalog.List("Calc", nil)
 	assert.NoError(t, err)
 	assert.Len(t, instances, numOfInstances, "Expected %v surviving instances, found %v", numOfInstances, len(instances))
-
-}
-
-func TestExternalRenewAndExpireInstancesConcurrently(t *testing.T) {
-	if testing.Short() {
-		t.Skip()
-	}
-
-	if testing.Short() {
-		t.SkipNow()
-	}
-
-	const numOfInstances = 10000
-	const numOfIterations = 10
-	const expirationProbability = 0.2
-	const ttl = (15) * time.Second
-
-	serviceInstances := make(map[string]*ServiceInstance)
-
-	db := NewMockExternalRegistry(serviceInstances)
-
-	conf := &externalConfig{ttl, testMinTTL, testMaxTTL, -1, "redis", "testaddress", "testpassword", nil}
-	catalog := createExternalCatalog(conf, db)
-
-	var ids [numOfInstances]string
-	for i := 0; i < numOfInstances; i++ {
-		hostSuffix := strconv.Itoa(i)
-		host := "192.168.0." + hostSuffix
-		instance := newServiceInstance("Calc", host, 9080)
-		id, _ := doRegister(catalog, instance)
-		ids[i] = id
-	}
-
-	var wg sync.WaitGroup
-	wg.Add(numOfInstances)
-
-	var expiredInstances uint32
-	stopExpiration := make(chan struct{})
-	done := make(chan struct{})
-	for i := 0; i < numOfInstances; i++ {
-		id := ids[i]
-		go func() {
-			defer wg.Done()
-			expirationAllowed := true
-			stopExpirationLocal := stopExpiration
-			for {
-				select {
-				case <-done:
-					return
-				case <-stopExpirationLocal:
-					{
-						expirationAllowed = false
-						stopExpirationLocal = nil
-					}
-				default:
-					{
-						if expirationAllowed && rand.Float32() <= expirationProbability {
-							atomic.AddUint32(&expiredInstances, 1)
-							return
-						}
-						duration := randPercentOfDuration(0.25, 0.5, ttl)
-						time.Sleep(duration)
-						_, err := catalog.Renew(id)
-						assert.NoError(t, err, "Renewal of instance %v failed: %v", id, err)
-					}
-				}
-			}
-		}()
-	}
-
-	time.Sleep(ttl * (numOfIterations - 2))
-	close(stopExpiration)
-	time.Sleep(ttl * 2)
-	close(done)
-	wg.Wait()
-
-	survivingInstances := numOfInstances - expiredInstances
-
-	instances, err := catalog.List("Calc", nil)
-	assert.NoError(t, err)
-	assert.Len(t, instances, int(survivingInstances), "Expected %v surviving instances, found %v", survivingInstances, len(instances))
 
 }
 

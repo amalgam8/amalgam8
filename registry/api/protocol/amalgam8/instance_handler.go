@@ -53,7 +53,7 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to register instance %+v", req)
-
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -87,7 +87,10 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 			default:
 				i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorInstanceRegistrationFailed)
 			}
+		} else {
+			i18n.Error(r, w, statusCodeFromError(err), i18n.ErrorInstanceRegistrationFailed)
 		}
+
 		return
 	} else if sir == nil {
 		routes.logger.WithFields(log.Fields{
@@ -307,7 +310,7 @@ func (routes *Routes) renewInstance(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Errorf("Failed to renew instance %s", iid)
-
+		// error response set by routes.catalog()
 		return
 	}
 
@@ -357,7 +360,7 @@ func (routes *Routes) listInstances(w rest.ResponseWriter, r *rest.Request) {
 			"namespace": r.Env[env.Namespace],
 			"error":     "catalog is nil",
 		}).Error("Failed to list instances")
-
+		// error response set by routes.catalog()
 		return
 	}
 

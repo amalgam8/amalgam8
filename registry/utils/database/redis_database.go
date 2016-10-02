@@ -15,6 +15,8 @@
 package database
 
 import (
+	"time"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/garyburd/redigo/redis"
 
@@ -82,7 +84,7 @@ func (rdb *redisDB) connect() (redis.Conn, error) {
 	return conn, nil
 }
 
-func (rdb *redisDB) ReadKeys(hashname string) ([]string, error) {
+func (rdb *redisDB) ReadKeys(match string) ([]string, error) {
 	var err error
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -93,12 +95,12 @@ func (rdb *redisDB) ReadKeys(hashname string) ([]string, error) {
 		defer conn.Close()
 	}
 
-	hashKeys, err := redis.Strings(conn.Do("HKEYS", hashname))
+	matches, err := rdb.scan(conn, match)
 
-	return hashKeys, err
+	return matches, err
 }
 
-func (rdb *redisDB) ReadEntry(hashname string, key string) ([]byte, error) {
+func (rdb *redisDB) ReadEntry(key string) ([]byte, error) {
 	var err error
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -109,12 +111,15 @@ func (rdb *redisDB) ReadEntry(hashname string, key string) ([]byte, error) {
 		defer conn.Close()
 	}
 
-	entry, err := redis.Bytes(conn.Do("HGET", hashname, key))
+	value, err := conn.Do("GET", key)
+	if value == nil || err != nil {
+		return nil, err
+	}
 
-	return entry, err
+	return redis.Bytes(value, err)
 }
 
-func (rdb *redisDB) ReadAllEntries(hashname string) (map[string]string, error) {
+func (rdb *redisDB) ReadAllEntries(match string) (map[string]string, error) {
 	var err error
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -125,56 +130,27 @@ func (rdb *redisDB) ReadAllEntries(hashname string) (map[string]string, error) {
 		defer conn.Close()
 	}
 
-	entries, err := redis.StringMap(conn.Do("HGETALL", hashname))
+	entries := make(map[string]string)
 
-	return entries, err
-}
+	matches, err := rdb.scan(conn, match)
 
-func (rdb *redisDB) ReadAllMatchingEntries(hashname string, match string) (map[string][]byte, error) {
-	var err error
-	conn := rdb.conn
-	if rdb.conn == nil {
-		conn, err = rdb.connect()
-		if err != nil {
-			return nil, err
-		}
-		defer conn.Close()
+	var args []interface{}
+	for _, k := range matches {
+		args = append(args, k)
+	}
+	values, err := redis.Strings(conn.Do("MGET", args...))
+	if err != nil {
+		return nil, err
 	}
 
-	var (
-		cursor int64
-		keys   [][]byte
-	)
-	var matches = make(map[string][]byte)
-
-	for {
-		items, err := redis.Values(conn.Do("HSCAN", hashname, cursor, "MATCH", match))
-		if err != nil || items == nil || len(items) == 0 {
-			return matches, err
-		}
-
-		items, err = redis.Scan(items, &cursor, &keys)
-		if err != nil {
-			return matches, err
-		}
-
-		for i := 0; i < len(keys); i++ {
-			// Make sure we don't go off the end as the values returned are:
-			// key[i]=key key[i+1]=value
-			if i+1 > len(keys) {
-				break
-			}
-			matches[string(keys[i])] = keys[i+1]
-			i++
-		}
-		if cursor == 0 {
-			break
-		}
+	for i, value := range values {
+		entries[matches[i]] = value
 	}
-	return matches, nil
+
+	return entries, nil
 }
 
-func (rdb *redisDB) InsertEntry(hashname string, key string, entry []byte) error {
+func (rdb *redisDB) InsertEntry(key string, entry []byte) error {
 	var err error
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -185,11 +161,11 @@ func (rdb *redisDB) InsertEntry(hashname string, key string, entry []byte) error
 		defer conn.Close()
 	}
 
-	_, err = conn.Do("HSET", hashname, key, entry)
+	_, err = conn.Do("SET", key, entry)
 	return err
 }
 
-func (rdb *redisDB) DeleteEntry(hashname string, key string) (int, error) {
+func (rdb *redisDB) DeleteEntry(key string) (int, error) {
 	var err error
 	conn := rdb.conn
 	if rdb.conn == nil {
@@ -200,5 +176,47 @@ func (rdb *redisDB) DeleteEntry(hashname string, key string) (int, error) {
 		defer conn.Close()
 	}
 
-	return redis.Int(conn.Do("HDEL", hashname, key))
+	return redis.Int(conn.Do("DEL", key))
+}
+
+func (rdb *redisDB) Expire(key string, ttl time.Duration) error {
+	var err error
+	conn := rdb.conn
+	if rdb.conn == nil {
+		conn, err = rdb.connect()
+		if err != nil {
+			return err
+		}
+		defer conn.Close()
+	}
+
+	_, err = conn.Do("EXPIRE", key, ttl.Seconds())
+	return err
+}
+
+func (rdb *redisDB) scan(conn redis.Conn, match string) ([]string, error) {
+	var (
+		cursor int64
+		keys   []string
+	)
+
+	var matches []string
+	for {
+		items, err := redis.Values(conn.Do("SCAN", cursor, "MATCH", match))
+		if err != nil || items == nil || len(items) == 0 {
+			return matches, err
+		}
+
+		items, err = redis.Scan(items, &cursor, &keys)
+		if err != nil {
+			return matches, err
+		}
+
+		matches = append(matches, keys...)
+
+		if cursor == 0 {
+			break
+		}
+	}
+	return matches, nil
 }

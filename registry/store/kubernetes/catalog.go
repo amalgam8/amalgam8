@@ -220,7 +220,6 @@ func parseEndpoint(address EndpointAddress, port EndpointPort) (*store.Endpoint,
 			fallthrough
 		case "https":
 			endpointType = portName
-			endpointValue = fmt.Sprintf("%s://%s", endpointType, endpointValue)
 		default:
 			endpointType = "tcp"
 		}

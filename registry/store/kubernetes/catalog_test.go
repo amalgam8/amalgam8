@@ -46,22 +46,22 @@ func TestParseEndpoint(t *testing.T) {
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "http"},
-			expectedEndpoint: &store.Endpoint{Type: "http", Value: "http://10.0.1.1:80"},
+			expectedEndpoint: &store.Endpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "HTTP"},
-			expectedEndpoint: &store.Endpoint{Type: "http", Value: "http://10.0.1.1:80"},
+			expectedEndpoint: &store.Endpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "https"},
-			expectedEndpoint: &store.Endpoint{Type: "https", Value: "https://10.0.1.1:943"},
+			expectedEndpoint: &store.Endpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "HTTPS"},
-			expectedEndpoint: &store.Endpoint{Type: "https", Value: "https://10.0.1.1:943"},
+			expectedEndpoint: &store.Endpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
 			addr:          EndpointAddress{IP: "10.0.1.1"},

@@ -38,7 +38,7 @@ helloworld-v1:
     - A8_SERVICE=helloworld:v1
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=5000
-    - A8_HEALTH_CHECKS=http://localhost:5000/health
+    - A8_HEALTHCHECKS=http://localhost:5000/health
   external_links:
     - registry
 
@@ -49,6 +49,6 @@ helloworld-v2:
     - A8_SERVICE=helloworld:v2
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=5000
-    - A8_HEALTH_CHECKS=http://localhost:5000/health
+    - A8_HEALTHCHECKS=http://localhost:5000/health
   external_links:
     - registry

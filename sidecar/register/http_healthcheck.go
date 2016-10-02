@@ -20,14 +20,24 @@ import (
 	"sync"
 	"time"
 
+	"net/url"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 )
 
+const (
+	defaultHTTPHealthcheckInterval = 30 * time.Second
+	defaultHTTPHealthcheckTimeout  = 5 * time.Second
+	defaultHTTPHealthcheckMethod   = http.MethodGet
+	defaultHTTPHealthcheckCode     = 200
+)
+
 // HTTPHealthCheck performs periodic HTTP health checks.
 type HTTPHealthCheck struct {
+	client *http.Client
+
 	url      string
-	client   *http.Client
 	interval time.Duration
 	method   string
 	code     int
@@ -38,18 +48,74 @@ type HTTPHealthCheck struct {
 }
 
 // NewHTTPHealthCheck creates a new HTTP health check from the given configuration
-func NewHTTPHealthCheck(checkConf config.HealthCheck) (*HTTPHealthCheck, error) {
-	// TODO: Validate and set defaults
-	// TODO: extract http health checks into http_healthcheck.go
+func NewHTTPHealthCheck(conf config.HealthCheck) (*HTTPHealthCheck, error) {
+	err := validateHTTPConfig(&conf)
+	if err != nil {
+		return nil, err
+	}
+
 	return &HTTPHealthCheck{
-		url: checkConf.Value,
+		url: conf.Value,
 		client: &http.Client{
-			Timeout: checkConf.Timeout,
+			Timeout: conf.Timeout,
 		},
-		interval: checkConf.Timeout,
-		method:   checkConf.Method,
-		code:     checkConf.Code,
+		interval: conf.Interval,
+		method:   conf.Method,
+		code:     conf.Code,
 	}, nil
+}
+
+// validateHTTPConfig validates, sanitizes, and sets defaults for an HTTP healthcheck configuration
+func validateHTTPConfig(conf *config.HealthCheck) error {
+
+	// Validate healthcheck type
+	switch conf.Type {
+	case "", "http", "https":
+	default:
+		return fmt.Errorf("invalid type for an HTTP healthcheck: '%s'", conf.Type)
+	}
+
+	// Validate URL
+	if conf.Value == "" {
+		return fmt.Errorf("empty URL for HTTP healthcheck")
+	}
+	u, err := url.Parse(conf.Value)
+	if err != nil {
+		return fmt.Errorf("error parsing URL '%s' for HTTP healthcheck: %v", conf.Value, err)
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("invalid URL '%s' for HTTP healthcheck", conf.Value)
+	}
+
+	// Validate interval
+	if conf.Interval == 0 {
+		conf.Interval = defaultHTTPHealthcheckInterval
+	}
+
+	// Validate timeout
+	if conf.Timeout == 0 {
+		conf.Timeout = defaultHTTPHealthcheckTimeout
+	}
+
+	// Validate method
+	switch conf.Method {
+	case http.MethodGet, http.MethodHead, http.MethodPost,
+		http.MethodPut, http.MethodPatch, http.MethodDelete,
+		http.MethodConnect, http.MethodOptions, http.MethodTrace:
+	case "":
+		conf.Method = defaultHTTPHealthcheckMethod
+	default:
+		return fmt.Errorf("invalid method for an HTTP healthcheck: '%s'", conf.Method)
+	}
+
+	// Validate code
+	if conf.Code == 0 {
+		conf.Code = defaultHTTPHealthcheckCode
+	} else if conf.Code < 100 || conf.Code > 599 {
+		return fmt.Errorf("invalid code for an HTTP healthcheck: '%d'", conf.Code)
+	}
+
+	return nil
 }
 
 // Start HTTP health check.

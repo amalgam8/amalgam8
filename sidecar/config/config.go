@@ -55,6 +55,16 @@ type Controller struct {
 	Poll  time.Duration `yaml:"poll"`
 }
 
+// HealthCheck configuration.
+type HealthCheck struct {
+	Type     string        `yaml:"type"`
+	Value    string        `yaml:"value"`
+	Interval time.Duration `yaml:"interval"`
+	Timeout  time.Duration `yaml:"timeout"`
+	Method   string        `yaml:"method"`
+	Code     int           `yaml:"code"`
+}
+
 // Config stores the various configuration options for the sidecar
 type Config struct {
 	Register bool `yaml:"register"`
@@ -68,6 +78,8 @@ type Config struct {
 
 	Supervise bool     `yaml:"supervise"`
 	App       []string `yaml:"app"`
+
+	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`
@@ -173,6 +185,19 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))
 		c.Service.Name = name
 		c.Service.Tags = tags
+	}
+
+	// For healthchecks flags, we take the raw flag value as the healthcheck value,
+	// and let the 'register.BuildHealthChecks' do the hard work and figure out what
+	// kind of healthcheck it is.
+	if context.IsSet(healthchecksFlag) {
+		hcValues := context.StringSlice(healthchecksFlag)
+		for _, hcValue := range hcValues {
+			hc := HealthCheck{
+				Value: hcValue,
+			}
+			c.HealthChecks = append(c.HealthChecks, hc)
+		}
 	}
 
 	if context.Args().Present() {

@@ -45,5 +45,3 @@ sudo mv /tmp/kubectl /usr/local/bin
 sudo chmod +x /usr/local/bin/kubectl
 echo "Waiting for K8S to initialize.."
 sleep 30
-echo "Setting up Weave Scope for visualization"
-kubectl create -f $SCRIPTDIR/weavescope.yaml --validate=false

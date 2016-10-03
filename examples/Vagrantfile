@@ -36,11 +36,14 @@ sudo usermod -a -G docker vagrant # Add vagrant user to the docker group
 sudo curl -L https://github.com/docker/compose/releases/download/1.5.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-git clone https://github.com/amalgam8/amalgam8 /home/vagrant/amalgam8
-chown vagrant:vagrant /home/vagrant/amalgam8
+A8_RELEASE=v0.3.1
+curl -L https://github.com/amalgam8/amalgam8/releases/download/$A8_RELEASE/a8demos-${A8_RELEASE}.tar.gz >/home/vagrant/a8demos.tar.gz
+cd /home/vagrant && tar -xzf a8demos.tar.gz
+chown vagrant:vagrant examples
 
 # Install Amalgam8 CLI
-sudo pip install git+https://github.com/amalgam8/a8ctl
+pip install --user git+https://github.com/amalgam8/a8ctl
+echo 'export PATH=$PATH:${HOME}/.local/bin/a8ctl' >>/home/vagrant/.bashrc
 
 SCRIPT
 
@@ -56,20 +59,16 @@ Vagrant.configure('2') do |config|
   end
 
   # Port mappings for various services inside the VM
-  ####A8 Console
-  config.vm.network "forwarded_port", guest: 31000, host: 31000
-  ####Controller
+  ####A8 Controller
   config.vm.network "forwarded_port", guest: 31200, host: 31200
-  ####Registry
+  ####A8 Registry
   config.vm.network "forwarded_port", guest: 31300, host: 31300
-  ####Gateway
+  ####A8 Gateway
   config.vm.network "forwarded_port", guest: 32000, host: 32000
   ####Elasticsearch
   config.vm.network "forwarded_port", guest: 30200, host: 30200
   ####Kibana
   config.vm.network "forwarded_port", guest: 30500, host: 30500
-  ####Weave Scope
-  config.vm.network "forwarded_port", guest: 30040, host: 30040
 
   config.vm.provision :shell, inline: $script
 end

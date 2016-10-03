@@ -15,12 +15,12 @@
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
 Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
-1. [Try the sample applications](examples/) with a container orchestration
-   framework of your choice.
+1. [Try the demo applications](https://amalgam8.io/_docs/demo/) with a
+   container runtime of your choice.
 
-1. [Integrate the sidecar](https://www.amalgam8.io/docs/getting-started/)
+1. [Integrate the sidecar](https://www.amalgam8.io/docs/sidecar/)
    into your existing application to start using Amalgam8.
-
+   
 ---
 
 ## Content and version-based routing - 101
@@ -77,13 +77,13 @@ resilience testing, etc.
 
 ## Amalgam8 - Components
 
-* The Amalgam8 control plane consists of two multi-tenant components:
-    * [Service Registry](registry/)
-    * [Route Controller](controller/)
+* The Amalgam8 Control Plane consists of two multi-tenant components:
+    * [Service Registry](https://amalgam8.io/docs/registry/)
+    * [Route Controller](https://amalgam8.io/docs/controller/)
 
     The registry and the controller store their state in a Redis backend.
 
-* In the data plane, the [Amalgam8 sidecar](sidecar/) runs alongside each
+* In the data plane, the [Amalgam8 sidecar](https://amalgam8.io/docs/sidecar/) runs alongside each
   microservice instance. The sidecar is an
   [Nginx/OpenResty](https://openresty.org) reverse proxy. In addition to proxying
   requests to other microservices, the sidecar is responsible for service
@@ -91,32 +91,29 @@ resilience testing, etc.
   request routing, and fault injection.
   
   Microservices communicate with the sidecar via the loopback socket at
-  http://localhost:6379 . For e.g., to make an API call to serviceB, the
-  application would use the following URL:
+  http://localhost:6379 . For e.g., to make a REST API call over HTTP to
+  serviceB, the application would use the following URL:
   http://localhost:6379/serviceB/apiEndpoint . The sidecar in-turn forwards
   the API call to an instance of service B.
-  
-  **Note**: You can enable HTTPS between microservices by customizing the
-  Nginx config files in `/etc/nginx/amalgam8-services.conf`. For more
-  information on setting up HTTPS with Nginx, please refer to the official
-  [Nginx guide](https://www.nginx.com/resources/admin-guide/nginx-https-upstreams/)
 
+## Documentation
 
-# Getting Started
+Detailed documentation on Amalgam8 can be found at [https://amalgam8.io/docs](https://amalgam8.io/docs). 
 
-## Amalgam8 - Sample Applications
+## Demos
 
-To get started with Amalgam8, we suggest exploring some of the sample
-applications in the [examples](examples/) folder. These examples
-demonstrate some of Amalgam8's features. Detailed instructions are
+To get started with Amalgam8, we suggest exploring some of the [demo
+applications](https://amalgam8.io/docs/demo). The walkthroughs 
+demonstrate some of Amalgam8's key features. Detailed instructions are
 available for different container runtimes and cloud platforms.
 
-## Slack Channel
+## Getting Help
 
 If you have any questions or feedback, you can reach us via our public
 Slack channel (#amalgam8). To join this channel, please use the following
 self invite URL: https://amalgam8-slack-invite.mybluemix.net
 
+---
 
 # Development Process
 

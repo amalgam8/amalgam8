@@ -17,10 +17,10 @@ package nginx
 import (
 	"errors"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"strings"
 	"syscall"
-	"os"
 )
 
 // Service provides management operations for the NGINX service
@@ -46,7 +46,7 @@ func (s *service) Start() error {
 
 	cmd := exec.Command("nginx", "-g", "daemon on;")
 	cmdEnv := os.Environ()
-	cmdEnv = append(cmdEnv, "A8_SERVICE=" + s.name)
+	cmdEnv = append(cmdEnv, "A8_SERVICE="+s.name)
 	cmd.Env = cmdEnv
 
 	out, err := cmd.CombinedOutput()

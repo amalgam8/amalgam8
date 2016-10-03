@@ -38,6 +38,12 @@ details_resp = '
 </dl>
 '
 
+server.mount_proc '/health' do |req, res|
+    res.status = 200
+    res.body = 'Details is healthy'
+    res['Content-Type'] = 'text/html'
+end
+
 server.mount_proc '/details' do |req, res|
     res.body = details_resp
     res['Content-Type'] = 'text/html'

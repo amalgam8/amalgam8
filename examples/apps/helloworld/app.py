@@ -13,14 +13,18 @@
 #   limitations under the License.
 
 import os
-from flask import Flask
+from flask import Flask, request
 app = Flask(__name__)
 
-@app.route("/hello")
+@app.route('/hello')
 def hello():
     service_version = os.environ.get('A8_SERVICE').split(':')
     version = service_version[1] if len(service_version) == 2 else 'UNVERSIONED'
-    return "Hello version: %s, container: %s\n" % (version, os.environ.get('HOSTNAME'))
+    return 'Hello version: %s, container: %s\n' % (version, os.environ.get('HOSTNAME'))
+
+@app.route('/health')
+def health():
+    return 'Helloworld is healthy', 200
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', threaded=True)

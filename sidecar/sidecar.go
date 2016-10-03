@@ -43,7 +43,7 @@ func Main() {
 
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
-	app.Version = "0.2.0"
+	app.Version = "0.3.1"
 	app.Flags = config.Flags
 	app.Action = sidecarCommand
 
@@ -139,7 +139,20 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		agent.Start()
+		healthChecks, err := register.BuildHealthChecks(conf.HealthChecks)
+		if err != nil {
+			logrus.WithError(err).Error("Could not build health checks")
+			return err
+		}
+
+		// Control the registration agent via the health checker if any health checks were provided. If no
+		// health checks are provided, just start the registration agent.
+		if len(healthChecks) > 0 {
+			checker := register.NewHealthChecker(agent, healthChecks)
+			checker.Start()
+		} else {
+			agent.Start()
+		}
 	}
 
 	if conf.Supervise {

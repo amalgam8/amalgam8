@@ -59,6 +59,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
 			Expect(c.Supervise).To(Equal(DefaultConfig.Supervise))
 			Expect(c.App).To(Equal(DefaultConfig.App))
+			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
 			Expect(c.Log).To(Equal(DefaultConfig.Log))
 			Expect(c.LogstashServer).To(Equal(DefaultConfig.LogstashServer))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
@@ -98,6 +99,8 @@ var _ = Describe("Config", func() {
 				"--controller_token=local",
 				"--controller_poll=5s",
 				"--supervise=true",
+				"--healthchecks=http://localhost:8082/health1",
+				"--healthchecks=http://localhost:8082/health2",
 				"--log=true",
 				"--logstash_server=logstash:8092",
 				"--log_level=debug",
@@ -123,6 +126,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
+			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
+			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
 			Expect(c.Log).To(Equal(true))
 			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))
@@ -155,6 +160,7 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
 			os.Setenv("A8_SUPERVISE", "true")
+			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
 			os.Setenv("A8_LOG", "true")
 			os.Setenv("A8_LOGSTASH_SERVER", "logstash:8092")
 			os.Setenv("A8_LOG_LEVEL", "debug")
@@ -179,6 +185,7 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_CONTROLLER_TOKEN")
 			os.Unsetenv("A8_CONTROLLER_POLL")
 			os.Unsetenv("A8_SUPERVISE")
+			os.Unsetenv("A8_HEALTHCHECKS")
 			os.Unsetenv("A8_LOG")
 			os.Unsetenv("A8_LOGSTASH_SERVER")
 			os.Unsetenv("A8_LOG_LEVEL")
@@ -200,6 +207,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
+			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
+			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
 			Expect(c.Log).To(Equal(true))
 			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))
@@ -249,6 +258,20 @@ controller:
 supervise: true
 app: [ "python", "productpage.py" ]
 
+healthchecks:
+  - type: http
+    value: http://localhost:8082/health1
+    interval: 15s
+    timeout: 5s
+    method: GET
+    code: 200
+  - type: http
+    value: http://localhost:8082/health2
+    interval: 30s
+    timeout: 3s
+    method: POST
+    code: 201
+
 log: true
 logstash_server: logstash:8092
 
@@ -262,6 +285,7 @@ log_level: debug
 			}...)
 
 			Expect(app.Run(args)).NotTo(HaveOccurred())
+
 		})
 
 		AfterEach(func() {
@@ -284,6 +308,18 @@ log_level: debug
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
+			Expect(c.HealthChecks[0].Type).To(Equal("http"))
+			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
+			Expect(c.HealthChecks[0].Interval).To(Equal(time.Duration(15) * time.Second))
+			Expect(c.HealthChecks[0].Timeout).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.HealthChecks[0].Method).To(Equal("GET"))
+			Expect(c.HealthChecks[0].Code).To(Equal(200))
+			Expect(c.HealthChecks[1].Type).To(Equal("http"))
+			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
+			Expect(c.HealthChecks[1].Interval).To(Equal(time.Duration(30) * time.Second))
+			Expect(c.HealthChecks[1].Timeout).To(Equal(time.Duration(3) * time.Second))
+			Expect(c.HealthChecks[1].Method).To(Equal("POST"))
+			Expect(c.HealthChecks[1].Code).To(Equal(201))
 			Expect(c.Log).To(Equal(true))
 			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))

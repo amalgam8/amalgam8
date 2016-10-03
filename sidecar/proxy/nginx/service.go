@@ -20,6 +20,7 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"os"
 )
 
 // Service provides management operations for the NGINX service
@@ -30,16 +31,25 @@ type Service interface {
 }
 
 // NewService creates new instance
-func NewService() Service {
-	return &service{}
+func NewService(name string) Service {
+	return &service{
+		name: name,
+	}
 }
 
 type service struct {
+	name string
 }
 
 // Start the NGINX service
 func (s *service) Start() error {
-	out, err := exec.Command("nginx", "-g", "daemon on;").CombinedOutput()
+
+	cmd := exec.Command("nginx", "-g", "daemon on;")
+	cmdEnv := os.Environ()
+	cmdEnv = append(cmdEnv, "A8_SERVICE=" + s.name)
+	cmd.Env = cmdEnv
+
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return errors.New(err.Error() + ": " + string(out))
 	}

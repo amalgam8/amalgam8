@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+	"strconv"
 )
 
 // Validate runs validation checks
@@ -96,3 +97,33 @@ func IsInRangeDuration(name string, value, min, max time.Duration) ValidatorFunc
 		return nil
 	}
 }
+// IsValidPort ensures that the port value is a positive integer.
+func IsValidPort(name, value string) ValidatorFunc {
+	return func() error {
+		if value == "" {
+			return errors.New(name + " is empty")
+		}
+		port, err := strconv.Atoi(value)
+		if  err != nil {
+			return errors.New(name + " not a number ")
+		}
+		if port <= 0 {
+			return errors.New(name + " not a valid port number")
+		}
+
+		return nil
+	}
+}
+
+func IsValidDomain(name, value string) ValidatorFunc {
+	return func() error {
+		if value == "" {
+			return errors.New(name + " is empty")
+		}
+		// TODO: Do I need to validate here the domain name ? and how?
+		return nil
+	}
+}
+
+
+

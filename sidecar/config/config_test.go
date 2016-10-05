@@ -52,11 +52,13 @@ var _ = Describe("Config", func() {
 		It("uses default config values", func() {
 			Expect(c.Register).To(Equal(DefaultConfig.Register))
 			Expect(c.Proxy).To(Equal(DefaultConfig.Proxy))
+			Expect(c.Dns).To(Equal(DefaultConfig.Dns))
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
 			Expect(c.Registry).To(Equal(DefaultConfig.Registry))
 			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
+			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
 			Expect(c.Supervise).To(Equal(DefaultConfig.Supervise))
 			Expect(c.App).To(Equal(DefaultConfig.App))
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
@@ -88,6 +90,7 @@ var _ = Describe("Config", func() {
 			args := append(os.Args[:1], []string{
 				"--register=true",
 				"--proxy=true",
+				"--dns=true",
 				"--service=helloworld:v1,somethingelse",
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
@@ -98,6 +101,8 @@ var _ = Describe("Config", func() {
 				"--controller_url=http://controller:8080",
 				"--controller_token=local",
 				"--controller_poll=5s",
+				"--dns_port=8053",
+				"--dns_domain=amalgam8",
 				"--supervise=true",
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
@@ -113,6 +118,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from command line flags", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.Dns).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -124,6 +130,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Dnsconfig.Port).To(Equal("8053"))
+			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -149,6 +157,7 @@ var _ = Describe("Config", func() {
 
 			os.Setenv("A8_REGISTER", "true")
 			os.Setenv("A8_PROXY", "true")
+			os.Setenv("A8_DNS", "true")
 			os.Setenv("A8_SERVICE", "helloworld:v1,somethingelse")
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
@@ -159,6 +168,8 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_CONTROLLER_URL", "http://controller:8080")
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
+			os.Setenv("A8_DNS_PORT", "8053")
+			os.Setenv("A8_DNS_DOMAIN", "amalgam8")
 			os.Setenv("A8_SUPERVISE", "true")
 			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
 			os.Setenv("A8_LOG", "true")
@@ -174,6 +185,7 @@ var _ = Describe("Config", func() {
 		AfterEach(func() {
 			os.Unsetenv("A8_REGISTER")
 			os.Unsetenv("A8_PROXY")
+			os.Unsetenv("A8_DNS")
 			os.Unsetenv("A8_SERVICE")
 			os.Unsetenv("A8_ENDPOINT_HOST")
 			os.Unsetenv("A8_ENDPOINT_PORT")
@@ -184,6 +196,8 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_CONTROLLER_URL")
 			os.Unsetenv("A8_CONTROLLER_TOKEN")
 			os.Unsetenv("A8_CONTROLLER_POLL")
+			os.Unsetenv("A8_DNS_PORT")
+			os.Unsetenv("A8_DNS_DOMAIN")
 			os.Unsetenv("A8_SUPERVISE")
 			os.Unsetenv("A8_HEALTHCHECKS")
 			os.Unsetenv("A8_LOG")
@@ -194,6 +208,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from environment variables", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.Dns).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -205,6 +220,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Dnsconfig.Port).To(Equal("8053"))
+			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -233,7 +250,7 @@ var _ = Describe("Config", func() {
 			configYaml := `
 register: true
 proxy: true
-
+dns: true
 service:
   name: helloworld
   tags:
@@ -254,6 +271,10 @@ controller:
   url:   http://controller:8080
   token: local
   poll:  5s
+
+dnsconfig:
+  port:   8053
+  domain: amalgam8
 
 supervise: true
 app: [ "python", "productpage.py" ]
@@ -295,6 +316,7 @@ log_level: debug
 		It("uses config values from configuration file", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.Dns).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -305,6 +327,8 @@ log_level: debug
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
+			Expect(c.Dnsconfig.Port).To(Equal("8053"))
+			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
@@ -339,8 +363,13 @@ log_level: debug
 					URL:   "http://controller",
 					Poll:  60 * time.Second,
 				},
+				Dnsconfig: Dnsconfig{
+					Port: "8053",
+					Domain: "amalgam8",
+				},
 				Proxy:    true,
 				Register: true,
+				Dns:	  true,
 				Service: Service{
 					Name: "mock",
 				},

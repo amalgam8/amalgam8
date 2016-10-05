@@ -54,6 +54,11 @@ type Controller struct {
 	Token string        `yaml:"token"`
 	Poll  time.Duration `yaml:"poll"`
 }
+// Dns configuration
+type Dnsconfig struct {
+	Port	string	    `yaml:"port"`
+	Domain	string      `yaml:"domain"`
+}
 
 // HealthCheck configuration.
 type HealthCheck struct {
@@ -69,12 +74,14 @@ type HealthCheck struct {
 type Config struct {
 	Register bool `yaml:"register"`
 	Proxy    bool `yaml:"proxy"`
+	Dns	 bool `yaml:"dns"`
 
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
 
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
+	Dnsconfig  Dnsconfig  `yaml:"dnsconfig"`
 
 	Supervise bool     `yaml:"supervise"`
 	App       []string `yaml:"app"`
@@ -167,6 +174,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
+	loadFromContextIfSet(&c.Dns, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
@@ -176,6 +184,8 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Port, DnsConfigPortFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Domain, DnsConfigDomainFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
@@ -251,6 +261,13 @@ func (c *Config) Validate() error {
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
 
+	}
+
+	if c.Dns {
+		validators = append(validators,
+		              IsValidPort("Dns Port", c.Dnsconfig.Port),
+			      IsValidDomain("Dns Domain",c.Dnsconfig.Domain),
+		)
 	}
 
 	return Validate(validators)

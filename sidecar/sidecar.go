@@ -31,6 +31,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
+	"github.com/amalgam8/amalgam8/sidecar/dns"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -153,6 +154,17 @@ func Run(conf config.Config) error {
 		} else {
 			agent.Start()
 		}
+
+		if conf.Dns {
+			dnsConfig := dns.Config{
+				DiscoveryClient: registryClient ,
+				Port:            conf.Dnsconfig.Port,
+				Domain:          conf.Dnsconfig.Domain,
+			}
+			dns.NewServer(dnsConfig)
+			//TODO: where listenAndServe goes ??
+		}
+
 	}
 
 	if conf.Supervise {

@@ -250,8 +250,6 @@ local function is_rule_for_me(myname, mytags, rule)
    -- if source field has no service name but has service tags, then the rule applies to us if tags match
    ----if our service has no tags, then try next source block
 
-   --right now, only ALL is supported
-
    if not rule.match then return true end
 
    local match = {}
@@ -717,7 +715,7 @@ function Amalgam8:apply_rules()
    -- So pick the first instance and get its instance type. This variable will be used by the proxy_pass directive
    ngx.var.a8_service_type = selected_instances[1].type
 
-   if selected_backend and actions then
+   if actions then
       -- ngx_log(ngx_DEBUG, destination.." has actions "..tostring(#actions))
       for _, a in ipairs(actions) do --rules are ordered by decreasing priority
          if match_headers(headers, a) then
@@ -731,7 +729,7 @@ function Amalgam8:apply_rules()
       -- Actions are performed on the backends (not specific instances of the backend). It would be
       -- nice to inject faults for specific instances but we can't do ngx.sleep in balancer_by_lua 
       for _,sa in ipairs(selected_actions) do
-         if not sa.tags or match_tags(table.concat(selected_backend.tags), sa.tags) then
+         if not sa.tags or (selected_backend and match_tags(table.concat(selected_backend.tags), sa.tags)) then
             -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
             if sa.action <= abort_action then
                -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
@@ -794,7 +792,7 @@ function Amalgam8:load_balance()
    --TODO: refactor. Need different LB functions
    local upstream = selected_instances[math.random(#selected_instances)]
    ngx.var.a8_upstream_tags = upstream.tags
-   ngx_log(ngx_DEBUG, "Selecting instance "..upstream.host..":"..upstream.port)
+   -- ngx_log(ngx_DEBUG, "Selecting instance "..upstream.host..":"..upstream.port)
    ok, err = balancer.set_current_peer(upstream.host, upstream.port)
    if not ok then
       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR

@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM jfloff/alpine-python:2.7-onbuild
+FROM python:2-onbuild
 
 RUN mkdir -p /opt/microservices
 ADD app.py /opt/microservices/

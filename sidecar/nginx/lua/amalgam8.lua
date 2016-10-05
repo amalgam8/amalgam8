@@ -401,12 +401,12 @@ function Amalgam8:new()
 
    local myname, mytags, err = get_name_and_tags()
    if err then
-      return err
+      return nil, err
    end
 
    self.myname = myname
    self.mytags = mytags
-   return o
+   return o, nil
 end
 
 

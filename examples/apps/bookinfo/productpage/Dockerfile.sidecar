@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 FROM amalgam8/a8-sidecar:alpine
+LABEL amalgam8.role=application
 
 RUN apk add --no-cache \
               bash \

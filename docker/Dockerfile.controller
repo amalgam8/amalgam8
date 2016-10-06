@@ -14,6 +14,8 @@
 
 FROM scratch
 
+LABEL amalgam8.role=controlplane
+
 WORKDIR /opt/a8controller
 COPY bin/a8controller /opt/a8controller/a8controller
 COPY controller/locales /opt/a8controller/locales

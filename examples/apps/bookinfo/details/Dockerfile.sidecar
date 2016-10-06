@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 FROM ruby:2.3
+LABEL amalgam8.role=application
 
 RUN mkdir -p /opt/microservices
 COPY . /opt/microservices/

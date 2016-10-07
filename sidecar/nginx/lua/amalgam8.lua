@@ -133,7 +133,7 @@ local function match_header_value(req_headers, header_name, header_val_pattern)
    local header_value = req_headers[header_name]
    if header_value then
       -- ngx_log(ngx_DEBUG, "match_header_value: header_name "..header_name.." value "..header_value.." pattern "..header_val_pattern)
-      local m, err = ngx.re.match(header_value, header_val_pattern, "o")
+      local m, err = ngx.re.match(header_value, header_val_pattern, "jo")
       if m then
          -- ngx_log(ngx_DEBUG, "header matched for "..header_name.." returning true")
          return true

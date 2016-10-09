@@ -17,47 +17,32 @@ package dns
 import (
 	"fmt"
 	"net"
+	"net/url"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
-	"strings"
 )
 
+// Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
 type Server struct {
 	config    Config
 	dnsServer *dns.Server
 }
 
+// Config represents the DNS server configurations.
 type Config struct {
 	DiscoveryClient client.Discovery
 	Port            uint16
 	Domain          string
 }
 
-/***********************************************************/
-func CreateNewClient() (client.Client, error) {
-	conf := client.Config{URL: "http://172.17.0.02:8080"}
-	return client.New(conf)
-}
-
-func CreateDNSServer() (*Server, error){
-	myclient, _ := CreateNewClient()
-	dnsConfig := Config{
-		DiscoveryClient: myclient ,
-		Port:            8053,
-		Domain:          "amalgam8",
-	}
-	return NewServer(dnsConfig)
-
-}
-/***********************************************************/
+// NewServer creates a new instance of a DNS server with the given configurations
 func NewServer(config Config) (*Server, error) {
 	err := validate(&config)
 	if err != nil {
 		return nil, err
 	}
-
 	s := &Server{
 		config: config,
 	}
@@ -76,6 +61,7 @@ func NewServer(config Config) (*Server, error) {
 	return s, nil
 }
 
+// ListenAndServe starts the DNS server
 func (s *Server) ListenAndServe() error {
 	logrus.Info("Starting DNS server")
 	err := s.dnsServer.ListenAndServe()
@@ -87,6 +73,7 @@ func (s *Server) ListenAndServe() error {
 	return nil
 }
 
+// Shutdown stpos the DNS server
 func (s *Server) Shutdown() error {
 	logrus.Info("Shutting down DNS server")
 	err := s.dnsServer.Shutdown()
@@ -138,80 +125,159 @@ func (s *Server) handleQuestion(question dns.Question, request, response *dns.Ms
 		response.SetRcode(request, dns.RcodeServerFailure)
 		return fmt.Errorf("unsupported DNS question type: %v", dns.Type(question.Qtype).String())
 	}
-	err, ServiceInstances := s.retrieveServices(question, request, response)
+
+	serviceInstances, err := s.retrieveServices(question, request, response)
 
 	if err != nil {
 		return err
 	}
-	numOfMatchingRecords := 0
-	for _, serviceInstance := range ServiceInstances {
-		endPointType := serviceInstance.Endpoint.Type
 
-		if endPointType == "tcp" {
-			numOfMatchingRecords++
-			record := &dns.A{
-				Hdr: dns.RR_Header{
-					Name:   question.Name,
-					Rrtype: dns.TypeA,
-					Class:  dns.ClassINET,
-					Ttl:    0,
-				},
-				// TODO: what to do with the port.
-				A: net.ParseIP(strings.Split(serviceInstance.Endpoint.Value, ":")[0]),
-			}
+	err = s.findMatchingServices(question, request, response, serviceInstances)
+	return err
+
+}
+
+func (s *Server) retrieveServices(question dns.Question, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
+	// parse query :
+	// Query format:
+	// [tag]*.<service>.<domain>.
+	numberOfLabels, isValidDomain := dns.IsDomainName(question.Name)
+	if !isValidDomain {
+		response.SetRcode(request, dns.RcodeBadName)
+		return nil, fmt.Errorf("Invalid Domain name %s", question.Name)
+	}
+
+	fullDomainRequestArray := dns.SplitDomainName(question.Name)
+	if len(fullDomainRequestArray) == 1 {
+		response.SetRcode(request, dns.RcodeNameError)
+		return nil, fmt.Errorf("service name wasn't included in domain %s", question.Name)
+
+	}
+	serviceName := fullDomainRequestArray[numberOfLabels-2]
+	tags := fullDomainRequestArray[:len(fullDomainRequestArray)-2]
+	var ServiceInstances []*client.ServiceInstance
+	var err error
+	if len(tags) == 0 {
+		ServiceInstances, err = s.config.DiscoveryClient.ListServiceInstances(serviceName)
+	} else {
+		filters := client.InstanceFilter{ServiceName: serviceName, Tags: tags}
+		ServiceInstances, err = s.config.DiscoveryClient.ListInstances(filters)
+	}
+	if err != nil {
+		// TODO: what Error should we return ?
+		response.SetRcode(request, dns.RcodeServerFailure)
+		return nil, fmt.Errorf("Error while reading from registry: %s", err.Error())
+	}
+	return ServiceInstances, nil
+}
+
+func (s *Server) findMatchingServices(question dns.Question, request, response *dns.Msg,
+	serviceInstances []*client.ServiceInstance) error {
+	numOfMatchingRecords := 0
+	for _, serviceInstance := range serviceInstances {
+		endPointType := serviceInstance.Endpoint.Type
+		var ip net.IP
+		var err error
+
+		switch endPointType {
+		case "tcp":
+			ip, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
+
+		case "udp":
+			ip, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
+
+		case "http":
+			ip, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
+
+		default:
+			continue
+		}
+		if err != nil {
+			// TODO: Do I need to skip or should I print something ?
+			continue
+		}
+		numOfMatchingRecords++
+		if ip.To4() != nil {
+			record := createARecord(question.Name, ip)
+			response.Answer = append(response.Answer, record)
+		} else if ip.To16() != nil {
+			record := createAAARecord(question.Name, ip)
 			response.Answer = append(response.Answer, record)
 		}
 	}
 	if numOfMatchingRecords == 0 {
 		//Non-Existent Domain
-		response.SetRcode(request, dns.RcodeNameError )
+		response.SetRcode(request, dns.RcodeNameError)
 		return fmt.Errorf("Non-Existent Domain	 %s", question.Name)
 
 	}
 	response.SetRcode(request, dns.RcodeSuccess)
 	return nil
 
+}
+
+func validateEndPointTypeTCPAndUDP(value string) (net.IP, error) {
+	ip, _, err := net.SplitHostPort(value)
+	if err != nil {
+		return nil, err
+	}
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return nil, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
+	}
+	return parsedIP, nil
+}
+
+func validateEndPointTypeHTTP(value string) (net.IP, error) {
+	parsedURL, err := url.Parse(value)
+	if err != nil {
+		return nil, err
+	}
+	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+		return nil, fmt.Errorf("url shceme %s should be http or https", parsedURL.Scheme)
+	}
+	host := parsedURL.Host
+	ip, _, err := net.SplitHostPort(host)
+	if err != nil {
+		return nil, err
+	}
+	parsedIP := net.ParseIP(ip)
+	if parsedIP == nil {
+		return nil, fmt.Errorf("url ip value %s is not a valid ip format", ip)
+	}
+	return parsedIP, nil
 
 }
 
+func createARecord(questionName string, ip net.IP) *dns.A {
+	record := &dns.A{
+		Hdr: dns.RR_Header{
+			Name:   questionName,
+			Rrtype: dns.TypeA,
+			Class:  dns.ClassINET,
+			Ttl:    0,
+		},
 
-func (s* Server)retrieveServices(question dns.Question, request, response *dns.Msg) (error, []*client.ServiceInstance) {
-	// parse query :
-	// Query format:
-	// [tag]*.<service>.<domain>.
-	numberOfLabels, isValidDomain := dns.IsDomainName(question.Name)
-	if isValidDomain == false {
-		response.SetRcode(request, dns.RcodeBadName)
-		return fmt.Errorf("Invalid Domain name %s", question.Name) , nil
+		A: ip,
 	}
+	return record
+}
 
-	fullDomainRequestArray := dns.SplitDomainName(question.Name)
-	if numberOfLabels == 1 {
-		response.SetRcode(request, dns.RcodeNameError )
-		return fmt.Errorf("service name wasn't included in domain %s", question.Name), nil
+func createAAARecord(questionName string, ip net.IP) *dns.AAAA {
+	record := &dns.AAAA{
+		Hdr: dns.RR_Header{
+			Name:   questionName,
+			Rrtype: dns.TypeAAAA,
+			Class:  dns.ClassINET,
+			Ttl:    0,
+		},
 
+		AAAA: ip,
 	}
-	serviceName := fullDomainRequestArray[numberOfLabels - 2]
-	tags := fullDomainRequestArray[:len(fullDomainRequestArray) -2]
-	var ServiceInstances []*client.ServiceInstance
-	var err error = nil
-	if len(tags) == 0 {
-		ServiceInstances, err = s.config.DiscoveryClient.ListServiceInstances(serviceName)
-	} else {
-		filters :=client.InstanceFilter{ServiceName:serviceName,Tags:tags}
-		ServiceInstances, err = s.config.DiscoveryClient.ListInstances(filters)
-	}
-	if err != nil {
-		// TODO: what Error should we return ?
-		response.SetRcode(request, dns.RcodeServerFailure )
-		return fmt.Errorf("Error while reading from registry: %s",err.Error() ) , nil
-	}
-	return nil, ServiceInstances
+	return record
 }
 
 func validate(config *Config) error {
-	// TODO: Validate port
-
 	if config.DiscoveryClient == nil {
 		return fmt.Errorf("Discovery client is nil")
 	}

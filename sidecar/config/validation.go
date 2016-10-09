@@ -19,7 +19,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
-	"strconv"
+
+	"github.com/miekg/dns"
 )
 
 // Validate runs validation checks
@@ -97,33 +98,17 @@ func IsInRangeDuration(name string, value, min, max time.Duration) ValidatorFunc
 		return nil
 	}
 }
-// IsValidPort ensures that the port value is a positive integer.
-func IsValidPort(name, value string) ValidatorFunc {
-	return func() error {
-		if value == "" {
-			return errors.New(name + " is empty")
-		}
-		port, err := strconv.Atoi(value)
-		if  err != nil {
-			return errors.New(name + " not a number ")
-		}
-		if port <= 0 {
-			return errors.New(name + " not a valid port number")
-		}
 
-		return nil
-	}
-}
-
+// IsValidDomain ensures the domain name is valid domain and that it contains only one domain.
 func IsValidDomain(name, value string) ValidatorFunc {
 	return func() error {
-		if value == "" {
-			return errors.New(name + " is empty")
+		numberOfDomains, isValidDomain := dns.IsDomainName(value)
+		if !isValidDomain {
+			return errors.New(name + " not a valid domain")
 		}
-		// TODO: Do I need to validate here the domain name ? and how?
+		if numberOfDomains != 1 {
+			return errors.New(name + " needs to contain 1 domain")
+		}
 		return nil
 	}
 }
-
-
-

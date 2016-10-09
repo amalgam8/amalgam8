@@ -40,9 +40,9 @@ const (
 	logFlag             = "log"
 	logstashServerFlag  = "logstash_server"
 	logLevelFlag        = "log_level"
-	dnsFlag		    = "dns"
-	DnsConfigPortFlag   = "dns_port"
-	DnsConfigDomainFlag = "dns_domain"
+	dnsFlag             = "dns"
+	dnsConfigPortFlag   = "dns_port"
+	dnsConfigDomainFlag = "dns_domain"
 )
 
 // Flags is the set of supported flags
@@ -65,7 +65,7 @@ var Flags = []cli.Flag{
 	cli.BoolFlag{
 		Name:   dnsFlag,
 		EnvVar: envVar(dnsFlag),
-		Usage:  "Enable DNS service",
+		Usage:  "Enable DNS server",
 	},
 	cli.StringFlag{
 		Name:   serviceFlag,
@@ -118,14 +118,14 @@ var Flags = []cli.Flag{
 		Usage:  "Interval for polling Controller",
 	},
 	cli.StringFlag{
-		Name:   DnsConfigPortFlag,
-		EnvVar: envVar(DnsConfigPortFlag),
-		Usage:  "DNS port number",
+		Name:   dnsConfigPortFlag,
+		EnvVar: envVar(dnsConfigPortFlag),
+		Usage:  "DNS server port number",
 	},
 	cli.StringFlag{
-		Name:   DnsConfigDomainFlag,
-		EnvVar: envVar(DnsConfigDomainFlag),
-		Usage:  "DNS domain name",
+		Name:   dnsConfigDomainFlag,
+		EnvVar: envVar(dnsConfigDomainFlag),
+		Usage:  "DNS server authorization domain name",
 	},
 	cli.BoolFlag{
 		Name:   superviseFlag,

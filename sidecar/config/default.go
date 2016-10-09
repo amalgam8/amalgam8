@@ -20,7 +20,7 @@ import "time"
 var DefaultConfig = Config{
 	Register: false,
 	Proxy:    false,
-	Dns:	  false,
+	DNS:      false,
 
 	Service: Service{
 		Name: "",
@@ -43,8 +43,8 @@ var DefaultConfig = Config{
 		Poll:  time.Duration(15 * time.Second),
 	},
 	Dnsconfig: Dnsconfig{
-		Port: "",
-		Domain: "",
+		Port:   8053,
+		Domain: "amalgam8",
 	},
 	Supervise: false,
 	App:       nil,

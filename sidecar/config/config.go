@@ -54,10 +54,11 @@ type Controller struct {
 	Token string        `yaml:"token"`
 	Poll  time.Duration `yaml:"poll"`
 }
-// Dns configuration
+
+// Dnsconfig - DNS server configuration
 type Dnsconfig struct {
-	Port	string	    `yaml:"port"`
-	Domain	string      `yaml:"domain"`
+	Port   int    `yaml:"port"`
+	Domain string `yaml:"domain"`
 }
 
 // HealthCheck configuration.
@@ -74,7 +75,7 @@ type HealthCheck struct {
 type Config struct {
 	Register bool `yaml:"register"`
 	Proxy    bool `yaml:"proxy"`
-	Dns	 bool `yaml:"dns"`
+	DNS      bool `yaml:"dns"`
 
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
@@ -174,7 +175,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
-	loadFromContextIfSet(&c.Dns, dnsFlag)
+	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
@@ -184,8 +185,8 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
-	loadFromContextIfSet(&c.Dnsconfig.Port, DnsConfigPortFlag)
-	loadFromContextIfSet(&c.Dnsconfig.Domain, DnsConfigDomainFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
@@ -263,10 +264,10 @@ func (c *Config) Validate() error {
 
 	}
 
-	if c.Dns {
+	if c.DNS {
 		validators = append(validators,
-		              IsValidPort("Dns Port", c.Dnsconfig.Port),
-			      IsValidDomain("Dns Domain",c.Dnsconfig.Domain),
+			IsInRange("Dns Port", c.Dnsconfig.Port, 1, 65535),
+			IsValidDomain("Dns Domain", c.Dnsconfig.Domain),
 		)
 	}
 

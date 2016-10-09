@@ -52,7 +52,7 @@ var _ = Describe("Config", func() {
 		It("uses default config values", func() {
 			Expect(c.Register).To(Equal(DefaultConfig.Register))
 			Expect(c.Proxy).To(Equal(DefaultConfig.Proxy))
-			Expect(c.Dns).To(Equal(DefaultConfig.Dns))
+			Expect(c.DNS).To(Equal(DefaultConfig.DNS))
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
@@ -101,8 +101,8 @@ var _ = Describe("Config", func() {
 				"--controller_url=http://controller:8080",
 				"--controller_token=local",
 				"--controller_poll=5s",
-				"--dns_port=8053",
-				"--dns_domain=amalgam8",
+				"--dns_port=4056",
+				"--dns_domain=someServer",
 				"--supervise=true",
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
@@ -118,7 +118,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from command line flags", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
-			Expect(c.Dns).To(Equal(true))
+			Expect(c.DNS).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -130,8 +130,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Dnsconfig.Port).To(Equal("8053"))
-			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
+			Expect(c.Dnsconfig.Port).To(Equal(4056))
+			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -168,8 +168,8 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_CONTROLLER_URL", "http://controller:8080")
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
-			os.Setenv("A8_DNS_PORT", "8053")
-			os.Setenv("A8_DNS_DOMAIN", "amalgam8")
+			os.Setenv("A8_DNS_PORT", "4056")
+			os.Setenv("A8_DNS_DOMAIN", "someServer")
 			os.Setenv("A8_SUPERVISE", "true")
 			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
 			os.Setenv("A8_LOG", "true")
@@ -208,7 +208,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from environment variables", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
-			Expect(c.Dns).To(Equal(true))
+			Expect(c.DNS).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -220,8 +220,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Dnsconfig.Port).To(Equal("8053"))
-			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
+			Expect(c.Dnsconfig.Port).To(Equal(4056))
+			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -273,8 +273,8 @@ controller:
   poll:  5s
 
 dnsconfig:
-  port:   8053
-  domain: amalgam8
+  port:   4056
+  domain: someServer
 
 supervise: true
 app: [ "python", "productpage.py" ]
@@ -316,7 +316,7 @@ log_level: debug
 		It("uses config values from configuration file", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
-			Expect(c.Dns).To(Equal(true))
+			Expect(c.DNS).To(Equal(true))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -327,8 +327,8 @@ log_level: debug
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
-			Expect(c.Dnsconfig.Port).To(Equal("8053"))
-			Expect(c.Dnsconfig.Domain).To(Equal("amalgam8"))
+			Expect(c.Dnsconfig.Port).To(Equal(4056))
+			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Supervise).To(Equal(true))
 			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
@@ -364,12 +364,12 @@ log_level: debug
 					Poll:  60 * time.Second,
 				},
 				Dnsconfig: Dnsconfig{
-					Port: "8053",
+					Port:   8053,
 					Domain: "amalgam8",
 				},
 				Proxy:    true,
 				Register: true,
-				Dns:	  true,
+				DNS:      true,
 				Service: Service{
 					Name: "mock",
 				},

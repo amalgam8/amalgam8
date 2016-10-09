@@ -26,12 +26,12 @@ import (
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/config"
+	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
-	"github.com/amalgam8/amalgam8/sidecar/dns"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -101,25 +101,22 @@ func Run(conf config.Config) error {
 		// TODO: Log failure?
 		go supervisor.DoLogManagement("/tmp/filebeat.yml")
 	}
-
+	registryClient, err := registryclient.New(registryclient.Config{
+		URL:       conf.Registry.URL,
+		AuthToken: conf.Registry.Token,
+	})
+	if err != nil {
+		logrus.WithError(err).Error("Could not create registry client")
+		return err
+	}
 	if conf.Proxy {
-		if err = startProxy(&conf); err != nil {
+		if err = startProxy(&conf, &registryClient); err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 		}
 	}
 
 	if conf.Register {
 		logrus.Info("Registering")
-
-		registryClient, err := registryclient.New(registryclient.Config{
-			URL:       conf.Registry.URL,
-			AuthToken: conf.Registry.Token,
-		})
-		if err != nil {
-			logrus.WithError(err).Error("Could not create registry client")
-			return err
-		}
-
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
 		serviceInstance := &registryclient.ServiceInstance{
 			ServiceName: conf.Service.Name,
@@ -155,15 +152,19 @@ func Run(conf config.Config) error {
 			agent.Start()
 		}
 
-		if conf.Dns {
-			dnsConfig := dns.Config{
-				DiscoveryClient: registryClient ,
-				Port:            conf.Dnsconfig.Port,
-				Domain:          conf.Dnsconfig.Domain,
-			}
-			dns.NewServer(dnsConfig)
-			//TODO: where listenAndServe goes ??
+	}
+	if conf.DNS {
+		dnsConfig := dns.Config{
+			DiscoveryClient: registryClient,
+			Port:            uint16(conf.Dnsconfig.Port),
+			Domain:          conf.Dnsconfig.Domain,
 		}
+		server, err := dns.NewServer(dnsConfig)
+		if err != nil {
+			logrus.WithError(err).Error("Could not start dns server")
+			return err
+		}
+		go server.ListenAndServe()
 
 	}
 
@@ -176,7 +177,7 @@ func Run(conf config.Config) error {
 	return nil
 }
 
-func startProxy(conf *config.Config) error {
+func startProxy(conf *config.Config, registryClient *registryclient.Client) error {
 	var err error
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
@@ -194,15 +195,6 @@ func startProxy(conf *config.Config) error {
 	})
 	if err != nil {
 		logrus.WithError(err).Error("Could not create controller client")
-		return err
-	}
-
-	registryClient, err := registryclient.New(registryclient.Config{
-		URL:       conf.Registry.URL,
-		AuthToken: conf.Registry.Token,
-	})
-	if err != nil {
-		logrus.WithError(err).Error("Could not create registry client")
 		return err
 	}
 
@@ -224,7 +216,7 @@ func startProxy(conf *config.Config) error {
 		Listeners: []monitor.RegistryListener{
 			nginxProxy,
 		},
-		RegistryClient: registryClient,
+		RegistryClient: *registryClient,
 	})
 	go func() {
 		if err = registryMonitor.Start(); err != nil {

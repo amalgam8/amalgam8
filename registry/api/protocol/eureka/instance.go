@@ -20,11 +20,10 @@ import (
 )
 
 const (
-	defaultDurationInt    uint32 = 90
-	metadataTags                 = "amalgam8.tags"
-	metadataTagsDelimiter        = ";"
-	extEureka                    = "eureka"
-	extVIP                       = "vipAddress"
+	defaultDurationInt uint32 = 90
+	metadataTags              = "amalgam8.tags"
+	extEureka                 = "eureka"
+	extVIP                    = "vipAddress"
 )
 
 // Port encapsulates information needed for a port information

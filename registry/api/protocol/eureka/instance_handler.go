@@ -174,8 +174,14 @@ func extractTagsFromMetadata(jsonString json.RawMessage) ([]string, error) {
 
 	var tags []string
 	if val, ok := md[metadataTags]; ok {
-		sval := fmt.Sprintf("%v", val)
-		tags = strings.Split(sval, metadataTagsDelimiter)
+		sval := strings.TrimSpace(fmt.Sprintf("%v", val))
+		if sval != "" {
+			sval = strings.Replace(sval, ";", ",", -1)
+			tags = strings.Split(sval, ",")
+			for i := range tags {
+				tags[i] = strings.TrimSpace(tags[i])
+			}
+		}
 	}
 	return tags, nil
 }

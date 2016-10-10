@@ -104,12 +104,6 @@ func TestEurekaInstancesCreate(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 		handler.ServeHTTP(recorder, req)
 		assert.Equal(t, tc.expected, recorder.Code, string(b), "\nResponse:", string(recorder.Body.Bytes()))
-		if recorder.Code == http.StatusCreated { // verify links
-			reply := &eureka.Instance{}
-
-			err = json.Unmarshal(recorder.Body.Bytes(), &reply)
-			assert.NoError(t, err)
-		}
 	}
 }
 

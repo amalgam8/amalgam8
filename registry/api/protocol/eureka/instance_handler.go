@@ -20,12 +20,11 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
-
-	"strings"
 
 	"github.com/amalgam8/amalgam8/registry/api/env"
 	"github.com/amalgam8/amalgam8/registry/store"
@@ -89,22 +88,6 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 		}).Warnf("Failed to register instance %+v", inst)
 
 		i18n.Error(r, w, http.StatusBadRequest, i18n.EurekaErrorApplicationMismatch)
-		return
-	}
-
-	metadataValid := true
-
-	if inst.Metadata != nil {
-		metadataValid = validateJSON(inst.Metadata)
-	}
-
-	if !metadataValid {
-		routes.logger.WithFields(log.Fields{
-			"namespace": r.Env[env.Namespace],
-			"error":     "metadata is not valid",
-		}).Warnf("Failed to register instance %+v", inst)
-
-		i18n.Error(r, w, http.StatusBadRequest, i18n.ErrorInstanceMetadataInvalid)
 		return
 	}
 
@@ -183,9 +166,24 @@ func (routes *Routes) registerInstance(w rest.ResponseWriter, r *rest.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func validateJSON(jsonString json.RawMessage) bool {
-	var js interface{}
-	return json.Unmarshal(jsonString, &js) == nil
+func extractTagsFromMetadata(jsonString json.RawMessage) ([]string, error) {
+	var md map[string]interface{}
+	if err := json.Unmarshal(jsonString, &md); err != nil {
+		return nil, err
+	}
+
+	var tags []string
+	if val, ok := md[metadataTags]; ok {
+		sval := strings.TrimSpace(fmt.Sprintf("%v", val))
+		if sval != "" {
+			sval = strings.Replace(sval, ";", ",", -1)
+			tags = strings.Split(sval, ",")
+			for i := range tags {
+				tags[i] = strings.TrimSpace(tags[i])
+			}
+		}
+	}
+	return tags, nil
 }
 
 func (routes *Routes) deregisterInstance(w rest.ResponseWriter, r *rest.Request) {
@@ -543,6 +541,11 @@ func Translate(inst *Instance) (*store.ServiceInstance, error) {
 	}
 	uid := buildUniqueInstanceID(inst.Application, id)
 
+	tags, err := extractTagsFromMetadata(inst.Metadata)
+	if err != nil {
+		return nil, err
+	}
+
 	ext, err := buildExtensionFromInstance(inst)
 	if err != nil {
 		return nil, err
@@ -568,6 +571,7 @@ func Translate(inst *Instance) (*store.ServiceInstance, error) {
 		ServiceName: inst.Application,
 		Endpoint:    endpoint,
 		Status:      inst.Status,
+		Tags:        tags,
 		TTL:         time.Duration(ttl) * time.Second,
 		LastRenewal: lastRenewal,
 		Metadata:    inst.Metadata,

@@ -1,4 +1,5 @@
 FROM websphere-liberty:latest
+LABEL amalgam8.role=application
 
 RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.3.0/a8sidecar.sh | sh
 

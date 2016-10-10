@@ -14,6 +14,8 @@
 
 FROM scratch
 
+LABEL amalgam8.role=controlplane
+
 WORKDIR /opt/a8registry
 COPY bin/a8registry       /opt/a8registry/
 COPY registry/messages    /opt/a8registry/locales

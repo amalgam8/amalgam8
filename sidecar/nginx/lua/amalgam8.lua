@@ -151,9 +151,9 @@ local function match_headers(req_headers, rule)
    end --source matched (earlier), destination matched.
    if rule.match.all then
       -- ngx_log(ngx_DEBUG, "match_headers: rule has match.all block "..r1)
-      for k, v in pairs(rule.match.all) do
+      for _, kv in ipairs(rule.match.all) do
          -- ngx_log(ngx_DEBUG, "match_headers: matching header "..k.." value "..v.." for rule.match.all "..r1)
-         if not match_header_value(req_headers, k, v) then return false end
+         if not match_header_value(req_headers, kv[1], kv[2]) then return false end
       end
    end
 
@@ -162,8 +162,8 @@ local function match_headers(req_headers, rule)
       -- atleast one should pass. (OR).
       local any_match = false
 
-      for k, v in pairs(rule.match.any) do
-         if match_header_value(req_headers, k, v) then
+      for _, kv in ipairs(rule.match.any) do
+         if match_header_value(req_headers, kv[1], kv[2]) then
             any_match = true
             break
          end
@@ -173,8 +173,8 @@ local function match_headers(req_headers, rule)
 
    if rule.match.none then
       -- none of the conditions should match
-      for k, v in pairs(rule.match.none) do
-         if match_header_value(req_headers, k, v) then return false end
+      for _, kv in ipairs(rule.match.none) do
+         if match_header_value(req_headers, kv[1], kv[2]) then return false end
       end
    end
 
@@ -227,7 +227,7 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
          if m.headers then
             match_cond = {}
             for k,v in pairs(m.headers) do
-               match_cond[k]=v
+               table.insert(match_cond, {k, v})
             end
          end
          return match_found, match_cond -- consider only the first match in the array of blocks containing source/headers

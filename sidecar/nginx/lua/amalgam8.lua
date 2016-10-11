@@ -257,18 +257,20 @@ local function match_tags(src_tag_string, dst_tag_set) --assumes both are not ni
    return match
 end
 
+
 local function check_and_preprocess_match(myname, mytags, match_type, match_sub_block)
    if not match_sub_block then return false, nil end
 
-   local match_cond = nil
    local is_my_tag_empty = (string.len(mytags) == 0)
-   local match_found = false
+   local match_all = false
+   local match_headers = nil
 
    for _, m in ipairs(match_sub_block) do
       local check1 = false
       local check2 = false
+      local match_found = true
 
-      if m.source then 
+      if m.source then
          local empty_src_tags = (not m.source.tags)
          local empty_src_name = (not m.source.name)
          local tags = m.source.tags
@@ -279,24 +281,30 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
          check1 = (not empty_src_name and (m.source.name == myname) and (empty_src_tags or (not is_my_tag_empty and match_tags(mytags, tags))))
          -- src has no service name. But it should have tags
          check2 = (empty_src_name and (not is_my_tag_empty and match_tags(mytags, tags)))
-      else
-         -- empty source implies wildcard source. Rule match found for all/any. continue collecting other fields.
-         if match_type ~= "none" then check1 = true end
-      end
-      
-      if check1 or check2 then
-         match_found = true
-         if m.headers then
-            match_cond = {}
-            for k,v in pairs(m.headers) do
-               table.insert(match_cond, {k, v})
-            end
+         match_found = check1 or check2
+
+         -- source block match failed.
+         -- if this is an ALL (i.e. and) type match, then terminate the scan
+         if not match_found and match_type == "all" then
+            return false, nil
          end
-         return match_found, match_cond -- consider only the first match in the array of blocks containing source/headers
+         -- if this is an ANY (i.e. or)  type match, continue
+         -- if this is a NONE type match, treat it as ANY here, while the caller will use NOT(none block matches)
+         match_all = match_all or match_found
+      end
+
+      if match_found and m.headers then
+         if not match_headers then match_headers = {} end
+         for k,v in pairs(m.headers) do
+            table.insert(match_headers, {k, v})
+         end
       end
    end
 
-   return match_found, match_cond
+   if match_type == "all" then
+      return true, match_headers
+   end
+   return match_all, match_headers
 end
 
 

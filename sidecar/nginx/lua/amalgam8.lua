@@ -1,6 +1,7 @@
 local cjson     = require("cjson.safe")
 local math     = require("math")
 local balancer = require("ngx.balancer")
+local resolver = require("resty.dns.resolver")
 
 local ngx_log = ngx.log
 local ngx_ERR = ngx.ERR
@@ -87,6 +88,42 @@ local function create_cookie_version(route_backend)
 end
 
 
+-- code from openresty example
+-- TODO: need to handle TTLs
+local function resolve_hostname(host)
+   local r, err = resolver:new{
+      nameservers = {"8.8.8.8", {"8.8.4.4", 53} },
+      retrans = 5,  -- 5 retransmissions on receive timeout
+      timeout = 2000,  -- 2 sec
+   }
+
+   if not r then
+      ngx_log(ngx_WARN, "failed to instantiate the resolver while resolving "..host.." : "..err)
+      return nil
+   end
+
+   local answers, err = r:query(host, {qtype = resolver.TYPE_A})
+   if not answers then
+      ngx_log(ngx_WARN, "failed to query the DNS server while resolving "..host.." : "..err)
+      return nil
+   end
+
+   if answers.errcode then
+      ngx_log(ngx_WARN, "Server error while resolving "..host..",error code: ", answers.errcode, ": ", answers.errstr)
+   end
+
+   local ip = nil
+   for i, ans in ipairs(answers) do
+      -- ngx_log(ngx_DEBUG, ans.name, " ", ans.address or ans.cname, " type:", ans.type, " class:", ans.class," ttl:", ans.ttl)
+      if ans.address then
+         ip = ans.address
+         break
+      end
+   end
+   return ip
+end
+
+
 local function create_instance(i)
    if i.status ~= "UP" then return nil end
    local instance = {}
@@ -99,22 +136,47 @@ local function create_instance(i)
    if not i.endpoint.type then
       instance.type = 'http'
    end
+
+   local host = nil
+   local port = nil
+   local ip = nil
    for x,y,z in string.gmatch(i.endpoint.value, '([^:]+)(:?(.*))') do
-      instance.host = x
-      instance.port = tonumber(z)
+      ip = x
+      port = tonumber(z)
       break
    end
-   if not instance.port then
-      if instance.type == 'http' then
-         instance.port = 80
-      elseif instance.type == 'https' then
-         instance.port = 443
-      else
-         ngx_log(ngx_WARN, "ignoring endpoint " .. instance.host .. ", missing port")
+
+   local m, err = ngx_rematch(ip, '([0-9]+).([0-9]+).([0-9]+).([0-9]+)')
+   if err then
+      ngx_log(ngx_WARN, "ignoring endpoint " .. i.endpoint.value .. ": could not parse instance host/ip")
+      return nil
+   end
+
+   if not m then
+      -- ngx_log(ngx_DEBUG, "found hostname in registry entry")
+      host = ip
+      ip = resolve_hostname(host)
+      if not ip then
+         ngx_log(ngx_WARN, "Ignoring endpoint "..i.endpoint.value..": DNS resolution for host "..host.." failed")
          return nil
       end
    end
-   -- TODO: add support for hostnames in endpoints
+
+   if not port then
+      if instance.type == 'http' then
+         port = 80
+      elseif instance.type == 'https' then
+         port = 443
+      else
+         ngx_log(ngx_WARN, "ignoring endpoint " .. i.endpoint.value .. ": could not determine port")
+         return nil
+      end
+   end
+
+   instance.host = host
+   instance.ip = ip
+   instance.port = port
+
    return instance
 end
 
@@ -691,10 +753,6 @@ function Amalgam8:apply_rules()
          ngx.exit(ngx.status)
       end
 
-      if selected_backend.host then
-         ngx.var.a8_upstream_host = selected_backend.host
-      end
-
       --set the version cookie      
       local selected_version =  create_cookie_version(selected_backend)
       if cookie_version then --delete old cookie
@@ -711,6 +769,10 @@ function Amalgam8:apply_rules()
    local upstream = selected_instances[math.random(#selected_instances)]
    ngx.var.a8_upstream_instance = upstream.host..":"..upstream.port
    ngx.var.a8_upstream_tags = upstream.tags
+
+   if upstream.host then
+      ngx_var.a8_upstream_host = upstream.host
+   end
 
    -- We need to know if this is a http or https instance. And the
    -- assumption here is that all instances in the pool are of same type.

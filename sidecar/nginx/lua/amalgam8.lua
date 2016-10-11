@@ -146,7 +146,7 @@ local function create_instance(i)
       break
    end
 
-   local m, err = ngx_rematch(ip, '([0-9]+).([0-9]+).([0-9]+).([0-9]+)')
+   local m, err = ngx.re.match(ip, '([0-9]+).([0-9]+).([0-9]+).([0-9]+)')
    if err then
       ngx_log(ngx_WARN, "ignoring endpoint " .. i.endpoint.value .. ": could not parse instance host/ip")
       return nil
@@ -775,7 +775,7 @@ function Amalgam8:apply_rules()
    end
 
    local upstream = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_instance = upstream.host..":"..upstream.port
+   ngx.var.a8_upstream_instance = upstream.ip..":"..upstream.port
    ngx.var.a8_upstream_tags = upstream.tags
 
    if upstream.host then

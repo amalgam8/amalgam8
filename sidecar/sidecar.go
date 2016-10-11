@@ -37,7 +37,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
-	"github.com/amalgam8/registry/client"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
@@ -309,8 +308,8 @@ func cliCommand(command string) {
 		}
 
 		sidecarstate := struct {
-			Instances []client.ServiceInstance `json:"instances"`
-			Rules     []rules.Rule             `json:"rules"`
+			Instances []registryclient.ServiceInstance `json:"instances"`
+			Rules     []rules.Rule                     `json:"rules"`
 		}{}
 
 		err = json.Unmarshal(respBytes, &sidecarstate)
@@ -347,7 +346,7 @@ func cliCommand(command string) {
 
 		sidecarBytes, _ := json.MarshalIndent(&sidecarstate, "", "   ")
 		nginxBytes, _ := json.MarshalIndent(&nginxstate, "", "   ")
-		fmt.Println("\n**************\nSidecar cached info:\n**************")
+		fmt.Println("\n**************\nSidecar cached state:\n**************")
 		fmt.Println(string(sidecarBytes))
 		fmt.Println("\n**************\nNginx cached state:\n**************")
 		fmt.Println(string(nginxBytes))

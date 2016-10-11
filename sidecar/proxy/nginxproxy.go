@@ -28,6 +28,7 @@ import (
 type NGINXProxy interface {
 	monitor.ControllerListener
 	monitor.RegistryListener
+	GetState() ([]client.ServiceInstance, []rules.Rule)
 }
 
 type nginxProxy struct {
@@ -67,4 +68,11 @@ func (n *nginxProxy) RuleChange(rules []rules.Rule) error {
 func (n *nginxProxy) updateNGINX() error {
 	logrus.Debug("Updating NGINX")
 	return n.nginx.Update(n.instances, n.rules)
+}
+
+func (n *nginxProxy) GetState() ([]client.ServiceInstance, []rules.Rule) {
+	n.mutex.Lock()
+	defer n.mutex.Unlock()
+
+	return n.instances, n.rules
 }

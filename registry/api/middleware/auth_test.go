@@ -15,11 +15,12 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"fmt"
+	"golang.org/x/net/context"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ type mockAuthenticator struct {
 	authFunc func(token string) (*auth.Namespace, error)
 }
 
-func (ma *mockAuthenticator) Authenticate(token string) (*auth.Namespace, error) {
+func (ma *mockAuthenticator) Authenticate(token string, ctx ...context.Context) (*auth.Namespace, error) {
 	if ma.authFunc != nil {
 		return ma.authFunc(token)
 	}

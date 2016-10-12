@@ -18,6 +18,8 @@ import (
 	"net/http"
 	"strings"
 
+	"golang.org/x/net/context"
+
 	"github.com/ant0ine/go-json-rest/rest"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
@@ -54,7 +56,10 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 		token = parts[1]
 	}
 
-	nsPtr, err := mw.Authenticator.Authenticate(token)
+	// Add the headers to the context passed to the authenticator
+	ctx := context.WithValue(context.Background(), auth.ContextHeadersKey, request.Header)
+
+	nsPtr, err := mw.Authenticator.Authenticate(token, ctx)
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:

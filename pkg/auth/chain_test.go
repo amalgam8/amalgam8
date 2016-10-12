@@ -17,6 +17,8 @@ package auth
 import (
 	"testing"
 
+	"golang.org/x/net/context"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -100,7 +102,7 @@ type mockAuthenticator struct {
 	err       error
 }
 
-func (ma mockAuthenticator) Authenticate(token string) (*Namespace, error) {
+func (ma mockAuthenticator) Authenticate(token string, ctx ...context.Context) (*Namespace, error) {
 	if ma.err != nil {
 		return nil, ma.err
 	}

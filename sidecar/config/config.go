@@ -86,7 +86,7 @@ type Config struct {
 
 	LogLevel string `yaml:"log_level"`
 
-	Debug string `yaml:"debug"`
+	Debug string
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.

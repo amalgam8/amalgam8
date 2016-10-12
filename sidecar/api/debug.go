@@ -35,7 +35,7 @@ func NewDebugAPI(nginxProxy proxy.NGINXProxy) *DebugAPI {
 	}
 }
 
-// Routes for health check API
+// Routes for debug API
 func (d *DebugAPI) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Get("/state", d.checkState),
@@ -47,7 +47,8 @@ func (d *DebugAPI) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	return routes
 }
 
-// GetHealth performs health check on controller and dependencies
+// checkState returns the cached rules from controller and cached instances
+// from registry stored in sidecar memory
 func (d *DebugAPI) checkState(w rest.ResponseWriter, req *rest.Request) {
 
 	cachedInstances, cachedRules := d.nginxProxy.GetState()

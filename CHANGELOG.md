@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.2 (October 12, 2016)
+
+- Sidecars now support HTTP health checks. The health check endpoint can be
+  provided as part of the sidecar configuration file. When the application
+  fails to respond to a health check, it is unregistered from the service
+  registry, causing the instance to be removed from the load balancing pool
+  of other sidecars upon the next refresh.
+
+- A special CLI mode for the `a8sidecar` binary that allows users to view
+  the state inside the sidecar. ([PR#335](https://github.com/amalgam8/amalgam8/pull/335))
+
+- Minor performance optimizations to the Lua code in the sidecar and bug
+  fixes. Timeout support is currently disabled. Specifying timeouts in the
+  rules will not have any effect. ([PR#334](https://github.com/amalgam8/amalgam8/pull/334))
+
+- Registry now supports Eureka remote catalog, similar to Kubernetes
+  catalog. Service registration info in Eureka will now be synced with the
+  Amalgam8 service registry automatically. ([PR#247](https://github.com/amalgam8/amalgam8/pull/247))
+
+- Eureka metadata tags are automatically translated into Amalgam8
+  instance tags in the service registry.
+
+- Optimizations to the redis operations used in registry code
+
+- The bookinfo example application is now a polyglot application, composed
+  of services written in Java, Ruby, and Python.
+
+- Simplification of the demo scripts: consolidate into fewer files and eliminate
+  unnecessary scripts.
+
+- All documentation has been moved to https://amalgam8.io/docs/
+
 ## 0.3.1 (September 20, 2016)
 
 - Amalgam8 nginx configuration files in the sidecar is now split into

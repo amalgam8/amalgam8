@@ -85,6 +85,8 @@ type Config struct {
 	LogstashServer string `yaml:"logstash_server"`
 
 	LogLevel string `yaml:"log_level"`
+
+	Debug string
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -180,6 +182,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Log, logFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
+	loadFromContextIfSet(&c.Debug, debugFlag)
 
 	if context.IsSet(serviceFlag) {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))

@@ -11,6 +11,10 @@
 - A special CLI mode for the `a8sidecar` binary that allows users to view
   the state inside the sidecar. ([PR#335](https://github.com/amalgam8/amalgam8/pull/335))
 
+- Filebeat is no longer installed/configured/managed by the sidecar. It is
+  the user's responsibility to aggregate the sidecar's nginx access logs
+  through a log management system of their choice.
+
 - Minor performance optimizations to the Lua code in the sidecar and bug
   fixes. Timeout support is currently disabled. Specifying timeouts in the
   rules will not have any effect. ([PR#334](https://github.com/amalgam8/amalgam8/pull/334))

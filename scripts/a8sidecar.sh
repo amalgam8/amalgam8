@@ -19,7 +19,7 @@
 set -x
 set -e
 
-A8SIDECAR_RELEASE=v0.2.0
+A8SIDECAR_RELEASE=v0.3.1
 FILEBEAT_RELEASE=1.2.2
 DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/releases/download/${A8SIDECAR_RELEASE}
 HAVE_WGET=0
@@ -43,11 +43,11 @@ if [ $HAVE_CURL -eq 0 -a $HAVE_WGET -eq 0 ]; then
 fi
 
 if [ $HAVE_WGET -eq 1 ]; then
-    wget -O /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
-    wget -O /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+    wget -qO /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+    wget -qO /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 else
-    curl -o /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
-    curl -o /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+    curl -sSL -o /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
+    curl -sSL -o /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 fi
   
 ##Install OpenResty from Amalgam8 repo

@@ -1,6 +1,7 @@
 local cjson     = require("cjson.safe")
 local math     = require("math")
 local balancer = require("ngx.balancer")
+local resolver = require("resty.dns.resolver")
 
 local ngx_log = ngx.log
 local ngx_ERR = ngx.ERR
@@ -87,6 +88,42 @@ local function create_cookie_version(route_backend)
 end
 
 
+-- code from openresty example
+-- TODO: need to handle TTLs
+local function resolve_hostname(host)
+   local r, err = resolver:new{
+      nameservers = {"8.8.8.8", {"8.8.4.4", 53} },
+      retrans = 5,  -- 5 retransmissions on receive timeout
+      timeout = 2000,  -- 2 sec
+   }
+
+   if not r then
+      ngx_log(ngx_WARN, "failed to instantiate the resolver while resolving "..host.." : "..err)
+      return nil
+   end
+
+   local answers, err = r:query(host, {qtype = resolver.TYPE_A})
+   if not answers then
+      ngx_log(ngx_WARN, "failed to query the DNS server while resolving "..host.." : "..err)
+      return nil
+   end
+
+   if answers.errcode then
+      ngx_log(ngx_WARN, "Server error while resolving "..host..",error code: ", answers.errcode, ": ", answers.errstr)
+   end
+
+   local ip = nil
+   for i, ans in ipairs(answers) do
+      -- ngx_log(ngx_DEBUG, ans.name, " ", ans.address or ans.cname, " type:", ans.type, " class:", ans.class," ttl:", ans.ttl)
+      if ans.address then
+         ip = ans.address
+         break
+      end
+   end
+   return ip
+end
+
+
 local function create_instance(i)
    if i.status ~= "UP" then return nil end
    local instance = {}
@@ -99,22 +136,47 @@ local function create_instance(i)
    if not i.endpoint.type then
       instance.type = 'http'
    end
+
+   local host = nil
+   local port = nil
+   local ip = nil
    for x,y,z in string.gmatch(i.endpoint.value, '([^:]+)(:?(.*))') do
-      instance.host = x
-      instance.port = tonumber(z)
+      ip = x
+      port = tonumber(z)
       break
    end
-   if not instance.port then
-      if instance.type == 'http' then
-         instance.port = 80
-      elseif instance.type == 'https' then
-         instance.port = 443
-      else
-         ngx_log(ngx_WARN, "ignoring endpoint " .. instance.host .. ", missing port")
+
+   local m, err = ngx.re.match(ip, '([0-9]+).([0-9]+).([0-9]+).([0-9]+)')
+   if err then
+      ngx_log(ngx_WARN, "ignoring endpoint " .. i.endpoint.value .. ": could not parse instance host/ip")
+      return nil
+   end
+
+   if not m then
+      -- ngx_log(ngx_DEBUG, "found hostname in registry entry")
+      host = ip
+      ip = resolve_hostname(host)
+      if not ip then
+         ngx_log(ngx_WARN, "Ignoring endpoint "..i.endpoint.value..": DNS resolution for host "..host.." failed")
          return nil
       end
    end
-   -- TODO: add support for hostnames in endpoints
+
+   if not port then
+      if instance.type == 'http' then
+         port = 80
+      elseif instance.type == 'https' then
+         port = 443
+      else
+         ngx_log(ngx_WARN, "ignoring endpoint " .. i.endpoint.value .. ": could not determine port")
+         return nil
+      end
+   end
+
+   instance.host = host
+   instance.ip = ip
+   instance.port = port
+
    return instance
 end
 
@@ -133,7 +195,7 @@ local function match_header_value(req_headers, header_name, header_val_pattern)
    local header_value = req_headers[header_name]
    if header_value then
       -- ngx_log(ngx_DEBUG, "match_header_value: header_name "..header_name.." value "..header_value.." pattern "..header_val_pattern)
-      local m, err = ngx.re.match(header_value, header_val_pattern, "o")
+      local m, err = ngx.re.match(header_value, header_val_pattern, "jo")
       if m then
          -- ngx_log(ngx_DEBUG, "header matched for "..header_name.." returning true")
          return true
@@ -151,9 +213,9 @@ local function match_headers(req_headers, rule)
    end --source matched (earlier), destination matched.
    if rule.match.all then
       -- ngx_log(ngx_DEBUG, "match_headers: rule has match.all block "..r1)
-      for k, v in pairs(rule.match.all) do
+      for _, kv in ipairs(rule.match.all) do
          -- ngx_log(ngx_DEBUG, "match_headers: matching header "..k.." value "..v.." for rule.match.all "..r1)
-         if not match_header_value(req_headers, k, v) then return false end
+         if not match_header_value(req_headers, kv[1], kv[2]) then return false end
       end
    end
 
@@ -162,8 +224,8 @@ local function match_headers(req_headers, rule)
       -- atleast one should pass. (OR).
       local any_match = false
 
-      for k, v in pairs(rule.match.any) do
-         if match_header_value(req_headers, k, v) then
+      for _, kv in ipairs(rule.match.any) do
+         if match_header_value(req_headers, kv[1], kv[2]) then
             any_match = true
             break
          end
@@ -173,8 +235,8 @@ local function match_headers(req_headers, rule)
 
    if rule.match.none then
       -- none of the conditions should match
-      for k, v in pairs(rule.match.none) do
-         if match_header_value(req_headers, k, v) then return false end
+      for _, kv in ipairs(rule.match.none) do
+         if match_header_value(req_headers, kv[1], kv[2]) then return false end
       end
    end
 
@@ -195,18 +257,20 @@ local function match_tags(src_tag_string, dst_tag_set) --assumes both are not ni
    return match
 end
 
+
 local function check_and_preprocess_match(myname, mytags, match_type, match_sub_block)
    if not match_sub_block then return false, nil end
 
-   local match_cond = nil
    local is_my_tag_empty = (string.len(mytags) == 0)
-   local match_found = false
+   local match_all = false
+   local match_headers = nil
 
    for _, m in ipairs(match_sub_block) do
       local check1 = false
       local check2 = false
+      local match_found = true
 
-      if m.source then 
+      if m.source then
          local empty_src_tags = (not m.source.tags)
          local empty_src_name = (not m.source.name)
          local tags = m.source.tags
@@ -217,24 +281,30 @@ local function check_and_preprocess_match(myname, mytags, match_type, match_sub_
          check1 = (not empty_src_name and (m.source.name == myname) and (empty_src_tags or (not is_my_tag_empty and match_tags(mytags, tags))))
          -- src has no service name. But it should have tags
          check2 = (empty_src_name and (not is_my_tag_empty and match_tags(mytags, tags)))
-      else
-         -- empty source implies wildcard source. Rule match found for all/any. continue collecting other fields.
-         if match_type ~= "none" then check1 = true end
-      end
-      
-      if check1 or check2 then
-         match_found = true
-         if m.headers then
-            match_cond = {}
-            for k,v in pairs(m.headers) do
-               match_cond[k]=v
-            end
+         match_found = check1 or check2
+
+         -- source block match failed.
+         -- if this is an ALL (i.e. and) type match, then terminate the scan
+         if not match_found and match_type == "all" then
+            return false, nil
          end
-         return match_found, match_cond -- consider only the first match in the array of blocks containing source/headers
+         -- if this is an ANY (i.e. or)  type match, continue
+         -- if this is a NONE type match, treat it as ANY here, while the caller will use NOT(none block matches)
+         match_all = match_all or match_found
+      end
+
+      if match_found and m.headers then
+         if not match_headers then match_headers = {} end
+         for k,v in pairs(m.headers) do
+            table.insert(match_headers, {k, v})
+         end
       end
    end
 
-   return match_found, match_cond
+   if match_type == "all" then
+      return true, match_headers
+   end
+   return match_all, match_headers
 end
 
 
@@ -691,10 +761,6 @@ function Amalgam8:apply_rules()
          ngx.exit(ngx.status)
       end
 
-      if selected_backend.host then
-         ngx.var.a8_upstream_host = selected_backend.host
-      end
-
       --set the version cookie      
       local selected_version =  create_cookie_version(selected_backend)
       if cookie_version then --delete old cookie
@@ -708,11 +774,18 @@ function Amalgam8:apply_rules()
       ngx.var.a8_upstream_name = destination
    end
 
-   ngx.ctx.a8_backend = selected_backend
-   ngx.ctx.a8_upstreams = selected_instances
+   local upstream = selected_instances[math.random(#selected_instances)]
+   ngx.var.a8_upstream_instance = upstream.ip..":"..upstream.port
+   ngx.var.a8_upstream_tags = upstream.tags
 
-   -- We need to know if this is a http or https instance. And the assumption here is that all instances in the pool are of same type.
-   -- So pick the first instance and get its instance type. This variable will be used by the proxy_pass directive
+   if upstream.host then
+      ngx_var.a8_upstream_host = upstream.host
+   end
+
+   -- We need to know if this is a http or https instance. And the
+   -- assumption here is that all instances in the pool are of same type.
+   -- So pick the first instance and get its instance type. This variable
+   -- will be used by the proxy_pass directive
    ngx.var.a8_service_type = selected_instances[1].type
 
    if actions then
@@ -726,10 +799,8 @@ function Amalgam8:apply_rules()
       if not selected_actions then ngx.exit(0) end -- proceed to next stage
       -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
 
-      -- Actions are performed on the backends (not specific instances of the backend). It would be
-      -- nice to inject faults for specific instances but we can't do ngx.sleep in balancer_by_lua 
       for _,sa in ipairs(selected_actions) do
-         if not sa.tags or (selected_backend and match_tags(table.concat(selected_backend.tags), sa.tags)) then
+         if not sa.tags or match_tags(upstream.tags, sa.tags) then
             -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
             if sa.action <= abort_action then
                -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
@@ -753,47 +824,7 @@ end
 
 
 function Amalgam8:load_balance()
-   local selected_instances = ngx.ctx.a8_upstreams
-   local selected_backend = ngx.ctx.a8_backend
-   local timeout = nil
-   local retries = nil
-
-   if selected_backend then
-      if selected_backend.timeout and selected_backend.timeout > 0 then
-         timeout = selected_backend.timeout
-         local ok, err = balancer.set_timeouts(timeout, timeout, timeout)
-         if not ok then
-            ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-            ngx_log(ngx_ERR, "failed to set timeouts"..err)
-            ngx.exit(ngx.status)
-         end
-      end
-
-      -- TODO: Failover and retries
-      -- if selected_backend.retries and selected_backend.retries > 0 then
-      --    retries = selected_backend.retries
-      --    if not ngx.ctx.tries then ngx.ctx.tries = 0 end
-      --    local state_name, status_code = balancer.get_last_failure()
-      --    ngx_log(ngx_DEBUG, "Setting retries to ",retries," attempts of which ",ngx.ctx.tries," attempts have been made with last status ",state_name," error code ",status_code)
-      --    if ngx.ctx.tries <= retries then
-      --       local ok, err = balancer.set_more_tries(1)
-      --       if err then
-      --          ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
-      --          ngx_log(ngx_ERR, "failed to set retries"..err)
-      --          ngx.exit(ngx.status)
-      --       end
-      --    else
-      --       ngx.exit(status_code)
-      --    end
-      --    ngx.ctx.tries = ngx.ctx.tries + 1
-      -- end
-   end
-
-   --TODO: refactor. Need different LB functions
-   local upstream = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_tags = upstream.tags
-   -- ngx_log(ngx_DEBUG, "Selecting instance "..upstream.host..":"..upstream.port)
-   ok, err = balancer.set_current_peer(upstream.host, upstream.port)
+   local ok, err = balancer.set_current_peer(ngx.var.a8_upstream_instance)
    if not ok then
       ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
       ngx_log(ngx_ERR, "failed to set current peer"..err)

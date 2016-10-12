@@ -15,7 +15,7 @@
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
 Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
-1. [Try the demo applications](https://amalgam8.io/_docs/demo/) with a
+1. [Try the demo applications](https://amalgam8.io/docs/demo/) with a
    container runtime of your choice.
 
 1. [Integrate the sidecar](https://www.amalgam8.io/docs/sidecar/)

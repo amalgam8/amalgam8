@@ -64,7 +64,7 @@ type fsCatalog struct {
 func newFileSystemCatalog(namespace auth.Namespace, conf *Config) (*fsCatalog, error) {
 	catalog := &fsCatalog{
 		namespace: namespace,
-		filename:  filepath.Join(conf.Dir, fmt.Sprintf("%s.conf", namespace)),
+		filename:  filepath.Join(conf.Dir, fmt.Sprintf("%s.json", namespace)),
 		services:  serviceMap{},
 		instances: instanceMap{},
 		logger:    logging.GetLogger(module).WithField("namespace", namespace),

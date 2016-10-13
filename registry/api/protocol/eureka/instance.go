@@ -21,6 +21,7 @@ import (
 
 const (
 	defaultDurationInt uint32 = 90
+	metadataTags              = "amalgam8.tags"
 	extEureka                 = "eureka"
 	extVIP                    = "vipAddress"
 )

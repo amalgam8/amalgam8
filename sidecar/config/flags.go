@@ -43,10 +43,15 @@ const (
 	dnsFlag             = "dns"
 	dnsConfigPortFlag   = "dns_port"
 	dnsConfigDomainFlag = "dns_domain"
+	debugFlag           = "debug"
 )
 
 // Flags is the set of supported flags
 var Flags = []cli.Flag{
+	cli.StringFlag{
+		Name:  debugFlag,
+		Usage: "Check current sidecar state via CLI command",
+	},
 	cli.StringFlag{
 		Name:   configFlag,
 		EnvVar: envVar(configFlag),

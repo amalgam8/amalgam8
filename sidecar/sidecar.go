@@ -23,8 +23,14 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 
+	"encoding/json"
+	"net/http"
+	"time"
+
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/controller/rules"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
@@ -32,6 +38,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
+	"github.com/ant0ine/go-json-rest/rest"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -65,6 +72,11 @@ func sidecarCommand(context *cli.Context) error {
 // Run the sidecar with the given configuration
 func Run(conf config.Config) error {
 	var err error
+
+	if conf.Debug != "" {
+		cliCommand(conf.Debug)
+		return nil
+	}
 
 	if err = conf.Validate(); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
@@ -224,5 +236,126 @@ func startProxy(conf *config.Config, registryClient *registryclient.Client) erro
 		}
 	}()
 
+	debugger := api.NewDebugAPI(nginxProxy)
+
+	a := rest.NewApi()
+	a.Use(
+		&rest.TimerMiddleware{},
+		&rest.RecorderMiddleware{},
+		&rest.RecoverMiddleware{
+			EnableResponseStackTrace: false,
+		},
+		&rest.ContentTypeCheckerMiddleware{},
+		//&middleware.RequestIDMiddleware{},
+		//&middleware.LoggingMiddleware{},
+		//middleware.NewRequireHTTPS(middleware.CheckRequest{
+		//	IsSecure: middleware.IsUsingSecureConnection,
+		//	Disabled: !conf.RequireHTTPS,
+		//}),
+	)
+
+	routes := debugger.Routes()
+	router, err := rest.MakeRouter(
+		routes...,
+	)
+	if err != nil {
+		logrus.WithError(err).Error("Could not start API server")
+		return err
+	}
+	a.SetApp(router)
+
+	go func() {
+		http.ListenAndServe(fmt.Sprintf(":%v", 6116), a.MakeHandler())
+	}()
+
 	return nil
+}
+
+// Instance TODO
+type Instance struct {
+	Tags string `json:"tags"`
+	Type string `json:"type"`
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+// NGINXState nginx cached lua state
+type NGINXState struct {
+	Routes    map[string][]rules.Rule `json:"routes"`
+	Instances map[string][]Instance   `json:"instances"`
+	Actions   map[string][]rules.Rule `json:"actions"`
+}
+
+func cliCommand(command string) {
+
+	switch command {
+	case "show-state":
+		httpClient := http.Client{
+			Timeout: time.Second * 10,
+		}
+		req, err := http.NewRequest("GET", "http://localhost:6116/state", nil)
+		if err != nil {
+			fmt.Println("Error occurred building the request:", err.Error())
+			return
+		}
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			fmt.Println("Error occurred sending the request:", err.Error())
+			return
+		}
+
+		respBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error occurred reading response body:", err.Error())
+			return
+		}
+
+		sidecarstate := struct {
+			Instances []registryclient.ServiceInstance `json:"instances"`
+			Rules     []rules.Rule                     `json:"rules"`
+		}{}
+
+		err = json.Unmarshal(respBytes, &sidecarstate)
+		if err != nil {
+			fmt.Println("Error occurred loading JSON response:", err.Error())
+			return
+		}
+
+		req, err = http.NewRequest("GET", "http://localhost:5813/a8-admin", nil)
+		if err != nil {
+			fmt.Println("Error occurred building the request:", err.Error())
+			return
+		}
+
+		resp, err = httpClient.Do(req)
+		if err != nil {
+			fmt.Println("Error occurred sending the request:", err.Error())
+			return
+		}
+
+		respBytes, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			fmt.Println("Error occurred reading response body:", err.Error())
+			return
+		}
+
+		nginxstate := NGINXState{}
+
+		err = json.Unmarshal(respBytes, &nginxstate)
+		if err != nil {
+			fmt.Println("Error occurred loading JSON response:", err.Error())
+			return
+		}
+
+		sidecarBytes, _ := json.MarshalIndent(&sidecarstate, "", "   ")
+		nginxBytes, _ := json.MarshalIndent(&nginxstate, "", "   ")
+		fmt.Println("\n**************\nSidecar cached state:\n**************")
+		fmt.Println(string(sidecarBytes))
+		fmt.Println("\n**************\nNginx cached state:\n**************")
+		fmt.Println(string(nginxBytes))
+
+	default:
+		fmt.Println("Unrecognized command: ", command)
+	}
 }

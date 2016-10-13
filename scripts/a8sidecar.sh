@@ -14,13 +14,12 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 #
-# Amalgam8 Sidecar installation script for Debian distributions.
+# Amalgam8 Sidecar installation script for Ubuntu/Debian/Centos/Fedora/RHEL distributions.
 
 set -x
 set -e
 
 A8SIDECAR_RELEASE=v0.3.1
-FILEBEAT_RELEASE=1.2.2
 DOWNLOAD_URL=https://github.com/amalgam8/amalgam8/releases/download/${A8SIDECAR_RELEASE}
 HAVE_WGET=0
 HAVE_CURL=0
@@ -38,15 +37,13 @@ fi
 
 set -e
 if [ $HAVE_CURL -eq 0 -a $HAVE_WGET -eq 0 ]; then
-    DEBIAN_FRONTEND=noninteractive apt-get -y update && apt-get -y install curl
-    HAVE_CURL=1
+    echo "Either curl or wget is required to download the sidecar binary from github"
+    exit 1
 fi
 
 if [ $HAVE_WGET -eq 1 ]; then
-    wget -qO /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
     wget -qO /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 else
-    curl -sSL -o /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_${FILEBEAT_RELEASE}_amd64.deb
     curl -sSL -o /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz ${DOWNLOAD_URL}/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
 fi
   
@@ -60,13 +57,9 @@ mkdir -p $A8TMP
 tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C $A8TMP
 tar -xzf $A8TMP/opt/openresty_dist/*.tar.gz -C /
 
-#Install Filebeat
-dpkg -i /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
-
 #Install Sidecar -- This should be in the end, as it overwrites default nginx.conf, filebeat.yml
 tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C /
 
 #Cleanup
 rm -rf ${A8TMP}
-rm /tmp/filebeat_${FILEBEAT_RELEASE}_amd64.deb
 rm /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz

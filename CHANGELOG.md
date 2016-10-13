@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.2 (October 12, 2016)
+## 0.4.0 (October 12, 2016)
 
 - Sidecars now support HTTP health checks. The health check endpoint can be
   provided as part of the sidecar configuration file. When the application

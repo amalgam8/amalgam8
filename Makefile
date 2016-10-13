@@ -204,13 +204,11 @@ release.sidecar:
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/opt/a8_lualib \
 		$(BUILDDIR)/opt/openresty_dist \
-		$(BUILDDIR)/etc/filebeat \
 		$(BUILDDIR)/etc/nginx \
 		$(BUILDDIR)/usr/bin \
 		$(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp sidecar/nginx/conf/*.conf $(BUILDDIR)/etc/nginx/
 	@cp sidecar/nginx/lua/*.lua $(BUILDDIR)/opt/a8_lualib/
-	@cp $(DOCKERDIR)/filebeat.yml $(BUILDDIR)/etc/filebeat/
 	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
 	@cp openresty/*.tar.gz $(BUILDDIR)/opt/openresty_dist/

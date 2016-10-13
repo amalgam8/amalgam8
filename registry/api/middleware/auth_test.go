@@ -32,19 +32,19 @@ const (
 )
 
 type mockAuthenticator struct {
-	authFunc func(token string) (*auth.Namespace, error)
+	authFunc func(token string, ctx ...context.Context) (*auth.Namespace, error)
 }
 
 func (ma *mockAuthenticator) Authenticate(token string, ctx ...context.Context) (*auth.Namespace, error) {
 	if ma.authFunc != nil {
-		return ma.authFunc(token)
+		return ma.authFunc(token, ctx...)
 	}
 	return nil, fmt.Errorf("internal test error")
 }
 
 func TestEmptyTokenSuccess(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string) (*auth.Namespace, error) {
+		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
 			if token == "" {
 				namespace := auth.NamespaceFrom(validToken)
 				return &namespace, nil
@@ -64,7 +64,7 @@ func TestEmptyTokenSuccess(t *testing.T) {
 
 func TestEmptyTokenFailure(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string) (*auth.Namespace, error) {
+		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
 			if token != "" {
 				namespace := auth.NamespaceFrom(token)
 				return &namespace, nil
@@ -84,7 +84,7 @@ func TestEmptyTokenFailure(t *testing.T) {
 
 func TestTokenInvalid(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string) (*auth.Namespace, error) {
+		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
 			if token == invalidToken {
 				return nil, auth.ErrUnauthorized
 			}
@@ -103,6 +103,40 @@ func TestTokenInvalid(t *testing.T) {
 	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
+func TestHeadersInContext(t *testing.T) {
+	ma := &mockAuthenticator{
+		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+			var headerValue string
+			if len(ctx) > 0 {
+				// Just read the first context
+				headers := ctx[0].Value(auth.ContextHeadersKey).(http.Header)
+				for key, header := range headers {
+					if key == "Someheader" {
+						headerValue = header[0]
+					}
+				}
+			}
+
+			if headerValue != "headervalue" {
+				return nil, fmt.Errorf("header not set")
+			}
+
+			namespace := auth.NamespaceFrom(token)
+			return &namespace, nil
+		},
+	}
+	authMw := &AuthMiddleware{Authenticator: ma}
+
+	res := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "http://example.com/", nil)
+	req.Header.Set("Someheader", "headervalue")
+	req.Header.Set("Authorization", "Bearer "+validToken)
+
+	jrestServer(authMw, "/").ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func TestDefaultAuthenticator(t *testing.T) {
 	authMw := &AuthMiddleware{}
 
@@ -116,7 +150,7 @@ func TestDefaultAuthenticator(t *testing.T) {
 
 func TestCommunicationError(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string) (*auth.Namespace, error) {
+		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
 			return nil, auth.ErrCommunicationError
 		},
 	}

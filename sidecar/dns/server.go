@@ -19,10 +19,11 @@ import (
 	"net"
 	"net/url"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
-	"strings"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
@@ -184,7 +185,7 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 		case "tcp", "udp":
 			ip, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
 
-		case "http" , "https":
+		case "http", "https":
 			ip, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
 
 		default:

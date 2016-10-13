@@ -22,6 +22,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
+	"strings"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
@@ -73,7 +74,7 @@ func (s *Server) ListenAndServe() error {
 	return nil
 }
 
-// Shutdown stpos the DNS server
+// Shutdown stops the DNS server
 func (s *Server) Shutdown() error {
 	logrus.Info("Shutting down DNS server")
 	err := s.dnsServer.Shutdown()
@@ -180,13 +181,10 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 		var err error
 
 		switch endPointType {
-		case "tcp":
+		case "tcp", "udp":
 			ip, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
 
-		case "udp":
-			ip, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
-
-		case "http":
+		case "http" , "https":
 			ip, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
 
 		default:
@@ -229,12 +227,14 @@ func validateEndPointTypeTCPAndUDP(value string) (net.IP, error) {
 }
 
 func validateEndPointTypeHTTP(value string) (net.IP, error) {
+	startsWithHttp := strings.HasPrefix(value, "http://")
+	startsWithHttps := strings.HasPrefix(value, "https://")
+	if !startsWithHttps && !startsWithHttp {
+		value += "http://"
+	}
 	parsedURL, err := url.Parse(value)
 	if err != nil {
 		return nil, err
-	}
-	if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
-		return nil, fmt.Errorf("url shceme %s should be http or https", parsedURL.Scheme)
 	}
 	host := parsedURL.Host
 	ip, _, err := net.SplitHostPort(host)

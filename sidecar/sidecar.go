@@ -121,10 +121,37 @@ func Run(conf config.Config) error {
 		logrus.WithError(err).Error("Could not create registry client")
 		return err
 	}
-	if conf.Proxy {
-		if err = startProxy(&conf, &registryClient); err != nil {
-			logrus.WithError(err).Error("Could not start proxy")
+	// initial regsistryMonitor:
+	if conf.DNS || conf.Proxy {
+		registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
+			PollInterval:   conf.Registry.Poll,
+			RegistryClient: registryClient,
+		})
+		if conf.Proxy {
+			if err = startProxy(&conf, registryMonitor); err != nil {
+				logrus.WithError(err).Error("Could not start proxy")
+			}
 		}
+		if conf.DNS {
+			dnsConfig := dns.Config{
+				DiscoveryClient: registryMonitor,
+				Port:            uint16(conf.Dnsconfig.Port),
+				Domain:          conf.Dnsconfig.Domain,
+			}
+			server, err := dns.NewServer(dnsConfig)
+			if err != nil {
+				logrus.WithError(err).Error("Could not start dns server")
+				return err
+			}
+			go server.ListenAndServe()
+
+		}
+
+		go func() {
+			if err = registryMonitor.Start(); err != nil {
+				logrus.WithError(err).Error("Registry monitor failed")
+			}
+		}()
 	}
 
 	if conf.Register {
@@ -165,20 +192,6 @@ func Run(conf config.Config) error {
 		}
 
 	}
-	if conf.DNS {
-		dnsConfig := dns.Config{
-			DiscoveryClient: registryClient,
-			Port:            uint16(conf.Dnsconfig.Port),
-			Domain:          conf.Dnsconfig.Domain,
-		}
-		server, err := dns.NewServer(dnsConfig)
-		if err != nil {
-			logrus.WithError(err).Error("Could not start dns server")
-			return err
-		}
-		go server.ListenAndServe()
-
-	}
 
 	if conf.Supervise {
 		supervisor.DoAppSupervision(conf.App)
@@ -189,7 +202,7 @@ func Run(conf config.Config) error {
 	return nil
 }
 
-func startProxy(conf *config.Config, registryClient *registryclient.Client) error {
+func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) error {
 	var err error
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
@@ -223,18 +236,7 @@ func startProxy(conf *config.Config, registryClient *registryclient.Client) erro
 		}
 	}()
 
-	registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
-		PollInterval: conf.Registry.Poll,
-		Listeners: []monitor.RegistryListener{
-			nginxProxy,
-		},
-		RegistryClient: *registryClient,
-	})
-	go func() {
-		if err = registryMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Registry monitor failed")
-		}
-	}()
+	registryMonitor.AddListener(nginxProxy)
 
 	debugger := api.NewDebugAPI(nginxProxy)
 

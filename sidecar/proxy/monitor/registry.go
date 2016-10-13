@@ -16,9 +16,9 @@ package monitor
 
 import (
 	"reflect"
-	"time"
-
 	"sort"
+	"sync"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
@@ -32,22 +32,29 @@ type RegistryListener interface {
 type registry struct {
 	pollInterval   time.Duration
 	registryClient client.Discovery
-	cached         []client.ServiceInstance
 	listeners      []RegistryListener
 	ticker         *time.Ticker
+	hashed         map[string][]*client.ServiceInstance
+	lock           sync.RWMutex
 }
 
 // RegistryConfig options
 type RegistryConfig struct {
 	PollInterval   time.Duration
 	RegistryClient client.Discovery
-	Listeners      []RegistryListener
+}
+
+// RegistryMonitor Definition:
+type RegistryMonitor interface {
+	Monitor
+	client.Discovery
+	AddListener(listener RegistryListener)
 }
 
 // NewRegistry instantiates new instance
-func NewRegistry(conf RegistryConfig) Monitor {
+func NewRegistry(conf RegistryConfig) RegistryMonitor {
 	return &registry{
-		listeners:      conf.Listeners,
+		listeners:      []RegistryListener{},
 		registryClient: conf.RegistryClient,
 		pollInterval:   conf.PollInterval,
 	}
@@ -85,44 +92,70 @@ func (m *registry) Start() error {
 func (m *registry) poll() error {
 	// Get newest catalog from registry
 	latestCatalog, err := m.getLatestCatalog()
+
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
 	}
 
 	// Check for changes
-	if !m.catalogsEqual(m.cached, latestCatalog) {
+	if !m.catalogsEqual(m.hashed, latestCatalog) {
 		// Update cached copy of catalog
-		m.cached = latestCatalog
-
+		m.lock.Lock()
+		m.hashed = latestCatalog
+		m.lock.Unlock()
+		instances, _ := m.registryClient.ListInstances(client.InstanceFilter{})
 		// Notify the listeners.
-		for _, listener := range m.listeners {
-			if err = listener.CatalogChange(latestCatalog); err != nil {
+		m.lock.RLock()
+		copyOfListeners := m.listeners
+		m.lock.RUnlock()
+
+		for _, listener := range copyOfListeners {
+			arrayOfInstancesByValue := m.copyInstances(instances)
+			if err = listener.CatalogChange(arrayOfInstancesByValue); err != nil {
 				logrus.WithError(err).Warn("Registry listener failed")
 			}
 		}
-	}
 
+	}
 	return nil
+}
+
+func (m *registry) copyInstances(instances []*client.ServiceInstance) []client.ServiceInstance {
+	arrayToReturn := make([]client.ServiceInstance, 0, len(instances))
+	for i := range instances {
+		arrayToReturn[i] = *instances[i]
+	}
+	return arrayToReturn
 }
 
 // catalogsEqual checks for pertinent differences between the given instances. We assume that all the instances have
 // been presorted. Instances are compared by all values except for heartbeat and TTL.
-func (m *registry) catalogsEqual(a, b []client.ServiceInstance) bool {
+func (m *registry) catalogsEqual(a, b map[string][]*client.ServiceInstance) bool {
+	m.lock.RLock()
+	defer m.lock.RUnlock()
 	equal := true
 	if len(a) != len(b) {
 		equal = false
 	} else {
-		for i := range a {
-			if a[i].ID != b[i].ID || a[i].ServiceName != b[i].ServiceName || a[i].Status != b[i].Status ||
-				!reflect.DeepEqual(a[i].Tags, b[i].Tags) || a[i].Endpoint.Type != b[i].Endpoint.Type ||
-				a[i].Endpoint.Value != b[i].Endpoint.Value || !reflect.DeepEqual(a[i].Metadata, b[i].Metadata) {
+		for key, v := range a {
+			if _, ok := b[key]; !ok {
 				equal = false
 				break
 			}
+			if len(b[key]) != len(v) {
+				equal = false
+			}
+			for i := range v {
+				if v[i].ID != b[key][i].ID || v[i].ServiceName != b[key][i].ServiceName || v[i].Status != b[key][i].Status ||
+					!reflect.DeepEqual(v[i].Tags, b[key][i].Tags) || v[i].Endpoint.Type != b[key][i].Endpoint.Type ||
+					v[i].Endpoint.Value != b[key][i].Endpoint.Value || !reflect.DeepEqual(v[i].Metadata, b[key][i].Metadata) {
+					equal = false
+					break
+				}
+			}
 		}
 	}
-
 	logrus.WithFields(logrus.Fields{
 		"a":     a,
 		"b":     b,
@@ -133,21 +166,21 @@ func (m *registry) catalogsEqual(a, b []client.ServiceInstance) bool {
 }
 
 // getLatestCatalog
-func (m *registry) getLatestCatalog() ([]client.ServiceInstance, error) {
+func (m *registry) getLatestCatalog() (map[string][]*client.ServiceInstance, error) {
+	mapToReturn := make(map[string][]*client.ServiceInstance)
 	instances, err := m.registryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
-		return []client.ServiceInstance{}, err
+		return mapToReturn, err
 	}
 
-	// Dereference the instances.
-	deref := make([]client.ServiceInstance, len(instances))
 	for i := range instances {
-		deref[i] = *instances[i]
+		mapToReturn[instances[i].ServiceName] = append(mapToReturn[instances[i].ServiceName], instances[i])
+	}
+	for _, value := range mapToReturn {
+		sort.Sort(ByID(value))
 	}
 
-	sort.Sort(ByID(deref))
-
-	return deref, nil
+	return mapToReturn, nil
 }
 
 // Stop monitoring registry
@@ -162,7 +195,7 @@ func (m *registry) Stop() error {
 }
 
 // ByID sorts by ID
-type ByID []client.ServiceInstance
+type ByID []*client.ServiceInstance
 
 // Len of the array
 func (a ByID) Len() int {
@@ -177,4 +210,56 @@ func (a ByID) Swap(i, j int) {
 // Less i and j
 func (a ByID) Less(i, j int) bool {
 	return a[i].ID < a[j].ID
+}
+
+func (m *registry) ListServices() ([]string, error) {
+	keys := make([]string, 0, len(m.hashed))
+	m.lock.RLock()
+	for k := range m.hashed {
+		keys = append(keys, k)
+	}
+	m.lock.RUnlock()
+	return keys, nil
+}
+
+func (m *registry) ListInstances(filter client.InstanceFilter) ([]*client.ServiceInstance, error) {
+	servicesToReturn := []*client.ServiceInstance{}
+	count := 0
+	m.lock.RLock()
+	serviceInstances := m.hashed[filter.ServiceName]
+	m.lock.RUnlock()
+	for _, service := range serviceInstances {
+		if service.ServiceName == filter.ServiceName {
+			for _, tag := range filter.Tags {
+				for _, serviceTag := range service.Tags {
+					if tag == serviceTag {
+						count++
+					}
+				}
+			}
+			if count == len(filter.Tags) {
+				servicesToReturn = append(servicesToReturn, service)
+			}
+		}
+	}
+	return servicesToReturn, nil
+}
+
+func (m *registry) ListServiceInstances(serviceName string) ([]*client.ServiceInstance, error) {
+	servicesToReturn := []*client.ServiceInstance{}
+	m.lock.RLock()
+	if instances, ok := m.hashed[serviceName]; ok {
+		servicesToReturn = instances
+	}
+	m.lock.RUnlock()
+	return servicesToReturn, nil
+}
+
+func (m *registry) AddListener(listener RegistryListener) {
+	m.lock.Lock()
+	copyOfListeners := m.listeners
+	copyOfListeners = append(m.listeners, listener)
+	m.listeners = copyOfListeners
+	m.lock.Unlock()
+
 }

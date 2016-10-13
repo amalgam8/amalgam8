@@ -54,6 +54,9 @@ import:
   subpackages:
   - statsd
 
+- package: golang.org/x/net/context
+  version: 6dba816f1056709e29a1c442883cab1336d3c083
+
 - package: github.com/pborman/uuid
   version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 

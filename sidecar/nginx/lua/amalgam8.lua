@@ -676,11 +676,6 @@ function Amalgam8:apply_rules()
    ngx.var.a8_upstream_name = destination
 
    local instances = get_unpacked_val(ngx_shared.a8_instances, destination)
-   if not instances or #instances == 0 then
-      ngx.status = ngx.HTTP_NOT_FOUND
-      ngx.exit(ngx.status)
-   end
-
    local routes = get_unpacked_val(ngx_shared.a8_routes, destination)
    local actions = get_unpacked_val(ngx_shared.a8_actions, destination)
    local headers = ngx.req.get_headers()
@@ -690,6 +685,18 @@ function Amalgam8:apply_rules()
    local selected_actions = nil
    local selected_backend = nil
    local cookie_version = ngx.var.cookie_version --check for version cookie
+
+   -- if we have routes/actions for the destination but no instances, then return HTTP 503
+   -- else return HTTP 404, as we don't know if this service actually exists or not.
+
+   if not instances or #instances == 0 then
+      if routes or actions then
+         ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
+      else
+         ngx.status = ngx.HTTP_NOT_FOUND
+      end
+      ngx.exit(ngx.status)
+   end
 
    if routes then
       for _, r in ipairs(routes) do --rules are ordered by decreasing priority
@@ -734,19 +741,21 @@ function Amalgam8:apply_rules()
             selected_instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
          end
          if not selected_backend.name or not instances then
-            ngx.status = ngx.HTTP_NOT_FOUND
+            -- service exists but no instances
+            ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
             ngx.exit(ngx.status)
          end
       else
          if selected_backend.name and selected_backend.name ~= destination then
             instances = get_unpacked_val(ngx_shared.a8_instances, selected_backend.name)
             if not instances then
-               ngx.status = ngx.HTTP_NOT_FOUND
+               -- service exists but no instances
+               ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
                ngx.exit(ngx.status)
             end
          else
             selected_backend.name = destination
-         end         
+         end
          for _, i in ipairs(instances) do
             if i.tags and match_tags(i.tags, selected_backend.tags) then
                table.insert(selected_instances, i)
@@ -756,8 +765,9 @@ function Amalgam8:apply_rules()
 
       ngx.var.a8_upstream_name = selected_backend.name
 
+      -- no instances of the selected backend are available
       if not selected_instances or #selected_instances == 0 then
-         ngx.status = ngx.HTTP_NOT_FOUND
+         ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
          ngx.exit(ngx.status)
       end
 
@@ -826,7 +836,7 @@ end
 function Amalgam8:load_balance()
    local ok, err = balancer.set_current_peer(ngx.var.a8_upstream_instance)
    if not ok then
-      ngx.status = ngx.HTTP_INTERNAL_SERVER_ERROR
+      ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE --caller does not care about nginx issues. We need to catch these errors in a different way.
       ngx_log(ngx_ERR, "failed to set current peer"..err)
       ngx.exit(ngx.status)
    end

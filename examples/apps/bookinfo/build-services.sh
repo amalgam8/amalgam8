@@ -20,7 +20,7 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 pushd $SCRIPTDIR/productpage
   docker build -t amalgam8/a8-examples-bookinfo-productpage:v1 .
-  docker build -t amalgam8/a8-examples-bookinfo-productpage-sidecar:v1-alpine -f Dockerfile.sidecar .
+  docker build -t amalgam8/a8-examples-bookinfo-productpage-sidecar:v1 -f Dockerfile.sidecar .
 popd
 
 pushd $SCRIPTDIR/details
@@ -46,5 +46,5 @@ popd
 
 pushd $SCRIPTDIR/ratings
   docker build -t amalgam8/a8-examples-bookinfo-ratings:v1 .
-  docker build -t amalgam8/a8-examples-bookinfo-ratings-sidecar:v1-alpine -f Dockerfile.sidecar .
+  docker build -t amalgam8/a8-examples-bookinfo-ratings-sidecar:v1 -f Dockerfile.sidecar .
 popd

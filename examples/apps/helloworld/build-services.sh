@@ -25,5 +25,5 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 docker build -t amalgam8/a8-examples-helloworld:v1 $SCRIPTDIR
 docker build -t amalgam8/a8-examples-helloworld:v2 $SCRIPTDIR
 
-docker build -t amalgam8/a8-examples-helloworld-sidecar:v1-alpine -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
-docker build -t amalgam8/a8-examples-helloworld-sidecar:v2-alpine -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar:v1 -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar:v2 -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR

@@ -71,6 +71,7 @@ func sidecarCommand(context *cli.Context) error {
 // Run the sidecar with the given configuration
 func Run(conf config.Config) error {
 	var err error
+	var agent *register.RegistrationAgent
 
 	if conf.Debug != "" {
 		cliCommand(conf.Debug)
@@ -90,27 +91,7 @@ func Run(conf config.Config) error {
 	logrus.SetLevel(logrusLevel)
 
 	if conf.Log {
-		//Replace the LOGSTASH_REPLACEME string in filebeat.yml with
-		//the value provided by the user
-
-		//TODO: Make this configurable
-		filebeatConf := "/etc/filebeat/filebeat.yml"
-		filebeat, err := ioutil.ReadFile(filebeatConf)
-		if err != nil {
-			logrus.WithError(err).Error("Could not read filebeat conf")
-			return err
-		}
-
-		fileContents := strings.Replace(string(filebeat), "LOGSTASH_REPLACEME", conf.LogstashServer, -1)
-
-		err = ioutil.WriteFile("/tmp/filebeat.yml", []byte(fileContents), 0)
-		if err != nil {
-			logrus.WithError(err).Error("Could not write filebeat conf")
-			return err
-		}
-
-		// TODO: Log failure?
-		go supervisor.DoLogManagement("/tmp/filebeat.yml")
+		//TODO: Pluggable logging
 	}
 
 	if conf.Proxy {
@@ -142,7 +123,7 @@ func Run(conf config.Config) error {
 			TTL: 60,
 		}
 
-		agent, err := register.NewRegistrationAgent(register.RegistrationConfig{
+		agent, err = register.NewRegistrationAgent(register.RegistrationConfig{
 			Client:          registryClient,
 			ServiceInstance: serviceInstance,
 		})
@@ -168,7 +149,8 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Supervise {
-		supervisor.DoAppSupervision(conf.App)
+		appSupervisor := supervisor.AppSupervisor{}
+		appSupervisor.DoAppSupervision(conf.App, agent)
 	} else {
 		select {}
 	}

@@ -95,6 +95,7 @@ func (a *AppSupervisor) Shutdown(exitCode int) {
 	// TODO: Gracefully shutdown Ngnix, and filebeat
 	//ugly temporary hack to kill all processes in container
 	exec.Command("pkill", "-9", "-f", "nginx")
+	exec.Command("pkill", "-9", "-f", "filebeat")
 
 	if a.agent != nil {
 		a.agent.Stop()
@@ -102,4 +103,20 @@ func (a *AppSupervisor) Shutdown(exitCode int) {
 
 	log.Infof("Shutting down with exit code %d", exitCode)
 	os.Exit(exitCode)
+}
+
+// DoLogManagement TODO
+func (a *AppSupervisor) DoLogManagement(filebeatConf string) {
+	// starting filebeat
+	logcmd := exec.Command("filebeat", "-c", filebeatConf)
+	env := os.Environ()
+	env = append(env, "GODEBUG=netdns=go")
+	logcmd.Env = env
+
+	logcmd.Stdin = os.Stdin
+	logcmd.Stdout = os.Stdout
+	err := logcmd.Run()
+	if err != nil {
+		log.WithError(err).Warn("Filebeat process exited with error")
+	}
 }

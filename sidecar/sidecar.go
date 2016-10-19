@@ -110,8 +110,7 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		// TODO: Log failure?
-		go appSupervisor.DoLogManagement("/tmp/filebeat.yml")
+		appSupervisor.AddProcess([]string{"filebeat", "-c", "/tmp/filebeat.yml"}, []string{"GODEBUG=netdns=go"})
 	}
 
 	if conf.Proxy {
@@ -169,10 +168,11 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Supervise {
-		appSupervisor.DoAppSupervision(conf.App, agent)
-	} else {
-		select {}
+		appSupervisor.AddProcess(conf.App, nil)
+
 	}
+
+	appSupervisor.DoAppSupervision(agent)
 
 	return nil
 }

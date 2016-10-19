@@ -28,33 +28,46 @@ import (
 // AppSupervisor TODO
 type AppSupervisor struct {
 	agent *register.RegistrationAgent
+	cmds  []*exec.Cmd
+}
+
+// AddProcess TODO
+func (a *AppSupervisor) AddProcess(cmdArgs, env []string) {
+	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
+	if a.cmds == nil {
+		a.cmds = make([]*exec.Cmd, 0)
+	}
+
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	cmdEnv := os.Environ()
+	if env != nil {
+		cmdEnv = append(cmdEnv, env...)
+	}
+	cmd.Env = cmdEnv
+
+	a.cmds = append(a.cmds, cmd)
 }
 
 // DoAppSupervision TODO
-func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.RegistrationAgent) {
+func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	a.agent = agent
 
-	// Launch the user app
-	var appProcess *os.Process
-	appChan := make(chan error, 1)
-	if len(cmdArgs) > 0 {
-		log.Infof("Launching app '%s' with args '%s'", cmdArgs[0], strings.Join(cmdArgs[1:], " "))
+	appChan := make(chan error, len(a.cmds))
+	for _, cmd := range a.cmds {
+		log.Infof("Launching app '%s' with args '%s'", cmd.Args[0], strings.Join(cmd.Args[1:], " "))
 
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		err := cmd.Start()
-		if err != nil {
-			appChan <- err
-		} else {
-			appProcess = cmd.Process
-			go func() {
+		go func(cmd *exec.Cmd) {
+			err := cmd.Start()
+			if err != nil {
+				appChan <- err
+			} else {
 				appChan <- cmd.Wait()
-			}()
-		}
+			}
+		}(cmd)
 	}
 
 	// Intercept SIGTERM/SIGINT and stop
@@ -64,11 +77,7 @@ func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.Regis
 		select {
 		case sig := <-sigChan:
 			log.Infof("Intercepted signal '%s'", sig)
-			if appProcess != nil {
-				appProcess.Signal(sig)
-			} else {
-				a.Shutdown(0)
-			}
+			a.Shutdown(0)
 		case err := <-appChan:
 			exitCode := 0
 			if err == nil {
@@ -94,8 +103,12 @@ func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.Regis
 func (a *AppSupervisor) Shutdown(exitCode int) {
 	// TODO: Gracefully shutdown Ngnix, and filebeat
 	//ugly temporary hack to kill all processes in container
-	exec.Command("pkill", "-9", "-f", "nginx")
-	exec.Command("pkill", "-9", "-f", "filebeat")
+	//exec.Command("pkill", "-9", "-f", "nginx")
+	//exec.Command("pkill", "-9", "-f", "filebeat")
+
+	for _, cmd := range a.cmds {
+		cmd.Process.Kill()
+	}
 
 	if a.agent != nil {
 		a.agent.Stop()

@@ -36,6 +36,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
+	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
 )
@@ -151,7 +152,7 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		healthChecks, err := register.BuildHealthChecks(conf.HealthChecks)
+		healthCheckAgents, err := healthcheck.BuildAgents(conf.HealthChecks)
 		if err != nil {
 			logrus.WithError(err).Error("Could not build health checks")
 			return err
@@ -159,8 +160,8 @@ func Run(conf config.Config) error {
 
 		// Control the registration agent via the health checker if any health checks were provided. If no
 		// health checks are provided, just start the registration agent.
-		if len(healthChecks) > 0 {
-			checker := register.NewHealthChecker(agent, healthChecks)
+		if len(healthCheckAgents) > 0 {
+			checker := register.NewHealthChecker(agent, healthCheckAgents)
 			checker.Start()
 		} else {
 			agent.Start()

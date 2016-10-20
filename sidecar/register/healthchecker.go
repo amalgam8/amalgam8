@@ -18,22 +18,23 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 )
 
 // HealthChecker uses a collection of periodic health checks to manage registration. Registration is maintained while
 // the state of the health checker is healthy. If the state changes to unhealthy, the registration agent is stopped.
-// Similarly, if the state changes to healthy, the registration agent is started again. If any health check's last
-// reported status is unhealthy, the health checker is considered unhealthy.
+// Similarly, if the state changes to healthy the registration agent is started again. The health checker is considered
+// unhealthy if any health check's last reported status is unhealthy.
 type HealthChecker struct {
 	active       bool
 	stop         chan struct{}
-	checks       []HealthCheck
+	checks       []*healthcheck.Agent
 	mutex        sync.Mutex
 	registration *RegistrationAgent
 }
 
 // NewHealthChecker instantiates a health checker.
-func NewHealthChecker(registration *RegistrationAgent, checks []HealthCheck) *HealthChecker {
+func NewHealthChecker(registration *RegistrationAgent, checks []*healthcheck.Agent) *HealthChecker {
 	if len(checks) == 0 {
 		panic("No health checks provided")
 	}
@@ -54,7 +55,7 @@ func (checker *HealthChecker) Start() {
 	}
 	checker.active = true
 
-	go checker.report()
+	go checker.maintainRegistration()
 }
 
 // Stop checking
@@ -71,16 +72,17 @@ func (checker *HealthChecker) Stop() {
 	checker.stop <- struct{}{}
 }
 
-func (checker *HealthChecker) report() {
+// maintainRegistration
+func (checker *HealthChecker) maintainRegistration() {
 	wasHealthy := false // Initialize as unhealthy so that we register on the first successful health check
 
-	statusChan := make(chan HealthStatus, len(checker.checks))
+	statusChan := make(chan healthcheck.Status, len(checker.checks))
 	for _, healthCheck := range checker.checks {
 		healthCheck.Start(statusChan)
 	}
 
 	// Set of health checks that have most recently reported unhealthy statuses.
-	unhealthyStatuses := make(map[HealthCheck]interface{})
+	unhealthyStatuses := make(map[healthcheck.Check]interface{})
 	for {
 		select {
 		case status := <-statusChan:
@@ -88,17 +90,17 @@ func (checker *HealthChecker) report() {
 
 			// Update our set
 			if status.Error != nil {
-				unhealthyStatuses[status.HealthCheck] = struct{}{}
+				unhealthyStatuses[status.Check] = struct{}{}
 			} else {
-				delete(unhealthyStatuses, status.HealthCheck)
+				delete(unhealthyStatuses, status.Check)
 			}
 
 			healthy := len(unhealthyStatuses) == 0
 			if healthy && !wasHealthy {
-				logrus.Debug("Service is healthy, registering")
+				logrus.Debug("Service is now healthy, registering")
 				checker.registration.Start()
 			} else if !healthy && wasHealthy {
-				logrus.Warn("Service is unhealthy, unregistering")
+				logrus.WithError(status.Error).Warn("Service is now unhealthy, unregistering")
 				checker.registration.Stop()
 			}
 
@@ -110,5 +112,4 @@ func (checker *HealthChecker) report() {
 			}
 		}
 	}
-
 }

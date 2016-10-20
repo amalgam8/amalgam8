@@ -38,6 +38,9 @@ func main() {
 	port := os.Args[1]
 
 	http.HandleFunc("/details", detailsHandler)
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 

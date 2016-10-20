@@ -38,6 +38,10 @@ func BuildAgent(conf config.HealthCheck) (*Agent, error) {
 	switch conf.Type {
 	case config.HTTPHealthCheck, config.HTTPSHealthCheck:
 		return NewHTTPAgent(conf)
+	case config.TCPHealthCheck:
+		return NewTCPAgent(conf)
+	case config.CommandHealthCheck:
+		return NewCommandAgent(conf)
 	default:
 		return nil, fmt.Errorf("Healthcheck type not supported: '%s'", conf.Type)
 	}

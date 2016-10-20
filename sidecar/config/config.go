@@ -59,8 +59,10 @@ type Controller struct {
 
 // Health check types.
 const (
-	HTTPHealthCheck  = "http"
-	HTTPSHealthCheck = "https"
+	HTTPHealthCheck    = "http"
+	HTTPSHealthCheck   = "https"
+	TCPHealthCheck     = "tcp"
+	CommandHealthCheck = "cmd"
 )
 
 // HealthCheck configuration.
@@ -215,6 +217,8 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 				hcType = HTTPHealthCheck
 			case "https":
 				hcType = HTTPSHealthCheck
+			case "tcp":
+				hcType = TCPHealthCheck
 			default:
 				return fmt.Errorf("Unsupported health check type: %v", u.Scheme)
 			}

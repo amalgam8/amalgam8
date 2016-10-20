@@ -2,7 +2,7 @@
 
 ## Requirements
 
-* [Go](http://golang.org/) version 1.6.3
+* [Go](http://golang.org/) version 1.7.1
 * [Docker](https://docs.docker.com/engine/installation/) 1.10 or later
 * [Docker Compose](https://docs.docker.com/compose/install/)  1.5.1 or later
 * Python 2.7 with pip

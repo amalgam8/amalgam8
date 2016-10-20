@@ -22,10 +22,18 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/register"
 )
 
+// AppSupervisor TODO
+type AppSupervisor struct {
+	agent *register.RegistrationAgent
+}
+
 // DoAppSupervision TODO
-func DoAppSupervision(cmdArgs []string) {
+func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.RegistrationAgent) {
+
+	a.agent = agent
 
 	// Launch the user app
 	var appProcess *os.Process
@@ -59,7 +67,7 @@ func DoAppSupervision(cmdArgs []string) {
 			if appProcess != nil {
 				appProcess.Signal(sig)
 			} else {
-				Shutdown(0)
+				a.Shutdown(0)
 			}
 		case err := <-appChan:
 			exitCode := 0
@@ -77,24 +85,28 @@ func DoAppSupervision(cmdArgs []string) {
 				}
 			}
 
-			Shutdown(exitCode)
+			a.Shutdown(exitCode)
 		}
 	}
 }
 
 // Shutdown TODO
-func Shutdown(exitCode int) {
+func (a *AppSupervisor) Shutdown(exitCode int) {
 	// TODO: Gracefully shutdown Ngnix, and filebeat
 	//ugly temporary hack to kill all processes in container
 	exec.Command("pkill", "-9", "-f", "nginx")
 	exec.Command("pkill", "-9", "-f", "filebeat")
+
+	if a.agent != nil {
+		a.agent.Stop()
+	}
 
 	log.Infof("Shutting down with exit code %d", exitCode)
 	os.Exit(exitCode)
 }
 
 // DoLogManagement TODO
-func DoLogManagement(filebeatConf string) {
+func (a *AppSupervisor) DoLogManagement(filebeatConf string) {
 	// starting filebeat
 	logcmd := exec.Command("filebeat", "-c", filebeatConf)
 	env := os.Environ()

@@ -12,29 +12,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM amalgam8/a8-sidecar:alpine
+FROM python:2-onbuild
 
-RUN apk add --no-cache \
-              bash \
-              python \
-              python-dev \
-              py-pip \
-  && pip install --upgrade pip \
-  && pip install Flask
+# Install Filebeat
+RUN set -ex \
+    && wget -qO /tmp/filebeat_1.2.2_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb \
+    && dpkg -i /tmp/filebeat_1.2.2_amd64.deb \
+    && rm /tmp/filebeat_1.2.2_amd64.deb
 
-RUN cd /usr/bin \
-  && ln -sf easy_install-2.7 easy_install \
-  && ln -sf python2.7 python \
-  && ln -sf python2.7-config python-config \
-  && ln -sf pip2.7 pip
+COPY filebeat.yml /etc/filebeat/filebeat.yml
+
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.0/a8sidecar.sh | sh
 
 RUN mkdir -p /opt/microservices
-ADD requirements.txt /opt
-RUN apk add --no-cache --virtual .build-deps \
-    build-base \
-    && pip install -r /opt/requirements.txt \
-    && apk del .build-deps
-
 COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices

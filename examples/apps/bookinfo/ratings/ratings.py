@@ -77,14 +77,12 @@ class Writer(object):
         self.file.flush()
 
 
-proxyurl=None
 if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print "usage: %s port proxyurl" % (sys.argv[0])
+    if len(sys.argv) < 1:
+        print "usage: %s port" % (sys.argv[0])
         sys.exit(-1)
 
     p = int(sys.argv[1])
-    proxyurl = sys.argv[2]
     sys.stderr = Writer('stderr.log')
     sys.stdout = Writer('stdout.log')
     logging.basicConfig(filename='microservice.log',filemode='w',level=logging.DEBUG)

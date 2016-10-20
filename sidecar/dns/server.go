@@ -192,7 +192,6 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 			continue
 		}
 		if err != nil {
-			// TODO: Do I need to skip or should I print something ?
 			continue
 		}
 		numOfMatchingRecords++

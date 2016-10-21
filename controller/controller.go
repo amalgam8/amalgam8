@@ -30,6 +30,7 @@ import (
 	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/controller/util/i18n"
 	"github.com/amalgam8/amalgam8/pkg/auth"
+	"github.com/amalgam8/amalgam8/pkg/version"
 )
 
 // Main is the entrypoint for the controller when running as an executable
@@ -38,7 +39,7 @@ func Main() {
 
 	app.Name = "controller"
 	app.Usage = "Amalgam8 Controller"
-	app.Version = "0.2.0"
+	app.Version = version.Build.Version
 	app.Flags = config.Flags
 	app.Action = func(context *cli.Context) error {
 		return Run(config.New(context))

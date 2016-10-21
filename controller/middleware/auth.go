@@ -15,6 +15,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 
 	"strings"
@@ -55,7 +56,9 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 		token = parts[1]
 	}
 
-	nsPtr, err := mw.Authenticator.Authenticate(token)
+	ctx := request.Env[util.Context].(context.Context)
+
+	nsPtr, err := mw.Authenticator.Authenticate(ctx, token)
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:

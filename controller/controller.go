@@ -110,6 +110,7 @@ func Run(conf *config.Config) error {
 			EnableResponseStackTrace: false,
 		},
 		&rest.ContentTypeCheckerMiddleware{},
+		&middleware.ContextMiddleware{},
 		&middleware.RequestIDMiddleware{},
 		&middleware.LoggingMiddleware{},
 		middleware.NewRequireHTTPS(middleware.CheckRequest{

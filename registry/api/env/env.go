@@ -53,4 +53,7 @@ const (
 	// Relevant only for operations targeted at a single service instance (register, deregister, heartbeat, ...).
 	// Type: *store.ServiceInstance
 	ServiceInstance = "SERVICE_INSTANCE"
+
+	// Type: context.Context
+	Context = "CONTEXT"
 )

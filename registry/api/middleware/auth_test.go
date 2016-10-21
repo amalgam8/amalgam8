@@ -15,12 +15,11 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"golang.org/x/net/context"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/stretchr/testify/assert"
@@ -32,19 +31,19 @@ const (
 )
 
 type mockAuthenticator struct {
-	authFunc func(token string, ctx ...context.Context) (*auth.Namespace, error)
+	authFunc func(ctx context.Context, token string) (*auth.Namespace, error)
 }
 
-func (ma *mockAuthenticator) Authenticate(token string, ctx ...context.Context) (*auth.Namespace, error) {
+func (ma *mockAuthenticator) Authenticate(ctx context.Context, token string) (*auth.Namespace, error) {
 	if ma.authFunc != nil {
-		return ma.authFunc(token, ctx...)
+		return ma.authFunc(ctx, token)
 	}
 	return nil, fmt.Errorf("internal test error")
 }
 
 func TestEmptyTokenSuccess(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+		authFunc: func(ctx context.Context, token string) (*auth.Namespace, error) {
 			if token == "" {
 				namespace := auth.NamespaceFrom(validToken)
 				return &namespace, nil
@@ -64,7 +63,7 @@ func TestEmptyTokenSuccess(t *testing.T) {
 
 func TestEmptyTokenFailure(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+		authFunc: func(ctx context.Context, token string) (*auth.Namespace, error) {
 			if token != "" {
 				namespace := auth.NamespaceFrom(token)
 				return &namespace, nil
@@ -84,7 +83,7 @@ func TestEmptyTokenFailure(t *testing.T) {
 
 func TestTokenInvalid(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+		authFunc: func(ctx context.Context, token string) (*auth.Namespace, error) {
 			if token == invalidToken {
 				return nil, auth.ErrUnauthorized
 			}
@@ -105,15 +104,12 @@ func TestTokenInvalid(t *testing.T) {
 
 func TestHeadersInContext(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+		authFunc: func(ctx context.Context, token string) (*auth.Namespace, error) {
 			var headerValue string
-			if len(ctx) > 0 {
-				// Just read the first context
-				headers := ctx[0].Value(auth.ContextHeadersKey).(http.Header)
-				for key, header := range headers {
-					if key == "Someheader" {
-						headerValue = header[0]
-					}
+			headers := ctx.Value(auth.ContextHeadersKey).(http.Header)
+			for key, header := range headers {
+				if key == "Someheader" {
+					headerValue = header[0]
 				}
 			}
 
@@ -150,7 +146,7 @@ func TestDefaultAuthenticator(t *testing.T) {
 
 func TestCommunicationError(t *testing.T) {
 	ma := &mockAuthenticator{
-		authFunc: func(token string, ctx ...context.Context) (*auth.Namespace, error) {
+		authFunc: func(ctx context.Context, token string) (*auth.Namespace, error) {
 			return nil, auth.ErrCommunicationError
 		},
 	}

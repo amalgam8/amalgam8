@@ -17,7 +17,7 @@ package auth
 import (
 	"fmt"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 // NewChainAuthenticator creates and initializes a new chain authenticator, wrapping the given authenticators.
@@ -44,10 +44,10 @@ type chainAuthenticator struct {
 
 // Authenticate verifies the specified token with the registered authenticators.
 // The function returns the Namespace of this token or an error if the token is not valid
-func (r *chainAuthenticator) Authenticate(token string, ctx ...context.Context) (*Namespace, error) {
+func (r *chainAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
 	// Scan the list of authenticators in order
 	for _, a := range r.authenticators {
-		namespace, err := a.Authenticate(token, ctx...)
+		namespace, err := a.Authenticate(ctx, token)
 		if err == ErrUnrecognizedToken {
 			continue
 		}

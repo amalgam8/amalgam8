@@ -15,9 +15,8 @@
 package auth
 
 import (
+	"context"
 	"errors"
-
-	"golang.org/x/net/context"
 
 	"github.com/dgrijalva/jwt-go"
 )
@@ -41,7 +40,7 @@ func NewJWTAuthenticator(key []byte) (Authenticator, error) {
 	return &jwtAuthenticator{key: key}, nil
 }
 
-func (aut *jwtAuthenticator) Authenticate(token string, ctx ...context.Context) (*Namespace, error) {
+func (aut *jwtAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
 	if token == "" {
 		return nil, ErrEmptyToken
 	}

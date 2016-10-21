@@ -14,7 +14,7 @@
 
 package auth
 
-import "golang.org/x/net/context"
+import "context"
 
 const (
 	// Module name to be used in logging
@@ -28,5 +28,5 @@ const (
 type Authenticator interface {
 
 	// Authenticate resolves an arbitrary string token into a namespace.
-	Authenticate(token string, ctx ...context.Context) (*Namespace, error)
+	Authenticate(ctx context.Context, token string) (*Namespace, error)
 }

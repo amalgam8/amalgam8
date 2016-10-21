@@ -14,7 +14,7 @@
 
 package auth
 
-import "golang.org/x/net/context"
+import "context"
 
 type trustedAuthenticator struct{}
 
@@ -25,7 +25,7 @@ func NewTrustedAuthenticator() Authenticator {
 	return trustedAuth
 }
 
-func (aut *trustedAuthenticator) Authenticate(token string, ctx ...context.Context) (*Namespace, error) {
+func (aut *trustedAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
 	if token == "" {
 		return nil, ErrEmptyToken
 	}

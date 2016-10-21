@@ -15,6 +15,7 @@
 package auth
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,13 +23,15 @@ import (
 
 func TestValidTrustedToken(t *testing.T) {
 	ta := NewTrustedAuthenticator()
-	namespace, err := ta.Authenticate("valid-token")
+	ctx := context.TODO()
+	namespace, err := ta.Authenticate(ctx, "valid-token")
 	assert.NoError(t, err)
 	assert.EqualValues(t, "valid-token", *namespace)
 }
 
 func TestInvalidTrustedToken(t *testing.T) {
 	ta := NewTrustedAuthenticator()
-	_, err := ta.Authenticate("")
+	ctx := context.TODO()
+	_, err := ta.Authenticate(ctx, "")
 	assert.Error(t, err)
 }

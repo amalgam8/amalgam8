@@ -14,7 +14,7 @@
 
 package auth
 
-import "golang.org/x/net/context"
+import "context"
 
 type defaultAuthenticator struct{}
 
@@ -27,7 +27,7 @@ func DefaultAuthenticator() Authenticator {
 	return defaultAuth
 }
 
-func (aut *defaultAuthenticator) Authenticate(token string, ctx ...context.Context) (*Namespace, error) {
+func (aut *defaultAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
 	if token == "" || token == defaultNamespace.String() {
 		return &defaultNamespace, nil
 	}

@@ -12,24 +12,25 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package auth
+package middleware
 
-import "context"
+import (
+	"context"
 
-type defaultAuthenticator struct{}
+	"github.com/ant0ine/go-json-rest/rest"
 
-var defaultAuth = &defaultAuthenticator{}
-var defaultNamespace = Namespace("default")
+	"github.com/amalgam8/amalgam8/registry/api/env"
+)
 
-// DefaultAuthenticator returns the default authenticator provided by this package,
-// which resolves "" (empty string) as well as "default" token to the default namespace.
-func DefaultAuthenticator() Authenticator {
-	return defaultAuth
-}
+// ContextMiddleware initializes a context and puts it in the request's env map
+type ContextMiddleware struct{}
 
-func (aut *defaultAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
-	if token == "" || token == defaultNamespace.String() {
-		return &defaultNamespace, nil
+// MiddlewareFunc makes ContextMiddleware implement the Middleware interface.
+func (mw *ContextMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
+	return func(w rest.ResponseWriter, r *rest.Request) {
+		r.Env[env.Context] = context.Background()
+
+		// Handle the request
+		h(w, r)
 	}
-	return nil, ErrUnrecognizedToken
 }

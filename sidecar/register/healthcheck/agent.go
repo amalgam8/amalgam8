@@ -46,7 +46,7 @@ func NewAgent(check Check, interval time.Duration) *Agent {
 }
 
 // Start health check agent.
-func (a *Agent) Start(statusChan chan Status) {
+func (a *Agent) Start(statusChan chan error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
@@ -72,9 +72,9 @@ func (a *Agent) Stop() {
 }
 
 // run periodic health checks until the agent is stopped.
-func (a *Agent) run(statusChan chan Status) {
+func (a *Agent) run(statusChan chan error) {
 	// Perform an initial health check on start.
-	statusChan <- a.execute()
+	statusChan <- a.healthCheck.Execute()
 
 	// Begin periodic checks.
 	ticker := time.NewTicker(a.interval)
@@ -82,17 +82,9 @@ func (a *Agent) run(statusChan chan Status) {
 	for {
 		select {
 		case <-ticker.C:
-			statusChan <- a.execute()
+			statusChan <- a.healthCheck.Execute()
 		case <-a.stop:
 			break
 		}
-	}
-}
-
-// execute the health check and report the result.
-func (a *Agent) execute() Status {
-	return Status{
-		Check: a.healthCheck,
-		Error: a.healthCheck.Execute(),
 	}
 }

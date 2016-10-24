@@ -14,12 +14,6 @@
 
 package healthcheck
 
-// Status is the reported health status reported by a health check.
-type Status struct {
-	Check Check
-	Error error
-}
-
 // Check is an interface for performing a health check.
 type Check interface {
 	// Execute the health check and return an error on failure.

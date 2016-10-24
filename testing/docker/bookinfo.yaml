@@ -95,7 +95,6 @@ productpage-v1:
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health,cmd:///bin/ls
-    - A8_LOG_LEVEL=debug
   external_links:
     - controller
     - registry

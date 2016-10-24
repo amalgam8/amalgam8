@@ -43,7 +43,6 @@ var DefaultConfig = Config{
 	},
 
 	Supervise: false,
-	App:       nil,
 
 	HealthChecks: nil,
 
@@ -51,4 +50,6 @@ var DefaultConfig = Config{
 	LogstashServer: "",
 
 	LogLevel: "info",
+
+	Commands: nil,
 }

@@ -72,7 +72,6 @@ func sidecarCommand(context *cli.Context) error {
 func Run(conf config.Config) error {
 	var err error
 	var agent *register.RegistrationAgent
-	appSupervisor := supervisor.AppSupervisor{}
 
 	if conf.Debug != "" {
 		cliCommand(conf.Debug)
@@ -90,6 +89,8 @@ func Run(conf config.Config) error {
 		logrusLevel = logrus.DebugLevel
 	}
 	logrus.SetLevel(logrusLevel)
+
+	appSupervisor := supervisor.NewAppSupervisor(&conf)
 
 	if conf.Log {
 		//Replace the LOGSTASH_REPLACEME string in filebeat.yml with
@@ -110,7 +111,8 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		appSupervisor.AddProcess([]string{"filebeat", "-c", "/tmp/filebeat.yml"}, []string{"GODEBUG=netdns=go"})
+		// TODO: Log failure?
+		go appSupervisor.DoLogManagement("/tmp/filebeat.yml")
 	}
 
 	if conf.Proxy {
@@ -165,11 +167,6 @@ func Run(conf config.Config) error {
 		} else {
 			agent.Start()
 		}
-	}
-
-	if conf.Supervise {
-		appSupervisor.AddProcess(conf.App, nil)
-
 	}
 
 	appSupervisor.DoAppSupervision(agent)

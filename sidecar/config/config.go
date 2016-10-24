@@ -28,6 +28,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Command TODO
+type Command struct {
+	Cmd     []string `yaml:"cmd"`
+	Env     []string `yaml:"env"`
+	Primary bool     `yaml:"primary"`
+}
+
 // Service configuration
 type Service struct {
 	Name string   `yaml:"name"`
@@ -76,15 +83,16 @@ type Config struct {
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise bool     `yaml:"supervise"`
-	App       []string `yaml:"app"`
+	Supervise bool `yaml:"supervise"`
 
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
+
+	LogLevel string `yaml:"log_level"`
 
 	Log            bool   `yaml:"log"`
 	LogstashServer string `yaml:"logstash_server"`
 
-	LogLevel string `yaml:"log_level"`
+	Commands []Command `yaml:"commands"`
 
 	Debug string
 }
@@ -180,6 +188,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
+	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
@@ -204,7 +213,11 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	}
 
 	if context.Args().Present() {
-		c.App = context.Args()
+		cmd := Command{
+			Cmd:     context.Args(),
+			Primary: true,
+		}
+		c.Commands = []Command{cmd}
 	}
 
 	return nil
@@ -223,7 +236,7 @@ func (c *Config) Validate() error {
 	if c.Supervise {
 		validators = append(validators,
 			func() error {
-				if len(c.App) == 0 {
+				if len(c.Commands) == 0 {
 					return fmt.Errorf("Supervision mode requires application launch arguments")
 				}
 				return nil

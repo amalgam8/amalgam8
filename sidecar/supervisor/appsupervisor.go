@@ -21,34 +21,48 @@ import (
 	"strings"
 	"syscall"
 
+	"sync"
+	"time"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 )
 
 // AppSupervisor TODO
 type AppSupervisor struct {
-	agent *register.RegistrationAgent
-	cmds  []*exec.Cmd
+	agent   *register.RegistrationAgent
+	App     *exec.Cmd
+	Helpers []*exec.Cmd
 }
 
-// AddProcess TODO
-func (a *AppSupervisor) AddProcess(cmdArgs, env []string) {
-	cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-	if a.cmds == nil {
-		a.cmds = make([]*exec.Cmd, 0)
+// NewAppSupervisor TODO
+func NewAppSupervisor(conf *config.Config) *AppSupervisor {
+	a := AppSupervisor{
+		Helpers: []*exec.Cmd{},
 	}
 
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	for _, cmd := range conf.Commands {
+		osCmd := exec.Command(cmd.Cmd[0], cmd.Cmd[1:]...)
 
-	cmdEnv := os.Environ()
-	if env != nil {
-		cmdEnv = append(cmdEnv, env...)
+		osCmd.Stdin = os.Stdin
+		osCmd.Stdout = os.Stdout
+		osCmd.Stderr = os.Stderr
+
+		cmdEnv := os.Environ()
+		if cmd.Env != nil {
+			cmdEnv = append(cmdEnv, cmd.Env...)
+		}
+		osCmd.Env = cmdEnv
+
+		if cmd.Primary {
+			a.App = osCmd
+		} else {
+			a.Helpers = append(a.Helpers, osCmd)
+		}
 	}
-	cmd.Env = cmdEnv
 
-	a.cmds = append(a.cmds, cmd)
+	return &a
 }
 
 // DoAppSupervision TODO
@@ -56,17 +70,24 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	a.agent = agent
 
-	appChan := make(chan error, len(a.cmds))
-	for _, cmd := range a.cmds {
-		log.Infof("Launching app '%s' with args '%s'", cmd.Args[0], strings.Join(cmd.Args[1:], " "))
+	appChan := make(chan error, 1)
+	if a.App != nil {
+		log.Infof("Launching app '%s' with args '%s'", a.App.Args[0], strings.Join(a.App.Args[1:], " "))
+		err := a.App.Start()
+		if err != nil {
+			appChan <- err
+		} else {
+			go func() {
+				appChan <- a.App.Wait()
+			}()
+		}
+	}
 
+	for _, cmd := range a.Helpers {
+		log.Infof("Launching app '%s' with args '%s'", cmd.Args[0], strings.Join(cmd.Args[1:], " "))
 		go func(cmd *exec.Cmd) {
-			err := cmd.Start()
-			if err != nil {
-				appChan <- err
-			} else {
-				appChan <- cmd.Wait()
-			}
+			err := cmd.Run()
+			log.WithError(err).Warn("Failed to launch helper command '%s'", cmd.Args[0])
 		}(cmd)
 	}
 
@@ -77,6 +98,10 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 		select {
 		case sig := <-sigChan:
 			log.Infof("Intercepted signal '%s'", sig)
+
+			// forwarding signal to application parent process
+			exit(append(a.Helpers, a.App), sig)
+
 			a.Shutdown(0)
 		case err := <-appChan:
 			exitCode := 0
@@ -93,29 +118,42 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 					log.Errorf("App failed to start: %v", err)
 				}
 			}
-
+			exit(a.Helpers, syscall.SIGKILL)
 			a.Shutdown(exitCode)
 		}
 	}
 }
 
 // Shutdown TODO
-func (a *AppSupervisor) Shutdown(exitCode int) {
-	// TODO: Gracefully shutdown Ngnix, and filebeat
-	//ugly temporary hack to kill all processes in container
-	//exec.Command("pkill", "-9", "-f", "nginx")
-	//exec.Command("pkill", "-9", "-f", "filebeat")
-
-	for _, cmd := range a.cmds {
-		cmd.Process.Kill()
-	}
+func (a *AppSupervisor) Shutdown(sig int) {
 
 	if a.agent != nil {
 		a.agent.Stop()
 	}
 
-	log.Infof("Shutting down with exit code %d", exitCode)
-	os.Exit(exitCode)
+	log.Infof("Shutting down with exit code %v", sig)
+	os.Exit(sig)
+}
+
+func exit(cmds []*exec.Cmd, sig os.Signal) {
+
+	var wg sync.WaitGroup
+
+	wg.Add(len(cmds))
+	for _, cmd := range cmds {
+		go func(cmd *exec.Cmd) {
+			defer wg.Done()
+			timer := time.AfterFunc(3*time.Second, func() {
+				cmd.Process.Kill()
+			})
+			cmd.Process.Signal(sig)
+
+			cmd.Wait()
+			timer.Stop()
+		}(cmd)
+	}
+
+	wg.Wait()
 }
 
 // DoLogManagement TODO

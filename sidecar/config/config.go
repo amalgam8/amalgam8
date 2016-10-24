@@ -201,7 +201,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 		c.Service.Tags = tags
 	}
 
-	// For health check flags, we only support a subset of health check types with default values.
+	// For health check flags, we only support default values.
 	if context.IsSet(healthchecksFlag) {
 		hcValues := context.StringSlice(healthchecksFlag)
 		for _, hcValue := range hcValues {
@@ -219,14 +219,26 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 				hcType = HTTPSHealthCheck
 			case "tcp":
 				hcType = TCPHealthCheck
+			case "cmd":
+				hcType = CommandHealthCheck
 			default:
 				return fmt.Errorf("Unsupported health check type: %v", u.Scheme)
 			}
 
-			hc := HealthCheck{
-				Type:  hcType,
-				Value: hcValue,
+			var hc HealthCheck
+			switch hcType {
+			case CommandHealthCheck:
+				hc = HealthCheck{
+					Type:  hcType,
+					Value: u.Path,
+				}
+			default:
+				hc = HealthCheck{
+					Type:  hcType,
+					Value: hcValue,
+				}
 			}
+
 			c.HealthChecks = append(c.HealthChecks, hc)
 		}
 	}

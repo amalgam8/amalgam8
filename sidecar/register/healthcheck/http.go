@@ -40,23 +40,20 @@ type HTTP struct {
 	code   int
 }
 
-// NewHTTPAgent creates a new HTTP health check.
-func NewHTTPAgent(conf config.HealthCheck) (*Agent, error) {
+// NewHTTP creates a new HTTP health check.
+func NewHTTP(conf config.HealthCheck) (Check, error) {
 	if err := validateHTTPConfig(&conf); err != nil {
 		return nil, err
 	}
 
-	return NewAgent(
-		&HTTP{
-			url: conf.Value,
-			client: &http.Client{
-				Timeout: conf.Timeout,
-			},
-			method: conf.Method,
-			code:   conf.Code,
+	return &HTTP{
+		url: conf.Value,
+		client: &http.Client{
+			Timeout: conf.Timeout,
 		},
-		conf.Interval,
-	), nil
+		method: conf.Method,
+		code:   conf.Code,
+	}, nil
 }
 
 // validateHTTPConfig validates, sanitizes, and sets defaults for an HTTP health check configuration.

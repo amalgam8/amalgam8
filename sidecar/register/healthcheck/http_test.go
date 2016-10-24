@@ -26,7 +26,7 @@ var _ = Describe("HTTP health check", func() {
 
 	Context("When constructing a new HTTP health check", func() {
 
-		var agent *Agent
+		var check Check
 		var hc *HTTP
 		var err error
 
@@ -41,12 +41,12 @@ var _ = Describe("HTTP health check", func() {
 			}
 
 			BeforeEach(func() {
-				agent, err = NewHTTPAgent(conf)
-				hc = agent.healthCheck.(*HTTP)
+				check, err = NewHTTP(conf)
+				hc = check.(*HTTP)
 			})
 
 			It("Succeeds to create a healthcheck", func() {
-				Expect(agent).ToNot(BeNil())
+				Expect(check).ToNot(BeNil())
 				Expect(hc).ToNot(BeNil())
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -56,7 +56,6 @@ var _ = Describe("HTTP health check", func() {
 				Expect(hc.url).To(Equal(conf.Value))
 				Expect(hc.code).To(Equal(conf.Code))
 				Expect(hc.method).To(Equal(conf.Method))
-				Expect(agent.interval).To(Equal(conf.Interval))
 				Expect(hc.client.Timeout).To(Equal(conf.Timeout))
 			})
 		})
@@ -67,8 +66,8 @@ var _ = Describe("HTTP health check", func() {
 			}
 
 			BeforeEach(func() {
-				agent, err = NewHTTPAgent(conf)
-				hc = agent.healthCheck.(*HTTP)
+				check, err = NewHTTP(conf)
+				hc = check.(*HTTP)
 			})
 
 			It("Succeeds to create a healthcheck", func() {
@@ -81,7 +80,6 @@ var _ = Describe("HTTP health check", func() {
 				Expect(hc.url).To(Equal(conf.Value))
 				Expect(hc.code).ToNot(BeZero())
 				Expect(hc.method).ToNot(BeZero())
-				Expect(agent.interval).ToNot(BeZero())
 				Expect(hc.client.Timeout).ToNot(BeZero())
 			})
 
@@ -100,58 +98,58 @@ var _ = Describe("HTTP health check", func() {
 
 			It("Fails to create a healthcheck due to an invalid type", func() {
 				conf.Type = "wtf"
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid URL", func() {
 				conf.Value = "wtf"
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to a missing URL", func() {
 				conf.Value = ""
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid method", func() {
 				conf.Method = "PING"
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid method", func() {
 				conf.Method = "PING"
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid code", func() {
 				conf.Code = 1
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck using an empty configuration", func() {
 				conf.Type = ""
 				conf.Value = ""
-				agent, err = NewHTTPAgent(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(agent).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 

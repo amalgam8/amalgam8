@@ -38,21 +38,18 @@ type Command struct {
 	exitCode int
 }
 
-// NewCommandAgent creates a new executable health check agent.
-func NewCommandAgent(conf config.HealthCheck) (*Agent, error) {
+// NewCommand creates a new executable health check.
+func NewCommand(conf config.HealthCheck) (Check, error) {
 	if err := validateCommandConfig(&conf); err != nil {
 		return nil, err
 	}
 
-	return NewAgent(
-		&Command{
-			cmd:      conf.Value,
-			args:     conf.Args,
-			exitCode: conf.Code,
-			timeout:  conf.Timeout,
-		},
-		conf.Interval,
-	), nil
+	return &Command{
+		cmd:      conf.Value,
+		args:     conf.Args,
+		exitCode: conf.Code,
+		timeout:  conf.Timeout,
+	}, nil
 }
 
 // validateCommandConfig validates, sanitizes, and sets defaults for a command health check configuration.

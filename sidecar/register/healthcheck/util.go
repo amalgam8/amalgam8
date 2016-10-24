@@ -35,14 +35,19 @@ func BuildAgents(confs []config.HealthCheck) ([]*Agent, error) {
 
 // BuildAgent constructs a health check agent using the given configuration.
 func BuildAgent(conf config.HealthCheck) (*Agent, error) {
+	var check Check
+	var err error
+
 	switch conf.Type {
 	case config.HTTPHealthCheck, config.HTTPSHealthCheck:
-		return NewHTTPAgent(conf)
+		check, err = NewHTTP(conf)
 	case config.TCPHealthCheck:
-		return NewTCPAgent(conf)
+		check, err = NewTCP(conf)
 	case config.CommandHealthCheck:
-		return NewCommandAgent(conf)
+		check, err = NewCommand(conf)
 	default:
 		return nil, fmt.Errorf("Healthcheck type not supported: '%s'", conf.Type)
 	}
+
+	return NewAgent(check, conf.Timeout), err
 }

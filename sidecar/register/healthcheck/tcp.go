@@ -34,19 +34,16 @@ type TCP struct {
 	timeout time.Duration
 }
 
-// NewTCPAgent creates a new TCP health check agent.
-func NewTCPAgent(conf config.HealthCheck) (*Agent, error) {
+// NewTCP creates a new TCP health check.
+func NewTCP(conf config.HealthCheck) (Check, error) {
 	if err := validateTCPConfig(&conf); err != nil {
 		return nil, err
 	}
 
-	return NewAgent(
-		&TCP{
-			url:     conf.Value,
-			timeout: conf.Timeout,
-		},
-		conf.Interval,
-	), nil
+	return &TCP{
+		url:     conf.Value,
+		timeout: conf.Timeout,
+	}, nil
 }
 
 // validateTCPConfig validates, sanitizes, and sets defaults for a TCP health check configuration.

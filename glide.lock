@@ -1,5 +1,5 @@
-hash: 0a333ffd3a7b7056d1b1a98e1df73fd28736f2f4cb2f7876af5af324d26adeaf
-updated: 2016-10-12T22:20:41.443793286+03:00
+hash: f296c8632aac88ee7a656bdbb0630e89aee941ee31b8060317c87d85199f97bc
+updated: 2016-10-21T17:44:33.780604605+03:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: 37ad7dc626602a8355801da6acd85155655520f8
@@ -48,10 +48,6 @@ imports:
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
-- name: golang.org/x/net
-  version: 6dba816f1056709e29a1c442883cab1336d3c083
-  subpackages:
-  - context
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 devImports: []

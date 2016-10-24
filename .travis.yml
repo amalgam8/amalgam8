@@ -7,7 +7,7 @@ services:
 
 # Go versions to build with
 go:
-    - 1.6.3
+    - 1.7.1
 
 env:
     # Platforms to build for

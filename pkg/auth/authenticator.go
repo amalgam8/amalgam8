@@ -14,12 +14,19 @@
 
 package auth
 
-// Module name to be used in logging
-const module = "AUTH"
+import "context"
+
+const (
+	// Module name to be used in logging
+	module = "AUTH"
+
+	// ContextHeadersKey is the key in the context for the headers passed to the Authenticators from the auth middleware
+	ContextHeadersKey = "headers"
+)
 
 // Authenticator is an interface for token authentication
 type Authenticator interface {
 
 	// Authenticate resolves an arbitrary string token into a namespace.
-	Authenticate(token string) (*Namespace, error)
+	Authenticate(ctx context.Context, token string) (*Namespace, error)
 }

@@ -15,6 +15,7 @@
 package auth
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -22,21 +23,24 @@ import (
 
 func TestDefaultAuthenticatorEmptyToken(t *testing.T) {
 	auth := DefaultAuthenticator()
-	namespace, err := auth.Authenticate("")
+	ctx := context.TODO()
+	namespace, err := auth.Authenticate(ctx, "")
 	assert.NoError(t, err)
 	assert.EqualValues(t, defaultNamespace, *namespace)
 }
 
 func TestDefaultAuthenticatorDefaultToken(t *testing.T) {
 	auth := DefaultAuthenticator()
-	namespace, err := auth.Authenticate(defaultNamespace.String())
+	ctx := context.TODO()
+	namespace, err := auth.Authenticate(ctx, defaultNamespace.String())
 	assert.NoError(t, err)
 	assert.EqualValues(t, defaultNamespace, *namespace)
 }
 
 func TestDefaultAuthenticatorInvalidToken(t *testing.T) {
 	auth := DefaultAuthenticator()
-	namespace, err := auth.Authenticate("invalid-token")
+	ctx := context.TODO()
+	namespace, err := auth.Authenticate(ctx, "invalid-token")
 	assert.Error(t, err)
 	assert.Nil(t, namespace)
 }

@@ -29,6 +29,7 @@ import (
 
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/pkg/version"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -50,7 +51,7 @@ func Main() {
 
 	app.Name = "sidecar"
 	app.Usage = "Amalgam8 Sidecar"
-	app.Version = "0.3.1"
+	app.Version = version.Build.Version
 	app.Flags = config.Flags
 	app.Action = sidecarCommand
 

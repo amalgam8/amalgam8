@@ -22,6 +22,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
+	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
@@ -34,7 +35,6 @@ import (
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/amalgam8/amalgam8/registry/utils/metrics"
 	"github.com/amalgam8/amalgam8/registry/utils/network"
-	"github.com/amalgam8/amalgam8/registry/utils/version"
 )
 
 // Main is the entrypoint for the registry when running as an executable

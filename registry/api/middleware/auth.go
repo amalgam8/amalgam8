@@ -15,6 +15,7 @@
 package middleware
 
 import (
+	"context"
 	"net/http"
 	"strings"
 
@@ -54,7 +55,18 @@ func (mw *AuthMiddleware) handler(writer rest.ResponseWriter, request *rest.Requ
 		token = parts[1]
 	}
 
-	nsPtr, err := mw.Authenticator.Authenticate(token)
+	// Read the context from the request Env
+	ctxFromEnv := request.Env[env.Context]
+	var ctx context.Context
+
+	// Add the headers to the context passed to the authenticator
+	if ctxFromEnv == nil {
+		ctx = context.WithValue(context.Background(), auth.ContextHeadersKey, request.Header)
+	} else {
+		ctx = context.WithValue(ctxFromEnv.(context.Context), auth.ContextHeadersKey, request.Header)
+	}
+
+	nsPtr, err := mw.Authenticator.Authenticate(ctx, token)
 	if err != nil {
 		switch err {
 		case auth.ErrEmptyToken:

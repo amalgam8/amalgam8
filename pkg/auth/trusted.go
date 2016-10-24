@@ -14,6 +14,8 @@
 
 package auth
 
+import "context"
+
 type trustedAuthenticator struct{}
 
 var trustedAuth = &trustedAuthenticator{}
@@ -23,7 +25,7 @@ func NewTrustedAuthenticator() Authenticator {
 	return trustedAuth
 }
 
-func (aut *trustedAuthenticator) Authenticate(token string) (*Namespace, error) {
+func (aut *trustedAuthenticator) Authenticate(ctx context.Context, token string) (*Namespace, error) {
 	if token == "" {
 		return nil, ErrEmptyToken
 	}

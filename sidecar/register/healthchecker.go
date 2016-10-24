@@ -71,7 +71,6 @@ func (checker *HealthChecker) Stop() {
 	checker.stop <- struct{}{}
 }
 
-
 // maintainRegistration
 func (checker *HealthChecker) maintainRegistration() {
 	// Receives a value whenever the status of a health check agent changes from healthy to unhealthy or vice versa.

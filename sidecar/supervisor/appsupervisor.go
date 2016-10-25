@@ -63,7 +63,7 @@ func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 			Action: cmd.OnDeath,
 		}
 		if proc.Action == "" {
-			proc.Action = config.DoNothingOnFailrue
+			proc.Action = config.DoNothingOnFailure
 		}
 
 		a.processes = append(a.processes, proc)
@@ -131,7 +131,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			}
 
 			switch err.Proc.Action {
-			case config.DoNothingOnFailrue:
+			case config.DoNothingOnFailure:
 				//Ignore this dead process
 				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				err.Proc.Cmd.Wait()

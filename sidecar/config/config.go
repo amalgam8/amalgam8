@@ -31,12 +31,17 @@ import (
 )
 
 const (
-	RestartOnFailure   = "restart"
-	KillOnFailure      = "kill"
-	DoNothingOnFailrue = "nothing"
+	//RestartOnFailure signal that supervisor should restart process on failure
+	RestartOnFailure = "restart"
+
+	//KillOnFailure signal that supervisor should kill other processes and exit process on failure
+	KillOnFailure = "kill"
+
+	//DoNothingOnFailure signal that supervisor should ignore this process on failure
+	DoNothingOnFailure = "nothing"
 )
 
-// Command TODO
+// Command to be managed by sidecar app supervisor
 type Command struct {
 	Cmd     []string `yaml:"cmd"`
 	Env     []string `yaml:"env"`

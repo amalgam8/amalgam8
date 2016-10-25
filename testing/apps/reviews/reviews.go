@@ -74,6 +74,9 @@ func main() {
 	}
 
 	http.HandleFunc("/reviews", reviewsHandler)
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 

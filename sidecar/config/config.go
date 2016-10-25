@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"net/url"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 	"gopkg.in/yaml.v2"
@@ -55,6 +57,14 @@ type Controller struct {
 	Poll  time.Duration `yaml:"poll"`
 }
 
+// Health check types.
+const (
+	HTTPHealthCheck    = "http"
+	HTTPSHealthCheck   = "https"
+	TCPHealthCheck     = "tcp"
+	CommandHealthCheck = "file"
+)
+
 // HealthCheck configuration.
 type HealthCheck struct {
 	Type     string        `yaml:"type"`
@@ -63,6 +73,7 @@ type HealthCheck struct {
 	Timeout  time.Duration `yaml:"timeout"`
 	Method   string        `yaml:"method"`
 	Code     int           `yaml:"code"`
+	Args     []string      `yaml:"args"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -190,15 +201,44 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 		c.Service.Tags = tags
 	}
 
-	// For healthchecks flags, we take the raw flag value as the healthcheck value,
-	// and let the 'register.BuildHealthChecks' do the hard work and figure out what
-	// kind of healthcheck it is.
+	// For health check flags, we only support default values.
 	if context.IsSet(healthchecksFlag) {
 		hcValues := context.StringSlice(healthchecksFlag)
 		for _, hcValue := range hcValues {
-			hc := HealthCheck{
-				Value: hcValue,
+			// Parse the healthcheck type from URL scheme
+			u, err := url.Parse(hcValue)
+			if err != nil {
+				return fmt.Errorf("Could not parse healthcheck: '%s'", hcValue)
 			}
+
+			var hcType string
+			switch u.Scheme {
+			case "http":
+				hcType = HTTPHealthCheck
+			case "https":
+				hcType = HTTPSHealthCheck
+			case "tcp":
+				hcType = TCPHealthCheck
+			case "file":
+				hcType = CommandHealthCheck
+			default:
+				return fmt.Errorf("Unsupported health check type: %v", u.Scheme)
+			}
+
+			var hc HealthCheck
+			switch hcType {
+			case CommandHealthCheck:
+				hc = HealthCheck{
+					Type:  hcType,
+					Value: u.Path,
+				}
+			default:
+				hc = HealthCheck{
+					Type:  hcType,
+					Value: hcValue,
+				}
+			}
+
 			c.HealthChecks = append(c.HealthChecks, hc)
 		}
 	}
@@ -241,6 +281,8 @@ func (c *Config) Validate() error {
 	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))
 
 	if c.Register {
+		// TODO: validate health checks
+
 		validators = append(validators,
 			IsNotEmpty("Service Name", c.Service.Name),
 			IsInRange("Service Endpoint Port", c.Endpoint.Port, 1, 65535),

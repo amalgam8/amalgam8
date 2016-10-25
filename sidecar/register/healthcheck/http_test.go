@@ -1,4 +1,18 @@
-package register
+// Copyright 2016 IBM Corporation
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+package healthcheck
 
 import (
 	"time"
@@ -8,14 +22,15 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("HTTPHealthCheck", func() {
+var _ = Describe("HTTP health check", func() {
 
-	Context("When constructing a new HTTPHealthCheck", func() {
+	Context("When constructing a new HTTP health check", func() {
 
-		var hc *HTTPHealthCheck
+		var check Check
+		var hc *HTTP
 		var err error
 
-		Context("Using an explicit configuraiton values", func() {
+		Context("Using an explicit configuration values", func() {
 			conf := config.HealthCheck{
 				Type:     "http",
 				Value:    "http://localhost:8082/healthcheck",
@@ -26,12 +41,14 @@ var _ = Describe("HTTPHealthCheck", func() {
 			}
 
 			BeforeEach(func() {
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
+				hc = check.(*HTTP)
 			})
 
-			It("Succeeds to create a healthcheck", func() {
-				Expect(hc).To(Not(BeNil()))
-				Expect(err).To(Not(HaveOccurred()))
+			It("Succeesfully creates a healthcheck", func() {
+				Expect(check).ToNot(BeNil())
+				Expect(hc).ToNot(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("Uses values passed with configurations", func() {
@@ -39,7 +56,6 @@ var _ = Describe("HTTPHealthCheck", func() {
 				Expect(hc.url).To(Equal(conf.Value))
 				Expect(hc.code).To(Equal(conf.Code))
 				Expect(hc.method).To(Equal(conf.Method))
-				Expect(hc.interval).To(Equal(conf.Interval))
 				Expect(hc.client.Timeout).To(Equal(conf.Timeout))
 			})
 		})
@@ -50,21 +66,21 @@ var _ = Describe("HTTPHealthCheck", func() {
 			}
 
 			BeforeEach(func() {
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
+				hc = check.(*HTTP)
 			})
 
 			It("Succeeds to create a healthcheck", func() {
-				Expect(hc).To(Not(BeNil()))
-				Expect(err).To(Not(HaveOccurred()))
+				Expect(hc).ToNot(BeNil())
+				Expect(err).ToNot(HaveOccurred())
 			})
 
 			It("Sets default values for missing fields", func() {
 				// TODO: Better, less ugly way to test this?
 				Expect(hc.url).To(Equal(conf.Value))
-				Expect(hc.code).To(Not(BeZero()))
-				Expect(hc.method).To(Not(BeZero()))
-				Expect(hc.interval).To(Not(BeZero()))
-				Expect(hc.client.Timeout).To(Not(BeZero()))
+				Expect(hc.code).ToNot(BeZero())
+				Expect(hc.method).ToNot(BeZero())
+				Expect(hc.client.Timeout).ToNot(BeZero())
 			})
 
 		})
@@ -82,58 +98,58 @@ var _ = Describe("HTTPHealthCheck", func() {
 
 			It("Fails to create a healthcheck due to an invalid type", func() {
 				conf.Type = "wtf"
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid URL", func() {
 				conf.Value = "wtf"
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to a missing URL", func() {
 				conf.Value = ""
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid method", func() {
 				conf.Method = "PING"
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid method", func() {
 				conf.Method = "PING"
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck due to an invalid code", func() {
 				conf.Code = 1
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 
 			It("Fails to create a healthcheck using an empty configuration", func() {
 				conf.Type = ""
 				conf.Value = ""
-				hc, err = NewHTTPHealthCheck(conf)
+				check, err = NewHTTP(conf)
 
-				Expect(hc).To(BeNil())
+				Expect(check).To(BeNil())
 				Expect(err).To(HaveOccurred())
 			})
 

@@ -17,29 +17,29 @@ package register
 import (
 	"sync"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 )
 
 // HealthChecker uses a collection of periodic health checks to manage registration. Registration is maintained while
 // the state of the health checker is healthy. If the state changes to unhealthy, the registration agent is stopped.
-// Similarly, if the state changes to healthy, the registration agent is started again. If any health check's last
-// reported status is unhealthy, the health checker is considered unhealthy.
+// Similarly, if the state changes to healthy the registration agent is started again. The health checker is considered
+// unhealthy if any health check's last reported status is unhealthy.
 type HealthChecker struct {
 	active       bool
 	stop         chan struct{}
-	checks       []HealthCheck
+	agents       []*healthcheck.Agent
 	mutex        sync.Mutex
 	registration *RegistrationAgent
 }
 
 // NewHealthChecker instantiates a health checker.
-func NewHealthChecker(registration *RegistrationAgent, checks []HealthCheck) *HealthChecker {
+func NewHealthChecker(registration *RegistrationAgent, checks []*healthcheck.Agent) *HealthChecker {
 	if len(checks) == 0 {
 		panic("No health checks provided")
 	}
 
 	return &HealthChecker{
-		checks:       checks,
+		agents:       checks,
 		registration: registration,
 	}
 }
@@ -54,7 +54,7 @@ func (checker *HealthChecker) Start() {
 	}
 	checker.active = true
 
-	go checker.report()
+	go checker.maintainRegistration()
 }
 
 // Stop checking
@@ -71,44 +71,69 @@ func (checker *HealthChecker) Stop() {
 	checker.stop <- struct{}{}
 }
 
-func (checker *HealthChecker) report() {
-	wasHealthy := false // Initialize as unhealthy so that we register on the first successful health check
+// maintainRegistration
+func (checker *HealthChecker) maintainRegistration() {
+	// Receives a value whenever the status of a health check agent changes from healthy to unhealthy or vice versa.
+	healthChan := make(chan bool, len(checker.agents))
 
-	statusChan := make(chan HealthStatus, len(checker.checks))
-	for _, healthCheck := range checker.checks {
-		healthCheck.Start(statusChan)
+	// Start agents and begin monitoring for changes in health status.
+	statusChans := make([]chan error, len(checker.agents))
+	for i, agent := range checker.agents {
+		// Create a channel for receiving health check statuses from the agent.
+		statusChans[i] = make(chan error, 1)
+
+		// Start the agent.
+		agent.Start(statusChans[i])
+
+		// Begin monitoring the agent.
+		go func(statusChan chan error) {
+			wasHealthy := false
+			for {
+				select {
+				case err, open := <-statusChan:
+					// Check if the channel has been closed.
+					if !open {
+						return
+					}
+
+					// Report changes in the health check agent's status.
+					healthy := err == nil
+					if healthy != wasHealthy {
+						healthChan <- healthy
+					}
+					wasHealthy = healthy
+				}
+			}
+		}(statusChans[i])
 	}
 
-	// Set of health checks that have most recently reported unhealthy statuses.
-	unhealthyStatuses := make(map[HealthCheck]interface{})
+	// Monitor the number of agents reporting healthy statuses. Maintain registration if all agents are reporting
+	// healthy statuses, and unregister if any agents become unhealthy.
+	numHealthy := 0
 	for {
 		select {
-		case status := <-statusChan:
-			logrus.WithField("status", status).Debug("Recieved health status")
-
-			// Update our set
-			if status.Error != nil {
-				unhealthyStatuses[status.HealthCheck] = struct{}{}
+		case healthy := <-healthChan:
+			if healthy {
+				numHealthy++
+				if numHealthy == len(checker.agents) { // Overall state has become healthy.
+					checker.registration.Start()
+				}
 			} else {
-				delete(unhealthyStatuses, status.HealthCheck)
+				numHealthy--
+				if numHealthy == len(checker.agents)-1 { // Overall state has become unhealthy.
+					checker.registration.Stop()
+				}
 			}
-
-			healthy := len(unhealthyStatuses) == 0
-			if healthy && !wasHealthy {
-				logrus.Debug("Service is healthy, registering")
-				checker.registration.Start()
-			} else if !healthy && wasHealthy {
-				logrus.Warn("Service is unhealthy, unregistering")
-				checker.registration.Stop()
-			}
-
-			// Record overall health state for next status
-			wasHealthy = healthy
 		case <-checker.stop:
-			for _, healthCheck := range checker.checks {
-				healthCheck.Stop()
+			// Stop the agents.
+			for _, agent := range checker.agents {
+				agent.Stop()
+			}
+
+			// Stop the monitors.
+			for _, statusChan := range statusChans {
+				close(statusChan)
 			}
 		}
 	}
-
 }

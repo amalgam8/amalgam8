@@ -49,10 +49,10 @@ func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error
 	}
 
 	entries := make(map[string]string)
-	for _, rule := range rules {
+	for i := range rules {
 		id := uuid.New() // Generate an ID for each rule
-		rule.ID = id
-		data, err := json.Marshal(&rule)
+		rules[i].ID = id
+		data, err := json.Marshal(&rules[i])
 		if err != nil {
 			return NewRules{}, &JSONMarshalError{Message: err.Error()}
 		}

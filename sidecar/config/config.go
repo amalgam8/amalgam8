@@ -62,7 +62,7 @@ const (
 	HTTPHealthCheck    = "http"
 	HTTPSHealthCheck   = "https"
 	TCPHealthCheck     = "tcp"
-	CommandHealthCheck = "cmd"
+	CommandHealthCheck = "file"
 )
 
 // HealthCheck configuration.
@@ -219,7 +219,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 				hcType = HTTPSHealthCheck
 			case "tcp":
 				hcType = TCPHealthCheck
-			case "cmd":
+			case "file":
 				hcType = CommandHealthCheck
 			default:
 				return fmt.Errorf("Unsupported health check type: %v", u.Scheme)

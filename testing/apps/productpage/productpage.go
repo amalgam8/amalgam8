@@ -57,6 +57,9 @@ func main() {
 	proxyURL = os.Args[2]
 
 	http.HandleFunc("/productpage", productpageHandler)
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 

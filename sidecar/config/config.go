@@ -188,7 +188,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Log, logFlag)
-	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)

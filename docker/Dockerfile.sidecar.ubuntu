@@ -39,6 +39,6 @@ ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
 
 ADD bin/a8sidecar /usr/bin/a8sidecar
 
-ENTRYPOINT ["/usr/bin/a8sidecar", "--supervise=false"]
+ENTRYPOINT ["/usr/bin/a8sidecar"]
 
 EXPOSE 6379

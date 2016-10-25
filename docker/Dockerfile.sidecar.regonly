@@ -16,4 +16,4 @@ FROM ubuntu:14.04
 
 ADD bin/a8sidecar /usr/bin/a8sidecar
 
-ENTRYPOINT ["/usr/bin/a8sidecar", "--proxy=false", "--log=false", "--supervise=false"]
+ENTRYPOINT ["/usr/bin/a8sidecar"]

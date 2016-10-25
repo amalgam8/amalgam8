@@ -32,14 +32,14 @@ import (
 // AppSupervisor TODO
 type AppSupervisor struct {
 	agent   *register.RegistrationAgent
-	App     *exec.Cmd
-	Helpers []*exec.Cmd
+	app     *exec.Cmd
+	helpers []*exec.Cmd
 }
 
 // NewAppSupervisor TODO
 func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 	a := AppSupervisor{
-		Helpers: []*exec.Cmd{},
+		helpers: []*exec.Cmd{},
 	}
 
 	for _, cmd := range conf.Commands {
@@ -56,9 +56,9 @@ func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 		osCmd.Env = cmdEnv
 
 		if cmd.Primary {
-			a.App = osCmd
+			a.app = osCmd
 		} else {
-			a.Helpers = append(a.Helpers, osCmd)
+			a.helpers = append(a.helpers, osCmd)
 		}
 	}
 
@@ -71,19 +71,19 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 	a.agent = agent
 
 	appChan := make(chan error, 1)
-	if a.App != nil {
-		log.Infof("Launching app '%s' with args '%s'", a.App.Args[0], strings.Join(a.App.Args[1:], " "))
-		err := a.App.Start()
+	if a.app != nil {
+		log.Infof("Launching app '%s' with args '%s'", a.app.Args[0], strings.Join(a.app.Args[1:], " "))
+		err := a.app.Start()
 		if err != nil {
 			appChan <- err
 		} else {
 			go func() {
-				appChan <- a.App.Wait()
+				appChan <- a.app.Wait()
 			}()
 		}
 	}
 
-	for _, cmd := range a.Helpers {
+	for _, cmd := range a.helpers {
 		log.Infof("Launching app '%s' with args '%s'", cmd.Args[0], strings.Join(cmd.Args[1:], " "))
 		go func(cmd *exec.Cmd) {
 			err := cmd.Run()
@@ -100,7 +100,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			log.Infof("Intercepted signal '%s'", sig)
 
 			// forwarding signal to application parent process
-			exit(append(a.Helpers, a.App), sig)
+			exit(append(a.helpers, a.app), sig)
 
 			a.Shutdown(0)
 		case err := <-appChan:
@@ -118,7 +118,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 					log.Errorf("App failed to start: %v", err)
 				}
 			}
-			exit(a.Helpers, syscall.SIGKILL)
+			exit(a.helpers, syscall.SIGKILL)
 			a.Shutdown(exitCode)
 		}
 	}
@@ -154,20 +154,4 @@ func exit(cmds []*exec.Cmd, sig os.Signal) {
 	}
 
 	wg.Wait()
-}
-
-// DoLogManagement TODO
-func (a *AppSupervisor) DoLogManagement(filebeatConf string) {
-	// starting filebeat
-	logcmd := exec.Command("filebeat", "-c", filebeatConf)
-	env := os.Environ()
-	env = append(env, "GODEBUG=netdns=go")
-	logcmd.Env = env
-
-	logcmd.Stdin = os.Stdin
-	logcmd.Stdout = os.Stdout
-	err := logcmd.Run()
-	if err != nil {
-		log.WithError(err).Warn("Filebeat process exited with error")
-	}
 }

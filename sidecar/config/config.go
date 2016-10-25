@@ -89,9 +89,6 @@ type Config struct {
 
 	LogLevel string `yaml:"log_level"`
 
-	Log            bool   `yaml:"log"`
-	LogstashServer string `yaml:"logstash_server"`
-
 	Commands []Command `yaml:"commands"`
 
 	Debug string
@@ -187,8 +184,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
-	loadFromContextIfSet(&c.Log, logFlag)
-	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
 
@@ -240,12 +235,6 @@ func (c *Config) Validate() error {
 				}
 				return nil
 			},
-		)
-	}
-
-	if c.Log {
-		validators = append(validators,
-			IsNotEmpty("Logstash Host", c.LogstashServer),
 		)
 	}
 

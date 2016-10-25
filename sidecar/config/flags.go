@@ -37,8 +37,6 @@ const (
 	controllerPollFlag  = "controller_poll"
 	superviseFlag       = "supervise"
 	healthchecksFlag    = "healthchecks"
-	logFlag             = "log"
-	logstashServerFlag  = "logstash_server"
 	logLevelFlag        = "log_level"
 	debugFlag           = "debug"
 )
@@ -123,16 +121,6 @@ var Flags = []cli.Flag{
 		Name:   healthchecksFlag,
 		EnvVar: envVar(healthchecksFlag),
 		Usage:  "List of health check URLs",
-	},
-	cli.BoolFlag{
-		Name:   logFlag,
-		EnvVar: envVar(logFlag),
-		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",
-	},
-	cli.StringFlag{
-		Name:   logstashServerFlag,
-		EnvVar: envVar(logstashServerFlag),
-		Usage:  "Logstash target for nginx logs",
 	},
 	cli.StringFlag{
 		Name:   logLevelFlag,

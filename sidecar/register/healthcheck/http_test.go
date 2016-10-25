@@ -30,7 +30,7 @@ var _ = Describe("HTTP health check", func() {
 		var hc *HTTP
 		var err error
 
-		Context("Using an explicit configuraton values", func() {
+		Context("Using an explicit configuration values", func() {
 			conf := config.HealthCheck{
 				Type:     "http",
 				Value:    "http://localhost:8082/healthcheck",
@@ -45,7 +45,7 @@ var _ = Describe("HTTP health check", func() {
 				hc = check.(*HTTP)
 			})
 
-			It("Succeeds to create a healthcheck", func() {
+			It("Succeesfully creates a healthcheck", func() {
 				Expect(check).ToNot(BeNil())
 				Expect(hc).ToNot(BeNil())
 				Expect(err).ToNot(HaveOccurred())

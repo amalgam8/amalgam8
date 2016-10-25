@@ -31,15 +31,19 @@ import (
 
 // AppSupervisor TODO
 type AppSupervisor struct {
-	agent   *register.RegistrationAgent
-	app     *exec.Cmd
-	helpers []*exec.Cmd
+	agent     *register.RegistrationAgent
+	processes []*process
+}
+
+type process struct {
+	Cmd    *exec.Cmd
+	Action string
 }
 
 // NewAppSupervisor TODO
 func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 	a := AppSupervisor{
-		helpers: []*exec.Cmd{},
+		processes: []*process{},
 	}
 
 	for _, cmd := range conf.Commands {
@@ -54,15 +58,23 @@ func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 			cmdEnv = append(cmdEnv, cmd.Env...)
 		}
 		osCmd.Env = cmdEnv
-
-		if cmd.Primary {
-			a.app = osCmd
-		} else {
-			a.helpers = append(a.helpers, osCmd)
+		proc := &process{
+			Cmd:    osCmd,
+			Action: cmd.OnDeath,
 		}
+		if proc.Action == "" {
+			proc.Action = config.DoNothingOnFailrue
+		}
+
+		a.processes = append(a.processes, proc)
 	}
 
 	return &a
+}
+
+type processError struct {
+	Err  error
+	Proc *process
 }
 
 // DoAppSupervision TODO
@@ -70,25 +82,24 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	a.agent = agent
 
-	appChan := make(chan error, 1)
-	if a.app != nil {
-		log.Infof("Launching app '%s' with args '%s'", a.app.Args[0], strings.Join(a.app.Args[1:], " "))
-		err := a.app.Start()
+	appChan := make(chan processError, len(a.processes))
+	for _, proc := range a.processes {
+		log.Infof("Launching app '%s' with args '%s'", proc.Cmd.Args[0], strings.Join(proc.Cmd.Args[1:], " "))
+		err := proc.Cmd.Start()
 		if err != nil {
-			appChan <- err
+			appChan <- processError{
+				Err:  err,
+				Proc: proc,
+			}
 		} else {
-			go func() {
-				appChan <- a.app.Wait()
-			}()
+			go func(proc *process) {
+				err := proc.Cmd.Wait()
+				appChan <- processError{
+					Err:  err,
+					Proc: proc,
+				}
+			}(proc)
 		}
-	}
-
-	for _, cmd := range a.helpers {
-		log.Infof("Launching app '%s' with args '%s'", cmd.Args[0], strings.Join(cmd.Args[1:], " "))
-		go func(cmd *exec.Cmd) {
-			err := cmd.Run()
-			log.WithError(err).Warn("Failed to launch helper command '%s'", cmd.Args[0])
-		}(cmd)
 	}
 
 	// Intercept SIGTERM/SIGINT and stop
@@ -99,17 +110,17 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 		case sig := <-sigChan:
 			log.Infof("Intercepted signal '%s'", sig)
 
-			// forwarding signal to application parent process
-			exit(append(a.helpers, a.app), sig)
+			// forwarding signal to supervised applications to exit gracefully
+			exit(a.processes, sig)
 
 			a.Shutdown(0)
 		case err := <-appChan:
 			exitCode := 0
-			if err == nil {
+			if err.Err == nil {
 				log.Info("App terminated with exit code 0")
 			} else {
 				exitCode = 1
-				if exitErr, ok := err.(*exec.ExitError); ok {
+				if exitErr, ok := err.Err.(*exec.ExitError); ok {
 					if waitStatus, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 						exitCode = waitStatus.ExitStatus()
 					}
@@ -118,8 +129,23 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 					log.Errorf("App failed to start: %v", err)
 				}
 			}
-			exit(a.helpers, syscall.SIGKILL)
-			a.Shutdown(exitCode)
+
+			switch err.Proc.Action {
+			case config.DoNothingOnFailrue:
+				//Ignore this dead process
+				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				err.Proc.Cmd.Wait()
+
+			case config.RestartOnFailure:
+				//TODO add restart functionality
+				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Restarting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+
+			case config.KillOnFailure:
+				log.WithError(err.Err).Error("App '%s' with args '%s' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				exit(a.processes, syscall.SIGKILL)
+				a.Shutdown(exitCode)
+			}
+
 		}
 	}
 }
@@ -135,12 +161,12 @@ func (a *AppSupervisor) Shutdown(sig int) {
 	os.Exit(sig)
 }
 
-func exit(cmds []*exec.Cmd, sig os.Signal) {
+func exit(procs []*process, sig os.Signal) {
 
 	var wg sync.WaitGroup
 
-	wg.Add(len(cmds))
-	for _, cmd := range cmds {
+	wg.Add(len(procs))
+	for _, proc := range procs {
 		go func(cmd *exec.Cmd) {
 			defer wg.Done()
 			timer := time.AfterFunc(3*time.Second, func() {
@@ -150,7 +176,7 @@ func exit(cmds []*exec.Cmd, sig os.Signal) {
 
 			cmd.Wait()
 			timer.Stop()
-		}(cmd)
+		}(proc.Cmd)
 	}
 
 	wg.Wait()

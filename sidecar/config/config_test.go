@@ -98,8 +98,6 @@ var _ = Describe("Config", func() {
 				"--supervise=true",
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
-				"--log=true",
-				"--logstash_server=logstash:8092",
 				"--log_level=debug",
 				"python", "productpage.py",
 			}...)
@@ -155,8 +153,6 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
 			os.Setenv("A8_SUPERVISE", "true")
 			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
-			os.Setenv("A8_LOG", "true")
-			os.Setenv("A8_LOGSTASH_SERVER", "logstash:8092")
 			os.Setenv("A8_LOG_LEVEL", "debug")
 
 			args := append(os.Args[:1], []string{
@@ -180,8 +176,6 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_CONTROLLER_POLL")
 			os.Unsetenv("A8_SUPERVISE")
 			os.Unsetenv("A8_HEALTHCHECKS")
-			os.Unsetenv("A8_LOG")
-			os.Unsetenv("A8_LOGSTASH_SERVER")
 			os.Unsetenv("A8_LOG_LEVEL")
 		})
 
@@ -262,9 +256,6 @@ healthchecks:
     timeout: 3s
     method: POST
     code: 201
-
-log: true
-logstash_server: logstash:8092
 
 log_level: debug
 `

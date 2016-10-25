@@ -28,11 +28,17 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	RestartOnFailure   = "restart"
+	KillOnFailure      = "kill"
+	DoNothingOnFailrue = "nothing"
+)
+
 // Command TODO
 type Command struct {
 	Cmd     []string `yaml:"cmd"`
 	Env     []string `yaml:"env"`
-	Primary bool     `yaml:"primary"`
+	OnDeath string   `yaml:"on_death"`
 }
 
 // Service configuration
@@ -209,7 +215,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	if context.Args().Present() {
 		cmd := Command{
 			Cmd:     context.Args(),
-			Primary: true,
+			OnDeath: KillOnFailure,
 		}
 		c.Commands = []Command{cmd}
 	}

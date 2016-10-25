@@ -46,9 +46,6 @@ var DefaultConfig = Config{
 
 	HealthChecks: nil,
 
-	Log:            false,
-	LogstashServer: "",
-
 	LogLevel: "info",
 
 	Commands: nil,

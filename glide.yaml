@@ -16,21 +16,19 @@ package: github.com/amalgam8/amalgam8
 
 
 import:
-    
+
 - package: github.com/Sirupsen/logrus
   version: 0.8.7
   subpackages:
   - formatters/logstash
-  
+
 - package: github.com/ant0ine/go-json-rest
   version: 3.3.1
   subpackages:
   - rest
-    
-- package: github.com/garyburd/redigo/redis
 
-- package: github.com/Shopify/sarama
-  version: 89bd629b50e1a69c40d40ded1c82a767b4859442
+- package: github.com/garyburd/redigo/redis
+  version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
 
 - package: github.com/xeipuuv/gojsonschema
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
@@ -40,12 +38,12 @@ import:
 
 - package: github.com/dgrijalva/jwt-go
   version: 2.3.0
-  
+
 - package: github.com/nicksnyder/go-i18n
   version: 1.4.0
   subpackages:
   - i18n
-  
+
 - package: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 

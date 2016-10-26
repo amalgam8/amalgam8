@@ -29,7 +29,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/register"
 )
 
-// AppSupervisor TODO
+// AppSupervisor manages process in sidecar
 type AppSupervisor struct {
 	agent     *register.RegistrationAgent
 	processes []*process
@@ -40,7 +40,7 @@ type process struct {
 	Action string
 }
 
-// NewAppSupervisor TODO
+// NewAppSupervisor builds new AppSupervisor using Commands in Config object
 func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 	a := AppSupervisor{
 		processes: []*process{},
@@ -49,21 +49,16 @@ func NewAppSupervisor(conf *config.Config) *AppSupervisor {
 	for _, cmd := range conf.Commands {
 		osCmd := exec.Command(cmd.Cmd[0], cmd.Cmd[1:]...)
 
-		osCmd.Stdin = os.Stdin
 		osCmd.Stdout = os.Stdout
 		osCmd.Stderr = os.Stderr
 
-		cmdEnv := os.Environ()
-		if cmd.Env != nil {
-			cmdEnv = append(cmdEnv, cmd.Env...)
-		}
-		osCmd.Env = cmdEnv
+		osCmd.Env = append(cmd.Env, os.Environ()...)
 		proc := &process{
 			Cmd:    osCmd,
-			Action: cmd.OnDeath,
+			Action: cmd.OnExit,
 		}
 		if proc.Action == "" {
-			proc.Action = config.DoNothingOnFailure
+			proc.Action = config.IgnoreProcess
 		}
 
 		a.processes = append(a.processes, proc)
@@ -77,7 +72,7 @@ type processError struct {
 	Proc *process
 }
 
-// DoAppSupervision TODO
+// DoAppSupervision starts subprocesses and manages their lifecycle - exiting if necessary
 func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	a.agent = agent
@@ -111,7 +106,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			log.Infof("Intercepted signal '%s'", sig)
 
 			// forwarding signal to supervised applications to exit gracefully
-			exit(a.processes, sig)
+			terminateSubprocesses(a.processes, sig)
 
 			a.Shutdown(0)
 		case err := <-appChan:
@@ -131,18 +126,14 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			}
 
 			switch err.Proc.Action {
-			case config.DoNothingOnFailure:
+			case config.IgnoreProcess:
 				//Ignore this dead process
 				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				err.Proc.Cmd.Wait()
 
-			case config.RestartOnFailure:
-				//TODO add restart functionality
-				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Restarting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
-
-			case config.KillOnFailure:
+			case config.TerminateProcess:
 				log.WithError(err.Err).Error("App '%s' with args '%s' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
-				exit(a.processes, syscall.SIGKILL)
+				terminateSubprocesses(a.processes, syscall.SIGTERM)
 				a.Shutdown(exitCode)
 			}
 
@@ -150,7 +141,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 	}
 }
 
-// Shutdown TODO
+// Shutdown deregister the app with registry and exit sidecar
 func (a *AppSupervisor) Shutdown(sig int) {
 
 	if a.agent != nil {
@@ -161,7 +152,7 @@ func (a *AppSupervisor) Shutdown(sig int) {
 	os.Exit(sig)
 }
 
-func exit(procs []*process, sig os.Signal) {
+func terminateSubprocesses(procs []*process, sig os.Signal) {
 
 	var wg sync.WaitGroup
 

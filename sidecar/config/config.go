@@ -31,21 +31,18 @@ import (
 )
 
 const (
-	//RestartOnFailure signal that supervisor should restart process on failure
-	RestartOnFailure = "restart"
+	//TerminateProcess signal that supervisor should kill other processes and exit process on failure
+	TerminateProcess = "terminate"
 
-	//KillOnFailure signal that supervisor should kill other processes and exit process on failure
-	KillOnFailure = "kill"
-
-	//DoNothingOnFailure signal that supervisor should ignore this process on failure
-	DoNothingOnFailure = "nothing"
+	//IgnoreProcess signal that supervisor should ignore this process on failure
+	IgnoreProcess = "ignore"
 )
 
 // Command to be managed by sidecar app supervisor
 type Command struct {
-	Cmd     []string `yaml:"cmd"`
-	Env     []string `yaml:"env"`
-	OnDeath string   `yaml:"on_death"`
+	Cmd    []string `yaml:"cmd"`
+	Env    []string `yaml:"env"`
+	OnExit string   `yaml:"on_exit"`
 }
 
 // Service configuration
@@ -259,10 +256,10 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	if context.Args().Present() {
 		cmd := Command{
-			Cmd:     context.Args(),
-			OnDeath: KillOnFailure,
+			Cmd:    context.Args(),
+			OnExit: TerminateProcess,
 		}
-		c.Commands = []Command{cmd}
+		c.Commands = append(c.Commands, cmd)
 	}
 
 	return nil

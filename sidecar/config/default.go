@@ -42,8 +42,6 @@ var DefaultConfig = Config{
 		Poll:  time.Duration(15 * time.Second),
 	},
 
-	Supervise: false,
-
 	HealthChecks: nil,
 
 	LogLevel: "info",

@@ -102,8 +102,6 @@ type Config struct {
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise bool `yaml:"supervise"`
-
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	LogLevel string `yaml:"log_level"`
@@ -202,7 +200,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
-	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
 
@@ -275,16 +272,20 @@ func (c *Config) Validate() error {
 	// Create list of validation checks
 	validators := []ValidatorFunc{}
 
-	if c.Supervise {
-		validators = append(validators,
-			func() error {
-				if len(c.Commands) == 0 {
-					return fmt.Errorf("Supervision mode requires application launch arguments")
+	validators = append(validators,
+		func() error {
+			for _, cmd := range c.Commands {
+				if cmd.OnExit != "" && (cmd.OnExit != TerminateProcess && cmd.OnExit != IgnoreProcess) {
+					return fmt.Errorf("Unrecognized OnExit command '%v'. Supported"+
+						" process OnExit types are 'ignore' and 'terminate'", cmd.OnExit)
 				}
-				return nil
-			},
-		)
-	}
+				if len(cmd.Cmd) == 0 {
+					return fmt.Errorf("Invalid command provided for process")
+				}
+			}
+			return nil
+		},
+	)
 
 	// Registry URL is needed for both proxying and registering.  Registry token is not required in all auth cases
 	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))

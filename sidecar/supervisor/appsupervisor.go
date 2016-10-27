@@ -21,7 +21,6 @@ import (
 	"strings"
 	"syscall"
 
-	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -132,7 +131,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 				err.Proc.Cmd.Wait()
 
 			case config.TerminateProcess:
-				log.WithError(err.Err).Error("App '%s' with args '%s' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				log.WithError(err.Err).Errorf("App '%s' with args '%s' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				terminateSubprocesses(a.processes, syscall.SIGTERM)
 				a.Shutdown(exitCode)
 			}
@@ -154,21 +153,30 @@ func (a *AppSupervisor) Shutdown(sig int) {
 
 func terminateSubprocesses(procs []*process, sig os.Signal) {
 
-	var wg sync.WaitGroup
-
-	wg.Add(len(procs))
 	for _, proc := range procs {
-		go func(cmd *exec.Cmd) {
-			defer wg.Done()
-			timer := time.AfterFunc(3*time.Second, func() {
-				cmd.Process.Kill()
-			})
-			cmd.Process.Signal(sig)
-
-			cmd.Wait()
-			timer.Stop()
-		}(proc.Cmd)
+		proc.Cmd.Process.Signal(sig)
 	}
 
-	wg.Wait()
+	timeout := time.Now().Add(3 * time.Second)
+	alive := len(procs)
+	for alive > 0 {
+		alive = len(procs)
+		for _, proc := range procs {
+			if e := syscall.Kill(proc.Cmd.Process.Pid, syscall.Signal(0)); e != nil {
+				if e == syscall.ESRCH {
+					alive--
+				}
+			}
+		}
+
+		if time.Now().After(timeout) {
+			for _, proc := range procs {
+				proc.Cmd.Process.Kill()
+			}
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
 }

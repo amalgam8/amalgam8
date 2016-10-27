@@ -30,7 +30,7 @@ const DefaultReregistrationDelay = time.Duration(5) * time.Second
 
 // RegistrationConfig options
 type RegistrationConfig struct {
-	Client          client.Client
+	Client          client.Registry
 	ServiceInstance *client.ServiceInstance
 }
 
@@ -54,8 +54,12 @@ func NewRegistrationAgent(config RegistrationConfig) (*RegistrationAgent, error)
 	return agent, nil
 }
 
-// Start maintaining registration with registry. Non-blocking.
+// Start maintaining registration with registry.
+// Non-blocking.
 func (agent *RegistrationAgent) Start() {
+	logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
+		Info("Starting Amalgam8 service registration agent")
+
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
 
@@ -68,7 +72,11 @@ func (agent *RegistrationAgent) Start() {
 }
 
 // Stop maintaining registration with registry.
+// Blocks until deregistration attempt is complete.
 func (agent *RegistrationAgent) Stop() {
+	logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
+		Info("Stopping Amalgam8 service registration agent")
+
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
 
@@ -78,21 +86,33 @@ func (agent *RegistrationAgent) Stop() {
 	agent.active = false
 
 	agent.stop <- struct{}{}
+	<-agent.stop
 }
 
 func (agent *RegistrationAgent) register() {
 	for {
+		logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
+			Debug("Attempting to register service with Amalgam8")
+
 		registeredInstance, err := agent.config.Client.Register(agent.config.ServiceInstance)
 		if err == nil {
+			logrus.WithFields(logrus.Fields{
+				"service_name": registeredInstance.ServiceName,
+				"instance_id":  registeredInstance.ID,
+			}).Info("Service successfully registered with Amalgam8")
+
 			go agent.renew(registeredInstance)
 			return
 		}
-		logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).Warn("Registration failed")
+
+		logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).
+			Warnf("Service registration had failed. Re-attempting in %s", DefaultReregistrationDelay)
 
 		select {
 		case <-time.After(DefaultReregistrationDelay):
 			continue
 		case <-agent.stop:
+			agent.stop <- struct{}{}
 			return
 		}
 	}
@@ -100,23 +120,52 @@ func (agent *RegistrationAgent) register() {
 
 func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 	interval := time.Duration(instance.TTL) * time.Second / DefaultHeartbeatsPerTTL
+
 	for {
 		select {
 		case <-time.After(interval):
+			logrus.WithFields(logrus.Fields{
+				"service_name": instance.ServiceName,
+				"instance_id":  instance.ID,
+			}).Debug("Attempting to renew service registration with Amalgam8")
+
 			err := agent.config.Client.Renew(instance.ID)
-			if cErr, ok := err.(client.Error); ok && cErr.Code == client.ErrorCodeUnknownInstance {
-				logrus.WithError(cErr).WithField("service_name", instance.ServiceName).Warn("Heartbeat failed")
-				go agent.register()
-				return
+			if err != nil {
+				logrus.WithError(err).WithFields(logrus.Fields{
+					"service_name": instance.ServiceName,
+					"instance_id":  instance.ID,
+				}).Warn("Service registration renewal had failed")
+
+				if cErr, ok := err.(client.Error); ok && cErr.Code == client.ErrorCodeUnknownInstance {
+					go agent.register()
+					return
+				}
 			}
+
 		case <-agent.stop:
-			go agent.deregister(instance)
+			agent.deregister(instance)
+			agent.stop <- struct{}{}
 			return
 		}
 	}
 }
 
 func (agent *RegistrationAgent) deregister(instance *client.ServiceInstance) {
-	logrus.WithField("service_name", instance.ServiceName).Info("Deregistered")
-	agent.config.Client.Deregister(instance.ID)
+	logrus.WithFields(logrus.Fields{
+		"service_name": instance.ServiceName,
+		"instance_id":  instance.ID,
+	}).Info("Attempting to deregister service with Amalgam8")
+
+	err := agent.config.Client.Deregister(instance.ID)
+	if err != nil {
+		logrus.WithError(err).WithFields(logrus.Fields{
+			"service_name": instance.ServiceName,
+			"instance_id":  instance.ID,
+		}).Warn("Service deregistration had failed")
+	} else {
+		logrus.WithFields(logrus.Fields{
+			"service_name": instance.ServiceName,
+			"instance_id":  instance.ID,
+		}).Info("Service successfully deregistered with Amalgam8")
+	}
 }

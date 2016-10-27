@@ -54,7 +54,8 @@ func NewRegistrationAgent(config RegistrationConfig) (*RegistrationAgent, error)
 	return agent, nil
 }
 
-// Start maintaining registration with registry. Non-blocking.
+// Start maintaining registration with registry.
+// Non-blocking.
 func (agent *RegistrationAgent) Start() {
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
@@ -68,6 +69,7 @@ func (agent *RegistrationAgent) Start() {
 }
 
 // Stop maintaining registration with registry.
+// Blocks until deregistration attempt is complete.
 func (agent *RegistrationAgent) Stop() {
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
@@ -78,6 +80,7 @@ func (agent *RegistrationAgent) Stop() {
 	agent.active = false
 
 	agent.stop <- struct{}{}
+	<-agent.stop
 }
 
 func (agent *RegistrationAgent) register() {
@@ -93,6 +96,7 @@ func (agent *RegistrationAgent) register() {
 		case <-time.After(DefaultReregistrationDelay):
 			continue
 		case <-agent.stop:
+			agent.stop <- struct{}{}
 			return
 		}
 	}
@@ -110,7 +114,8 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 				return
 			}
 		case <-agent.stop:
-			go agent.deregister(instance)
+			agent.deregister(instance)
+			agent.stop <- struct{}{}
 			return
 		}
 	}

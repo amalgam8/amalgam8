@@ -32,6 +32,7 @@ RUN set -ex \
     \
     && rm -rf /tmp/filebeat*
 
+RUN apt-get update; apt-get upgrade -y
 RUN apt-get install -y net-tools
 
 ADD sidecar/nginx/lua /opt/a8_lualib

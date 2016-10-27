@@ -860,7 +860,7 @@ function Amalgam8:get_myip()
 end
 
 function Amalgam8:ip_cmd()
-   local f = assert(io.popen("hostname -i"), 'r')
+   local f = assert(io.popen("hostname -i | awk '{print $1}'"), 'r')
    local s = f:read('*a')
    f:close()
    s = string.gsub(s, '^%s+', '')

@@ -127,11 +127,11 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			switch err.Proc.Action {
 			case config.IgnoreProcess:
 				//Ignore this dead process
-				log.WithError(err.Err).Warn("App '%v' with args '%v' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				log.WithError(err.Err).Warn("App '%v' with args '%v' exited.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				err.Proc.Cmd.Wait()
 
 			case config.TerminateProcess:
-				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				terminateSubprocesses(a.processes, syscall.SIGTERM)
 				a.Shutdown(exitCode)
 			}
@@ -154,7 +154,9 @@ func (a *AppSupervisor) Shutdown(sig int) {
 func terminateSubprocesses(procs []*process, sig os.Signal) {
 
 	for _, proc := range procs {
-		proc.Cmd.Process.Signal(sig)
+		if proc.Cmd.Process != nil {
+			proc.Cmd.Process.Signal(sig)
+		}
 	}
 
 	timeout := time.Now().Add(3 * time.Second)
@@ -162,16 +164,20 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 	for alive > 0 {
 		alive = len(procs)
 		for _, proc := range procs {
-			if e := syscall.Kill(proc.Cmd.Process.Pid, syscall.Signal(0)); e != nil {
-				if e == syscall.ESRCH {
-					alive--
+			if proc.Cmd.Process != nil {
+				if e := syscall.Kill(proc.Cmd.Process.Pid, syscall.Signal(0)); e != nil {
+					if e == syscall.ESRCH {
+						alive--
+					}
 				}
 			}
 		}
 
 		if time.Now().After(timeout) {
 			for _, proc := range procs {
-				proc.Cmd.Process.Kill()
+				if proc.Cmd.Process != nil {
+					proc.Cmd.Process.Kill()
+				}
 			}
 			break
 		}

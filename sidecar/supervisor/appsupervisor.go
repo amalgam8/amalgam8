@@ -78,7 +78,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	appChan := make(chan processError, len(a.processes))
 	for _, proc := range a.processes {
-		log.Infof("Launching app '%s' with args '%s'", proc.Cmd.Args[0], strings.Join(proc.Cmd.Args[1:], " "))
+		log.Infof("Launching app '%v' with args '%v'", proc.Cmd.Args[0], strings.Join(proc.Cmd.Args[1:], " "))
 		err := proc.Cmd.Start()
 		if err != nil {
 			appChan <- processError{
@@ -102,7 +102,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 	for {
 		select {
 		case sig := <-sigChan:
-			log.Infof("Intercepted signal '%s'", sig)
+			log.Infof("Intercepted signal '%v'", sig)
 
 			// forwarding signal to supervised applications to exit gracefully
 			terminateSubprocesses(a.processes, sig)
@@ -118,7 +118,7 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 					if waitStatus, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 						exitCode = waitStatus.ExitStatus()
 					}
-					log.Errorf("App terminated with exit code %d", exitCode)
+					log.Errorf("App terminated with exit code %v", exitCode)
 				} else {
 					log.Errorf("App failed to start: %v", err)
 				}
@@ -127,11 +127,11 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 			switch err.Proc.Action {
 			case config.IgnoreProcess:
 				//Ignore this dead process
-				log.WithError(err.Err).Warn("App '%s' with args '%s' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				log.WithError(err.Err).Warn("App '%v' with args '%v' exited with error.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				err.Proc.Cmd.Wait()
 
 			case config.TerminateProcess:
-				log.WithError(err.Err).Errorf("App '%s' with args '%s' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited with error.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				terminateSubprocesses(a.processes, syscall.SIGTERM)
 				a.Shutdown(exitCode)
 			}

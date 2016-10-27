@@ -30,7 +30,7 @@ const DefaultReregistrationDelay = time.Duration(5) * time.Second
 
 // RegistrationConfig options
 type RegistrationConfig struct {
-	Client          client.Client
+	Client          client.Registry
 	ServiceInstance *client.ServiceInstance
 }
 

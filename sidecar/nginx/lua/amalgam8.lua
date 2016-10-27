@@ -478,7 +478,7 @@ function Amalgam8:new()
 
    self.myname = myname
    self.mytags = mytags
-   self.myip = "0.0.0.0"
+   self.myip = self:ip_cmd()
    return o, nil
 end
 
@@ -500,8 +500,6 @@ function Amalgam8:update_state(input)
    local a8_routes = {}
    local a8_actions = {}
    local err
-
-   self.myip = self:os_cmd("ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'", false)
 
    if input.instances then
       for _, e in ipairs(input.instances) do
@@ -861,15 +859,10 @@ function Amalgam8:get_myip()
    return self.myip
 end
 
-function Amalgam8:get_env(name)
-   return os.getenv(name)
-end
-
-function Amalgam8:os_cmd(cmd, raw)
-   local f = assert(io.popen(cmd), 'r')
+function Amalgam8:ip_cmd()
+   local f = assert(io.popen("hostname -i"), 'r')
    local s = f:read('*a')
    f:close()
-   if raw then return s end
    s = string.gsub(s, '^%s+', '')
    s = string.gsub(s, '%s+$', '')
    s = string.gsub(s, '[\n\r]+', ' ')

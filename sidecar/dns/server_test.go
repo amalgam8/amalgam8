@@ -117,7 +117,7 @@ func (suite *TestSuite) SetupTest() {
 		ID: "2", Endpoint: client.NewTCPEndpoint("127.0.0.5", 5050)})
 
 	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{Tags: []string{"first", "second"},
-		ServiceName: "shoppingCart", ID: "3", Endpoint: client.NewTCPEndpoint("127.0.0.4", 5050)})
+		ServiceName: "shoppingCart", ID: "3", Endpoint: client.NewTCPEndpoint("127.0.0.4", 3050)})
 
 	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "Orders",
 		ID: "4", Endpoint: client.NewTCPEndpoint("127.0.0.10", 3050)})
@@ -149,7 +149,7 @@ func (suite *TestSuite) TearDownTest() {
 // suite.
 
 func (suite *TestSuite) TestShoppingCartNoTags() {
-	target := "shoppingCart.amalgam8"
+	target := "shoppingCart.service.amalgam8"
 	server := "127.0.0.1:"
 
 	c := dns.Client{}
@@ -174,7 +174,7 @@ func (suite *TestSuite) TestShoppingCartNoTags() {
 
 func (suite *TestSuite) TestUnregisteredServices() {
 
-	target := "unregisterd.amalgam8"
+	target := "unregisterd.service.amalgam8"
 	server := "127.0.0.1:"
 
 	c := dns.Client{}
@@ -185,7 +185,7 @@ func (suite *TestSuite) TestUnregisteredServices() {
 	suite.Nil(err)
 	suite.Equal(0, len(r.Answer), "No records for service unregistred")
 
-	target = "httpService.amalgam8"
+	target = "httpService.service.amalgam8"
 	m.SetQuestion(target+".", dns.TypeA)
 	r, _, err = c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
 	suite.Equal(dns.RcodeNameError, r.Rcode)
@@ -206,7 +206,7 @@ func (suite *TestSuite) TestEmptyRequest() {
 }
 
 func (suite *TestSuite) TestRequestsWithTags() {
-	target := "first.second.shoppingCart.amalgam8"
+	target := "first.second.shoppingCart.service.amalgam8"
 	server := "127.0.0.1:"
 
 	c := dns.Client{}
@@ -226,18 +226,18 @@ func (suite *TestSuite) TestRequestsWithTags() {
 
 	}
 
-	target = "tag.Reviews.amalgam8"
+	target = "tag.Reviews.service.amalgam8"
 
 	m.SetQuestion(target+".", dns.TypeA)
 	r, _, err = c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
 	suite.Equal(dns.RcodeNameError, r.Rcode)
 	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "No records for serive unregistred")
+	suite.Equal(0, len(r.Answer), "No records for service unregistred")
 
 }
 
 func (suite *TestSuite) TestRequestsWithSubTags() {
-	target := "seconds.shoppingCart.amalgam8"
+	target := "seconds.shoppingCart.service.amalgam8"
 	server := "127.0.0.1:"
 
 	c := dns.Client{}
@@ -248,6 +248,60 @@ func (suite *TestSuite) TestRequestsWithSubTags() {
 	suite.Nil(err)
 	suite.Equal(0, len(r.Answer), "Should be No records for serive unregistred")
 	//fmt.Println(r.Answer)
+}
+
+func (suite *TestSuite) TestRequestsSRVNoTags() {
+	target := "_shoppingCart._tcp.service.amalgam8"
+	server := "127.0.0.1:"
+
+	c := dns.Client{}
+	m := dns.Msg{}
+	m.SetQuestion(target+".", dns.TypeSRV)
+	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
+	suite.Nil(err)
+	suite.Equal(2, len(r.Answer), "Should be 2 tcp records for shoppingCart")
+	suite.Equal(dns.RcodeSuccess, r.Rcode)
+
+	Arecord1 := r.Answer[0].(*dns.SRV)
+	targetName1 := suite.myClient.services[1].ID + ".instance.amalgam8."
+	suite.True(Arecord1.Target == (targetName1), Arecord1.Target+" (Actual) + Expected : "+targetName1)
+	suite.True(Arecord1.Port == 5050)
+
+	Arecord2 := r.Answer[1].(*dns.SRV)
+	targetName2 := suite.myClient.services[2].ID + ".instance.amalgam8."
+	suite.True(Arecord2.Target == (targetName2))
+	suite.True(Arecord2.Port == 3050)
+
+	Arecord3 := r.Extra[0].(*dns.A)
+	a := net.IPv4(127, 0, 0, 5)
+	suite.True(Arecord3.A.Equal(a))
+
+	Arecord4 := r.Extra[1].(*dns.A)
+	a = net.IPv4(127, 0, 0, 4)
+	suite.True(Arecord4.A.Equal(a))
+
+}
+
+func (suite *TestSuite) TestRequestsSRVWuthTag() {
+	target := "_shoppingCart._first.service.amalgam8"
+	server := "127.0.0.1:"
+
+	c := dns.Client{}
+	m := dns.Msg{}
+	m.SetQuestion(target+".", dns.TypeSRV)
+	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
+	suite.Nil(err)
+	suite.Equal(1, len(r.Answer), "Should be 1 records for  with tag first")
+	suite.Equal(dns.RcodeSuccess, r.Rcode)
+
+	Arecord2 := r.Answer[0].(*dns.SRV)
+	targetName2 := suite.myClient.services[2].ID + ".instance.amalgam8."
+	suite.True(Arecord2.Target == (targetName2))
+	suite.True(Arecord2.Port == 3050)
+	Arecord4 := r.Extra[0].(*dns.A)
+	a := net.IPv4(127, 0, 0, 4)
+	suite.True(Arecord4.A.Equal(a))
+
 }
 
 // In order for 'go test' to run this suite, we need to create

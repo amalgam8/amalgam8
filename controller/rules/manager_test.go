@@ -15,9 +15,10 @@
 package rules
 
 import (
+	"errors"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"errors"
 )
 
 type MockValidator struct {
@@ -32,7 +33,7 @@ var _ = Describe("Manager", func() {
 
 	var (
 		validator Validator
-		manager Manager
+		manager   Manager
 		namespace string
 	)
 
@@ -48,9 +49,9 @@ var _ = Describe("Manager", func() {
 	Describe("simple CRUD operations", func() {
 		Describe("adding a rule", func() {
 			var (
-				rules []Rule
+				rules    []Rule
 				newRules NewRules
-				err error
+				err      error
 			)
 
 			JustBeforeEach(func() {
@@ -99,7 +100,7 @@ var _ = Describe("Manager", func() {
 					JustBeforeEach(func() {
 						rules = []Rule{
 							{
-								ID: newRules.IDs[0],
+								ID:          newRules.IDs[0],
 								Destination: NewDestination,
 							},
 						}

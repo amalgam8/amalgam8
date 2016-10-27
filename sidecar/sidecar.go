@@ -101,8 +101,6 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Register {
-		logrus.Info("Registering")
-
 		registryClient, err := registryclient.New(registryclient.Config{
 			URL:       conf.Registry.URL,
 			AuthToken: conf.Registry.Token,

@@ -290,10 +290,10 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 
 		switch endPointType {
 		case "tcp", "udp":
-			ip,port,  err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
+			ip, port, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
 
 		case "http", "https":
-			ip,port,  err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
+			ip, port, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
 
 		default:
 			continue
@@ -307,7 +307,7 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 			domainName := fullDomainRequestArray[len(fullDomainRequestArray)-1]
 			instanceID := serviceInstance.ID
 			targetName := instanceID + ".instance." + domainName + "."
-			portNumber,_ := strconv.Atoi(port)
+			portNumber, _ := strconv.Atoi(port)
 			recordSRV := &dns.SRV{Hdr: dns.RR_Header{
 				Name:   question.Name,
 				Rrtype: dns.TypeSRV,
@@ -347,19 +347,19 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 
 }
 
-func validateEndPointTypeTCPAndUDP(value string) (net.IP,string, error) {
+func validateEndPointTypeTCPAndUDP(value string) (net.IP, string, error) {
 	ip, port, err := net.SplitHostPort(value)
 	if err != nil {
-		return nil,port, err
+		return nil, port, err
 	}
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
-		return nil,port, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
+		return nil, port, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
 	}
-	return parsedIP,port, nil
+	return parsedIP, port, nil
 }
 
-func validateEndPointTypeHTTP(value string) (net.IP,string, error) {
+func validateEndPointTypeHTTP(value string) (net.IP, string, error) {
 	startsWithHTTP := strings.HasPrefix(value, "http://")
 	startsWithHTTPS := strings.HasPrefix(value, "https://")
 	if !startsWithHTTPS && !startsWithHTTP {
@@ -368,18 +368,18 @@ func validateEndPointTypeHTTP(value string) (net.IP,string, error) {
 	var port string
 	parsedURL, err := url.Parse(value)
 	if err != nil {
-		return nil,port, err
+		return nil, port, err
 	}
 	host := parsedURL.Host
-	ip, port , err := net.SplitHostPort(host)
+	ip, port, err := net.SplitHostPort(host)
 	if err != nil {
-		return nil,port, err
+		return nil, port, err
 	}
 	parsedIP := net.ParseIP(ip)
 	if parsedIP == nil {
-		return nil,port, fmt.Errorf("url ip value %s is not a valid ip format", ip)
+		return nil, port, fmt.Errorf("url ip value %s is not a valid ip format", ip)
 	}
-	return parsedIP,port, nil
+	return parsedIP, port, nil
 
 }
 

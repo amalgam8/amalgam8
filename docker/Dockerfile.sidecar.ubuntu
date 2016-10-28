@@ -32,7 +32,6 @@ RUN set -ex \
     \
     && rm -rf /tmp/filebeat*
 
-
 ADD sidecar/nginx/lua /opt/a8_lualib
 COPY sidecar/nginx/conf/*.conf /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml

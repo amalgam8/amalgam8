@@ -30,6 +30,21 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	//TerminateProcess signal that supervisor should kill other processes and exit process on failure
+	TerminateProcess = "terminate"
+
+	//IgnoreProcess signal that supervisor should ignore this process on failure
+	IgnoreProcess = "ignore"
+)
+
+// Command to be managed by sidecar app supervisor
+type Command struct {
+	Cmd    []string `yaml:"cmd"`
+	Env    []string `yaml:"env"`
+	OnExit string   `yaml:"on_exit"`
+}
+
 // Service configuration
 type Service struct {
 	Name string   `yaml:"name"`
@@ -87,15 +102,11 @@ type Config struct {
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
 
-	Supervise bool     `yaml:"supervise"`
-	App       []string `yaml:"app"`
-
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
-	Log            bool   `yaml:"log"`
-	LogstashServer string `yaml:"logstash_server"`
-
 	LogLevel string `yaml:"log_level"`
+
+	Commands []Command `yaml:"commands"`
 
 	Debug string
 }
@@ -189,9 +200,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
-	loadFromContextIfSet(&c.Supervise, superviseFlag)
-	loadFromContextIfSet(&c.Log, logFlag)
-	loadFromContextIfSet(&c.LogstashServer, logstashServerFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
 
@@ -244,7 +252,11 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	}
 
 	if context.Args().Present() {
-		c.App = context.Args()
+		cmd := Command{
+			Cmd:    context.Args(),
+			OnExit: TerminateProcess,
+		}
+		c.Commands = append(c.Commands, cmd)
 	}
 
 	return nil
@@ -260,22 +272,20 @@ func (c *Config) Validate() error {
 	// Create list of validation checks
 	validators := []ValidatorFunc{}
 
-	if c.Supervise {
-		validators = append(validators,
-			func() error {
-				if len(c.App) == 0 {
-					return fmt.Errorf("Supervision mode requires application launch arguments")
+	validators = append(validators,
+		func() error {
+			for _, cmd := range c.Commands {
+				if cmd.OnExit != "" && (cmd.OnExit != TerminateProcess && cmd.OnExit != IgnoreProcess) {
+					return fmt.Errorf("Unrecognized OnExit command '%v'. Supported"+
+						" process OnExit types are 'ignore' and 'terminate'", cmd.OnExit)
 				}
-				return nil
-			},
-		)
-	}
-
-	if c.Log {
-		validators = append(validators,
-			IsNotEmpty("Logstash Host", c.LogstashServer),
-		)
-	}
+				if len(cmd.Cmd) == 0 {
+					return fmt.Errorf("Invalid command provided for process")
+				}
+			}
+			return nil
+		},
+	)
 
 	// Registry URL is needed for both proxying and registering.  Registry token is not required in all auth cases
 	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))

@@ -35,10 +35,7 @@ const (
 	controllerURLFlag   = "controller_url"
 	controllerTokenFlag = "controller_token"
 	controllerPollFlag  = "controller_poll"
-	superviseFlag       = "supervise"
 	healthchecksFlag    = "healthchecks"
-	logFlag             = "log"
-	logstashServerFlag  = "logstash_server"
 	logLevelFlag        = "log_level"
 	debugFlag           = "debug"
 )
@@ -114,25 +111,10 @@ var Flags = []cli.Flag{
 		EnvVar: envVar(controllerPollFlag),
 		Usage:  "Interval for polling Controller",
 	},
-	cli.BoolFlag{
-		Name:   superviseFlag,
-		EnvVar: envVar(superviseFlag),
-		Usage:  "Enable monitoring of application process. If application dies, container is killed as well. This has to be the last flag. All arguments provided after this flag will considered as part of the application invocation",
-	},
 	cli.StringSliceFlag{
 		Name:   healthchecksFlag,
 		EnvVar: envVar(healthchecksFlag),
 		Usage:  "List of health check URLs",
-	},
-	cli.BoolFlag{
-		Name:   logFlag,
-		EnvVar: envVar(logFlag),
-		Usage:  "Enable logging of outgoing requests through proxy using FileBeat",
-	},
-	cli.StringFlag{
-		Name:   logstashServerFlag,
-		EnvVar: envVar(logstashServerFlag),
-		Usage:  "Logstash target for nginx logs",
 	},
 	cli.StringFlag{
 		Name:   logLevelFlag,

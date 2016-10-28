@@ -42,13 +42,9 @@ var DefaultConfig = Config{
 		Poll:  time.Duration(15 * time.Second),
 	},
 
-	Supervise: false,
-	App:       nil,
-
 	HealthChecks: nil,
 
-	Log:            false,
-	LogstashServer: "",
-
 	LogLevel: "info",
+
+	Commands: nil,
 }

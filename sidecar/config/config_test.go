@@ -59,12 +59,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Registry).To(Equal(DefaultConfig.Registry))
 			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
-			Expect(c.Supervise).To(Equal(DefaultConfig.Supervise))
-			Expect(c.App).To(Equal(DefaultConfig.App))
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
-			Expect(c.Log).To(Equal(DefaultConfig.Log))
-			Expect(c.LogstashServer).To(Equal(DefaultConfig.LogstashServer))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
+			Expect(c.Commands).To(HaveLen(0))
 		})
 
 		It("falls back to local IP when no hostname is specified", func() {
@@ -103,11 +100,8 @@ var _ = Describe("Config", func() {
 				"--controller_poll=5s",
 				"--dns_port=4056",
 				"--dns_domain=someServer",
-				"--supervise=true",
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
-				"--log=true",
-				"--logstash_server=logstash:8092",
 				"--log_level=debug",
 				"python", "productpage.py",
 			}...)
@@ -132,13 +126,12 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
-			Expect(c.Supervise).To(Equal(true))
-			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
-			Expect(c.Log).To(Equal(true))
-			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))
+			Expect(c.Commands).To(HaveLen(1))
+			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
+			Expect(c.Commands[0].Cmd).To(Equal([]string{"python", "productpage.py"}))
 		})
 	})
 
@@ -170,12 +163,8 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
 			os.Setenv("A8_DNS_PORT", "4056")
 			os.Setenv("A8_DNS_DOMAIN", "someServer")
-			os.Setenv("A8_SUPERVISE", "true")
 			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
-			os.Setenv("A8_LOG", "true")
-			os.Setenv("A8_LOGSTASH_SERVER", "logstash:8092")
 			os.Setenv("A8_LOG_LEVEL", "debug")
-
 			args := append(os.Args[:1], []string{
 				"python", "productpage.py",
 			}...)
@@ -198,10 +187,7 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_CONTROLLER_POLL")
 			os.Unsetenv("A8_DNS_PORT")
 			os.Unsetenv("A8_DNS_DOMAIN")
-			os.Unsetenv("A8_SUPERVISE")
 			os.Unsetenv("A8_HEALTHCHECKS")
-			os.Unsetenv("A8_LOG")
-			os.Unsetenv("A8_LOGSTASH_SERVER")
 			os.Unsetenv("A8_LOG_LEVEL")
 		})
 
@@ -222,12 +208,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
-			Expect(c.Supervise).To(Equal(true))
-			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
-			Expect(c.Log).To(Equal(true))
-			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))
 		})
 	})
@@ -272,12 +254,10 @@ controller:
   token: local
   poll:  5s
 
+
 dnsconfig:
   port:   4056
   domain: someServer
-
-supervise: true
-app: [ "python", "productpage.py" ]
 
 healthchecks:
   - type: http
@@ -293,8 +273,13 @@ healthchecks:
     method: POST
     code: 201
 
-log: true
-logstash_server: logstash:8092
+commands:
+  - cmd: [ "sleep", "720" ]
+    env: [ "GODEBUG=netdns=go" ]
+    on_exit: terminate
+  - cmd: [ "ls" ]
+    env: nil
+    on_exit: ignore
 
 log_level: debug
 `
@@ -330,8 +315,6 @@ log_level: debug
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
-			Expect(c.Supervise).To(Equal(true))
-			Expect(c.App).To(Equal([]string{"python", "productpage.py"}))
 			Expect(c.HealthChecks[0].Type).To(Equal("http"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
 			Expect(c.HealthChecks[0].Interval).To(Equal(time.Duration(15) * time.Second))
@@ -344,9 +327,11 @@ log_level: debug
 			Expect(c.HealthChecks[1].Timeout).To(Equal(time.Duration(3) * time.Second))
 			Expect(c.HealthChecks[1].Method).To(Equal("POST"))
 			Expect(c.HealthChecks[1].Code).To(Equal(201))
-			Expect(c.Log).To(Equal(true))
-			Expect(c.LogstashServer).To(Equal("logstash:8092"))
 			Expect(c.LogLevel).To(Equal("debug"))
+			Expect(c.Commands).To(HaveLen(2))
+			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
+			Expect(c.Commands[0].Cmd).To(Equal([]string{"sleep", "720"}))
+			Expect(c.Commands[0].Env).To(Equal([]string{"GODEBUG=netdns=go"}))
 		})
 	})
 
@@ -378,6 +363,11 @@ log_level: debug
 					Port: 9090,
 					Type: "http",
 				},
+				Commands: []Command{Command{
+					Cmd:    []string{"ls"},
+					Env:    []string{},
+					OnExit: TerminateProcess,
+				}},
 			}
 		})
 
@@ -392,6 +382,21 @@ log_level: debug
 
 		It("rejects an excessively large poll interval", func() {
 			c.Controller.Poll = 48 * time.Hour
+			Expect(c.Validate()).To(HaveOccurred())
+		})
+
+		It("rejects invalid OnExit parameter", func() {
+			c.Commands[0].OnExit = "unknown_param"
+			Expect(c.Validate()).To(HaveOccurred())
+		})
+
+		It("accepts empty OnExit parameter", func() {
+			c.Commands[0].OnExit = ""
+			Expect(c.Validate()).ToNot(HaveOccurred())
+		})
+
+		It("rejects Command with empty command", func() {
+			c.Commands[0].Cmd = []string{}
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 	})

@@ -21,39 +21,78 @@ import (
 	"strings"
 	"syscall"
 
+	"time"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 )
 
-// AppSupervisor TODO
+// AppSupervisor manages process in sidecar
 type AppSupervisor struct {
-	agent *register.RegistrationAgent
+	agent     *register.RegistrationAgent
+	processes []*process
 }
 
-// DoAppSupervision TODO
-func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.RegistrationAgent) {
+type process struct {
+	Cmd    *exec.Cmd
+	Action string
+}
+
+// NewAppSupervisor builds new AppSupervisor using Commands in Config object
+func NewAppSupervisor(conf *config.Config) *AppSupervisor {
+	a := AppSupervisor{
+		processes: []*process{},
+	}
+
+	for _, cmd := range conf.Commands {
+		osCmd := exec.Command(cmd.Cmd[0], cmd.Cmd[1:]...)
+
+		osCmd.Stdout = os.Stdout
+		osCmd.Stderr = os.Stderr
+
+		osCmd.Env = append(cmd.Env, os.Environ()...)
+		proc := &process{
+			Cmd:    osCmd,
+			Action: cmd.OnExit,
+		}
+		if proc.Action == "" {
+			proc.Action = config.IgnoreProcess
+		}
+
+		a.processes = append(a.processes, proc)
+	}
+
+	return &a
+}
+
+type processError struct {
+	Err  error
+	Proc *process
+}
+
+// DoAppSupervision starts subprocesses and manages their lifecycle - exiting if necessary
+func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 	a.agent = agent
 
-	// Launch the user app
-	var appProcess *os.Process
-	appChan := make(chan error, 1)
-	if len(cmdArgs) > 0 {
-		log.Infof("Launching app '%s' with args '%s'", cmdArgs[0], strings.Join(cmdArgs[1:], " "))
-
-		cmd := exec.Command(cmdArgs[0], cmdArgs[1:]...)
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		err := cmd.Start()
+	appChan := make(chan processError, len(a.processes))
+	for _, proc := range a.processes {
+		log.Infof("Launching app '%v' with args '%v'", proc.Cmd.Args[0], strings.Join(proc.Cmd.Args[1:], " "))
+		err := proc.Cmd.Start()
 		if err != nil {
-			appChan <- err
+			appChan <- processError{
+				Err:  err,
+				Proc: proc,
+			}
 		} else {
-			appProcess = cmd.Process
-			go func() {
-				appChan <- cmd.Wait()
-			}()
+			go func(proc *process) {
+				err := proc.Cmd.Wait()
+				appChan <- processError{
+					Err:  err,
+					Proc: proc,
+				}
+			}(proc)
 		}
 	}
 
@@ -63,60 +102,87 @@ func (a *AppSupervisor) DoAppSupervision(cmdArgs []string, agent *register.Regis
 	for {
 		select {
 		case sig := <-sigChan:
-			log.Infof("Intercepted signal '%s'", sig)
-			if appProcess != nil {
-				appProcess.Signal(sig)
-			} else {
-				a.Shutdown(0)
-			}
+			log.Infof("Intercepted signal '%v'", sig)
+
+			// forwarding signal to supervised applications to exit gracefully
+			terminateSubprocesses(a.processes, sig)
+
+			a.Shutdown(0)
 		case err := <-appChan:
 			exitCode := 0
-			if err == nil {
+			if err.Err == nil {
 				log.Info("App terminated with exit code 0")
 			} else {
 				exitCode = 1
-				if exitErr, ok := err.(*exec.ExitError); ok {
+				if exitErr, ok := err.Err.(*exec.ExitError); ok {
 					if waitStatus, ok := exitErr.Sys().(syscall.WaitStatus); ok {
 						exitCode = waitStatus.ExitStatus()
 					}
-					log.Errorf("App terminated with exit code %d", exitCode)
+					log.Errorf("App terminated with exit code %v", exitCode)
 				} else {
 					log.Errorf("App failed to start: %v", err)
 				}
 			}
 
-			a.Shutdown(exitCode)
+			switch err.Proc.Action {
+			case config.IgnoreProcess:
+				//Ignore this dead process
+				log.WithError(err.Err).Warn("App '%v' with args '%v' exited.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				err.Proc.Cmd.Wait()
+
+			case config.TerminateProcess:
+				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
+				terminateSubprocesses(a.processes, syscall.SIGTERM)
+				a.Shutdown(exitCode)
+			}
+
 		}
 	}
 }
 
-// Shutdown TODO
-func (a *AppSupervisor) Shutdown(exitCode int) {
-	// TODO: Gracefully shutdown Ngnix, and filebeat
-	//ugly temporary hack to kill all processes in container
-	exec.Command("pkill", "-9", "-f", "nginx")
-	exec.Command("pkill", "-9", "-f", "filebeat")
+// Shutdown deregister the app with registry and exit sidecar
+func (a *AppSupervisor) Shutdown(sig int) {
 
 	if a.agent != nil {
 		a.agent.Stop()
 	}
 
-	log.Infof("Shutting down with exit code %d", exitCode)
-	os.Exit(exitCode)
+	log.Infof("Shutting down with exit code %v", sig)
+	os.Exit(sig)
 }
 
-// DoLogManagement TODO
-func (a *AppSupervisor) DoLogManagement(filebeatConf string) {
-	// starting filebeat
-	logcmd := exec.Command("filebeat", "-c", filebeatConf)
-	env := os.Environ()
-	env = append(env, "GODEBUG=netdns=go")
-	logcmd.Env = env
+func terminateSubprocesses(procs []*process, sig os.Signal) {
 
-	logcmd.Stdin = os.Stdin
-	logcmd.Stdout = os.Stdout
-	err := logcmd.Run()
-	if err != nil {
-		log.WithError(err).Warn("Filebeat process exited with error")
+	for _, proc := range procs {
+		if proc.Cmd.Process != nil {
+			proc.Cmd.Process.Signal(sig)
+		}
 	}
+
+	timeout := time.Now().Add(3 * time.Second)
+	alive := len(procs)
+	for alive > 0 {
+		alive = len(procs)
+		for _, proc := range procs {
+			if proc.Cmd.Process != nil {
+				if e := syscall.Kill(proc.Cmd.Process.Pid, syscall.Signal(0)); e != nil {
+					if e == syscall.ESRCH {
+						alive--
+					}
+				}
+			}
+		}
+
+		if time.Now().After(timeout) {
+			for _, proc := range procs {
+				if proc.Cmd.Process != nil {
+					proc.Cmd.Process.Kill()
+				}
+			}
+			break
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
 }

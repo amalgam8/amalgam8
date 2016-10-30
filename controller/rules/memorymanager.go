@@ -158,6 +158,9 @@ func (m *memory) UpdateRules(namespace string, rules []Rule) error {
 		m.rules[namespace][rule.ID] = rule
 	}
 
+	// Update the revision
+	m.revision[namespace]++
+
 	return nil
 }
 

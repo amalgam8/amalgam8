@@ -12,6 +12,8 @@ local ngx_var = ngx.var
 local ngx_shared = ngx.shared
 local tostring = tostring
 
+local io = require("io");
+
 --TODO: This code has been tested with a single worker only
 -----With multiple workers, we might need a read-write lock on the
 -----shared state (a8_instances, a8_rules) so that workers do not see
@@ -476,6 +478,7 @@ function Amalgam8:new()
 
    self.myname = myname
    self.mytags = mytags
+   self.myip = self:ip_cmd()
    return o, nil
 end
 
@@ -850,6 +853,20 @@ end
 
 function Amalgam8:get_mytags()
    return self.mytags
+end
+
+function Amalgam8:get_myip()
+   return self.myip
+end
+
+function Amalgam8:ip_cmd()
+   local f = assert(io.popen("hostname -i | awk '{print $1}'"), 'r')
+   local s = f:read('*a')
+   f:close()
+   s = string.gsub(s, '^%s+', '')
+   s = string.gsub(s, '%s+$', '')
+   s = string.gsub(s, '[\n\r]+', ' ')
+   return s
 end
 
 

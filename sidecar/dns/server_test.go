@@ -282,7 +282,7 @@ func (suite *TestSuite) TestRequestsSRVNoTags() {
 
 }
 
-func (suite *TestSuite) TestRequestsSRVWuthTag() {
+func (suite *TestSuite) TestRequestsSRVWithTag() {
 	target := "_shoppingCart._first.service.amalgam8"
 	server := "127.0.0.1:"
 

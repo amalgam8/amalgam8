@@ -18,15 +18,12 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-
+	"strconv"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
-
-	"errors"
-	"strconv"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
@@ -160,7 +157,7 @@ func (s *Server) retrieveServices(question dns.Question, request, response *dns.
 	// string s. I.e.  a domain name longer than 255 characters is considered valid.
 	numberOfLabels, isValidDomain := dns.IsDomainName(question.Name)
 	if !isValidDomain {
-		response.SetRcode(request, dns.RcodeBadName)
+		response.SetRcode(request, dns.RcodeFormatError)
 		return nil, fmt.Errorf("Invalid Domain name %s", question.Name)
 	}
 	fullDomainRequestArray := dns.SplitDomainName(question.Name)
@@ -175,11 +172,11 @@ func (s *Server) retrieveServices(question dns.Question, request, response *dns.
 			// SRV Query :
 			tagOrProtocol := fullDomainRequestArray[1][1:]
 			serviceName := fullDomainRequestArray[0][1:]
-			ServiceInstances, err = s.retrieveServicesFromSRVQuery(serviceName, tagOrProtocol)
+			ServiceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagOrProtocol)
 		} else {
 			serviceName := fullDomainRequestArray[numberOfLabels-3]
 			tagsOrProtocol := fullDomainRequestArray[:numberOfLabels-3]
-			ServiceInstances, err = s.retrieveServicesFromRegularQuery(serviceName, tagsOrProtocol)
+			ServiceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagsOrProtocol...)
 
 		}
 
@@ -187,95 +184,65 @@ func (s *Server) retrieveServices(question dns.Question, request, response *dns.
 		question.Qtype == dns.TypeAAAA) && numberOfLabels == 3 {
 
 		instanceID := fullDomainRequestArray[0]
-		ServiceInstances, err = s.retrieveServicesFromInstanceQuery(instanceID)
-
+		ServiceInstances, err = s.retrieveServicesFromInstanceQuery(instanceID, request, response)
 	}
-
-	/*
-		if len(tags) == 0 {
-			ServiceInstances, err = s.config.DiscoveryClient.ListServiceInstances(serviceName)
-		} else {
-			filters := client.InstanceFilter{ServiceName: serviceName, Tags: tags}
-			ServiceInstances, err = s.config.DiscoveryClient.ListInstances(filters)
-		}
-		if err != nil {
-			// TODO: what Error should we return ?
-			response.SetRcode(request, dns.RcodeServerFailure)
-			return nil, fmt.Errorf("Error while reading from registry: %s", err.Error())
-		}
-	*/
 
 	return ServiceInstances, err
 }
 
-func (s *Server) retrieveServicesFromSRVQuery(serviceName string, tagOrProtocol string) ([]*client.ServiceInstance, error) {
-	if tagOrProtocol == "tcp" || tagOrProtocol == "udp" || tagOrProtocol == "http" || tagOrProtocol == "https" {
-		ServiceInstances, err := s.config.DiscoveryClient.ListServiceInstances(serviceName)
-		if err != nil {
-			return ServiceInstances, err
-		}
-		k := 0
-		for i, serviceInstance := range ServiceInstances {
-			if serviceInstance.Endpoint.Type == tagOrProtocol {
-				ServiceInstances[k] = ServiceInstances[i]
-				k++
+func (s *Server) retrieveInstancesForServiceQuery(serviceName string, request, response *dns.Msg, tagOrProtocol ...string) ([]*client.ServiceInstance, error) {
+	protocol := ""
+	tags := make([]string, 0, len(tagOrProtocol))
+
+	// Split tags and protocol filters
+	for _, tag := range tagOrProtocol {
+		switch tag {
+		case "tcp", "udp", "http", "https":
+			if protocol != "" {
+				response.SetRcode(request, dns.RcodeFormatError)
+				return nil, fmt.Errorf("invalid DNS query: more than one protocol specified")
 			}
-		}
-		ServiceInstances = ServiceInstances[:k]
-		return ServiceInstances, nil
-	}
-	filters := client.InstanceFilter{ServiceName: serviceName, Tags: []string{tagOrProtocol}}
-	ServiceInstances, err := s.config.DiscoveryClient.ListInstances(filters)
-	return ServiceInstances, err
-
-}
-
-func (s *Server) retrieveServicesFromRegularQuery(serviceName string, tagsOrProtocol []string) ([]*client.ServiceInstance, error) {
-	numberOfProtocols := 0
-	var protocol string
-	for i, tag := range tagsOrProtocol {
-		if tag == "tcp" || tag == "udp" || tag == "http" || tag == "https" {
 			protocol = tag
-			numberOfProtocols++
-			tagsOrProtocol = append(tagsOrProtocol[:i], tagsOrProtocol[i+1:]...)
-
+		default:
+			tags = append(tags, tag)
 		}
 	}
-	if numberOfProtocols > 1 {
-		return nil, errors.New("Error while parsing request - more then one protocol found. " +
-			"request needs to contain at most one protocol type")
-	}
-	filters := client.InstanceFilter{ServiceName: serviceName, Tags: tagsOrProtocol}
-	ServiceInstances, err := s.config.DiscoveryClient.ListInstances(filters)
-	if err != nil {
-		return ServiceInstances, err
-	}
-	if numberOfProtocols == 1 {
-		k := 0
-		for i, serviceInstance := range ServiceInstances {
-			if serviceInstance.Endpoint.Type == protocol {
-				ServiceInstances[k] = ServiceInstances[i]
-				k++
+	filters := client.InstanceFilter{ServiceName: serviceName, Tags: tags}
 
+	// Dispatch query to registry
+	serviceInstances, err := s.config.DiscoveryClient.ListInstances(filters)
+	if err != nil {
+		response.SetRcode(request, dns.RcodeServerFailure)
+		return nil, err
+	}
+
+	// Apply protocol filter
+	if protocol != "" {
+		k := 0
+		for _, serviceInstance := range serviceInstances {
+			if serviceInstance.Endpoint.Type == protocol {
+				serviceInstances[k] = serviceInstance
+				k++
 			}
 		}
-		ServiceInstances = ServiceInstances[:k]
-		return ServiceInstances, nil
+		serviceInstances = serviceInstances[:k]
 	}
-	return ServiceInstances, nil
 
+	return serviceInstances, nil
 }
 
-func (s *Server) retrieveServicesFromInstanceQuery(instanceID string) ([]*client.ServiceInstance, error) {
-	ServiceInstances, err := s.config.DiscoveryClient.ListInstances(client.InstanceFilter{})
+func (s *Server) retrieveServicesFromInstanceQuery(instanceID string, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
+	serviceInstances, err := s.config.DiscoveryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
-		return ServiceInstances, err
+		response.SetRcode(request, dns.RcodeServerFailure)
+		return serviceInstances, err
 	}
-	for _, serviceInstance := range ServiceInstances {
+	for _, serviceInstance := range serviceInstances {
 		if serviceInstance.ID == instanceID {
 			return []*client.ServiceInstance{serviceInstance}, nil
 		}
 	}
+	response.SetRcode(request, dns.RcodeNameError)
 	return nil, fmt.Errorf("Error : didn't find a service with the id given %s", instanceID)
 }
 
@@ -306,7 +273,7 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 			fullDomainRequestArray := dns.SplitDomainName(question.Name)
 			domainName := fullDomainRequestArray[len(fullDomainRequestArray)-1]
 			instanceID := serviceInstance.ID
-			targetName := instanceID + ".instance." + domainName + "."
+			targetName := fmt.Sprintf("%s.instance.%s.", instanceID, domainName)
 			portNumber, _ := strconv.Atoi(port)
 			recordSRV := &dns.SRV{Hdr: dns.RR_Header{
 				Name:   question.Name,

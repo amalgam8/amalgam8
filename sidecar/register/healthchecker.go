@@ -44,7 +44,8 @@ func NewHealthChecker(registration *RegistrationAgent, checks []*healthcheck.Age
 	}
 }
 
-// Start checking
+// Start healthchecking and maintaining registration with registry.
+// Non-blocking.
 func (checker *HealthChecker) Start() {
 	checker.mutex.Lock()
 	defer checker.mutex.Unlock()
@@ -57,7 +58,8 @@ func (checker *HealthChecker) Start() {
 	go checker.maintainRegistration()
 }
 
-// Stop checking
+// Stop healthchecking and maintaining registration with registry.
+// Blocks until deregistration attempt is complete.
 func (checker *HealthChecker) Stop() {
 	checker.mutex.Lock()
 	defer checker.mutex.Unlock()
@@ -69,6 +71,7 @@ func (checker *HealthChecker) Stop() {
 	checker.active = false
 
 	checker.stop <- struct{}{}
+	<-checker.stop
 }
 
 // maintainRegistration
@@ -125,7 +128,7 @@ func (checker *HealthChecker) maintainRegistration() {
 				}
 			}
 		case <-checker.stop:
-			// Stop the agents.
+			// Stop the healthcheck agents.
 			for _, agent := range checker.agents {
 				agent.Stop()
 			}
@@ -134,6 +137,11 @@ func (checker *HealthChecker) maintainRegistration() {
 			for _, statusChan := range statusChans {
 				close(statusChan)
 			}
+
+			// Stop the registration agent
+			checker.registration.Stop()
+
+			checker.stop <- struct{}{}
 		}
 	}
 }

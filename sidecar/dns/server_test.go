@@ -135,7 +135,7 @@ func (suite *TestSuite) SetupTest() {
 		ID: "9", Endpoint: client.NewHTTPEndpoint(url1)})
 
 	go suite.server.ListenAndServe()
-	time.Sleep((10) * time.Second)
+	time.Sleep((200) * time.Millisecond)
 	//suite.Nil(err, "Error should be nil")
 
 }

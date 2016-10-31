@@ -74,7 +74,6 @@ func sidecarCommand(context *cli.Context) error {
 // Run the sidecar with the given configuration
 func Run(conf config.Config) error {
 	var err error
-	var registrationAgent *register.RegistrationAgent
 
 	if conf.Debug != "" {
 		cliCommand(conf.Debug)
@@ -124,7 +123,6 @@ func Run(conf config.Config) error {
 				return err
 			}
 			go server.ListenAndServe()
-
 		}
 
 		go func() {
@@ -133,8 +131,7 @@ func Run(conf config.Config) error {
 			}
 		}()
 	}
-	appSupervisor := supervisor.NewAppSupervisor(&conf)
-
+	var lifecycle register.Lifecycle
 	if conf.Register {
 
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
@@ -148,7 +145,7 @@ func Run(conf config.Config) error {
 			TTL: 60,
 		}
 
-		registrationAgent, err = register.NewRegistrationAgent(register.RegistrationConfig{
+		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{
 			Client:          registryClient,
 			ServiceInstance: serviceInstance,
 		})
@@ -166,17 +163,18 @@ func Run(conf config.Config) error {
 		// Control the registration agent via the health checker if any health checks were provided. If no
 		// health checks are provided, just start the registration agent.
 		if len(hcAgents) > 0 {
-			checker := register.NewHealthChecker(registrationAgent, hcAgents)
-
-			// Delay slightly to give time for the application to start
-			time.AfterFunc(1*time.Second, checker.Start) // TODO: make this delay configurable or implement a better solution.
+			lifecycle = register.NewHealthChecker(registrationAgent, hcAgents)
 		} else {
-			registrationAgent.Start()
+			lifecycle = registrationAgent
 		}
 
+		// Delay slightly to give time for the application to start
+		// TODO: make this delay configurable or implement a better solution.
+		time.AfterFunc(1*time.Second, lifecycle.Start)
 	}
 
-	appSupervisor.DoAppSupervision(registrationAgent)
+	appSupervisor := supervisor.NewAppSupervisor(&conf, lifecycle)
+	appSupervisor.DoAppSupervision()
 
 	return nil
 }

@@ -133,14 +133,13 @@ func (s *Server) handleQuestion(question dns.Question, request, response *dns.Ms
 	if err != nil {
 		return err
 	}
-
-	err = s.findMatchingServices(question, request, response, serviceInstances)
+	err = s.createRecordsForInstances(question, request, response, serviceInstances)
 	return err
 
 }
 
 func (s *Server) retrieveServices(question dns.Question, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
-	var ServiceInstances []*client.ServiceInstance
+	var serviceInstances []*client.ServiceInstance
 	var err error
 	// parse query :
 	// Query format:
@@ -172,11 +171,11 @@ func (s *Server) retrieveServices(question dns.Question, request, response *dns.
 			// SRV Query :
 			tagOrProtocol := fullDomainRequestArray[1][1:]
 			serviceName := fullDomainRequestArray[0][1:]
-			ServiceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagOrProtocol)
+			serviceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagOrProtocol)
 		} else {
 			serviceName := fullDomainRequestArray[numberOfLabels-3]
 			tagsOrProtocol := fullDomainRequestArray[:numberOfLabels-3]
-			ServiceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagsOrProtocol...)
+			serviceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagsOrProtocol...)
 
 		}
 
@@ -184,10 +183,9 @@ func (s *Server) retrieveServices(question dns.Question, request, response *dns.
 		question.Qtype == dns.TypeAAAA) && numberOfLabels == 3 {
 
 		instanceID := fullDomainRequestArray[0]
-		ServiceInstances, err = s.retrieveServicesFromInstanceQuery(instanceID, request, response)
+		serviceInstances, err = s.retrieveInstancesForInstanceQuery(instanceID, request, response)
 	}
-
-	return ServiceInstances, err
+	return serviceInstances, err
 }
 
 func (s *Server) retrieveInstancesForServiceQuery(serviceName string, request, response *dns.Msg, tagOrProtocol ...string) ([]*client.ServiceInstance, error) {
@@ -231,7 +229,7 @@ func (s *Server) retrieveInstancesForServiceQuery(serviceName string, request, r
 	return serviceInstances, nil
 }
 
-func (s *Server) retrieveServicesFromInstanceQuery(instanceID string, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
+func (s *Server) retrieveInstancesForInstanceQuery(instanceID string, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
 	serviceInstances, err := s.config.DiscoveryClient.ListInstances(client.InstanceFilter{})
 	if err != nil {
 		response.SetRcode(request, dns.RcodeServerFailure)
@@ -246,7 +244,7 @@ func (s *Server) retrieveServicesFromInstanceQuery(instanceID string, request, r
 	return nil, fmt.Errorf("Error : didn't find a service with the id given %s", instanceID)
 }
 
-func (s *Server) findMatchingServices(question dns.Question, request, response *dns.Msg,
+func (s *Server) createRecordsForInstances(question dns.Question, request, response *dns.Msg,
 	serviceInstances []*client.ServiceInstance) error {
 	numOfMatchingRecords := 0
 	for _, serviceInstance := range serviceInstances {
@@ -258,7 +256,6 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 		switch endPointType {
 		case "tcp", "udp":
 			ip, port, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
-
 		case "http", "https":
 			ip, port, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
 
@@ -270,10 +267,10 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 		}
 		numOfMatchingRecords++
 		if question.Qtype == dns.TypeSRV {
-			fullDomainRequestArray := dns.SplitDomainName(question.Name)
-			domainName := fullDomainRequestArray[len(fullDomainRequestArray)-1]
+
+			domainName := s.config.Domain
 			instanceID := serviceInstance.ID
-			targetName := fmt.Sprintf("%s.instance.%s.", instanceID, domainName)
+			targetName := fmt.Sprintf("%s.instance.%s", instanceID, domainName)
 			portNumber, _ := strconv.Atoi(port)
 			recordSRV := &dns.SRV{Hdr: dns.RR_Header{
 				Name:   question.Name,
@@ -316,12 +313,18 @@ func (s *Server) findMatchingServices(question dns.Question, request, response *
 
 func validateEndPointTypeTCPAndUDP(value string) (net.IP, string, error) {
 	ip, port, err := net.SplitHostPort(value)
+	var parsedIP net.IP
 	if err != nil {
-		return nil, port, err
-	}
-	parsedIP := net.ParseIP(ip)
-	if parsedIP == nil {
-		return nil, port, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
+		parsedIP = net.ParseIP(value)
+		if parsedIP == nil {
+			return nil, port, err
+		}
+		port = "0"
+	} else {
+		parsedIP = net.ParseIP(ip)
+		if parsedIP == nil {
+			return nil, port, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
+		}
 	}
 	return parsedIP, port, nil
 }
@@ -330,23 +333,26 @@ func validateEndPointTypeHTTP(value string) (net.IP, string, error) {
 	startsWithHTTP := strings.HasPrefix(value, "http://")
 	startsWithHTTPS := strings.HasPrefix(value, "https://")
 	if !startsWithHTTPS && !startsWithHTTP {
-		value += "http://"
+		value = "http://" + value
 	}
 	var port string
 	parsedURL, err := url.Parse(value)
+
 	if err != nil {
 		return nil, port, err
 	}
+
 	host := parsedURL.Host
-	ip, port, err := net.SplitHostPort(host)
+	ip, port, err := validateEndPointTypeTCPAndUDP(host)
 	if err != nil {
 		return nil, port, err
 	}
-	parsedIP := net.ParseIP(ip)
-	if parsedIP == nil {
-		return nil, port, fmt.Errorf("url ip value %s is not a valid ip format", ip)
+	if port == "0" && startsWithHTTPS {
+		port = "430"
+	} else if port == "0" {
+		port = "80"
 	}
-	return parsedIP, port, nil
+	return ip, port, nil
 
 }
 

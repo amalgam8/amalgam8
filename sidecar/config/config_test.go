@@ -69,7 +69,7 @@ var _ = Describe("Config", func() {
 
 	})
 
-	Context("config overiden with command line flags", func() {
+	Context("config overidden with command line flags", func() {
 
 		BeforeEach(func() {
 			app := cli.NewApp()
@@ -257,7 +257,6 @@ commands:
     env: [ "GODEBUG=netdns=go" ]
     on_exit: terminate
   - cmd: [ "ls" ]
-    env: nil
     on_exit: ignore
 
 log_level: debug

@@ -187,10 +187,10 @@
           "exclusiveMinimum": true
         },
         "retries": {
-          "description": "Number of times to retry a failed request to a different instances",
+          "description": "Number of times to retry a failed request to a different instances. 0 to disable",
           "type": "number",
           "minimum": 0,
-          "exclusiveMinimum": true
+          "exclusiveMinimum": false
         }
       },
       "required": [

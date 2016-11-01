@@ -26,7 +26,6 @@ local io = require("io");
 local Amalgam8 = { _VERSION = '0.4.0' }
 
 local delay_action, abort_action, trace_action = 1, 2, 3
-local default_timeout, default_retries = 60, 0
 
 local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then

@@ -255,9 +255,9 @@ func (s *Server) createRecordsForInstances(question dns.Question, request, respo
 
 		switch endPointType {
 		case "tcp", "udp":
-			ip, port, err = validateEndPointTypeTCPAndUDP(serviceInstance.Endpoint.Value)
+			ip, port, err = splitHostPortTCPUDP(serviceInstance.Endpoint.Value)
 		case "http", "https":
-			ip, port, err = validateEndPointTypeHTTP(serviceInstance.Endpoint.Value)
+			ip, port, err = splitHostPortHTTP(serviceInstance.Endpoint.Value)
 
 		default:
 			continue
@@ -311,47 +311,51 @@ func (s *Server) createRecordsForInstances(question dns.Question, request, respo
 
 }
 
-func validateEndPointTypeTCPAndUDP(value string) (net.IP, string, error) {
-	ip, port, err := net.SplitHostPort(value)
-	var parsedIP net.IP
+func splitHostPortTCPUDP(value string) (net.IP, string, error) {
+	// Assume value is "host:port"
+	host, port, err := net.SplitHostPort(value)
+
+	// Assume value is "host" (no port)
 	if err != nil {
-		parsedIP = net.ParseIP(value)
-		if parsedIP == nil {
-			return nil, port, err
-		}
+		host = value
 		port = "0"
-	} else {
-		parsedIP = net.ParseIP(ip)
-		if parsedIP == nil {
-			return nil, port, fmt.Errorf("tcp/udp ip value %s is not a valid ip format", ip)
-		}
 	}
-	return parsedIP, port, nil
+
+	ip := net.ParseIP(host)
+	if ip == nil {
+		return nil, "", fmt.Errorf("could not parse '%s' as ip:port", value)
+	}
+
+	return ip, port, nil
 }
 
-func validateEndPointTypeHTTP(value string) (net.IP, string, error) {
-	startsWithHTTP := strings.HasPrefix(value, "http://")
-	startsWithHTTPS := strings.HasPrefix(value, "https://")
-	if !startsWithHTTPS && !startsWithHTTP {
+func splitHostPortHTTP(value string) (net.IP, string, error) {
+	isHTTP := strings.HasPrefix(value, "http://")
+	isHTTPS := strings.HasPrefix(value, "https://")
+	if !isHTTPS && !isHTTP {
 		value = "http://" + value
+		isHTTP = true
 	}
-	var port string
+
 	parsedURL, err := url.Parse(value)
-
 	if err != nil {
-		return nil, port, err
+		return nil, "", err
 	}
 
-	host := parsedURL.Host
-	ip, port, err := validateEndPointTypeTCPAndUDP(host)
+	ip, port, err := splitHostPortTCPUDP(parsedURL.Host)
 	if err != nil {
-		return nil, port, err
+		return nil, "", err
 	}
-	if port == "0" && startsWithHTTPS {
-		port = "430"
-	} else if port == "0" {
-		port = "80"
+
+	// Use default port, if not specified
+	if port == "0" {
+		if isHTTP {
+			port = "80"
+		} else if isHTTPS {
+			port = "443"
+		}
 	}
+
 	return ip, port, nil
 
 }

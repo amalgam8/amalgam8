@@ -30,6 +30,7 @@ gateway:
     - controller
     - registry
   container_name: gateway
+  command: /usr/bin/run_filebeat.sh
 
 helloworld-v1:
   image: amalgam8/a8-examples-helloworld-sidecar:v1

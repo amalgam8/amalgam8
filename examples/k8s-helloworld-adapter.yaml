@@ -50,10 +50,10 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
+        args:
+        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)

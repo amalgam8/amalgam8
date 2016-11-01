@@ -787,11 +787,14 @@ function Amalgam8:apply_rules()
       ngx.var.a8_upstream_name = destination
    end
 
-   local upstream = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_instance = upstream.ip..":"..upstream.port
-   ngx.var.a8_upstream_tags = upstream.tags
+   ngx.ctx.a8_upstreams = selected_instances
+   ngx.var.a8_upstream_tags = ""
+   if selected_backend then
+      ngx.ctx.a8_timeout = selected_backend.timeout
+      ngx.ctx.a8_retries = selected_backend.retries
+   end
 
-   if upstream.host then
+   if selected_instances[1].host then -- FIXME
       ngx_var.a8_upstream_host = upstream.host
    end
 
@@ -813,7 +816,7 @@ function Amalgam8:apply_rules()
       -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
 
       for _,sa in ipairs(selected_actions) do
-         if not sa.tags or match_tags(upstream.tags, sa.tags) then
+         if not sa.tags or (selected_backend and match_tags(table.concat(selected_backend.tags), sa.tags)) then
             -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
             if sa.action <= abort_action then
                -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
@@ -837,12 +840,45 @@ end
 
 
 function Amalgam8:load_balance()
-   local ok, err = balancer.set_current_peer(ngx.var.a8_upstream_instance)
+   local selected_instances = ngx.ctx.a8_upstreams
+   local timeout = ngx.ctx.a8_timeout
+   local retries = ngx.ctx.a8_retries
+
+   if timeout and timeout > 0 then
+      local ok, err = balancer.set_timeouts(timeout, timeout, timeout)
+      if not ok then
+         ngx_log(ngx_WARN, "failed to set timeouts"..err)
+      end
+   end
+
+   if not retries then
+      retries = #selected_instances
+   end
+
+   if not ngx.ctx.tries then
+      ngx.ctx.tries = 0
+   end
+
+   if ngx.ctx.tries < retries then
+      local ok, err = balancer.set_more_tries(1)
+      if not ok then
+         ngx_log(ngx_ERR, "failed to set more tries: "..err)
+         ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE
+         ngx.exit(ngx.status)
+      elseif err then
+         ngx_log(ngx_WARN, "set more tries: ", err)
+      end
+   end
+   ngx.ctx.tries = ngx.ctx.tries + 1
+
+   local upstream = selected_instances[math.random(#selected_instances)]
+   local ok, err = balancer.set_current_peer(upstream.ip, upstream.port)
    if not ok then
       ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE --caller does not care about nginx issues. We need to catch these errors in a different way.
       ngx_log(ngx_ERR, "failed to set current peer"..err)
       ngx.exit(ngx.status)
    end
+   ngx.var.a8_upstream_tags = upstream.tags
 end
 
 

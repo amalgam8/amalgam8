@@ -82,7 +82,8 @@ func TestCatalogComparison(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		actual := r.catalogsEqual(c.A, c.B)
+		r.cache = c.A
+		actual := r.compareToCache(c.B)
 		if actual != c.Equal {
 			t.Errorf("catalogsEqual(%v, %v): expected %v, got %v %d", c.A, c.B, c.Equal, actual, i)
 		}

@@ -34,7 +34,7 @@ type registry struct {
 	registryClient client.Discovery
 	listeners      []RegistryListener
 	ticker         *time.Ticker
-	hashed         map[string][]*client.ServiceInstance
+	cache          map[string][]*client.ServiceInstance
 	lock           sync.RWMutex
 }
 
@@ -91,96 +91,76 @@ func (m *registry) Start() error {
 // poll registry for changes in the catalog
 func (m *registry) poll() error {
 	// Get newest catalog from registry
-	latestCatalog, err := m.getLatestCatalog()
-
+	instances, err := m.getRegistryInstances()
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
 	}
+	catalog := instanceListAsMap(instances)
 
 	// Check for changes
-	if !m.catalogsEqual(m.hashed, latestCatalog) {
-		// Update cached copy of catalog
-		m.lock.Lock()
-		m.hashed = latestCatalog
-		m.lock.Unlock()
-		instances, _ := m.registryClient.ListInstances(client.InstanceFilter{})
-		// Notify the listeners.
-		m.lock.RLock()
-		copyOfListeners := m.listeners
-		m.lock.RUnlock()
-
-		for _, listener := range copyOfListeners {
-			arrayOfInstancesByValue := m.copyInstances(instances)
-			if err = listener.CatalogChange(arrayOfInstancesByValue); err != nil {
-				logrus.WithError(err).Warn("Registry listener failed")
-			}
-		}
-
+	if m.compareToCache(catalog) {
+		// Match, nothing else to do
+		return nil
 	}
+
+	// Update cached catalog
+	m.lock.Lock()
+	m.cache = catalog
+	listeners := m.listeners
+	m.lock.Unlock()
+
+	// Notify the listeners
+	instancesByValue := instanceListAsValues(instances)
+	for _, listener := range listeners {
+		if err = listener.CatalogChange(instancesByValue); err != nil {
+			logrus.WithError(err).Warn("Registry listener failed")
+		}
+	}
+
 	return nil
 }
 
-func (m *registry) copyInstances(instances []*client.ServiceInstance) []client.ServiceInstance {
-	arrayToReturn := make([]client.ServiceInstance, 0, len(instances))
-	for i := range instances {
-		arrayToReturn[i] = *instances[i]
-	}
-	return arrayToReturn
-}
-
-// catalogsEqual checks for pertinent differences between the given instances. We assume that all the instances have
-// been presorted. Instances are compared by all values except for heartbeat and TTL.
-func (m *registry) catalogsEqual(a, b map[string][]*client.ServiceInstance) bool {
+// compareToCache compares the given catalog to the cached one, by comparing all instance attributes
+// except for heartbeat and TTL. Instance list for each service is assumed to be presorted.
+// Return 'true' if catalog match, and 'false' otherwise.
+func (m *registry) compareToCache(catalog map[string][]*client.ServiceInstance) bool {
 	m.lock.RLock()
 	defer m.lock.RUnlock()
-	equal := true
-	if len(a) != len(b) {
-		equal = false
-	} else {
-		for key, v := range a {
-			if _, ok := b[key]; !ok {
-				equal = false
-				break
-			}
-			if len(b[key]) != len(v) {
-				equal = false
-			}
-			for i := range v {
-				if v[i].ID != b[key][i].ID || v[i].ServiceName != b[key][i].ServiceName || v[i].Status != b[key][i].Status ||
-					!reflect.DeepEqual(v[i].Tags, b[key][i].Tags) || v[i].Endpoint.Type != b[key][i].Endpoint.Type ||
-					v[i].Endpoint.Value != b[key][i].Endpoint.Value || !reflect.DeepEqual(v[i].Metadata, b[key][i].Metadata) {
-					equal = false
-					break
-				}
+
+	if len(catalog) != len(m.cache) {
+		return false
+	}
+
+	for name, instances := range catalog {
+		cachedInstances, ok := m.cache[name]
+		if !ok {
+			return false
+		}
+
+		if len(instances) != len(cachedInstances) {
+			return false
+		}
+
+		for i, instance := range instances {
+			cachedInstance := cachedInstances[i]
+			if instance.ID != cachedInstance.ID ||
+				instance.ServiceName != cachedInstance.ServiceName ||
+				instance.Status != cachedInstance.Status ||
+				instance.Endpoint.Type != cachedInstance.Endpoint.Type ||
+				instance.Endpoint.Value != cachedInstance.Endpoint.Value ||
+				!reflect.DeepEqual(instance.Tags, cachedInstance.Tags) ||
+				!reflect.DeepEqual(instance.Metadata, cachedInstance.Metadata) {
+				return false
 			}
 		}
 	}
-	logrus.WithFields(logrus.Fields{
-		"a":     a,
-		"b":     b,
-		"equal": equal,
-	}).Debug("Comparing service instances")
 
-	return equal
+	return true
 }
 
-// getLatestCatalog
-func (m *registry) getLatestCatalog() (map[string][]*client.ServiceInstance, error) {
-	mapToReturn := make(map[string][]*client.ServiceInstance)
-	instances, err := m.registryClient.ListInstances(client.InstanceFilter{})
-	if err != nil {
-		return mapToReturn, err
-	}
-
-	for i := range instances {
-		mapToReturn[instances[i].ServiceName] = append(mapToReturn[instances[i].ServiceName], instances[i])
-	}
-	for _, value := range mapToReturn {
-		sort.Sort(ByID(value))
-	}
-
-	return mapToReturn, nil
+func (m *registry) getRegistryInstances() ([]*client.ServiceInstance, error) {
+	return m.registryClient.ListInstances(client.InstanceFilter{})
 }
 
 // Stop monitoring registry
@@ -213,9 +193,9 @@ func (a ByID) Less(i, j int) bool {
 }
 
 func (m *registry) ListServices() ([]string, error) {
-	keys := make([]string, 0, len(m.hashed))
+	keys := make([]string, 0, len(m.cache))
 	m.lock.RLock()
-	for k := range m.hashed {
+	for k := range m.cache {
 		keys = append(keys, k)
 	}
 	m.lock.RUnlock()
@@ -226,7 +206,7 @@ func (m *registry) ListInstances(filter client.InstanceFilter) ([]*client.Servic
 	servicesToReturn := []*client.ServiceInstance{}
 	count := 0
 	m.lock.RLock()
-	serviceInstances := m.hashed[filter.ServiceName]
+	serviceInstances := m.cache[filter.ServiceName]
 	m.lock.RUnlock()
 	for _, service := range serviceInstances {
 		if service.ServiceName == filter.ServiceName {
@@ -248,7 +228,7 @@ func (m *registry) ListInstances(filter client.InstanceFilter) ([]*client.Servic
 func (m *registry) ListServiceInstances(serviceName string) ([]*client.ServiceInstance, error) {
 	servicesToReturn := []*client.ServiceInstance{}
 	m.lock.RLock()
-	if instances, ok := m.hashed[serviceName]; ok {
+	if instances, ok := m.cache[serviceName]; ok {
 		servicesToReturn = instances
 	}
 	m.lock.RUnlock()
@@ -262,4 +242,32 @@ func (m *registry) AddListener(listener RegistryListener) {
 	m.listeners = copyOfListeners
 	m.lock.Unlock()
 
+}
+
+func instanceListAsValues(instances []*client.ServiceInstance) []client.ServiceInstance {
+	values := make([]client.ServiceInstance, len(instances))
+
+	for i, instance := range instances {
+		values[i] = *instance
+	}
+
+	return values
+}
+
+func instanceListAsMap(instances []*client.ServiceInstance) map[string][]*client.ServiceInstance {
+	// Assume 3 instances per service by average, for initial map capacity
+	// TODO: can improve based on length of previously stored map
+	numOfServices := len(instances) / 3
+
+	m := make(map[string][]*client.ServiceInstance, numOfServices)
+	for _, instance := range instances {
+		m[instance.ServiceName] = append(m[instance.ServiceName], instance)
+	}
+
+	// Sort instances of each service
+	for _, value := range m {
+		sort.Sort(ByID(value))
+	}
+
+	return m
 }

@@ -181,11 +181,17 @@
           "default": 1
         },
         "timeout": {
-          "description": "Request timeout or read/write timeout on the pipe in seconds",
+          "description": "Connect/read/write timeout when talking to an instance",
           "type": "number",
           "minimum": 0,
           "exclusiveMinimum": true
-        }
+        },
+        "retries": {
+          "description": "Number of times to retry a failed request to a different instances",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
       },
       "required": [
         "tags"

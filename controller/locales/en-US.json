@@ -18,5 +18,17 @@
   {
     "id": "error_invalid_json",
     "translation": "Could not parse JSON, invalid JSON provided"
+  },
+  {
+    "id": "error_invalid_rule",
+    "translation": "Invalid rule provided"
+  },
+  {
+    "id": "error_no_rules_provided",
+    "translation": "No rules provided"
+  },
+  {
+    "id": "error_internal",
+    "translation": "Internal system error"
   }
 ]

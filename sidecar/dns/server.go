@@ -272,23 +272,13 @@ func (s *Server) createRecordsForInstances(question dns.Question, request, respo
 			instanceID := serviceInstance.ID
 			targetName := fmt.Sprintf("%s.instance.%s", instanceID, domainName)
 			portNumber, _ := strconv.Atoi(port)
-			recordSRV := &dns.SRV{Hdr: dns.RR_Header{
-				Name:   question.Name,
-				Rrtype: dns.TypeSRV,
-				Class:  dns.ClassINET,
-				Ttl:    0,
-			},
-				Port:     uint16(portNumber),
-				Priority: 1,
-				Target:   targetName,
-				Weight:   1,
-			}
+			recordSRV := createSRVRecord(question.Name, portNumber, targetName)
 			response.Answer = append(response.Answer, recordSRV)
 			if ip.To4() != nil {
 				recordA := createARecord(targetName, ip)
 				response.Extra = append(response.Extra, recordA)
 			} else if ip.To16() != nil {
-				recordAAAA := createAAARecord(targetName, ip)
+				recordAAAA := createAAAARecord(targetName, ip)
 				response.Extra = append(response.Extra, recordAAAA)
 			}
 
@@ -296,7 +286,7 @@ func (s *Server) createRecordsForInstances(question dns.Question, request, respo
 			record := createARecord(question.Name, ip)
 			response.Answer = append(response.Answer, record)
 		} else if ip.To16() != nil && question.Qtype == dns.TypeAAAA {
-			record := createAAARecord(question.Name, ip)
+			record := createAAAARecord(question.Name, ip)
 			response.Answer = append(response.Answer, record)
 		}
 	}
@@ -360,30 +350,44 @@ func splitHostPortHTTP(value string) (net.IP, string, error) {
 
 }
 
-func createARecord(questionName string, ip net.IP) *dns.A {
+func createARecord(name string, ip net.IP) *dns.A {
 	record := &dns.A{
 		Hdr: dns.RR_Header{
-			Name:   questionName,
+			Name:   name,
 			Rrtype: dns.TypeA,
 			Class:  dns.ClassINET,
 			Ttl:    0,
 		},
-
 		A: ip,
 	}
 	return record
 }
 
-func createAAARecord(questionName string, ip net.IP) *dns.AAAA {
+func createAAAARecord(name string, ip net.IP) *dns.AAAA {
 	record := &dns.AAAA{
 		Hdr: dns.RR_Header{
-			Name:   questionName,
+			Name:   name,
 			Rrtype: dns.TypeAAAA,
 			Class:  dns.ClassINET,
 			Ttl:    0,
 		},
-
 		AAAA: ip,
+	}
+	return record
+}
+
+func createSRVRecord(name string, port int, target string) *dns.AAAA {
+	record := &dns.SRV{
+		Hdr: dns.RR_Header{
+			Name:   name,
+			Rrtype: dns.TypeSRV,
+			Class:  dns.ClassINET,
+			Ttl:    0,
+		},
+		Port:     uint16(port),
+		Priority: 0,
+		Weight:   0,
+		Target:   target,
 	}
 	return record
 }

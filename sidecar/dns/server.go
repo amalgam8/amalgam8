@@ -24,6 +24,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
+	"math/rand"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
@@ -246,62 +247,71 @@ func (s *Server) retrieveInstancesForInstanceQuery(instanceID string, request, r
 
 func (s *Server) createRecordsForInstances(question dns.Question, request, response *dns.Msg,
 	serviceInstances []*client.ServiceInstance) error {
-	numOfMatchingRecords := 0
+
+	answer := make([]dns.RR, 0, 3)
+	extra := make([]dns.RR, 0, 3)
+
 	for _, serviceInstance := range serviceInstances {
-		endPointType := serviceInstance.Endpoint.Type
-		var ip net.IP
-		var err error
-		var port string
-
-		switch endPointType {
-		case "tcp", "udp":
-			ip, port, err = splitHostPortTCPUDP(serviceInstance.Endpoint.Value)
-		case "http", "https":
-			ip, port, err = splitHostPortHTTP(serviceInstance.Endpoint.Value)
-
-		default:
-			continue
-		}
+		ip, port, err := splitHostPort(serviceInstance.Endpoint)
 		if err != nil {
+			logrus.WithError(err).Warnf("unable to resolve ip address for instance '%s' in DNS query '%s'",
+				serviceInstance.ID, question.Name)
 			continue
 		}
-		numOfMatchingRecords++
-		if question.Qtype == dns.TypeSRV {
 
-			domainName := s.config.Domain
-			instanceID := serviceInstance.ID
-			targetName := fmt.Sprintf("%s.instance.%s", instanceID, domainName)
-			portNumber, _ := strconv.Atoi(port)
-			recordSRV := createSRVRecord(question.Name, portNumber, targetName)
-			response.Answer = append(response.Answer, recordSRV)
-			if ip.To4() != nil {
-				recordA := createARecord(targetName, ip)
-				response.Extra = append(response.Extra, recordA)
-			} else if ip.To16() != nil {
-				recordAAAA := createAAAARecord(targetName, ip)
-				response.Extra = append(response.Extra, recordAAAA)
+		switch question.Qtype {
+		case dns.TypeA:
+			ipV4 := ip.To4()
+			if ipV4 != nil {
+				answer = append(answer, createARecord(question.Name, ipV4))
+			}
+		case dns.TypeAAAA:
+			ipV4 := ip.To4()
+			if ipV4 == nil {
+				answer = append(answer, createARecord(question.Name, ip.To16()))
+			}
+		case dns.TypeSRV:
+			target := fmt.Sprintf("%s.instance.%s.", serviceInstance.ID, s.config.Domain)
+			answer = append(answer, createSRVRecord(question.Name, port, target))
+
+			ipV4 := ip.To4()
+			if ipV4 != nil {
+				extra = append(extra, createARecord(question.Name, ipV4))
+			} else {
+				extra = append(extra, createAAAARecord(question.Name, ip.To16()))
 			}
 
-		} else if ip.To4() != nil && question.Qtype == dns.TypeA {
-			record := createARecord(question.Name, ip)
-			response.Answer = append(response.Answer, record)
-		} else if ip.To16() != nil && question.Qtype == dns.TypeAAAA {
-			record := createAAAARecord(question.Name, ip)
-			response.Answer = append(response.Answer, record)
 		}
 	}
-	if numOfMatchingRecords == 0 {
-		//Non-Existent Domain
-		response.SetRcode(request, dns.RcodeNameError)
-		return fmt.Errorf("Non-Existent Domain	 %s", question.Name)
 
+	if len(answer) == 0 {
+		response.SetRcode(request, dns.RcodeNameError)
+		return nil
 	}
+
+	// Poor-man's load balancing: randomize returned records order
+	shuffleRecords(answer)
+	shuffleRecords(extra)
+
+	response.Answer = append(response.Answer, answer...)
+	response.Extra = append(response.Extra, extra...)
 	response.SetRcode(request, dns.RcodeSuccess)
 	return nil
 
 }
 
-func splitHostPortTCPUDP(value string) (net.IP, string, error) {
+func splitHostPort(endpoint client.ServiceEndpoint) (net.IP, uint16, error) {
+	switch endpoint.Type {
+	case "tcp", "udp":
+		return splitHostPortTCPUDP(endpoint.Value)
+	case "http", "https":
+		return splitHostPortHTTP(endpoint.Value)
+	default:
+		return nil, 0, fmt.Errorf("unsupported endpoint type: %s", endpoint.Type)
+	}
+}
+
+func splitHostPortTCPUDP(value string) (net.IP, uint16, error) {
 	// Assume value is "host:port"
 	host, port, err := net.SplitHostPort(value)
 
@@ -313,13 +323,18 @@ func splitHostPortTCPUDP(value string) (net.IP, string, error) {
 
 	ip := net.ParseIP(host)
 	if ip == nil {
-		return nil, "", fmt.Errorf("could not parse '%s' as ip:port", value)
+		return nil, 0, fmt.Errorf("could not parse '%s' as ip:port", value)
 	}
 
-	return ip, port, nil
+	portNum, err := strconv.Atoi(port)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return ip, uint16(portNum), nil
 }
 
-func splitHostPortHTTP(value string) (net.IP, string, error) {
+func splitHostPortHTTP(value string) (net.IP, uint16, error) {
 	isHTTP := strings.HasPrefix(value, "http://")
 	isHTTPS := strings.HasPrefix(value, "https://")
 	if !isHTTPS && !isHTTP {
@@ -329,25 +344,24 @@ func splitHostPortHTTP(value string) (net.IP, string, error) {
 
 	parsedURL, err := url.Parse(value)
 	if err != nil {
-		return nil, "", err
+		return nil, 0, err
 	}
 
 	ip, port, err := splitHostPortTCPUDP(parsedURL.Host)
 	if err != nil {
-		return nil, "", err
+		return nil, 0, err
 	}
 
 	// Use default port, if not specified
-	if port == "0" {
+	if port == 0 {
 		if isHTTP {
-			port = "80"
+			port = 80
 		} else if isHTTPS {
-			port = "443"
+			port = 443
 		}
 	}
 
 	return ip, port, nil
-
 }
 
 func createARecord(name string, ip net.IP) *dns.A {
@@ -376,7 +390,7 @@ func createAAAARecord(name string, ip net.IP) *dns.AAAA {
 	return record
 }
 
-func createSRVRecord(name string, port int, target string) *dns.AAAA {
+func createSRVRecord(name string, port uint16, target string) *dns.SRV {
 	record := &dns.SRV{
 		Hdr: dns.RR_Header{
 			Name:   name,
@@ -384,7 +398,7 @@ func createSRVRecord(name string, port int, target string) *dns.AAAA {
 			Class:  dns.ClassINET,
 			Ttl:    0,
 		},
-		Port:     uint16(port),
+		Port:     port,
 		Priority: 0,
 		Weight:   0,
 		Target:   target,
@@ -400,4 +414,11 @@ func validate(config *Config) error {
 	config.Domain = dns.Fqdn(config.Domain)
 
 	return nil
+}
+
+func shuffleRecords(records []dns.RR) {
+	for i := range records {
+		j := rand.Intn(i + 1)
+		records[i], records[j] = records[j], records[i]
+	}
 }

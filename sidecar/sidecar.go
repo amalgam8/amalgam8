@@ -33,6 +33,7 @@ import (
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
+	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
@@ -91,22 +92,47 @@ func Run(conf config.Config) error {
 	}
 	logrus.SetLevel(logrusLevel)
 
-	if conf.Proxy {
-		if err = startProxy(&conf); err != nil {
-			logrus.WithError(err).Error("Could not start proxy")
-		}
+	registryClient, err := registryclient.New(registryclient.Config{
+		URL:       conf.Registry.URL,
+		AuthToken: conf.Registry.Token,
+	})
+	if err != nil {
+		logrus.WithError(err).Error("Could not create registry client")
+		return err
 	}
+	// initial regsistryMonitor:
+	if conf.DNS || conf.Proxy {
+		registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
+			PollInterval:   conf.Registry.Poll,
+			RegistryClient: registryClient,
+		})
+		if conf.Proxy {
+			if err = startProxy(&conf, registryMonitor); err != nil {
+				logrus.WithError(err).Error("Could not start proxy")
+			}
+		}
+		if conf.DNS {
+			dnsConfig := dns.Config{
+				DiscoveryClient: registryMonitor,
+				Port:            uint16(conf.Dnsconfig.Port),
+				Domain:          conf.Dnsconfig.Domain,
+			}
+			server, err := dns.NewServer(dnsConfig)
+			if err != nil {
+				logrus.WithError(err).Error("Could not start dns server")
+				return err
+			}
+			go server.ListenAndServe()
+		}
 
+		go func() {
+			if err = registryMonitor.Start(); err != nil {
+				logrus.WithError(err).Error("Registry monitor failed")
+			}
+		}()
+	}
 	var lifecycle register.Lifecycle
 	if conf.Register {
-		registryClient, err := registryclient.New(registryclient.Config{
-			URL:       conf.Registry.URL,
-			AuthToken: conf.Registry.Token,
-		})
-		if err != nil {
-			logrus.WithError(err).Error("Could not create registry client")
-			return err
-		}
 
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
 		serviceInstance := &registryclient.ServiceInstance{
@@ -153,7 +179,7 @@ func Run(conf config.Config) error {
 	return nil
 }
 
-func startProxy(conf *config.Config) error {
+func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) error {
 	var err error
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
@@ -174,15 +200,6 @@ func startProxy(conf *config.Config) error {
 		return err
 	}
 
-	registryClient, err := registryclient.New(registryclient.Config{
-		URL:       conf.Registry.URL,
-		AuthToken: conf.Registry.Token,
-	})
-	if err != nil {
-		logrus.WithError(err).Error("Could not create registry client")
-		return err
-	}
-
 	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
 		Client: controllerClient,
 		Listeners: []monitor.ControllerListener{
@@ -196,18 +213,7 @@ func startProxy(conf *config.Config) error {
 		}
 	}()
 
-	registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
-		PollInterval: conf.Registry.Poll,
-		Listeners: []monitor.RegistryListener{
-			nginxProxy,
-		},
-		RegistryClient: registryClient,
-	})
-	go func() {
-		if err = registryMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Registry monitor failed")
-		}
-	}()
+	registryMonitor.AddListener(nginxProxy)
 
 	debugger := api.NewDebugAPI(nginxProxy)
 

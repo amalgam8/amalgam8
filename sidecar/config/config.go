@@ -72,6 +72,12 @@ type Controller struct {
 	Poll  time.Duration `yaml:"poll"`
 }
 
+// Dnsconfig - DNS server configuration
+type Dnsconfig struct {
+	Port   int    `yaml:"port"`
+	Domain string `yaml:"domain"`
+}
+
 // Health check types.
 const (
 	HTTPHealthCheck    = "http"
@@ -95,12 +101,14 @@ type HealthCheck struct {
 type Config struct {
 	Register bool `yaml:"register"`
 	Proxy    bool `yaml:"proxy"`
+	DNS      bool `yaml:"dns"`
 
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
 
 	Registry   Registry   `yaml:"registry"`
 	Controller Controller `yaml:"controller"`
+	Dnsconfig  Dnsconfig  `yaml:"dnsconfig"`
 
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
@@ -186,6 +194,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
+	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
@@ -195,6 +204,8 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
+	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
 
@@ -301,6 +312,13 @@ func (c *Config) Validate() error {
 			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
 		)
 
+	}
+
+	if c.DNS {
+		validators = append(validators,
+			IsInRange("Dns Port", c.Dnsconfig.Port, 1, 65535),
+			IsValidDomain("Dns Domain", c.Dnsconfig.Domain),
+		)
 	}
 
 	return Validate(validators)

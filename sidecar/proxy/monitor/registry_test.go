@@ -25,56 +25,67 @@ func TestCatalogComparison(t *testing.T) {
 	r := registry{}
 
 	cases := []struct {
-		A, B  []client.ServiceInstance
+		A, B  map[string][]*client.ServiceInstance
 		Equal bool
 	}{
 		{
-			A:     []client.ServiceInstance{},
-			B:     []client.ServiceInstance{},
+			A:     map[string][]*client.ServiceInstance{},
+			B:     map[string][]*client.ServiceInstance{},
 			Equal: true,
 		},
 		{ // TTL and heartbeat should be ignored when comparing
-			A: []client.ServiceInstance{
-				{
-					LastHeartbeat: time.Unix(0, 0),
-					TTL:           1,
+			A: map[string][]*client.ServiceInstance{
+				"Service": []*client.ServiceInstance{
+					{
+						LastHeartbeat: time.Unix(0, 0),
+						TTL:           1,
+					},
 				},
 			},
-			B: []client.ServiceInstance{
-				{
-					LastHeartbeat: time.Unix(1, 0),
-					TTL:           2,
+			B: map[string][]*client.ServiceInstance{
+				"Service": []*client.ServiceInstance{
+					{
+						LastHeartbeat: time.Unix(1, 0),
+						TTL:           2,
+					},
 				},
 			},
 			Equal: true,
 		},
 		{
-			A: []client.ServiceInstance{
-				{
-					ServiceName: "ServiceA",
+			A: map[string][]*client.ServiceInstance{
+				"ServiceA": []*client.ServiceInstance{
+					{
+						ServiceName: "ServiceA",
+					},
 				},
 			},
-			B:     []client.ServiceInstance{},
+			B:     map[string][]*client.ServiceInstance{},
 			Equal: false,
 		},
 		{
-			A: []client.ServiceInstance{
-				{
-					ServiceName: "ServiceA",
+			A: map[string][]*client.ServiceInstance{
+				"ServiceA": []*client.ServiceInstance{
+					{
+						ServiceName: "ServiceA",
+					},
 				},
 			},
-			B: []client.ServiceInstance{
-				{
-					ServiceName: "ServiceB",
+			B: map[string][]*client.ServiceInstance{
+				"ServiceB": []*client.ServiceInstance{
+					{
+						ServiceName: "ServiceB",
+					},
 				},
 			},
 			Equal: false,
 		},
 	}
-	for _, c := range cases {
-		actual := r.catalogsEqual(c.A, c.B)
+	for i, c := range cases {
+		r.cache = c.A
+		actual := r.compareToCache(c.B)
 		if actual != c.Equal {
-			t.Errorf("catalogsEqual(%v, %v): expected %v, got %v", c.A, c.B, c.Equal, actual)
+			t.Errorf("catalogsEqual(%v, %v): expected %v, got %v %d", c.A, c.B, c.Equal, actual, i)
 		}
 	}
 }

@@ -19,6 +19,8 @@ import (
 	"fmt"
 	"net/url"
 	"time"
+
+	"github.com/miekg/dns"
 )
 
 // Validate runs validation checks
@@ -92,6 +94,20 @@ func IsInRangeDuration(name string, value, min, max time.Duration) ValidatorFunc
 	return func() error {
 		if value.Seconds() < min.Seconds() || value.Seconds() > max.Seconds() {
 			return fmt.Errorf("%v must be more than %v and less than %v", name, min, max)
+		}
+		return nil
+	}
+}
+
+// IsValidDomain ensures the domain name is valid domain and that it contains only one domain.
+func IsValidDomain(name, value string) ValidatorFunc {
+	return func() error {
+		numberOfDomains, isValidDomain := dns.IsDomainName(value)
+		if !isValidDomain {
+			return errors.New(name + " not a valid domain")
+		}
+		if numberOfDomains != 1 {
+			return errors.New(name + " needs to contain 1 domain")
 		}
 		return nil
 	}

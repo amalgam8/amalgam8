@@ -17,6 +17,8 @@ imports:
   subpackages:
   - redis
   - internal
+- name: github.com/miekg/dns
+  version: db96a2b759cdef4f11a34506a42eb8d1290c598e
 - name: github.com/nicksnyder/go-i18n
   version: 37e5c2de3e03e4b82693e3fcb4a6aa2cc4eb07e3
   subpackages:

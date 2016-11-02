@@ -37,6 +37,9 @@ const (
 	controllerPollFlag  = "controller_poll"
 	healthchecksFlag    = "healthchecks"
 	logLevelFlag        = "log_level"
+	dnsFlag             = "dns"
+	dnsConfigPortFlag   = "dns_port"
+	dnsConfigDomainFlag = "dns_domain"
 	debugFlag           = "debug"
 )
 
@@ -60,6 +63,11 @@ var Flags = []cli.Flag{
 		Name:   proxyFlag,
 		EnvVar: envVar(proxyFlag),
 		Usage:  "Enable automatic service discovery and load balancing across services using NGINX",
+	},
+	cli.BoolFlag{
+		Name:   dnsFlag,
+		EnvVar: envVar(dnsFlag),
+		Usage:  "Enable DNS server",
 	},
 	cli.StringFlag{
 		Name:   serviceFlag,
@@ -110,6 +118,17 @@ var Flags = []cli.Flag{
 		Name:   controllerPollFlag,
 		EnvVar: envVar(controllerPollFlag),
 		Usage:  "Interval for polling Controller",
+	},
+
+	cli.StringFlag{
+		Name:   dnsConfigPortFlag,
+		EnvVar: envVar(dnsConfigPortFlag),
+		Usage:  "DNS server port number",
+	},
+	cli.StringFlag{
+		Name:   dnsConfigDomainFlag,
+		EnvVar: envVar(dnsConfigDomainFlag),
+		Usage:  "DNS server authorization domain name",
 	},
 	cli.StringSliceFlag{
 		Name:   healthchecksFlag,

@@ -254,7 +254,7 @@ func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) er
 type Instance struct {
 	Tags string `json:"tags"`
 	Type string `json:"type"`
-	Host string `json:"host"`
+	IP   string `json:"ip"`
 	Port int    `json:"port"`
 }
 

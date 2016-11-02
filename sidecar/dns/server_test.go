@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"sort"
+
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +19,7 @@ import (
 type TestSuite struct {
 	suite.Suite
 	server   *Server
+	config   Config
 	myClient *mySimpleServiceDiscovery
 }
 
@@ -74,31 +77,22 @@ func (m *mySimpleServiceDiscovery) ListServiceInstances(serviceName string) ([]*
 	return servicesToReturn, nil
 }
 
-/*************************************************************/
-
-/******************** Helper functions ***********************/
-
-func (suite *TestSuite) createDNSServer() (*Server, error) {
+// create the dns server with a client , initialize registry with service instances.
+func (suite *TestSuite) SetupTest() {
+	var err error
 	suite.myClient = new(mySimpleServiceDiscovery)
+
 	rand.Seed(int64(time.Now().Nanosecond()))
 	port := rand.Intn(9000-8000) + 8000
-	fmt.Println("Port generateed: ", port)
-	dnsConfig := Config{
+
+	suite.config = Config{
 		DiscoveryClient: suite.myClient,
 		Port:            uint16(port),
 		Domain:          "amalgam8",
 	}
-	return NewServer(dnsConfig)
 
-}
-
-/***************************************************************/
-
-// create the dns server with a client , initialize registry with service instances.
-func (suite *TestSuite) SetupTest() {
-	var err error
-	suite.server, err = suite.createDNSServer()
-	suite.Nil(err, "Error should be nil")
+	suite.server, err = NewServer(suite.config)
+	suite.NoError(err)
 
 	url1 := url.URL{
 		Scheme: "http",
@@ -136,172 +130,118 @@ func (suite *TestSuite) SetupTest() {
 
 	go suite.server.ListenAndServe()
 	time.Sleep((200) * time.Millisecond)
-	//suite.Nil(err, "Error should be nil")
 
 }
 
 func (suite *TestSuite) TearDownTest() {
 	suite.server.Shutdown()
-
 }
 
-// All methods that begin with "Test" are run as tests within a
-// suite.
-
 func (suite *TestSuite) TestShoppingCartNoTags() {
-	target := "shoppingCart.service.amalgam8"
-	server := "127.0.0.1:"
+	r, err := suite.doDNSQuery("shoppingCart.amalgam8.", dns.TypeA)
 
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
-	suite.Nil(err)
-	suite.Equal(2, len(r.Answer), "Should be two records for shoppingCart")
-
+	suite.NoError(err)
+	suite.Len(r.Answer, 2, "Should be two records for shoppingCart")
 	suite.Equal(dns.RcodeSuccess, r.Rcode)
 
-	for _, ans := range r.Answer {
-		Arecord := ans.(*dns.A)
+	sort.Sort(ByIP(r.Answer))
 
-		a := net.IPv4(127, 0, 0, 4)
-		b := net.IPv4(127, 0, 0, 5)
-		suite.True(Arecord.A.Equal(a) || Arecord.A.Equal(b))
+	suite.IsType(&dns.A{}, r.Answer[0])
+	suite.IsType(&dns.A{}, r.Answer[1])
 
-	}
-
+	suite.Equal(net.ParseIP("127.0.0.5").To4(), r.Answer[0].(*dns.A).A.To4())
+	suite.Equal(net.ParseIP("127.0.0.4").To4(), r.Answer[1].(*dns.A).A.To4())
 }
 
 func (suite *TestSuite) TestUnregisteredServices() {
+	r, err := suite.doDNSQuery("unregisterd.amalgam8.", dns.TypeA)
 
-	target := "unregisterd.service.amalgam8"
-	server := "127.0.0.1:"
-
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
 	suite.Equal(dns.RcodeNameError, r.Rcode)
-	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "No records for service unregistred")
+	suite.NoError(err)
+	suite.Empty(r.Answer, "No records for service unregistred")
 
-	target = "httpService.service.amalgam8"
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err = c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
+	r, err = suite.doDNSQuery("httpService.service.amalgam8.", dns.TypeA)
+
 	suite.Equal(dns.RcodeNameError, r.Rcode)
-	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "No records for serive unregistred")
+	suite.NoError(err)
+	suite.Empty(r.Answer, "No records for service unregistred")
 }
 
 func (suite *TestSuite) TestEmptyRequest() {
-	target := "amalgam8"
-	server := "127.0.0.1:"
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
+	r, err := suite.doDNSQuery("amalgam8.", dns.TypeA)
+
 	suite.Equal(dns.RcodeNameError, r.Rcode)
-	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "No records for serive unregistred")
+	suite.NoError(err)
+	suite.Empty(r.Answer, "No records for serive unregistred")
 }
 
 func (suite *TestSuite) TestRequestsWithTags() {
-	target := "first.second.shoppingCart.service.amalgam8"
-	server := "127.0.0.1:"
+	r, err := suite.doDNSQuery("first.second.shoppingCart.amalgam8.", dns.TypeA)
 
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
-	suite.Nil(err)
-	suite.Equal(1, len(r.Answer), "Should be 1 record for shoppingCart")
-
+	suite.NoError(err)
 	suite.Equal(dns.RcodeSuccess, r.Rcode)
+	suite.Len(r.Answer, 1, "Should be 1 record for shoppingCart")
 
-	for _, ans := range r.Answer {
-		Arecord := ans.(*dns.A)
+	suite.IsType(&dns.A{}, r.Answer[0])
+	suite.Equal(net.IPv4(127, 0, 0, 4).To4(), r.Answer[0].(*dns.A).A.To4())
 
-		a := net.IPv4(127, 0, 0, 4)
-		suite.True(Arecord.A.Equal(a))
+	r, err = suite.doDNSQuery("tag.Reviews.amalgam8.", dns.TypeA)
 
-	}
-
-	target = "tag.Reviews.service.amalgam8"
-
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err = c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
 	suite.Equal(dns.RcodeNameError, r.Rcode)
-	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "No records for service unregistred")
-
+	suite.NoError(err)
+	suite.Empty(r.Answer, "No records for service unregistred")
 }
 
 func (suite *TestSuite) TestRequestsWithSubTags() {
-	target := "seconds.shoppingCart.service.amalgam8"
-	server := "127.0.0.1:"
+	r, err := suite.doDNSQuery("seconds.shoppingCart.amalgam8.", dns.TypeA)
 
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeA)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
 	suite.Equal(dns.RcodeNameError, r.Rcode, "Expected Error code : "+strconv.Itoa(dns.RcodeNameError)+" Got :"+strconv.Itoa(r.Rcode))
-	suite.Nil(err)
-	suite.Equal(0, len(r.Answer), "Should be No records for serive unregistred")
-	//fmt.Println(r.Answer)
+	suite.NoError(err)
+	suite.Empty(r.Answer, "Should be No records for serive unregistred")
 }
 
 func (suite *TestSuite) TestRequestsSRVNoTags() {
-	target := "_shoppingCart._tcp.service.amalgam8"
-	server := "127.0.0.1:"
+	r, err := suite.doDNSQuery("_shoppingCart._tcp.amalgam8.", dns.TypeSRV)
 
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeSRV)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
-	suite.Nil(err)
-	suite.Equal(2, len(r.Answer), "Should be 2 tcp records for shoppingCart")
+	suite.NoError(err)
+	suite.Len(r.Answer, 2, "Should be 2 tcp records for shoppingCart")
 	suite.Equal(dns.RcodeSuccess, r.Rcode)
 
-	Arecord1 := r.Answer[0].(*dns.SRV)
-	targetName1 := suite.myClient.services[1].ID + ".instance.amalgam8."
-	suite.True(Arecord1.Target == (targetName1), Arecord1.Target+" (Actual) + Expected : "+targetName1)
-	suite.True(Arecord1.Port == 5050)
+	sort.Sort(ByPort(r.Answer))
+	sort.Sort(ByIP(r.Extra))
 
-	Arecord2 := r.Answer[1].(*dns.SRV)
-	targetName2 := suite.myClient.services[2].ID + ".instance.amalgam8."
-	suite.True(Arecord2.Target == (targetName2))
-	suite.True(Arecord2.Port == 3050)
+	suite.IsType(&dns.SRV{}, r.Answer[0])
+	suite.IsType(&dns.SRV{}, r.Answer[1])
 
-	Arecord3 := r.Extra[0].(*dns.A)
-	a := net.IPv4(127, 0, 0, 5)
-	suite.True(Arecord3.A.Equal(a))
+	target1 := fmt.Sprintf("%s.shoppingCart.amalgam8.", suite.myClient.services[1].ID)
+	target2 := fmt.Sprintf("%s.shoppingCart.amalgam8.", suite.myClient.services[2].ID)
 
-	Arecord4 := r.Extra[1].(*dns.A)
-	a = net.IPv4(127, 0, 0, 4)
-	suite.True(Arecord4.A.Equal(a))
+	suite.Equal(target1, r.Answer[0].(*dns.SRV).Target, "Wrong target for SRV record")
+	suite.Equal(target2, r.Answer[1].(*dns.SRV).Target, "Wrong target for SRV record")
+	suite.EqualValues(5050, r.Answer[0].(*dns.SRV).Port, "Wrong port for SRV record")
+	suite.EqualValues(3050, r.Answer[1].(*dns.SRV).Port, "Wrong port for SRV record")
 
+	suite.IsType(&dns.A{}, r.Extra[0])
+	suite.IsType(&dns.A{}, r.Extra[1])
+	suite.Equal(net.IPv4(127, 0, 0, 5).To4(), r.Extra[0].(*dns.A).A.To4())
+	suite.Equal(net.IPv4(127, 0, 0, 4).To4(), r.Extra[1].(*dns.A).A.To4())
 }
 
 func (suite *TestSuite) TestRequestsSRVWithTag() {
-	target := "_shoppingCart._first.service.amalgam8"
-	server := "127.0.0.1:"
+	r, err := suite.doDNSQuery("_shoppingCart._first.amalgam8.", dns.TypeSRV)
 
-	c := dns.Client{}
-	m := dns.Msg{}
-	m.SetQuestion(target+".", dns.TypeSRV)
-	r, _, err := c.Exchange(&m, server+strconv.Itoa(int(suite.server.config.Port)))
-	suite.Nil(err)
-	suite.Equal(1, len(r.Answer), "Should be 1 records for  with tag first")
+	suite.NoError(err)
+	suite.Len(r.Answer, 1, "Should be 1 records for with tag first")
 	suite.Equal(dns.RcodeSuccess, r.Rcode)
 
-	Arecord2 := r.Answer[0].(*dns.SRV)
-	targetName2 := suite.myClient.services[2].ID + ".instance.amalgam8."
-	suite.True(Arecord2.Target == (targetName2))
-	suite.True(Arecord2.Port == 3050)
-	Arecord4 := r.Extra[0].(*dns.A)
-	a := net.IPv4(127, 0, 0, 4)
-	suite.True(Arecord4.A.Equal(a))
+	target := fmt.Sprintf("%s.shoppingCart.amalgam8.", suite.myClient.services[2].ID)
 
+	suite.IsType(&dns.SRV{}, r.Answer[0])
+	suite.Equal(target, r.Answer[0].(*dns.SRV).Target, "Wrong target name in SRV record")
+	suite.EqualValues(3050, r.Answer[0].(*dns.SRV).Port, "Wrong port in SRV record")
+
+	suite.IsType(&dns.A{}, r.Extra[0])
+	suite.Equal(net.ParseIP("127.0.0.4").To4(), r.Extra[0].(*dns.A).A.To4())
 }
 
 // In order for 'go test' to run this suite, we need to create
@@ -309,4 +249,61 @@ func (suite *TestSuite) TestRequestsSRVWithTag() {
 func TestTestSuite(t *testing.T) {
 
 	suite.Run(t, new(TestSuite))
+}
+
+type ByPort []dns.RR
+
+func (rrs ByPort) Len() int {
+	return len(rrs)
+}
+
+func (rrs ByPort) Less(i, j int) bool {
+	srvI, okI := rrs[i].(*dns.SRV)
+	srvJ, okJ := rrs[j].(*dns.SRV)
+
+	var portI, portJ uint16
+	if okI {
+		portI = srvI.Port
+	}
+	if okJ {
+		portJ = srvJ.Port
+	}
+	return portI > portJ
+}
+
+func (rrs ByPort) Swap(i, j int) {
+	rrs[i], rrs[j] = rrs[j], rrs[i]
+}
+
+type ByIP []dns.RR
+
+func (rrs ByIP) Len() int {
+	return len(rrs)
+}
+
+func (rrs ByIP) Less(i, j int) bool {
+	aI, okI := rrs[i].(*dns.A)
+	aJ, okJ := rrs[j].(*dns.A)
+
+	var ipI, ipJ net.IP
+	if okI {
+		ipI = aI.A
+	}
+	if okJ {
+		ipJ = aJ.A
+	}
+	return ipI.String() > ipJ.String()
+}
+
+func (rrs ByIP) Swap(i, j int) {
+	rrs[i], rrs[j] = rrs[j], rrs[i]
+}
+
+func (suite *TestSuite) doDNSQuery(question string, questionType uint16) (*dns.Msg, error) {
+	s := "127.0.0.1:" + strconv.Itoa(int(suite.config.Port))
+
+	m := &dns.Msg{}
+	m.SetQuestion(question, questionType)
+
+	return dns.Exchange(m, s)
 }

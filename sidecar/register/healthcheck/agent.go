@@ -40,7 +40,7 @@ func NewAgent(check Check, interval time.Duration) *Agent {
 	}
 
 	return &Agent{
-		stop: make(chan interface{}),
+		stop:        make(chan interface{}),
 		healthCheck: check,
 		interval:    interval,
 	}

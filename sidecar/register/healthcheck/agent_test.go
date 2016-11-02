@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -42,7 +43,7 @@ func TestAgent(t *testing.T) {
 	hc := &MockCheck{}
 	hc.On("Execute").Return(nil) // No execute errors.
 
-	expectedCalls := 10 // Number of times that the check's execute function should be called.
+	expectedCalls := 10                // Number of times that the check's execute function should be called.
 	interval := 100 * time.Millisecond // Amount of time between calls.
 
 	agent := NewAgent(hc, interval)
@@ -51,7 +52,7 @@ func TestAgent(t *testing.T) {
 	statusChan := make(chan error)
 	agent.Start(statusChan)
 
-	expectedEnd := time.Now().Add(interval * time.Duration(expectedCalls - 1))
+	expectedEnd := time.Now().Add(interval * time.Duration(expectedCalls-1))
 
 	// Check the output
 	count := 0
@@ -64,7 +65,7 @@ func TestAgent(t *testing.T) {
 	}
 
 	end := time.Now()
-	assert.WithinDuration(t, expectedEnd, end, time.Millisecond * 50)
+	assert.WithinDuration(t, expectedEnd, end, time.Millisecond*50)
 	hc.AssertNumberOfCalls(t, "Execute", expectedCalls)
 
 	// Make sure the agent stops calling execute in a timely fashion.

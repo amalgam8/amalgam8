@@ -22,10 +22,14 @@ import (
 
 	"errors"
 
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/rules"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 )
+
+const clientTimeout = 30 * time.Second
 
 // Client for NGINX
 type Client interface {
@@ -40,8 +44,10 @@ type client struct {
 // NewClient return new NGINX client
 func NewClient(url string) Client {
 	return &client{
-		httpClient: &http.Client{},
-		url:        url,
+		httpClient: &http.Client{
+			Timeout: clientTimeout,
+		},
+		url: url,
 	}
 }
 

@@ -793,7 +793,13 @@ function Amalgam8:apply_rules()
       ngx.ctx.a8_retries = selected_backend.retries
    end
 
-   if selected_instances[1].host then -- FIXME
+   -- FIXME: By doing the LB in balancer_by_lua and supporting retries,
+   -- we are losing the ability to set the host header on a per upstream instance basis, if
+   -- the instances from the registry contain hostnames instead of IP addresses.
+   -- The very gross approximation to this problem: pick the host header from the first
+   -- instance in the list. Alternatively, one could set a host header for the entire backend
+   -- via the rules (TBD).
+   if selected_instances[1].host then
       ngx_var.a8_upstream_host = upstream.host
    end
 

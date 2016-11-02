@@ -297,9 +297,9 @@ func (s *Server) createRecords(question dns.Question, request, response *dns.Msg
 
 			ipV4 := ip.To4()
 			if ipV4 != nil {
-				extra = append(extra, createARecord(question.Name, ipV4))
+				extra = append(extra, createARecord(target, ipV4))
 			} else {
-				extra = append(extra, createAAAARecord(question.Name, ip.To16()))
+				extra = append(extra, createAAAARecord(target, ip.To16()))
 			}
 
 		}

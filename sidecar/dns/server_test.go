@@ -223,6 +223,8 @@ func (suite *TestSuite) TestRequestsSRVNoTags() {
 
 	suite.IsType(&dns.A{}, r.Extra[0])
 	suite.IsType(&dns.A{}, r.Extra[1])
+	suite.Equal(target1, r.Extra[0].Header().Name, "Extra A record name doesn't match target")
+	suite.Equal(target2, r.Extra[1].Header().Name, "Extra A record name doesn't match target")
 	suite.Equal(net.IPv4(127, 0, 0, 5).To4(), r.Extra[0].(*dns.A).A.To4())
 	suite.Equal(net.IPv4(127, 0, 0, 4).To4(), r.Extra[1].(*dns.A).A.To4())
 }
@@ -241,6 +243,7 @@ func (suite *TestSuite) TestRequestsSRVWithTag() {
 	suite.EqualValues(3050, r.Answer[0].(*dns.SRV).Port, "Wrong port in SRV record")
 
 	suite.IsType(&dns.A{}, r.Extra[0])
+	suite.Equal(target, r.Extra[0].Header().Name, "Extra A record name doesn't match target")
 	suite.Equal(net.ParseIP("127.0.0.4").To4(), r.Extra[0].(*dns.A).A.To4())
 }
 

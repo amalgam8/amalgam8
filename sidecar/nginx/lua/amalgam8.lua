@@ -26,7 +26,6 @@ local io = require("io");
 local Amalgam8 = { _VERSION = '0.4.0' }
 
 local delay_action, abort_action, trace_action = 1, 2, 3
-local default_timeout, default_retries = 60, 0
 
 local function is_valid_string(input)
    if input and type(input) == 'string' and input ~= '' then
@@ -787,11 +786,20 @@ function Amalgam8:apply_rules()
       ngx.var.a8_upstream_name = destination
    end
 
-   local upstream = selected_instances[math.random(#selected_instances)]
-   ngx.var.a8_upstream_instance = upstream.ip..":"..upstream.port
-   ngx.var.a8_upstream_tags = upstream.tags
+   ngx.ctx.a8_upstreams = selected_instances
+   ngx.var.a8_upstream_tags = ""
+   if selected_backend then
+      ngx.ctx.a8_timeout = selected_backend.timeout
+      ngx.ctx.a8_retries = selected_backend.retries
+   end
 
-   if upstream.host then
+   -- FIXME: By doing the LB in balancer_by_lua and supporting retries,
+   -- we are losing the ability to set the host header on a per upstream instance basis, if
+   -- the instances from the registry contain hostnames instead of IP addresses.
+   -- The very gross approximation to this problem: pick the host header from the first
+   -- instance in the list. Alternatively, one could set a host header for the entire backend
+   -- via the rules (TBD).
+   if selected_instances[1].host then
       ngx_var.a8_upstream_host = upstream.host
    end
 
@@ -813,7 +821,7 @@ function Amalgam8:apply_rules()
       -- ngx_log(ngx_DEBUG, "matched action "..cjson.encode(selected_actions).." for "..destination)
 
       for _,sa in ipairs(selected_actions) do
-         if not sa.tags or match_tags(upstream.tags, sa.tags) then
+         if not sa.tags or (selected_backend and match_tags(table.concat(selected_backend.tags), sa.tags)) then
             -- ngx_log(ngx_DEBUG, "action type "..tostring(sa.action).." tags matched for "..destination)
             if sa.action <= abort_action then
                -- ngx_log(ngx_DEBUG, "executing action type "..tostring(sa.action).." for "..destination)
@@ -835,14 +843,87 @@ function Amalgam8:apply_rules()
 
 end
 
+-- If the upstream list is empty before the request reaches the load
+-- balancing stage (balancer_by_lua), then the access_by_lua stage will
+-- return a HTTP 503 (service unavailable). However, once the request
+-- enters the upstream phase (balancer_by_lua), there are two possible
+-- error codes: HTTP 504 Gateway Timeout (after gateway tries out all
+-- upstreams), or HTTP 502 BAd Gateway (if none of the upstreams are
+-- alive). The latter case is a race condition of sorts. When request lands
+-- here, the expectation is that atleast one upstream is alive. If all
+-- upstreams are dead, then the health check results didn't propagate fast
+-- enough to remove the upstream elements in time. If it was fast enough,
+-- the access_by_lua case would have automatically caught it and responded
+-- with a HTTP 503.
 
 function Amalgam8:load_balance()
-   local ok, err = balancer.set_current_peer(ngx.var.a8_upstream_instance)
-   if not ok then
-      ngx.status = ngx.HTTP_SERVICE_UNAVAILABLE --caller does not care about nginx issues. We need to catch these errors in a different way.
-      ngx_log(ngx_ERR, "failed to set current peer"..err)
-      ngx.exit(ngx.status)
+   local selected_instances = ngx.ctx.a8_upstreams
+   local timeout = ngx.ctx.a8_timeout
+   local retries = ngx.ctx.a8_retries
+
+   -- only retry if last attempt was a failed connection (error/connect timeout/bad headers).
+   local state, status = balancer.get_last_failure()
+   if state and state ~= "failed" then
+      return ngx.exit(0)
    end
+
+   -- If timeout is not provided by the user, we let nginx use its default timeouts
+   -- for connect, send and read. The default timeout is 60s.
+   if timeout and timeout > 0 then
+      local ok, err = balancer.set_timeouts(timeout, timeout, timeout)
+      if not ok then
+         ngx_log(ngx_WARN, "failed to set timeouts"..err)
+      end
+   end
+
+   local upstream = nil
+   local count = #selected_instances
+   local pick = 1
+   while not upstream and count > 0 do
+      pick = math.random(#selected_instances)
+      upstream = selected_instances[pick]
+      if upstream then break end
+      count = count -1
+   end
+
+   -- we didn't get any upstream from the list. More retries than instances
+   -- available
+   if not upstream then
+      ngx_log(ngx_DEBUG, "No more upstreams. returning "..ngx.status)
+      return ngx.exit(0)
+   end
+
+   -- make sure same upstream does not get selected next time
+   ngx.ctx.a8_upstreams[pick] = nil 
+
+   local ok, err = balancer.set_current_peer(upstream.ip, upstream.port)
+   if not ok then
+      ngx_log(ngx_ERR, "failed to set current peer"..err)
+      return ngx.exit(0)
+   end
+   ngx.var.a8_upstream_tags = upstream.tags
+
+   if not retries then
+      retries = #selected_instances
+   end
+
+   if not ngx.ctx.tries then
+      ngx.ctx.tries = 0
+   end
+
+   -- When the number of retries is exhausted, the application will get a HTTP 504 Gateway Timeout.
+   if ngx.ctx.tries < retries then
+      -- Tell nginx to invoke the balancer_by_lua section again when the request
+      -- to the upstream fails.
+      local ok, err = balancer.set_more_tries(1)
+      if not ok then
+         ngx_log(ngx_ERR, "failed to set more tries: "..err)
+         return ngx.exit(0)
+      elseif err then
+         ngx_log(ngx_WARN, "set more tries: ", err)
+      end
+   end
+   ngx.ctx.tries = ngx.ctx.tries + 1
 end
 
 

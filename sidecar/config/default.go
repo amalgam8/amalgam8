@@ -20,6 +20,7 @@ import "time"
 var DefaultConfig = Config{
 	Register: false,
 	Proxy:    false,
+	DNS:      false,
 
 	Service: Service{
 		Name: "",
@@ -40,6 +41,11 @@ var DefaultConfig = Config{
 		URL:   "",
 		Token: "",
 		Poll:  time.Duration(15 * time.Second),
+	},
+
+	Dnsconfig: Dnsconfig{
+		Port:   8053,
+		Domain: "amalgam8",
 	},
 
 	HealthChecks: nil,

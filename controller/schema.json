@@ -181,10 +181,16 @@
           "default": 1
         },
         "timeout": {
-          "description": "Request timeout or read/write timeout on the pipe in seconds",
+          "description": "Connect/read/write timeout when talking to an instance. Default is nginx's timeout (60s). Unit is in seconds (e.g, 1.234s)",
           "type": "number",
           "minimum": 0,
           "exclusiveMinimum": true
+        },
+        "retries": {
+          "description": "Number of times to retry a failed request to a different instances. If not set, all instances are tried with max 10 retries. Set to 0 to disable retries",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": false
         }
       },
       "required": [

@@ -21,16 +21,22 @@ import (
 	"strconv"
 	"strings"
 
+	"math/rand"
+
+	"sort"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/client"
 	"github.com/miekg/dns"
-	"math/rand"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
 type Server struct {
-	config    Config
-	dnsServer *dns.Server
+	dnsServer       *dns.Server
+	discoveryClient client.Discovery
+
+	domain       string
+	domainLabels int
 }
 
 // Config represents the DNS server configurations.
@@ -47,7 +53,9 @@ func NewServer(config Config) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		config: config,
+		discoveryClient: config.DiscoveryClient,
+		domain:          config.Domain,
+		domainLabels:    len(dns.Split(config.Domain)),
 	}
 
 	// Setup DNS muxing
@@ -101,7 +109,6 @@ func (s *Server) handleRequest(w dns.ResponseWriter, request *dns.Msg) {
 		err := s.handleQuestion(question, request, response)
 		if err != nil {
 			logrus.WithError(err).Errorf("Error handling DNS question %d: %s", i, question.String())
-			// TODO: what should the dns response return ?
 			break
 		}
 	}
@@ -112,7 +119,6 @@ func (s *Server) handleRequest(w dns.ResponseWriter, request *dns.Msg) {
 }
 
 func (s *Server) handleQuestion(question dns.Question, request, response *dns.Msg) error {
-
 	switch question.Qclass {
 	case dns.ClassINET:
 	default:
@@ -129,133 +135,148 @@ func (s *Server) handleQuestion(question dns.Question, request, response *dns.Ms
 		return fmt.Errorf("unsupported DNS question type: %v", dns.Type(question.Qtype).String())
 	}
 
-	serviceInstances, err := s.retrieveServices(question, request, response)
-
+	instances, err := s.retrieveInstances(question, request, response)
 	if err != nil {
 		return err
 	}
-	err = s.createRecordsForInstances(question, request, response, serviceInstances)
-	return err
-
+	return s.createRecords(question, request, response, instances)
 }
 
-func (s *Server) retrieveServices(question dns.Question, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
-	var serviceInstances []*client.ServiceInstance
-	var err error
-	// parse query :
-	// Query format:
-	// [tag or endpoint type]*.<service>.service.<domain>.
-	// <instance_id>.instance.<domain>.
-	// For SRV types we also support :
-	// _<service>._<tag or endpoint type>.<domain>.
-
-	/// IsDomainName checks if s is a valid domain name
-	//  When false is returned the number of labels is not
-	// defined.  Also note that this function is extremely liberal; almost any
-	// string is a valid domain name as the DNS is 8 bit protocol. It checks if each
-	// label fits in 63 characters, but there is no length check for the entire
-	// string s. I.e.  a domain name longer than 255 characters is considered valid.
-	numberOfLabels, isValidDomain := dns.IsDomainName(question.Name)
+func (s *Server) retrieveInstances(question dns.Question, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
+	// Validate the domain name in the question.
+	_, isValidDomain := dns.IsDomainName(question.Name)
 	if !isValidDomain {
-		response.SetRcode(request, dns.RcodeFormatError)
-		return nil, fmt.Errorf("Invalid Domain name %s", question.Name)
-	}
-	fullDomainRequestArray := dns.SplitDomainName(question.Name)
-	if len(fullDomainRequestArray) == 1 || len(fullDomainRequestArray) == 2 {
 		response.SetRcode(request, dns.RcodeNameError)
-		return nil, fmt.Errorf("service name wasn't included in domain %s", question.Name)
+		return nil, fmt.Errorf("invalid domain name")
 	}
-	if fullDomainRequestArray[numberOfLabels-2] == "service" {
-		if question.Qtype == dns.TypeSRV && numberOfLabels == 4 &&
-			strings.HasPrefix(fullDomainRequestArray[0], "_") &&
-			strings.HasPrefix(fullDomainRequestArray[1], "_") {
-			// SRV Query :
-			tagOrProtocol := fullDomainRequestArray[1][1:]
-			serviceName := fullDomainRequestArray[0][1:]
-			serviceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagOrProtocol)
-		} else {
-			serviceName := fullDomainRequestArray[numberOfLabels-3]
-			tagsOrProtocol := fullDomainRequestArray[:numberOfLabels-3]
-			serviceInstances, err = s.retrieveInstancesForServiceQuery(serviceName, request, response, tagsOrProtocol...)
+	labels := dns.SplitDomainName(question.Name)
 
+	// Query format can be either of the following:
+	// 1. [tag|protocol|instanceID]*.<service>.<domain> (A/AAAA query)
+	// 2. _<service>._<tag|protocol|instanceID>.domain> (SRV query per RFC 2782)
+
+	if len(labels) < 1+s.domainLabels {
+		response.SetRcode(request, dns.RcodeNameError)
+		return nil, fmt.Errorf("no service specified")
+	}
+
+	// Extract service name and filtering labels (tags / protocol / instance ID)
+	var service string
+	var filters []string
+	switch question.Qtype {
+	case dns.TypeA, dns.TypeAAAA:
+		servicePos := len(labels) - s.domainLabels - 1
+		service = labels[servicePos]
+		filters = labels[0:servicePos]
+	case dns.TypeSRV:
+		// Make sure the query syntax complies to RFC 2782
+		if len(labels) != 2+s.domainLabels ||
+			!strings.HasPrefix(labels[0], "_") ||
+			!strings.HasPrefix(labels[1], "_") {
+			response.SetRcode(request, dns.RcodeNameError)
+			return nil, fmt.Errorf("invalid SRV query syntax")
 		}
-
-	} else if fullDomainRequestArray[numberOfLabels-2] == "instance" && (question.Qtype == dns.TypeA ||
-		question.Qtype == dns.TypeAAAA) && numberOfLabels == 3 {
-
-		instanceID := fullDomainRequestArray[0]
-		serviceInstances, err = s.retrieveInstancesForInstanceQuery(instanceID, request, response)
+		service = strings.TrimPrefix(labels[0], "_")
+		filters = []string{strings.TrimPrefix(labels[1], "_")}
 	}
-	return serviceInstances, err
-}
-
-func (s *Server) retrieveInstancesForServiceQuery(serviceName string, request, response *dns.Msg, tagOrProtocol ...string) ([]*client.ServiceInstance, error) {
-	protocol := ""
-	tags := make([]string, 0, len(tagOrProtocol))
-
-	// Split tags and protocol filters
-	for _, tag := range tagOrProtocol {
-		switch tag {
-		case "tcp", "udp", "http", "https":
-			if protocol != "" {
-				response.SetRcode(request, dns.RcodeFormatError)
-				return nil, fmt.Errorf("invalid DNS query: more than one protocol specified")
-			}
-			protocol = tag
-		default:
-			tags = append(tags, tag)
-		}
-	}
-	filters := client.InstanceFilter{ServiceName: serviceName, Tags: tags}
 
 	// Dispatch query to registry
-	serviceInstances, err := s.config.DiscoveryClient.ListInstances(filters)
+	instances, err := s.discoveryClient.ListServiceInstances(service)
 	if err != nil {
 		response.SetRcode(request, dns.RcodeServerFailure)
 		return nil, err
 	}
 
-	// Apply protocol filter
-	if protocol != "" {
-		k := 0
-		for _, serviceInstance := range serviceInstances {
-			if serviceInstance.Endpoint.Type == protocol {
-				serviceInstances[k] = serviceInstance
-				k++
+	filteredInstances, err := s.filterInstances(instances, filters)
+	if err != nil {
+		response.SetRcode(request, dns.RcodeNameError)
+	}
+	return filteredInstances, err
+}
+
+func (s *Server) filterInstances(instances []*client.ServiceInstance, filters []string) ([]*client.ServiceInstance, error) {
+	// If no filters are specified, all instances match vacuously
+	if len(filters) == 0 {
+		return instances, nil
+	}
+
+	// If only a single filter is specified, first attempt to match it as an instance ID
+	if len(filters) == 1 {
+		id := filters[0]
+		for _, instance := range instances {
+			if instance.ID == id {
+				return []*client.ServiceInstance{instance}, nil
 			}
 		}
-		serviceInstances = serviceInstances[:k]
 	}
 
-	return serviceInstances, nil
-}
-
-func (s *Server) retrieveInstancesForInstanceQuery(instanceID string, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
-	serviceInstances, err := s.config.DiscoveryClient.ListInstances(client.InstanceFilter{})
-	if err != nil {
-		response.SetRcode(request, dns.RcodeServerFailure)
-		return serviceInstances, err
-	}
-	for _, serviceInstance := range serviceInstances {
-		if serviceInstance.ID == instanceID {
-			return []*client.ServiceInstance{serviceInstance}, nil
+	// Split tags and protocol filters
+	protocol := ""
+	tags := make([]string, 0, len(filters))
+	for _, filter := range filters {
+		switch filter {
+		case "tcp", "udp", "http", "https":
+			if protocol != "" {
+				return nil, fmt.Errorf("invalid DNS query: more than one protocol specified")
+			}
+			protocol = filter
+		default:
+			tags = append(tags, filter)
 		}
 	}
-	response.SetRcode(request, dns.RcodeNameError)
-	return nil, fmt.Errorf("Error : didn't find a service with the id given %s", instanceID)
+
+	// Sort the tags
+	sort.Strings(tags)
+
+	// Apply filters
+	// Note: filtering is done in-place, without allocating another array
+	k := 0
+	for _, instance := range instances {
+
+		// Apply protocol filter
+		if protocol != "" && instance.Endpoint.Type != protocol {
+			continue
+		}
+
+		// Apply tags filter
+		// Note: We presort the instance tags so that we can filter with a single pass
+		sort.Strings(instance.Tags)
+		j := 0
+		match := true
+		for _, tag := range tags {
+			found := false
+			for i := j; i < len(instance.Tags); i++ {
+				if tag == instance.Tags[i] {
+					found = true
+					j = i + 1
+					break
+				}
+			}
+			if !found {
+				match = false
+				break
+			}
+		}
+		if !match {
+			continue
+		}
+
+		instances[k] = instance
+		k++
+	}
+
+	return instances[0:k], nil
 }
 
-func (s *Server) createRecordsForInstances(question dns.Question, request, response *dns.Msg,
-	serviceInstances []*client.ServiceInstance) error {
-
+func (s *Server) createRecords(question dns.Question, request, response *dns.Msg, instances []*client.ServiceInstance) error {
 	answer := make([]dns.RR, 0, 3)
 	extra := make([]dns.RR, 0, 3)
 
-	for _, serviceInstance := range serviceInstances {
-		ip, port, err := splitHostPort(serviceInstance.Endpoint)
+	for _, instance := range instances {
+		ip, port, err := splitHostPort(instance.Endpoint)
 		if err != nil {
 			logrus.WithError(err).Warnf("unable to resolve ip address for instance '%s' in DNS query '%s'",
-				serviceInstance.ID, question.Name)
+				instance.ID, question.Name)
 			continue
 		}
 
@@ -271,7 +292,7 @@ func (s *Server) createRecordsForInstances(question dns.Question, request, respo
 				answer = append(answer, createARecord(question.Name, ip.To16()))
 			}
 		case dns.TypeSRV:
-			target := fmt.Sprintf("%s.instance.%s.", serviceInstance.ID, s.config.Domain)
+			target := fmt.Sprintf("%s.%s.%s", instance.ID, instance.ServiceName, s.domain)
 			answer = append(answer, createSRVRecord(question.Name, port, target))
 
 			ipV4 := ip.To4()

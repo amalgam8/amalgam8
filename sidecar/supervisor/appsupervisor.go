@@ -30,8 +30,8 @@ import (
 
 // AppSupervisor manages process in sidecar
 type AppSupervisor struct {
-	agent     *register.RegistrationAgent
-	processes []*process
+	registration register.Lifecycle
+	processes    []*process
 }
 
 type process struct {
@@ -40,9 +40,10 @@ type process struct {
 }
 
 // NewAppSupervisor builds new AppSupervisor using Commands in Config object
-func NewAppSupervisor(conf *config.Config) *AppSupervisor {
+func NewAppSupervisor(conf *config.Config, registration register.Lifecycle) *AppSupervisor {
 	a := AppSupervisor{
-		processes: []*process{},
+		registration: registration,
+		processes:    []*process{},
 	}
 
 	for _, cmd := range conf.Commands {
@@ -72,10 +73,7 @@ type processError struct {
 }
 
 // DoAppSupervision starts subprocesses and manages their lifecycle - exiting if necessary
-func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
-
-	a.agent = agent
-
+func (a *AppSupervisor) DoAppSupervision() {
 	appChan := make(chan processError, len(a.processes))
 	for _, proc := range a.processes {
 		log.Infof("Launching app '%v' with args '%v'", proc.Cmd.Args[0], strings.Join(proc.Cmd.Args[1:], " "))
@@ -142,9 +140,8 @@ func (a *AppSupervisor) DoAppSupervision(agent *register.RegistrationAgent) {
 
 // Shutdown deregister the app with registry and exit sidecar
 func (a *AppSupervisor) Shutdown(sig int) {
-
-	if a.agent != nil {
-		a.agent.Stop()
+	if a.registration != nil {
+		a.registration.Stop()
 	}
 
 	log.Infof("Shutting down with exit code %v", sig)

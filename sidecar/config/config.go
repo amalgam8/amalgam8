@@ -146,12 +146,7 @@ func (c *Config) loadFromFile(configFile string) error {
 		return err
 	}
 
-	err = yaml.Unmarshal(bytes, c)
-	if err != nil {
-		return nil
-	}
-
-	return nil
+	return yaml.Unmarshal(bytes, c)
 }
 
 func (c *Config) loadFromContext(context *cli.Context) error {

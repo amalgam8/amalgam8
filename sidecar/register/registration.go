@@ -28,6 +28,12 @@ const DefaultHeartbeatsPerTTL = 3
 // DefaultReregistrationDelay default delay before registering
 const DefaultReregistrationDelay = time.Duration(5) * time.Second
 
+// Lifecycle is the interface implemented by objects that can be started and stopped.
+type Lifecycle interface {
+	Start()
+	Stop()
+}
+
 // RegistrationConfig options
 type RegistrationConfig struct {
 	Client          client.Registry

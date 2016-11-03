@@ -21,8 +21,8 @@ import (
 )
 
 // BuildAgents constructs health check agents.
-func BuildAgents(confs []config.HealthCheck) ([]*Agent, error) {
-	healthChecks := make([]*Agent, len(confs))
+func BuildAgents(confs []config.HealthCheck) ([]Agent, error) {
+	healthChecks := make([]Agent, len(confs))
 	for i, conf := range confs {
 		healthCheck, err := BuildAgent(conf)
 		if err != nil {
@@ -34,7 +34,7 @@ func BuildAgents(confs []config.HealthCheck) ([]*Agent, error) {
 }
 
 // BuildAgent constructs a health check agent using the given configuration.
-func BuildAgent(conf config.HealthCheck) (*Agent, error) {
+func BuildAgent(conf config.HealthCheck) (Agent, error) {
 	var check Check
 	var err error
 

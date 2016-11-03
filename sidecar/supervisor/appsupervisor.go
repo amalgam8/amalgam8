@@ -26,17 +26,21 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
+	"sync"
+	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 )
 
 // AppSupervisor manages process in sidecar
 type AppSupervisor struct {
 	registration register.Lifecycle
 	processes    []*process
+	lock sync.Mutex
 }
 
 type process struct {
 	Cmd    *exec.Cmd
 	Action string
+	KillGroup bool
 }
 
 // NewAppSupervisor builds new AppSupervisor using Commands in Config object
@@ -52,10 +56,15 @@ func NewAppSupervisor(conf *config.Config, registration register.Lifecycle) *App
 		osCmd.Stdout = os.Stdout
 		osCmd.Stderr = os.Stderr
 
+		// Enable setting process's group ID so we can kill this process
+		// and all of its children (if any) if `kill_group` flag is set
+		osCmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
 		osCmd.Env = append(cmd.Env, os.Environ()...)
 		proc := &process{
 			Cmd:    osCmd,
 			Action: cmd.OnExit,
+			KillGroup: cmd.KillGroup,
 		}
 		if proc.Action == "" {
 			proc.Action = config.IgnoreProcess
@@ -93,6 +102,9 @@ func (a *AppSupervisor) DoAppSupervision() {
 			}(proc)
 		}
 	}
+
+	// listen for SIGTERMS from any of the supervised processes and any orphans spun off from those
+	reapZombies()
 
 	// Intercept SIGTERM/SIGINT and stop
 	sigChan := make(chan os.Signal, 1)
@@ -152,7 +164,16 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 
 	for _, proc := range procs {
 		if proc.Cmd.Process != nil {
-			proc.Cmd.Process.Signal(sig)
+
+			// If enabled, send the signal to the child and all of its
+			// own children (using process group ID), else send just to
+			// the immediate child
+			if proc.KillGroup {
+				syscall.Kill(-proc.Cmd.Process.Pid, sig.(syscall.Signal))
+			} else {
+				proc.Cmd.Process.Signal(sig)
+			}
+
 		}
 	}
 
@@ -173,7 +194,7 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		if time.Now().After(timeout) {
 			for _, proc := range procs {
 				if proc.Cmd.Process != nil {
-					proc.Cmd.Process.Kill()
+					syscall.Kill(-proc.Cmd.Process.Pid, syscall.SIGKILL)
 				}
 			}
 			break
@@ -182,4 +203,29 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
+}
+
+// reapZombies cleans up any zombies sidecar may have inherited from terminated children
+// - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
+func reapZombies() {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, syscall.SIGCHLD)
+	go func() {
+		for _ = range sig {
+			for {
+				// only 1 SIGCHLD can be handled at a time from the channel,
+				// so we need to allow for the possibility that multiple child
+				// processes have terminated while one is already being reaped.
+				var wstatus syscall.WaitStatus
+				if _, err := syscall.Wait4(-1, &wstatus,
+					syscall.WNOHANG|syscall.WUNTRACED|syscall.WCONTINUED,
+					nil); err == syscall.EINTR {
+					logrus.Debug("Zombie process reaped")
+					continue
+				}
+				// no other zombies to reap
+				break
+			}
+		}
+	}()
 }

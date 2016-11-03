@@ -1,5 +1,21 @@
 # Changelog
 
+0.4.1 (November 3, 2016)
+
+- Sidecars now supports TCP and command health checks. 
+
+- Sidecar now supports DNS queries for a specified domain. DNS queries for other domains will be forwarded to upstream DNS servers.
+
+- Breaking change: --supervise flag no longer supported.
+
+- Multiple process supervision now supported.
+
+- Sidecar now logs the source IP address in the NGINX access logs.
+
+- Fixed an issue that resulted in IDs not being returned on rule creation via the API.
+
+- Updated to Go 1.7.1.
+
 ## 0.4.0 (October 13, 2016)
 
 - Sidecars now support HTTP health checks. The health check endpoint can be

@@ -23,23 +23,24 @@ import (
 
 	"time"
 
+	"sync"
+
+	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
-	"sync"
-	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 )
 
 // AppSupervisor manages process in sidecar
 type AppSupervisor struct {
 	registration register.Lifecycle
 	processes    []*process
-	lock sync.Mutex
+	lock         sync.Mutex
 }
 
 type process struct {
-	Cmd    *exec.Cmd
-	Action string
+	Cmd       *exec.Cmd
+	Action    string
 	KillGroup bool
 }
 
@@ -62,8 +63,8 @@ func NewAppSupervisor(conf *config.Config, registration register.Lifecycle) *App
 
 		osCmd.Env = append(cmd.Env, os.Environ()...)
 		proc := &process{
-			Cmd:    osCmd,
-			Action: cmd.OnExit,
+			Cmd:       osCmd,
+			Action:    cmd.OnExit,
 			KillGroup: cmd.KillGroup,
 		}
 		if proc.Action == "" {

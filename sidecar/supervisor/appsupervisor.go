@@ -25,10 +25,10 @@ import (
 
 	"sync"
 
-	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
+	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 )
 
 // AppSupervisor manages process in sidecar

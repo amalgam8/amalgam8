@@ -34,9 +34,9 @@ func (m *MockCheck) Execute() error {
 
 func TestAgentDefaultConfig(t *testing.T) {
 	check := &MockCheck{}
-	agent := NewAgent(check, 0)
-	assert.NotNil(t, agent)
-	assert.Equal(t, agent.interval, defaultHealthCheckInterval)
+	agnt := NewAgent(check, 0)
+	assert.NotNil(t, agnt)
+	assert.Equal(t, agnt.(*agent).interval, defaultHealthCheckInterval)
 }
 
 func TestAgent(t *testing.T) {

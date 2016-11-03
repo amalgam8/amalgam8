@@ -40,6 +40,7 @@ func NewAgent(check Check, interval time.Duration) *Agent {
 	}
 
 	return &Agent{
+		stop:        make(chan interface{}),
 		healthCheck: check,
 		interval:    interval,
 	}
@@ -81,10 +82,11 @@ func (a *Agent) run(statusChan chan error) {
 	defer ticker.Stop()
 	for {
 		select {
+		case <-a.stop:
+			return
 		case <-ticker.C:
 			statusChan <- a.healthCheck.Execute()
-		case <-a.stop:
-			break
 		}
 	}
+
 }

@@ -17,52 +17,59 @@ package healthcheck
 import (
 	"time"
 
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type MockCheck struct {
-	ExecuteError error
+	mock.Mock
 }
 
 func (m *MockCheck) Execute() error {
-	return m.ExecuteError
+	args := m.Called()
+	return args.Error(0)
 }
 
-var _ = Describe("Health check agent", func() {
+func TestAgentDefaultConfig(t *testing.T) {
+	check := &MockCheck{}
+	agent := NewAgent(check, 0)
+	assert.NotNil(t, agent)
+	assert.Equal(t, agent.interval, defaultHealthCheckInterval)
+}
 
-	Context("When constructing a new health check agent", func() {
+func TestAgent(t *testing.T) {
+	hc := &MockCheck{}
+	hc.On("Execute").Return(nil) // No execute errors.
 
-		var check Check
-		var agent *Agent
+	expectedCalls := 10                // Number of times that the check's execute function should be called.
+	interval := 100 * time.Millisecond // Amount of time between calls.
 
-		Context("Using an explicit configuration values", func() {
+	agent := NewAgent(hc, interval)
+	assert.NotNil(t, agent)
 
-			BeforeEach(func() {
-				check = &MockCheck{}
-				agent = NewAgent(check, 5*time.Second)
-			})
+	statusChan := make(chan error)
+	agent.Start(statusChan)
 
-			It("Successfully create an agent", func() {
-				Expect(agent).ToNot(BeNil())
-				Expect(agent.interval).To(Equal(5 * time.Second))
-			})
-		})
+	expectedEnd := time.Now().Add(interval * time.Duration(expectedCalls-1))
 
-		Context("Using default configuration values", func() {
-			BeforeEach(func() {
-				check = &MockCheck{}
-				agent = NewAgent(check, 0)
-				Expect(agent).ToNot(BeNil())
-			})
+	// Check the output
+	count := 0
+	for count < expectedCalls {
+		select {
+		case err := <-statusChan:
+			assert.NoError(t, err)
+			count++
+		}
+	}
 
-			It("Sets default values for missing fields", func() {
-				Expect(agent).ToNot(BeNil())
-				Expect(agent.interval).To(Equal(defaultHealthCheckInterval))
-			})
+	end := time.Now()
+	assert.WithinDuration(t, expectedEnd, end, time.Millisecond*50)
+	hc.AssertNumberOfCalls(t, "Execute", expectedCalls)
 
-		})
-
-	})
-
-})
+	// Make sure the agent stops calling execute in a timely fashion.
+	agent.Stop()
+	time.Sleep(2 * interval)
+	hc.AssertNumberOfCalls(t, "Execute", expectedCalls)
+}

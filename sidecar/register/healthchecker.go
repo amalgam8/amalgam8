@@ -27,18 +27,19 @@ import (
 type HealthChecker struct {
 	active       bool
 	stop         chan struct{}
-	agents       []*healthcheck.Agent
+	agents       []healthcheck.Agent
 	mutex        sync.Mutex
-	registration *RegistrationAgent
+	registration Lifecycle
 }
 
 // NewHealthChecker instantiates a health checker.
-func NewHealthChecker(registration *RegistrationAgent, checks []*healthcheck.Agent) *HealthChecker {
+func NewHealthChecker(registration Lifecycle, checks []healthcheck.Agent) *HealthChecker {
 	if len(checks) == 0 {
 		panic("No health checks provided")
 	}
 
 	return &HealthChecker{
+		stop:         make(chan struct{}),
 		agents:       checks,
 		registration: registration,
 	}
@@ -142,6 +143,7 @@ func (checker *HealthChecker) maintainRegistration() {
 			checker.registration.Stop()
 
 			checker.stop <- struct{}{}
+			return
 		}
 	}
 }

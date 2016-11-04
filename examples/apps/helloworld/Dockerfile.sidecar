@@ -14,7 +14,6 @@
 
 FROM python:2-onbuild
 
-COPY filebeat.yml /etc/filebeat/filebeat.yml
 COPY config.yaml /opt/microservices/config.yaml
 
 ADD app.py /opt/microservices/

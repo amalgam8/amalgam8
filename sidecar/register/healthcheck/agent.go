@@ -24,7 +24,12 @@ const (
 )
 
 // Agent executes a health check a given interval.
-type Agent struct {
+type Agent interface {
+	Start(chan error)
+	Stop()
+}
+
+type agent struct {
 	stop   chan interface{}
 	active bool
 	mutex  sync.Mutex
@@ -34,19 +39,20 @@ type Agent struct {
 }
 
 // NewAgent creates a new health check agent.
-func NewAgent(check Check, interval time.Duration) *Agent {
+func NewAgent(check Check, interval time.Duration) Agent {
 	if interval == 0 {
 		interval = defaultHealthCheckInterval
 	}
 
-	return &Agent{
+	return &agent{
+		stop:        make(chan interface{}),
 		healthCheck: check,
 		interval:    interval,
 	}
 }
 
 // Start health check agent.
-func (a *Agent) Start(statusChan chan error) {
+func (a *agent) Start(statusChan chan error) {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
@@ -59,7 +65,7 @@ func (a *Agent) Start(statusChan chan error) {
 }
 
 // Stop health check agent.
-func (a *Agent) Stop() {
+func (a *agent) Stop() {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()
 
@@ -72,7 +78,7 @@ func (a *Agent) Stop() {
 }
 
 // run periodic health checks until the agent is stopped.
-func (a *Agent) run(statusChan chan error) {
+func (a *agent) run(statusChan chan error) {
 	// Perform an initial health check on start.
 	statusChan <- a.healthCheck.Execute()
 
@@ -81,10 +87,11 @@ func (a *Agent) run(statusChan chan error) {
 	defer ticker.Stop()
 	for {
 		select {
+		case <-a.stop:
+			return
 		case <-ticker.C:
 			statusChan <- a.healthCheck.Execute()
-		case <-a.stop:
-			break
 		}
 	}
+
 }

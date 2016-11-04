@@ -8,10 +8,14 @@ import (
 	"net/http"
 	"net/url"
 
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/registry/api/env"
 )
+
+const defaultTimeout = 30 * time.Second
 
 // RuleResponse is the information returned from a rule query.
 type RuleResponse struct {
@@ -70,7 +74,9 @@ func normalizeConfig(conf *Config) error {
 	}
 
 	if conf.HTTPClient == nil {
-		conf.HTTPClient = &http.Client{}
+		conf.HTTPClient = &http.Client{
+			Timeout: defaultTimeout,
+		}
 	}
 
 	return nil

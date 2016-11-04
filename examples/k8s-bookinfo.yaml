@@ -109,8 +109,6 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -151,8 +149,6 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -205,8 +201,6 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -259,8 +253,6 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -313,8 +305,6 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -367,5 +357,3 @@ spec:
               fieldPath: status.podIP
         - name: A8_ENDPOINT_PORT
           value: "9080"
-        - name: A8_HEALTHCHECKS
-          value: http://localhost:9080/health

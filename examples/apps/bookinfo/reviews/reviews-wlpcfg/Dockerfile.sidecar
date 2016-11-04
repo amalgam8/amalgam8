@@ -21,8 +21,10 @@ RUN set -ex \
     && rm /tmp/filebeat_1.2.2_amd64.deb
 
 COPY filebeat.yml /etc/filebeat/filebeat.yml
+COPY config.yaml /opt/microservices/config.yaml
+COPY run_filebeat.sh /usr/bin/run_filebeat.sh
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.0/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.1/a8sidecar.sh | sh
 
 ENV SERVERDIRNAME reviews
 
@@ -38,6 +40,4 @@ ENV ENABLE_RATINGS ${enable_ratings:-false}
 ENV STAR_COLOR ${star_color:-black}
 ENV PROXY_SERVICE http://127.0.0.1:6379
 
-RUN echo A8_ENDPOINT_TYPE=${A8_ENDPOINT_TYPE}
-RUN echo A8_ENDPOINT_PORT=${A8_ENDPOINT_PORT}
-CMD a8sidecar --supervise /opt/ibm/wlp/bin/server run defaultServer
+CMD [ "a8sidecar", "--config", "/opt/microservices/config.yaml" ]

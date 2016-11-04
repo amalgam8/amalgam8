@@ -19,6 +19,6 @@ COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.0/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.1/a8sidecar.sh | sh
 
-ENTRYPOINT ["a8sidecar", "--supervise", "ruby", "details.rb", "9080"]
+ENTRYPOINT ["a8sidecar", "ruby", "details.rb", "9080"]

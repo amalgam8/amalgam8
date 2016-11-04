@@ -30,6 +30,8 @@ gateway:
     - controller
     - registry
   container_name: gateway
+  command: /usr/bin/run_filebeat.sh
+
 
 details-v1:
   image: amalgam8/a8-examples-bookinfo-details-sidecar:v1
@@ -55,22 +57,15 @@ ratings-v1:
 reviews-v1:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v1
   environment:
-    - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v1
-    - A8_REGISTER=true
-    - A8_ENDPOINT_PORT=9080
   external_links:
     - registry
 
 reviews-v2:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v2
   environment:
-    - A8_LOG=true
-    - A8_REGISTER=true
     - A8_PROXY=true
-    - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v2
-    - A8_ENDPOINT_PORT=9080
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
@@ -83,12 +78,8 @@ reviews-v2:
 reviews-v3:
   image: amalgam8/a8-examples-bookinfo-reviews-sidecar:v3
   environment:
-    - A8_LOG=true
-    - A8_REGISTER=true
     - A8_PROXY=true
-    - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:v3
-    - A8_ENDPOINT_PORT=9080
     - A8_LOGSTASH_SERVER='logstash:8092'
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
@@ -101,16 +92,7 @@ reviews-v3:
 productpage-v1:
   image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1
   environment:
-    - A8_LOG=true
-    - A8_REGISTER=true
-    - A8_PROXY=true
-    - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=productpage:v1
-    - A8_ENDPOINT_PORT=9080
     - A8_LOGSTASH_SERVER='logstash:8092'
-    - A8_CONTROLLER_URL=http://controller:8080
-    - A8_CONTROLLER_POLL=5s
-    - A8_REGISTRY_POLL=5s
   external_links:
     - logstash
     - controller

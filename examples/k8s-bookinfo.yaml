@@ -50,10 +50,10 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
+        args:
+        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -94,6 +94,8 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_REGISTER
           value: "true"
@@ -134,6 +136,8 @@ spec:
       - name: servicereg
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_REGISTER
           value: "true"
@@ -174,14 +178,14 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
         - name: A8_REGISTER
           value: "true"
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -226,14 +230,14 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
         - name: A8_REGISTER
           value: "true"
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -278,14 +282,14 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
         - name: A8_REGISTER
           value: "true"
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -330,14 +334,14 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:alpine
         imagePullPolicy: IfNotPresent
+        args:
+        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
         - name: A8_REGISTER
           value: "true"
         - name: A8_PROXY
-          value: "true"
-        - name: A8_LOG
           value: "true"
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)

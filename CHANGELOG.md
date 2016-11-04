@@ -2,19 +2,19 @@
 
 0.4.1 (November 3, 2016)
 
-- Sidecars now supports TCP and command health checks. 
+- Sidecar now supports TCP and command health checks. ([PR#350](https://github.com/amalgam8/amalgam8/pull/350))
 
-- Sidecar now supports DNS queries for a specified domain. DNS queries for other domains will be forwarded to upstream DNS servers.
+- Sidecar now supports DNS queries for a specified domain. DNS queries for other domains will be forwarded to upstream DNS servers. ([PR#328](https://github.com/amalgam8/amalgam8/pull/328))
 
-- Breaking change: --supervise flag no longer supported.
+- Sidecar `--supervise` flag has been deprecated.
 
-- Multiple process supervision now supported.
+- Sidecar now supports supervision of multiple processes. ([PR#349](https://github.com/amalgam8/amalgam8/pull/349))
 
-- Sidecar now logs the source IP address in the NGINX access logs.
+- Sidecar now logs the source IP address in the NGINX access logs. ([PR#362](https://github.com/amalgam8/amalgam8/pull/362))
 
-- Fixed an issue that resulted in IDs not being returned on rule creation via the API.
+- Fixed an issue in the controller that resulted in IDs not being returned on rule creation via the API. ([PR#352](https://github.com/amalgam8/amalgam8/pull/352))
 
-- Updated to Go 1.7.1.
+- Updated to Go 1.7.1. ([PR#345](https://github.com/amalgam8/amalgam8/pull/345))
 
 ## 0.4.0 (October 13, 2016)
 

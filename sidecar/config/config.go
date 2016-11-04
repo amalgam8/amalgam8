@@ -110,6 +110,8 @@ type Config struct {
 	Controller Controller `yaml:"controller"`
 	Dnsconfig  Dnsconfig  `yaml:"dnsconfig"`
 
+	Supervise bool `yaml:"supervise"`
+
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	LogLevel string `yaml:"log_level"`
@@ -204,6 +206,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
@@ -270,6 +273,10 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 // Validate the configuration
 func (c *Config) Validate() error {
+
+	if c.Supervise {
+		logrus.Warn("WARNING: --supervise flag is deprecated and may not be supported in the future.")
+	}
 
 	if !c.Register && !c.Proxy {
 		return errors.New("Sidecar serves no purpose. Please enable either proxy or registry or both")

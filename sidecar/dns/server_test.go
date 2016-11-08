@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"math/rand"
 	"net"
-	"net/url"
 	"strconv"
 	"testing"
 	"time"
 
 	"sort"
 
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/suite"
 )
@@ -26,7 +25,7 @@ type TestSuite struct {
 /********************* Mock client ***************************/
 
 type mySimpleServiceDiscovery struct {
-	services []*client.ServiceInstance
+	services []*api.ServiceInstance
 }
 
 // ListServices queries the registry for the list of services for which instances are currently registered.
@@ -39,34 +38,17 @@ func (m *mySimpleServiceDiscovery) ListServices() ([]string, error) {
 }
 
 // ListInstances queries the registry for the list of service instances currently registered.
-// The given InstanceFilter can be used to filter the returned instances as well as the fields returned for each.
-func (m *mySimpleServiceDiscovery) ListInstances(filter client.InstanceFilter) ([]*client.ServiceInstance, error) {
-
-	servicesToReturn := []*client.ServiceInstance{}
-	count := 0
-	for _, service := range m.services {
-		if service.ServiceName == filter.ServiceName {
-			for _, tag := range filter.Tags {
-				for _, serviceTag := range service.Tags {
-					if tag == serviceTag {
-						count++
-					}
-				}
-			}
-			if count == len(filter.Tags) {
-				servicesToReturn = append(servicesToReturn, service)
-
-			}
-		}
-	}
+func (m *mySimpleServiceDiscovery) ListInstances() ([]*api.ServiceInstance, error) {
+	servicesToReturn := []*api.ServiceInstance{}
+	servicesToReturn = append(servicesToReturn, m.services...)
 	return servicesToReturn, nil
 }
 
 // ListServiceInstances queries the registry for the list of service instances with status 'UP' currently
 // registered for the given service.
-func (m *mySimpleServiceDiscovery) ListServiceInstances(serviceName string) ([]*client.ServiceInstance, error) {
+func (m *mySimpleServiceDiscovery) ListServiceInstances(serviceName string) ([]*api.ServiceInstance, error) {
 
-	servicesToReturn := []*client.ServiceInstance{}
+	servicesToReturn := []*api.ServiceInstance{}
 	for _, service := range m.services {
 		if service.ServiceName == serviceName {
 			servicesToReturn = append(servicesToReturn, service)
@@ -94,39 +76,29 @@ func (suite *TestSuite) SetupTest() {
 	suite.server, err = NewServer(suite.config)
 	suite.NoError(err)
 
-	url1 := url.URL{
-		Scheme: "http",
-		Host:   "amalgam8",
-		Path:   "/shopping/cart",
-	}
-	url2 := url.URL{
-		Scheme: "http",
-		Host:   "amalgam8",
-		Path:   "/Orders",
-	}
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "shoppingCart",
-		ID: "1", Endpoint: client.NewHTTPEndpoint(url1)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "shoppingCart",
+		ID: "1", Endpoint: api.ServiceEndpoint{Type: "http", Value: "http://amalgam8/shopping/cart"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "shoppingCart",
-		ID: "2", Endpoint: client.NewTCPEndpoint("127.0.0.5", 5050)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "shoppingCart",
+		ID: "2", Endpoint: api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.5:5050"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{Tags: []string{"first", "second"},
-		ServiceName: "shoppingCart", ID: "3", Endpoint: client.NewTCPEndpoint("127.0.0.4", 3050)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{Tags: []string{"first", "second"},
+		ServiceName: "shoppingCart", ID: "3", Endpoint: api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.4:3050"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "Orders",
-		ID: "4", Endpoint: client.NewTCPEndpoint("127.0.0.10", 3050)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "Orders",
+		ID: "4", Endpoint: api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.10:3050"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "Orders",
-		ID: "6", Endpoint: client.NewHTTPEndpoint(url2)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "Orders",
+		ID: "6", Endpoint: api.ServiceEndpoint{Type: "http", Value: "http://amalgam8/orders"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "Orders",
-		ID: "7", Endpoint: client.NewTCPEndpoint("132.68.5.6", 1010)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "Orders",
+		ID: "7", Endpoint: api.ServiceEndpoint{Type: "tcp", Value: "132.68.5.6:1010"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "Reviews",
-		ID: "8", Endpoint: client.NewTCPEndpoint("132.68.5.6", 1010)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "Reviews",
+		ID: "8", Endpoint: api.ServiceEndpoint{Type: "tcp", Value: "132.68.5.6:1010"}})
 
-	suite.myClient.services = append(suite.myClient.services, &client.ServiceInstance{ServiceName: "httpService",
-		ID: "9", Endpoint: client.NewHTTPEndpoint(url1)})
+	suite.myClient.services = append(suite.myClient.services, &api.ServiceInstance{ServiceName: "httpService",
+		ID: "9", Endpoint: api.ServiceEndpoint{Type: "http", Value: "http://amalgam8/shopping/cart"}})
 
 	go suite.server.ListenAndServe()
 	time.Sleep((200) * time.Millisecond)

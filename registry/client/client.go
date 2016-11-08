@@ -25,46 +25,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
 )
 
 const defaultTimeout = time.Second * 30
-
-// Registry defines the interface used by clients for registering service instances with the registry.
-type Registry interface {
-
-	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
-	// The returned ServiceInstance is mostly similar to the given one, but includes additional
-	// attributes set by the registry server, such as the service instance ID and TTL.
-	Register(instance *ServiceInstance) (*ServiceInstance, error)
-
-	// Deregister removes a registered service instance, identified by the given ID, from the registry.
-	Deregister(id string) error
-
-	// Renew sends a heartbeat for the service instance identified by the given ID.
-	Renew(id string) error
-}
-
-// Discovery defines the interface used by clients for discovering service instances from the registry.
-type Discovery interface {
-
-	// ListServices queries the registry for the list of services for which instances are currently registered.
-	ListServices() ([]string, error)
-
-	// ListInstances queries the registry for the list of service instances currently registered.
-	// The given InstanceFilter can be used to filter the returned instances as well as the fields returned for each.
-	ListInstances(filter InstanceFilter) ([]*ServiceInstance, error)
-
-	// ListServiceInstances queries the registry for the list of service instances with status 'UP' currently
-	// registered for the given service.
-	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
-}
-
-// Client unifies the Registry and Discovery interfaces under a single interface.
-type Client interface {
-	Registry
-	Discovery
-}
 
 // Config stores the configurable attributes of the client.
 type Config struct {
@@ -82,21 +47,21 @@ type Config struct {
 	HTTPClient *http.Client
 }
 
-// client implements the Client interface using Amalgam8 Service Registry REST API.
-type client struct {
+// Client implements the Discovery and Registry interfaces using Amalgam8 Registry REST API.
+type Client struct {
 	config     Config
 	httpClient *http.Client
 }
 
 // New constructs a new Client using the given configuration.
-func New(config Config) (Client, error) {
+func New(config Config) (*Client, error) {
 	// Validate and normalize configuration
 	err := normalizeConfig(&config)
 	if err != nil {
 		return nil, err
 	}
 
-	client := &client{
+	client := &Client{
 		config: config,
 	}
 
@@ -111,7 +76,8 @@ func New(config Config) (Client, error) {
 	return client, nil
 }
 
-func (client *client) Register(instance *ServiceInstance) (*ServiceInstance, error) {
+// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
+func (client *Client) Register(instance *api.ServiceInstance) (*api.ServiceInstance, error) {
 	// Record a pessimistic last heartbeat time - Better safe than sorry!
 	lastHeartbeat := time.Now()
 
@@ -134,17 +100,20 @@ func (client *client) Register(instance *ServiceInstance) (*ServiceInstance, err
 	return registeredInstance, nil
 }
 
-func (client *client) Deregister(id string) error {
+// Deregister removes a registered service instance, identified by the given ID, from the registry.
+func (client *Client) Deregister(id string) error {
 	_, err := client.doRequest("DELETE", amalgam8.InstanceURL(id), nil, http.StatusOK)
 	return err
 }
 
-func (client *client) Renew(id string) error {
+// Renew sends a heartbeat for the service instance identified by the given ID.
+func (client *Client) Renew(id string) error {
 	_, err := client.doRequest("PUT", amalgam8.InstanceHeartbeatURL(id), nil, http.StatusOK)
 	return err
 }
 
-func (client *client) ListServices() ([]string, error) {
+// ListServices queries for the list of services for which instances are currently registered.
+func (client *Client) ListServices() ([]string, error) {
 	body, err := client.doRequest("GET", amalgam8.ServiceNamesURL(), nil, http.StatusOK)
 	if err != nil {
 		return nil, err
@@ -160,13 +129,20 @@ func (client *client) ListServices() ([]string, error) {
 	return s.Services, nil
 }
 
-func (client *client) ListServiceInstances(serviceName string) ([]*ServiceInstance, error) {
-	return client.ListInstances(InstanceFilter{
+// ListServiceInstances queries for the list of service instances currently registered for the given service.
+func (client *Client) ListServiceInstances(serviceName string) ([]*api.ServiceInstance, error) {
+	return client.ListInstancesWithFilter(InstanceFilter{
 		ServiceName: serviceName,
 	})
 }
 
-func (client *client) ListInstances(filter InstanceFilter) ([]*ServiceInstance, error) {
+// ListInstances queries for the list of service instances currently registered.
+func (client *Client) ListInstances() ([]*api.ServiceInstance, error) {
+	return client.ListInstancesWithFilter(InstanceFilter{})
+}
+
+// ListInstancesWithFilter queries for the list of service instances currently registered that satisfy the given filter.
+func (client *Client) ListInstancesWithFilter(filter InstanceFilter) ([]*api.ServiceInstance, error) {
 	path := amalgam8.InstancesURL()
 	queryParams := filter.asQueryParams()
 	if len(queryParams) > 0 {
@@ -179,7 +155,7 @@ func (client *client) ListInstances(filter InstanceFilter) ([]*ServiceInstance, 
 	}
 
 	s := struct {
-		Instances []*ServiceInstance `json:"instances"`
+		Instances []*api.ServiceInstance `json:"instances"`
 	}{}
 	err = json.Unmarshal(body, &s)
 	if err != nil {
@@ -188,7 +164,7 @@ func (client *client) ListInstances(filter InstanceFilter) ([]*ServiceInstance, 
 	return s.Instances, nil
 }
 
-func (client *client) doRequest(method string, path string, body interface{}, status int) ([]byte, error) {
+func (client *Client) doRequest(method string, path string, body interface{}, status int) ([]byte, error) {
 	var reader io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)

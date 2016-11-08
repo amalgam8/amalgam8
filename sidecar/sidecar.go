@@ -30,6 +30,7 @@ import (
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/version"
+	registryapi "github.com/amalgam8/amalgam8/registry/api"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -135,10 +136,10 @@ func Run(conf config.Config) error {
 	if conf.Register {
 
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
-		serviceInstance := &registryclient.ServiceInstance{
+		serviceInstance := &registryapi.ServiceInstance{
 			ServiceName: conf.Service.Name,
 			Tags:        conf.Service.Tags,
-			Endpoint: registryclient.ServiceEndpoint{
+			Endpoint: registryapi.ServiceEndpoint{
 				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
@@ -146,7 +147,7 @@ func Run(conf config.Config) error {
 		}
 
 		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Client:          registryClient,
+			Registry:        registryClient,
 			ServiceInstance: serviceInstance,
 		})
 		if err != nil {
@@ -291,8 +292,8 @@ func cliCommand(command string) {
 		}
 
 		sidecarstate := struct {
-			Instances []registryclient.ServiceInstance `json:"instances"`
-			Rules     []rules.Rule                     `json:"rules"`
+			Instances []registryapi.ServiceInstance `json:"instances"`
+			Rules     []rules.Rule                  `json:"rules"`
 		}{}
 
 		err = json.Unmarshal(respBytes, &sidecarstate)

@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/client"
 )
 
@@ -36,8 +37,8 @@ type Lifecycle interface {
 
 // RegistrationConfig options
 type RegistrationConfig struct {
-	Client          client.Registry
-	ServiceInstance *client.ServiceInstance
+	Registry        api.ServiceRegistry
+	ServiceInstance *api.ServiceInstance
 }
 
 // RegistrationAgent maintains a registration with registry.
@@ -100,7 +101,7 @@ func (agent *RegistrationAgent) register() {
 		logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
 			Debug("Attempting to register service with Amalgam8")
 
-		registeredInstance, err := agent.config.Client.Register(agent.config.ServiceInstance)
+		registeredInstance, err := agent.config.Registry.Register(agent.config.ServiceInstance)
 		if err == nil {
 			logrus.WithFields(logrus.Fields{
 				"service_name": registeredInstance.ServiceName,
@@ -124,7 +125,7 @@ func (agent *RegistrationAgent) register() {
 	}
 }
 
-func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
+func (agent *RegistrationAgent) renew(instance *api.ServiceInstance) {
 	interval := time.Duration(instance.TTL) * time.Second / DefaultHeartbeatsPerTTL
 
 	for {
@@ -135,7 +136,7 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 				"instance_id":  instance.ID,
 			}).Debug("Attempting to renew service registration with Amalgam8")
 
-			err := agent.config.Client.Renew(instance.ID)
+			err := agent.config.Registry.Renew(instance.ID)
 			if err != nil {
 				logrus.WithError(err).WithFields(logrus.Fields{
 					"service_name": instance.ServiceName,
@@ -156,13 +157,13 @@ func (agent *RegistrationAgent) renew(instance *client.ServiceInstance) {
 	}
 }
 
-func (agent *RegistrationAgent) deregister(instance *client.ServiceInstance) {
+func (agent *RegistrationAgent) deregister(instance *api.ServiceInstance) {
 	logrus.WithFields(logrus.Fields{
 		"service_name": instance.ServiceName,
 		"instance_id":  instance.ID,
 	}).Info("Attempting to deregister service with Amalgam8")
 
-	err := agent.config.Client.Deregister(instance.ID)
+	err := agent.config.Registry.Deregister(instance.ID)
 	if err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"service_name": instance.ServiceName,

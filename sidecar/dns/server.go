@@ -26,14 +26,14 @@ import (
 	"sort"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/miekg/dns"
 )
 
 // Server represent a DNS server. has config field for port,domain,and client discovery, and the DNS server itself
 type Server struct {
-	dnsServer       *dns.Server
-	discoveryClient client.Discovery
+	dnsServer *dns.Server
+	discovery api.ServiceDiscovery
 
 	domain       string
 	domainLabels int
@@ -41,7 +41,7 @@ type Server struct {
 
 // Config represents the DNS server configurations.
 type Config struct {
-	DiscoveryClient client.Discovery
+	DiscoveryClient api.ServiceDiscovery
 	Port            uint16
 	Domain          string
 }
@@ -53,9 +53,9 @@ func NewServer(config Config) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		discoveryClient: config.DiscoveryClient,
-		domain:          config.Domain,
-		domainLabels:    len(dns.Split(config.Domain)),
+		discovery:    config.DiscoveryClient,
+		domain:       config.Domain,
+		domainLabels: len(dns.Split(config.Domain)),
 	}
 
 	// Setup DNS muxing
@@ -142,7 +142,7 @@ func (s *Server) handleQuestion(question dns.Question, request, response *dns.Ms
 	return s.createRecords(question, request, response, instances)
 }
 
-func (s *Server) retrieveInstances(question dns.Question, request, response *dns.Msg) ([]*client.ServiceInstance, error) {
+func (s *Server) retrieveInstances(question dns.Question, request, response *dns.Msg) ([]*api.ServiceInstance, error) {
 	// Validate the domain name in the question.
 	_, isValidDomain := dns.IsDomainName(question.Name)
 	if !isValidDomain {
@@ -181,7 +181,7 @@ func (s *Server) retrieveInstances(question dns.Question, request, response *dns
 	}
 
 	// Dispatch query to registry
-	instances, err := s.discoveryClient.ListServiceInstances(service)
+	instances, err := s.discovery.ListServiceInstances(service)
 	if err != nil {
 		response.SetRcode(request, dns.RcodeServerFailure)
 		return nil, err
@@ -194,7 +194,7 @@ func (s *Server) retrieveInstances(question dns.Question, request, response *dns
 	return filteredInstances, err
 }
 
-func (s *Server) filterInstances(instances []*client.ServiceInstance, filters []string) ([]*client.ServiceInstance, error) {
+func (s *Server) filterInstances(instances []*api.ServiceInstance, filters []string) ([]*api.ServiceInstance, error) {
 	// If no filters are specified, all instances match vacuously
 	if len(filters) == 0 {
 		return instances, nil
@@ -205,7 +205,7 @@ func (s *Server) filterInstances(instances []*client.ServiceInstance, filters []
 		id := filters[0]
 		for _, instance := range instances {
 			if instance.ID == id {
-				return []*client.ServiceInstance{instance}, nil
+				return []*api.ServiceInstance{instance}, nil
 			}
 		}
 	}
@@ -268,7 +268,7 @@ func (s *Server) filterInstances(instances []*client.ServiceInstance, filters []
 	return instances[0:k], nil
 }
 
-func (s *Server) createRecords(question dns.Question, request, response *dns.Msg, instances []*client.ServiceInstance) error {
+func (s *Server) createRecords(question dns.Question, request, response *dns.Msg, instances []*api.ServiceInstance) error {
 	answer := make([]dns.RR, 0, 3)
 	extra := make([]dns.RR, 0, 3)
 
@@ -321,7 +321,7 @@ func (s *Server) createRecords(question dns.Question, request, response *dns.Msg
 
 }
 
-func splitHostPort(endpoint client.ServiceEndpoint) (net.IP, uint16, error) {
+func splitHostPort(endpoint api.ServiceEndpoint) (net.IP, uint16, error) {
 	switch endpoint.Type {
 	case "tcp", "udp":
 		return splitHostPortTCPUDP(endpoint.Value)

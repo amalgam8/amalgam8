@@ -26,14 +26,14 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/rules"
-	registryclient "github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 )
 
 const clientTimeout = 30 * time.Second
 
 // Client for NGINX
 type Client interface {
-	Update([]registryclient.ServiceInstance, []rules.Rule) error
+	Update([]api.ServiceInstance, []rules.Rule) error
 }
 
 type client struct {
@@ -52,10 +52,10 @@ func NewClient(url string) Client {
 }
 
 // Update the NGINX server
-func (c *client) Update(newInstances []registryclient.ServiceInstance, newRules []rules.Rule) error {
+func (c *client) Update(newInstances []api.ServiceInstance, newRules []rules.Rule) error {
 	conf := struct {
-		Instances []registryclient.ServiceInstance `json:"instances"`
-		Rules     []rules.Rule                     `json:"rules"`
+		Instances []api.ServiceInstance `json:"instances"`
+		Rules     []rules.Rule          `json:"rules"`
 	}{
 		Instances: newInstances,
 		Rules:     newRules,

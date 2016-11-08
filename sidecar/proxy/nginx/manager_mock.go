@@ -16,7 +16,7 @@ package nginx
 
 import (
 	"github.com/amalgam8/amalgam8/controller/rules"
-	registryclient "github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 )
 
 // MockManager mocks interface
@@ -26,7 +26,7 @@ type MockManager struct {
 }
 
 // Update mocks interface
-func (m *MockManager) Update([]registryclient.ServiceInstance, []rules.Rule) error {
+func (m *MockManager) Update([]api.ServiceInstance, []rules.Rule) error {
 	m.UpdateCount++
 	return m.UpdateError
 }

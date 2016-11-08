@@ -18,32 +18,32 @@ import (
 	"testing"
 	"time"
 
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 )
 
 func TestCatalogComparison(t *testing.T) {
-	r := registry{}
+	r := registryMonitor{}
 
 	cases := []struct {
-		A, B  map[string][]*client.ServiceInstance
+		A, B  map[string][]*api.ServiceInstance
 		Equal bool
 	}{
 		{
-			A:     map[string][]*client.ServiceInstance{},
-			B:     map[string][]*client.ServiceInstance{},
+			A:     map[string][]*api.ServiceInstance{},
+			B:     map[string][]*api.ServiceInstance{},
 			Equal: true,
 		},
 		{ // TTL and heartbeat should be ignored when comparing
-			A: map[string][]*client.ServiceInstance{
-				"Service": []*client.ServiceInstance{
+			A: map[string][]*api.ServiceInstance{
+				"Service": []*api.ServiceInstance{
 					{
 						LastHeartbeat: time.Unix(0, 0),
 						TTL:           1,
 					},
 				},
 			},
-			B: map[string][]*client.ServiceInstance{
-				"Service": []*client.ServiceInstance{
+			B: map[string][]*api.ServiceInstance{
+				"Service": []*api.ServiceInstance{
 					{
 						LastHeartbeat: time.Unix(1, 0),
 						TTL:           2,
@@ -53,26 +53,26 @@ func TestCatalogComparison(t *testing.T) {
 			Equal: true,
 		},
 		{
-			A: map[string][]*client.ServiceInstance{
-				"ServiceA": []*client.ServiceInstance{
+			A: map[string][]*api.ServiceInstance{
+				"ServiceA": []*api.ServiceInstance{
 					{
 						ServiceName: "ServiceA",
 					},
 				},
 			},
-			B:     map[string][]*client.ServiceInstance{},
+			B:     map[string][]*api.ServiceInstance{},
 			Equal: false,
 		},
 		{
-			A: map[string][]*client.ServiceInstance{
-				"ServiceA": []*client.ServiceInstance{
+			A: map[string][]*api.ServiceInstance{
+				"ServiceA": []*api.ServiceInstance{
 					{
 						ServiceName: "ServiceA",
 					},
 				},
 			},
-			B: map[string][]*client.ServiceInstance{
-				"ServiceB": []*client.ServiceInstance{
+			B: map[string][]*api.ServiceInstance{
+				"ServiceB": []*api.ServiceInstance{
 					{
 						ServiceName: "ServiceB",
 					},

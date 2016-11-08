@@ -66,3 +66,18 @@ import:
 
 - package: github.com/miekg/dns
   version: db96a2b759cdef4f11a34506a42eb8d1290c598e
+
+- package: github.com/shirou/gopsutil
+  version: 2.1.0
+  subpackages:
+  - load
+
+- package: github.com/davecgh/go-spew
+  version: 2df174808ee097f90d259e432cc04442cf60be21
+  subpackages:
+  - spew
+
+- package: golang.org/x/sys
+  version: 9a2e24c3733eddc63871eda99f253e2db29bd3b9
+  subpackages:
+  - unix

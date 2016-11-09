@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package api
+package server
 
 import (
 	"bytes"
@@ -25,7 +25,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/amalgam8/registry/api/protocol/eureka"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/eureka"
 	"github.com/amalgam8/amalgam8/registry/store"
 )
 

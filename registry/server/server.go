@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package api
+package server
 
 import (
 	"errors"
@@ -22,10 +22,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/amalgam8/registry/api/middleware"
-	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
-	"github.com/amalgam8/amalgam8/registry/api/protocol/eureka"
-	"github.com/amalgam8/amalgam8/registry/api/uptime"
+	"github.com/amalgam8/amalgam8/registry/server/middleware"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/eureka"
+	"github.com/amalgam8/amalgam8/registry/server/uptime"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
@@ -46,9 +46,9 @@ type server struct {
 	logger   *log.Entry
 }
 
-// NewServer creates a new server based on the provided configuration options.
+// New creates a new server based on the provided configuration options.
 // Returns a valid Server interface on success or an error on failure
-func NewServer(conf *Config) (Server, error) {
+func New(conf *Config) (Server, error) {
 	if conf == nil {
 		return nil, errors.New("null Service Discovery configuration provided")
 	}

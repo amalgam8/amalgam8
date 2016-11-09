@@ -27,7 +27,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	eurekaapi "github.com/amalgam8/amalgam8/registry/api/protocol/eureka"
+	eurekaapi "github.com/amalgam8/amalgam8/registry/server/protocol/eureka"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 

@@ -25,7 +25,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
 )
 
 const defaultTimeout = time.Second * 30

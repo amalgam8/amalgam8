@@ -18,8 +18,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/amalgam8/amalgam8/registry/api/env"
-	"github.com/amalgam8/amalgam8/registry/api/protocol"
+	"github.com/amalgam8/amalgam8/registry/server/env"
+	"github.com/amalgam8/amalgam8/registry/server/protocol"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/rcrowley/go-metrics"

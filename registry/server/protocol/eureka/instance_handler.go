@@ -26,7 +26,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/ant0ine/go-json-rest/rest"
 
-	"github.com/amalgam8/amalgam8/registry/api/env"
+	"github.com/amalgam8/amalgam8/registry/server/env"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 )

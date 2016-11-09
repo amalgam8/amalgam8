@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package api
+package server
 
 // Consider adding a REST client class to abstract away some of the http details?
 
@@ -30,8 +30,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
-	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
-	"github.com/amalgam8/amalgam8/registry/api/uptime"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/server/uptime"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/health"
 )
@@ -42,7 +42,7 @@ const (
 )
 
 func setupServer(c *Config) (http.Handler, error) {
-	s, err := NewServer(c)
+	s, err := New(c)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func defaultServerConfig() *Config {
 func TestUsingPassedConfig(t *testing.T) {
 	c := defaultServerConfig()
 
-	s, err := NewServer(c)
+	s, err := New(c)
 	assert.Nil(t, err)
 	assert.Equal(t, s.(*server).config, c)
 }

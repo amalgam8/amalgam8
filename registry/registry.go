@@ -23,10 +23,10 @@ import (
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
-	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
 	"github.com/amalgam8/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/server"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/store/eureka"
 	"github.com/amalgam8/amalgam8/registry/store/filesystem"
@@ -188,13 +188,13 @@ func Run(conf *config.Values) error {
 	}
 	cm := store.New(cmConfig)
 
-	serverConfig := &api.Config{
+	serverConfig := &server.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.APIPort),
 		CatalogMap:      cm,
 		Authenticator:   authenticator,
 		RequireHTTPS:    conf.RequireHTTPS,
 	}
-	server, err := api.NewServer(serverConfig)
+	server, err := server.New(serverConfig)
 	if err != nil {
 		return err
 	}

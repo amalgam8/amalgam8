@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package eureka
+package amalgam8
 
 import (
 	"net/http"
@@ -21,103 +21,72 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
-	"github.com/amalgam8/amalgam8/registry/api/env"
-	"github.com/amalgam8/amalgam8/registry/api/protocol"
+	"github.com/amalgam8/amalgam8/registry/server/env"
+	"github.com/amalgam8/amalgam8/registry/server/protocol"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
 const (
-	module = "EUREKA"
+	module = "AMALGAM8"
 )
 
-// Routes encapsulates information needed for the eureka protocol routes
+// Routes encapsulates information needed for the aykesd protocol routes
 type Routes struct {
 	catalogMap store.CatalogMap
 	logger     *log.Entry
 }
 
-// New creates a new eureka Server instance
+// New creates a Routes object for the amalgam8 protocol routes
 func New(catalogMap store.CatalogMap) *Routes {
-	return &Routes{
-		catalogMap: catalogMap,
-		logger:     logging.GetLogger(module),
-	}
+	return &Routes{catalogMap, logging.GetLogger(module)}
 }
 
-// RouteHandlers returns an array of routes
+// RouteHandlers returns an array of route handlers
 func (routes *Routes) RouteHandlers(middlewares ...rest.Middleware) []*rest.Route {
 	descriptors := []*protocol.APIDescriptor{
 		{
-			Path:      applicationTemplateURL(),
+			Path:      ServiceNamesURL(),
+			Method:    "GET",
+			Protocol:  protocol.Amalgam8,
+			Operation: protocol.ListServices,
+			Handler:   routes.listServices,
+		},
+		{
+			Path:      serviceInstancesTemplateURL(),
+			Method:    "GET",
+			Protocol:  protocol.Amalgam8,
+			Operation: protocol.ListServiceInstances,
+			Handler:   routes.getServiceInstances,
+		},
+		{
+			Path:      InstanceCreateURL(),
 			Method:    "POST",
-			Protocol:  protocol.Eureka,
+			Protocol:  protocol.Amalgam8,
 			Operation: protocol.RegisterInstance,
 			Handler:   routes.registerInstance,
 		},
 		{
+			Path:      InstancesURL(),
+			Method:    "GET",
+			Protocol:  protocol.Amalgam8,
+			Operation: protocol.ListInstances,
+			Handler:   routes.listInstances,
+		},
+		{
 			Path:      instanceTemplateURL(),
 			Method:    "DELETE",
-			Protocol:  protocol.Eureka,
+			Protocol:  protocol.Amalgam8,
 			Operation: protocol.DeregisterInstance,
 			Handler:   routes.deregisterInstance,
 		},
 		{
-			Path:      instanceTemplateURL(),
+			Path:      instanceHeartbeatTemplateURL(),
 			Method:    "PUT",
-			Protocol:  protocol.Eureka,
+			Protocol:  protocol.Amalgam8,
 			Operation: protocol.RenewInstance,
 			Handler:   routes.renewInstance,
-		},
-		{
-			Path:      applicationsURL(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.ListServices,
-			Handler:   routes.listApps,
-		},
-		{
-			Path:      applicationsURLTrailingSlash(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.ListServices,
-			Handler:   routes.listApps,
-		},
-		{
-			Path:      applicationTemplateURL(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.ListServiceInstances,
-			Handler:   routes.listAppInstances,
-		},
-		{
-			Path:      instanceTemplateURL(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.GetInstance,
-			Handler:   routes.getInstanceByAppAndID,
-		},
-		{
-			Path:      instanceQueryTemplateURL(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.GetInstance,
-			Handler:   routes.getInstanceByID,
-		},
-		{
-			Path:      instanceStatusTemplateURL(),
-			Method:    "PUT",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.SetInstanceStatus,
-			Handler:   routes.setStatus,
-		},
-		{
-			Path:      vipTemplateURL(),
-			Method:    "GET",
-			Protocol:  protocol.Eureka,
-			Operation: protocol.ListServiceInstances,
-			Handler:   routes.listVips,
 		},
 	}
 

@@ -24,8 +24,8 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
-	"github.com/amalgam8/amalgam8/registry/api/env"
-	"github.com/amalgam8/amalgam8/registry/api/protocol"
+	"github.com/amalgam8/amalgam8/registry/server/env"
+	"github.com/amalgam8/amalgam8/registry/server/protocol"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 

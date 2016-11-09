@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package api
+package server
 
 // Consider adding a REST client class to abstract away some of the http details?
 
@@ -27,7 +27,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 )

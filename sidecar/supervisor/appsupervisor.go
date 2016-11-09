@@ -186,19 +186,20 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 			}
 		}
 
+		// If services have not exited gracefully within the alotted time, force kill them all
 		if time.Now().After(timeout) {
 			for _, proc := range procs {
 				if proc.Cmd.Process != nil {
 					syscall.Kill(-proc.Cmd.Process.Pid, syscall.SIGKILL)
 				}
 			}
+			// Allow for processes to handle signal
+			time.Sleep(100 * time.Millisecond)
 			break
 		}
 
 		time.Sleep(100 * time.Millisecond)
 	}
-
-	time.Sleep(100 * time.Millisecond)
 
 }
 

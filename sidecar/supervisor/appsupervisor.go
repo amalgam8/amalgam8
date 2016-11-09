@@ -28,7 +28,6 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/register"
-	"github.com/Shopify/toxiproxy/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 )
 
 // AppSupervisor manages process in sidecar
@@ -138,8 +137,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 			switch err.Proc.Action {
 			case config.IgnoreProcess:
 				//Ignore this dead process
-				log.WithError(err.Err).Warn("App '%v' with args '%v' exited.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
-				err.Proc.Cmd.Wait()
+				log.WithError(err.Err).Warnf("App '%v' with args '%v' exited.  Ignoring", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 
 			case config.TerminateProcess:
 				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
@@ -204,6 +202,8 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		time.Sleep(100 * time.Millisecond)
 	}
 
+	time.Sleep(100 * time.Millisecond)
+
 }
 
 // reapZombies cleans up any zombies sidecar may have inherited from terminated children
@@ -221,7 +221,6 @@ func reapZombies() {
 				if _, err := syscall.Wait4(-1, &wstatus,
 					syscall.WNOHANG|syscall.WUNTRACED|syscall.WCONTINUED,
 					nil); err == syscall.EINTR {
-					logrus.Debug("Zombie process reaped")
 					continue
 				}
 				// no other zombies to reap

@@ -1,5 +1,5 @@
-hash: 7115d8f157c71414d7b4bb847597f01a3c5c874669e0f2891699e03710ce5451
-updated: 2016-11-08T15:43:24.583225213-06:00
+hash: be96d25fe6684689937c28f66b3eb5d5c4cedb925529ad046dbacc1288a1f0bb
+updated: 2016-11-09T13:06:50.369339839-06:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: 37ad7dc626602a8355801da6acd85155655520f8
@@ -10,10 +10,6 @@ imports:
   version: 622d25e1032a3c551f821cf36267f2286c426531
   subpackages:
   - statsd
-- name: github.com/davecgh/go-spew
-  version: 2df174808ee097f90d259e432cc04442cf60be21
-  subpackages:
-  - spew
 - name: github.com/dgrijalva/jwt-go
   version: e5cb38552fb8426fe9f0f2b3bc8408f238b97b87
 - name: github.com/garyburd/redigo
@@ -68,6 +64,7 @@ imports:
 - name: github.com/shirou/gopsutil
   version: 22a03b5be3f384f558742929065778aa26471033
   subpackages:
+  - internal/common
   - load
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
@@ -88,13 +85,13 @@ imports:
   version: e02fc20de94c78484cd5ffb007f8af96be030a45
 - name: github.com/xeipuuv/gojsonschema
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
-- name: golang.org/x/sys
-  version: 9a2e24c3733eddc63871eda99f253e2db29bd3b9
-  subpackages:
-  - unix
 - name: gopkg.in/yaml.v2
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports:
+- name: github.com/davecgh/go-spew
+  version: 2df174808ee097f90d259e432cc04442cf60be21
+  subpackages:
+  - spew
 - name: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:

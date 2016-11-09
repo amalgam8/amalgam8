@@ -35,6 +35,7 @@ const (
 	controllerURLFlag   = "controller_url"
 	controllerTokenFlag = "controller_token"
 	controllerPollFlag  = "controller_poll"
+	superviseFlag       = "supervise"
 	healthchecksFlag    = "healthchecks"
 	logLevelFlag        = "log_level"
 	dnsFlag             = "dns"
@@ -129,6 +130,11 @@ var Flags = []cli.Flag{
 		Name:   dnsConfigDomainFlag,
 		EnvVar: envVar(dnsConfigDomainFlag),
 		Usage:  "DNS server authorization domain name",
+	},
+	cli.BoolFlag{
+		Name:   superviseFlag,
+		EnvVar: envVar(superviseFlag),
+		Usage:  "Deprecated - this flag is no longer required and will be ignored",
 	},
 	cli.StringSliceFlag{
 		Name:   healthchecksFlag,

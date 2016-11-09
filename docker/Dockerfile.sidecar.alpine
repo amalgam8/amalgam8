@@ -136,6 +136,7 @@ RUN set -ex \
 ADD sidecar/nginx/lua /opt/a8_lualib
 COPY sidecar/nginx/conf/*.conf /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/run_filebeat.sh /usr/bin/run_filebeat.sh
 
 ADD bin/a8sidecar /usr/bin/a8sidecar
 

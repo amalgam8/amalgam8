@@ -1,0 +1,35 @@
+register: true
+proxy: true
+
+service:
+  name: productpage
+  tags:
+    - v1
+
+endpoint:
+  port: 9080
+
+registry:
+  url:   http://registry:8080
+  poll:  5s
+
+controller:
+  url:   http://controller:8080
+  poll:  5s
+
+healthchecks:
+  - type: http
+    value: http://localhost:9080/health
+    interval: 30s
+    timeout: 15s
+    method: GET
+    code: 200
+
+commands:
+  - cmd: [ "/usr/bin/run_filebeat.sh" ]
+    env: [ "GODEBUG=netdns=go" ]
+    on_exit: ignore
+  - cmd: [ "python", "productpage.py", "9080", "http://localhost:6379" ]
+    on_exit: terminate
+
+log_level: debug

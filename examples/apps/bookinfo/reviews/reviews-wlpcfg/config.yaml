@@ -1,0 +1,24 @@
+register: true
+
+registry:
+  url: http://registry:8080
+
+endpoint:
+  port: 9080
+
+healthchecks:
+  - type: http
+    value: http://localhost:9080/health
+    interval: 30s
+    timeout: 15s
+    method: GET
+    code: 200
+
+commands:
+  - cmd: [ "/usr/bin/run_filebeat.sh" ]
+    env: [ "GODEBUG=netdns=go" ]
+    on_exit: ignore
+  - cmd: [ "/opt/ibm/wlp/bin/server", "run", "defaultServer" ]
+    on_exit: terminate
+
+log_level: debug

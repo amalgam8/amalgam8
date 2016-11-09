@@ -1,0 +1,22 @@
+register: true
+
+endpoint:
+  port: 5000
+
+registry:
+  url:   http://registry:8080
+  poll:  5s
+
+healthchecks:
+  - type: http
+    value: http://localhost:5000/health
+    interval: 30s
+    timeout: 15s
+    method: GET
+    code: 200
+
+commands:
+  - cmd: [ "python", "-u", "app.py" ]
+    on_exit: terminate
+
+log_level: debug

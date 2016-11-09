@@ -1,6 +1,10 @@
 # Changelog
 
-0.4.1 (November 3, 2016)
+## 0.4.2 (November 9, 2016)
+
+- Bug fix for sidecar proxy host header propagation logic. ([PR#384](https://github.com/amalgam8/amalgam8/pull/384))
+
+## 0.4.1 (November 3, 2016)
 
 - Sidecar now supports TCP and command health checks. ([PR#350](https://github.com/amalgam8/amalgam8/pull/350))
 

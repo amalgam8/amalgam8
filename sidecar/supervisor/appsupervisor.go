@@ -20,10 +20,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-
 	"time"
-
-	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -34,7 +31,6 @@ import (
 type AppSupervisor struct {
 	registration register.Lifecycle
 	processes    []*process
-	lock         sync.Mutex
 }
 
 type process struct {

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 (November 9, 2016)
+## 0.4.2 (November 10, 2016)
 
 - Bug fix for sidecar proxy host header propagation logic. ([PR#384](https://github.com/amalgam8/amalgam8/pull/384))
 

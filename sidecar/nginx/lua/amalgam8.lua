@@ -800,7 +800,7 @@ function Amalgam8:apply_rules()
    -- instance in the list. Alternatively, one could set a host header for the entire backend
    -- via the rules (TBD).
    if selected_instances[1].host then
-      ngx_var.a8_upstream_host = upstream.host
+      ngx_var.a8_upstream_host = selected_instances[1].host
    end
 
    -- We need to know if this is a http or https instance. And the

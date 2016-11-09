@@ -23,9 +23,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"net/url"
+	urlpkg "net/url"
 
 	log "github.com/Sirupsen/logrus"
+
+	"sync"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
@@ -35,7 +37,7 @@ const (
 	k8sTokenFile = "/var/run/secrets/kubernetes.io/serviceaccount/token"
 )
 
-type k8sClient struct {
+type client struct {
 	httpClient *http.Client
 	k8sURL     string
 	k8sToken   string
@@ -43,26 +45,35 @@ type k8sClient struct {
 	logger *log.Entry
 }
 
-func newK8sClient(k8sURL, k8sToken string) (*k8sClient, error) {
-
+func newClient(url, token string) (*client, error) {
 	logger := logging.GetLogger(module)
 
-	// Normalize k8sURL to not end with a slash
-	for strings.HasSuffix(k8sURL, "/") {
-		k8sURL = strings.TrimSuffix(k8sURL, "/")
+	// Normalize url to not end with a slash
+	for strings.HasSuffix(url, "/") {
+		url = strings.TrimSuffix(url, "/")
 	}
 
-	u, err := url.Parse(k8sURL)
+	u, err := urlpkg.Parse(url)
 	if err != nil {
 		return nil, err
 	}
 
-	if k8sToken == "" {
+	// check if we have a client cached for this url
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	c, ok := clientCache[url]
+	if ok {
+		return c, nil
+	}
+
+	// Build a new client
+	if token == "" {
 		t, err := ioutil.ReadFile(k8sTokenFile)
 		if err != nil {
 			logger.Warnf("Failed to read kubernetes token. %s", err)
 		}
-		k8sToken = string(t)
+		token = string(t)
 	}
 
 	hc := &http.Client{
@@ -75,19 +86,21 @@ func newK8sClient(k8sURL, k8sToken string) (*k8sClient, error) {
 		}
 	}
 
-	return &k8sClient{
+	c = &client{
 		httpClient: hc,
-		k8sURL:     k8sURL,
-		k8sToken:   k8sToken,
+		k8sURL:     url,
+		k8sToken:   token,
 		logger:     logger,
-	}, nil
+	}
+	clientCache[url] = c
+	return c, nil
 }
 
-func (client *k8sClient) getEndpointsURL(namespace auth.Namespace) string {
+func (client *client) getEndpointsURL(namespace auth.Namespace) string {
 	return fmt.Sprintf("%s/api/v1/namespaces/%s/endpoints", client.k8sURL, namespace)
 }
 
-func (client *k8sClient) getEndpointsList(namespace auth.Namespace) (*EndpointsList, error) {
+func (client *client) getEndpointsList(namespace auth.Namespace) (*EndpointsList, error) {
 	endpointsList := EndpointsList{}
 
 	req, _ := http.NewRequest("GET", client.getEndpointsURL(namespace), nil)
@@ -109,3 +122,6 @@ func (client *k8sClient) getEndpointsList(namespace auth.Namespace) (*EndpointsL
 	json.Unmarshal(body, &endpointsList)
 	return &endpointsList, nil
 }
+
+var clientCache map[string]*client
+var cacheMutex sync.Mutex

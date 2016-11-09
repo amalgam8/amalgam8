@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-// Discovery defines the interface used for discovering service instances.
+// ServiceDiscovery defines the interface used for discovering service instances.
 type ServiceDiscovery interface {
 
 	// ListServices queries for the list of services for which instances are currently registered.
@@ -33,7 +33,7 @@ type ServiceDiscovery interface {
 	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
 }
 
-// Registry defines the interface used for registering service instances.
+// ServiceRegistry defines the interface used for registering service instances.
 type ServiceRegistry interface {
 
 	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.

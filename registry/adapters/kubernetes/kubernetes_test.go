@@ -17,7 +17,7 @@ package kubernetes
 import (
 	"testing"
 
-	"github.com/amalgam8/amalgam8/registry/store"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,43 +25,43 @@ func TestParseEndpoint(t *testing.T) {
 	cases := []struct {
 		addr             EndpointAddress
 		port             EndpointPort
-		expectedEndpoint *store.Endpoint
+		expectedEndpoint *api.ServiceEndpoint
 		expectedError    bool
 	}{
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 53, Protocol: Protocol("UDP")},
-			expectedEndpoint: &store.Endpoint{Type: "udp", Value: "10.0.1.1:53"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "udp", Value: "10.0.1.1:53"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 5000, Protocol: Protocol("TCP")},
-			expectedEndpoint: &store.Endpoint{Type: "tcp", Value: "10.0.1.1:5000"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "tcp", Value: "10.0.1.1:5000"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 5000, Protocol: Protocol("TCP"), Name: "donald-duck"},
-			expectedEndpoint: &store.Endpoint{Type: "tcp", Value: "10.0.1.1:5000"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "tcp", Value: "10.0.1.1:5000"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "http"},
-			expectedEndpoint: &store.Endpoint{Type: "http", Value: "10.0.1.1:80"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "HTTP"},
-			expectedEndpoint: &store.Endpoint{Type: "http", Value: "10.0.1.1:80"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "https"},
-			expectedEndpoint: &store.Endpoint{Type: "https", Value: "10.0.1.1:943"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
 			addr:             EndpointAddress{IP: "10.0.1.1"},
 			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "HTTPS"},
-			expectedEndpoint: &store.Endpoint{Type: "https", Value: "10.0.1.1:943"},
+			expectedEndpoint: &api.ServiceEndpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
 			addr:          EndpointAddress{IP: "10.0.1.1"},

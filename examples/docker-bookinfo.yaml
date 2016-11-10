@@ -50,7 +50,6 @@ ratings-v1:
     - A8_SERVICE=ratings:v1
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
-    - A8_HEALTHCHECKS=http://localhost:9080/health
   external_links:
     - registry
 

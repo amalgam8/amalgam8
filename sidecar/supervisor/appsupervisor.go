@@ -99,7 +99,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 		}
 	}
 
-	// listen for SIGTERMS from any of the supervised processes and any orphans spun off from those
+	// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
 	reapZombies()
 
 	// Intercept SIGTERM/SIGINT and stop
@@ -193,8 +193,6 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 					syscall.Kill(-proc.Cmd.Process.Pid, syscall.SIGKILL)
 				}
 			}
-			// Allow for processes to handle signal
-			time.Sleep(100 * time.Millisecond)
 			break
 		}
 

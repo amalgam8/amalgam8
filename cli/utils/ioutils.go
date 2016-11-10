@@ -1,0 +1,161 @@
+// Copyright 2016 IBM Corporation
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
+//   you may not use this file except in compliance with the License.
+//   You may obtain a copy of the License at
+//
+//       http://www.apache.org/licenses/LICENSE-2.0
+//
+//   Unless required by applicable law or agreed to in writing, software
+//   distributed under the License is distributed on an "AS IS" BASIS,
+//   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//   See the License for the specific language governing permissions and
+//   limitations under the License.
+
+package utils
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/amalgam8/amalgam8/cli/common"
+	"gopkg.in/yaml.v2"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+const (
+	// JSON .
+	JSON = "JSON"
+	// YAML .
+	YAML = "YAML"
+)
+
+// ReadInputFile reads the content of a given file and retuns a reader and the extension of the file.
+func ReadInputFile(path string) (io.Reader, string, error) {
+	// Get the file extension
+	ext := strings.ToUpper(filepath.Ext(path)[1:])
+	if ext != JSON && ext != YAML {
+		return nil, ext, common.ErrUnsoportedFormat
+	}
+
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, ext, err
+	}
+
+	return bytes.NewReader(data), ext, nil
+}
+
+//YAMLToJSON converts the YAML data of a given reader to JSON, removes all insignificant characters and returns a new reader.
+func YAMLToJSON(reader io.Reader, dst interface{}) (io.Reader, error) {
+	err := UnmarshallReader(reader, YAML, dst)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+	err = MarshallReader(&buf, dst, JSON)
+	if err != nil {
+		return nil, err
+	}
+
+	var compact bytes.Buffer
+	err = json.Compact(&compact, buf.Bytes())
+	if err != nil {
+		return nil, err
+	}
+
+	return bytes.NewReader(compact.Bytes()), nil
+}
+
+// UnmarshallReader parses the reader data and stores the result in the value pointed by dest.
+func UnmarshallReader(data io.Reader, format string, dest interface{}) error {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(data)
+	format = strings.ToUpper(format)
+	if format != JSON && format != YAML {
+		return common.ErrUnsoportedFormat
+	}
+	switch format {
+
+	case JSON:
+		err := json.Unmarshal(buf.Bytes(), dest)
+		if err != nil {
+			return err
+		}
+
+	case YAML:
+		err := yaml.Unmarshal(buf.Bytes(), dest)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("Invalid Format")
+	}
+
+	return nil
+}
+
+// MarshallReader returns the JSON or YAML encoding of data.
+func MarshallReader(writer io.Writer, data interface{}, format string) error {
+	format = strings.ToUpper(format)
+	if format != JSON && format != YAML {
+		return common.ErrUnsoportedFormat
+	}
+	var pretty []byte
+	var err error
+	switch format {
+	case JSON:
+		pretty, err = json.MarshalIndent(data, "", "  ")
+		if err != nil {
+			return err
+		}
+
+	case YAML:
+		pretty, err = yaml.Marshal(data)
+		if err != nil {
+			return err
+		}
+
+	default:
+		return errors.New("Invalid Format")
+	}
+	fmt.Fprintf(writer, "\n%+v\n\n", string(pretty))
+	return nil
+}
+
+// ScannerLines returns a reader with the rules provided in the console.
+func ScannerLines(writer io.Writer, description string) (io.Reader, string, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+	dataBuf := bytes.Buffer{}
+	var format string
+	breakers := map[string]string{
+		".json": JSON,
+		".yaml": YAML,
+	}
+	fmt.Fprintf(writer, "\n%s\n%s:\n\n", "*** Write .json or .yaml in a new line when finished ***", description)
+	for scanner.Scan() {
+		for k := range breakers {
+			if strings.ToLower(scanner.Text()) == k {
+				format = breakers[k]
+				break
+			}
+		}
+		if format != "" {
+			break
+		}
+		fmt.Fprintln(&dataBuf, scanner.Text())
+	}
+	err := scanner.Err()
+	if err != nil {
+		return nil, format, err
+	}
+	return &dataBuf, format, nil
+}

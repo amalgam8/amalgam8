@@ -1,0 +1,194 @@
+[
+  {
+    "id": "app_name",
+    "translation": "a8"
+  },
+  {
+    "id": "app_usage",
+    "translation": "Amalgam8 CLI"
+  },
+  {
+    "id": "app_version",
+    "translation": "0.0.1"
+  },
+  {
+    "id":"debug_usage",
+    "translation": "Show REST communication with Amalgam8 Controller as it is performed."
+  },
+  {
+    "id":"json_usage",
+    "translation": "Show output in JSON format"
+  },
+  {
+    "id":"yaml_usage",
+    "translation": "Show output in YAML format"
+  },
+  {
+    "id":"invalid_url",
+    "translation": "Invalid URL or empty."
+  },
+  {
+    "id":"registry_url_usage",
+    "translation": "Registry URL"
+  },
+  {
+    "id":"registry_token_usage",
+    "translation": "Registry Token"
+  },
+  {
+    "id":"controller_url_usage",
+    "translation": "Controller URL"
+  },
+  {
+    "id":"info",
+    "translation": "Rule Deleted"
+  },
+  {
+    "id": "info_name",
+    "translation": "info"
+  },
+  {
+    "id": "info_description",
+    "translation": "Shows information about the configuration of the CLI."
+  },
+  {
+    "id": "info_usage",
+    "translation": "Shows information about the configuration of the CLI."
+  },
+  {
+    "id":"rule_deleted",
+    "translation": "Rule Deleted"
+  },
+  {
+    "id": "service_list_name",
+    "translation": "service-list"
+  },
+  {
+    "id": "service_list_description",
+    "translation": "List managed microservices."
+  },
+  {
+    "id": "service_list_usage",
+    "translation": "List managed microservices."
+  },
+  {
+    "id": "service_list_output_usage",
+    "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
+  },
+  {
+    "id": "route_list_name",
+    "translation": "route-list"
+  },
+  {
+    "id": "route_list_description",
+    "translation": "List microservices version routing rules."
+  },
+  {
+    "id": "route_list_usage",
+    "translation": "List microservices version routing rules."
+  },
+  {
+    "id": "route_list_service_usage",
+    "translation": "The service name."
+  },
+  {
+    "id": "route_list_output_usage",
+    "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
+  },
+  {
+    "id": "action_list_name",
+    "translation": "action-list"
+  },
+  {
+    "id": "action_list_description",
+    "translation": "List action rules."
+  },
+  {
+    "id": "action_list_usage",
+    "translation": "List action rules."
+  },
+  {
+    "id": "action_list_service_usage",
+    "translation": "The service name."
+  },
+  {
+    "id": "action_list_output_usage",
+    "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
+  },
+  {
+    "id": "rule_create_name",
+    "translation": "rule-create"
+  },
+  {
+    "id": "rule_create_description",
+    "translation": "Set rules for a microservice."
+  },
+  {
+    "id": "rule_create_usage",
+    "translation": "Set rules for a microservice."
+  },
+  {
+    "id": "rule_create_file_usage",
+    "translation": "Read a JSON or YAML file containing a description of rules to create. Reads from stdin by default."
+  },
+  {
+    "id": "rule_get_name",
+    "translation": "rule-get"
+  },
+  {
+    "id": "rule_get_description",
+    "translation": "Get rules for a microservice."
+  },
+  {
+    "id": "rule_get_usage",
+    "translation": "Get rules for a microservice."
+  },
+  {
+    "id": "rule_get_id_usage",
+    "translation": "The rule id."
+  },
+  {
+    "id": "rule_get_tag_usage",
+    "translation": "The rule tag."
+  },
+  {
+    "id": "rule_get_destination_usage",
+    "translation": "The rule destination."
+  },
+  {
+    "id": "rule_get_output_usage",
+    "translation": "Output format. Supported values are 'json' or 'yaml'."
+  },
+  {
+    "id": "rule_get_all_usage",
+    "translation": "Output all rules."
+  },
+  {
+    "id": "rule_delete_name",
+    "translation": "rule-delete"
+  },
+  {
+    "id": "rule_delete_usage",
+    "translation": "Delete rules from a microservice."
+  },
+  {
+    "id": "rule_delete_description",
+    "translation": "Delete rules with the specified rule id, tag, or destination."
+  },
+  {
+    "id": "rule_delete_id_usage",
+    "translation": "The rule id."
+  },
+  {
+    "id": "rule_delete_tag_usage",
+    "translation": "The rule tag."
+  },
+  {
+    "id": "rule_delete_destination_usage",
+    "translation": "The rule destination."
+  },
+  {
+    "id": "rule_delete_all_usage",
+    "translation": "The all rules."
+  }
+]

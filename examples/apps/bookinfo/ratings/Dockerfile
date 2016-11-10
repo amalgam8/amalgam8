@@ -14,8 +14,5 @@
 
 FROM node:4-onbuild
 
-RUN mkdir -p /opt/microservices
-COPY . /opt/microservices/
 EXPOSE 9080
-WORKDIR /opt/microservices
 CMD node ratings.js 9080 http://localhost:6379

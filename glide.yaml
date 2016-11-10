@@ -66,3 +66,8 @@ import:
 
 - package: github.com/miekg/dns
   version: db96a2b759cdef4f11a34506a42eb8d1290c598e
+
+- package: github.com/shirou/gopsutil
+  version: 2.1.0
+  subpackages:
+  - load

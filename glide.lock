@@ -1,5 +1,5 @@
-hash: b3eef165fafe83fca894287f8ac5b4904320a8b6c95a1d2b58b7d8001c3c61cd
-updated: 2016-10-25T17:17:46.862151423+01:00
+hash: be96d25fe6684689937c28f66b3eb5d5c4cedb925529ad046dbacc1288a1f0bb
+updated: 2016-11-09T13:06:50.369339839-06:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: 37ad7dc626602a8355801da6acd85155655520f8
@@ -15,8 +15,8 @@ imports:
 - name: github.com/garyburd/redigo
   version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
   subpackages:
-  - redis
   - internal
+  - redis
 - name: github.com/miekg/dns
   version: db96a2b759cdef4f11a34506a42eb8d1290c598e
 - name: github.com/nicksnyder/go-i18n
@@ -31,36 +31,41 @@ imports:
   subpackages:
   - config
   - internal/codelocation
+  - internal/containernode
   - internal/failer
+  - internal/leafnodes
   - internal/remote
+  - internal/spec
+  - internal/specrunner
   - internal/suite
   - internal/testingtproxy
   - internal/writer
   - reporters
   - reporters/stenographer
   - types
-  - internal/containernode
-  - internal/leafnodes
-  - internal/spec
-  - internal/specrunner
 - name: github.com/onsi/gomega
   version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
   subpackages:
+  - format
   - internal/assertion
   - internal/asyncassertion
+  - internal/oraclematcher
   - internal/testingtsupport
   - matchers
-  - types
-  - internal/oraclematcher
-  - format
   - matchers/support/goraph/bipartitegraph
   - matchers/support/goraph/edge
   - matchers/support/goraph/node
   - matchers/support/goraph/util
+  - types
 - name: github.com/pborman/uuid
   version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
 - name: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
+- name: github.com/shirou/gopsutil
+  version: 22a03b5be3f384f558742929065778aa26471033
+  subpackages:
+  - internal/common
+  - load
 - name: github.com/Sirupsen/logrus
   version: 418b41d23a1bf978c06faea5313ba194650ac088
   subpackages:

@@ -17,10 +17,10 @@ package uptime
 import (
 	"math"
 	"net/http"
-	"syscall"
 	"time"
 
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/shirou/gopsutil/load"
 
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/utils/health"
@@ -65,16 +65,14 @@ func currentSysInfo() *uptimeInfo {
 	const loadScale = 65536.0 // magic conversion factor 2^16
 
 	info := &uptimeInfo{}
-	sysinfo := syscall.Sysinfo_t{}
 
-	if err := syscall.Sysinfo(&sysinfo); err != nil { // just stop processing, values will be all zero's
-		return info
-	}
+	load, _ := load.Avg()
 
 	info.Uptime = time.Now().UTC().Sub(startTime)
-	info.LastMinute = fixedPrecision(float64(sysinfo.Loads[0])/loadScale, 3)
-	info.LastFive = fixedPrecision(float64(sysinfo.Loads[1])/loadScale, 3)
-	info.LastFifteen = fixedPrecision(float64(sysinfo.Loads[2])/loadScale, 3)
+	info.LastMinute = fixedPrecision(load.Load1/loadScale, 3)
+	info.LastFive = fixedPrecision(load.Load5/loadScale, 3)
+	info.LastFifteen = fixedPrecision(load.Load15/loadScale, 3)
+
 	return info
 }
 

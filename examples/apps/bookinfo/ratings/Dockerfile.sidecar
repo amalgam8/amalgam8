@@ -14,7 +14,7 @@
 
 FROM node:4-onbuild
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.1/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.2/a8sidecar.sh | sh
 
 RUN mkdir -p /opt/microservices
 COPY . /opt/microservices/

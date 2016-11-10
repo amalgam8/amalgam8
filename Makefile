@@ -156,11 +156,11 @@ lint: tools.golint
 
 depend.update: tools.glide
 	@echo "--> updating dependencies from glide.yaml"
-	@glide update --strip-vcs --update-vendored
+	@glide update --strip-vcs --strip-vendor --update-vendored
 
 depend.install:	tools.glide
 	@echo "--> installing dependencies from glide.lock "
-	@glide install --strip-vcs --update-vendored
+	@glide install --strip-vcs --strip-vendor --update-vendored
 
 #---------------
 #-- dockerize

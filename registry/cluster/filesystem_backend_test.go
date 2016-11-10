@@ -26,7 +26,7 @@ import (
 
 const (
 	testDirectory         = "/tmp/sd-test"
-	testUnreadableTimeout = time.Duration(100) * time.Millisecond
+	testUnreadableTimeout = time.Duration(2) * time.Second
 )
 
 type FilesystemBackendSuite struct {

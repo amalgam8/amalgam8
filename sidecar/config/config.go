@@ -40,9 +40,10 @@ const (
 
 // Command to be managed by sidecar app supervisor
 type Command struct {
-	Cmd    []string `yaml:"cmd"`
-	Env    []string `yaml:"env"`
-	OnExit string   `yaml:"on_exit"`
+	Cmd       []string `yaml:"cmd"`
+	Env       []string `yaml:"env"`
+	OnExit    string   `yaml:"on_exit"`
+	KillGroup bool     `yaml:"kill_group"`
 }
 
 // Service configuration
@@ -262,8 +263,9 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	if context.Args().Present() {
 		cmd := Command{
-			Cmd:    context.Args(),
-			OnExit: TerminateProcess,
+			Cmd:       context.Args(),
+			OnExit:    TerminateProcess,
+			KillGroup: false,
 		}
 		c.Commands = append(c.Commands, cmd)
 	}

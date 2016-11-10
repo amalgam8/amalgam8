@@ -12,10 +12,10 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM python:2-onbuild
+FROM node:4-onbuild
 
 RUN mkdir -p /opt/microservices
 COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices
-CMD python ratings.py 9080 http://localhost:6379
+CMD node ratings.js 9080 http://localhost:6379

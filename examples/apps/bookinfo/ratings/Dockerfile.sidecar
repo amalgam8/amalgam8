@@ -12,7 +12,7 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-FROM python:2-onbuild
+FROM node:4-onbuild
 
 RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.1/a8sidecar.sh | sh
 
@@ -21,4 +21,4 @@ COPY . /opt/microservices/
 EXPOSE 9080
 WORKDIR /opt/microservices
 
-ENTRYPOINT ["a8sidecar", "python", "ratings.py", "9080"]
+ENTRYPOINT ["a8sidecar", "node", "ratings.js", "9080"]

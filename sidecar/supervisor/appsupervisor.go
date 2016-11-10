@@ -189,7 +189,11 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		if time.Now().After(timeout) {
 			for _, proc := range procs {
 				if proc.Cmd.Process != nil {
-					proc.Cmd.Process.Kill()
+					if proc.KillGroup {
+						syscall.Kill(-proc.Cmd.Process.Pid, syscall.SIGKILL)
+					} else {
+						proc.Cmd.Process.Kill()
+					}
 				}
 			}
 			break

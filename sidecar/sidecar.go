@@ -142,7 +142,7 @@ func Run(conf config.Config) error {
 				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
-			TTL: 60,
+			TTL: int(conf.Endpoint.TTL.Seconds()),
 		}
 
 		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{

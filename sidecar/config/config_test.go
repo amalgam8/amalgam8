@@ -56,6 +56,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
+			Expect(c.Endpoint.TTL).To(Equal(DefaultConfig.Endpoint.TTL))
 			Expect(c.Registry).To(Equal(DefaultConfig.Registry))
 			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
@@ -92,6 +93,7 @@ var _ = Describe("Config", func() {
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
 				"--endpoint_type=https",
+				"--endpoint_ttl=45s",
 				"--registry_url=http://registry:8080",
 				"--registry_token=local",
 				"--registry_poll=5s",
@@ -118,6 +120,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
+			Expect(c.Endpoint.TTL).To(Equal(time.Duration(45) * time.Second))
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -155,6 +158,7 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
 			os.Setenv("A8_ENDPOINT_TYPE", "https")
+			os.Setenv("A8_ENDPOINT_TTL", "45s")
 			os.Setenv("A8_REGISTRY_URL", "http://registry:8080")
 			os.Setenv("A8_REGISTRY_TOKEN", "local")
 			os.Setenv("A8_REGISTRY_POLL", "5s")
@@ -179,6 +183,7 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_ENDPOINT_HOST")
 			os.Unsetenv("A8_ENDPOINT_PORT")
 			os.Unsetenv("A8_ENDPOINT_TYPE")
+			os.Unsetenv("A8_ENDPOINT_TTL")
 			os.Unsetenv("A8_REGISTRY_URL")
 			os.Unsetenv("A8_REGISTRY_TOKEN")
 			os.Unsetenv("A8_REGISTRY_POLL")
@@ -200,6 +205,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
+			Expect(c.Endpoint.TTL).To(Equal(time.Duration(45) * time.Second))
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -243,6 +249,7 @@ endpoint:
   host: localhost
   port: 9080
   type: https
+  ttl: 45s
 
 registry:
   url:   http://registry:8080
@@ -306,6 +313,7 @@ log_level: debug
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
+			Expect(c.Endpoint.TTL).To(Equal(time.Duration(45) * time.Second))
 			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.Registry.Token).To(Equal("local"))
 			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -361,6 +369,7 @@ log_level: debug
 					Host: "mockhost",
 					Port: 9090,
 					Type: "http",
+					TTL:  45 * time.Second,
 				},
 				Commands: []Command{Command{
 					Cmd:    []string{"ls"},

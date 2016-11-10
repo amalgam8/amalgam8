@@ -29,6 +29,7 @@ const (
 	endpointHostFlag    = "endpoint_host"
 	endpointPortFlag    = "endpoint_port"
 	endpointTypeFlag    = "endpoint_type"
+	endpointTTLFlag     = "endpoint_ttl"
 	registryTokenFlag   = "registry_token"
 	registryURLFlag     = "registry_url"
 	registryPollFlag    = "registry_poll"
@@ -89,6 +90,11 @@ var Flags = []cli.Flag{
 		Name:   endpointTypeFlag,
 		EnvVar: envVar(endpointTypeFlag),
 		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
+	},
+	cli.DurationFlag{
+		Name:   endpointTTLFlag,
+		EnvVar: envVar(endpointTTLFlag),
+		Usage:  "Service endpoint TTL",
 	},
 	cli.StringFlag{
 		Name:   registryURLFlag,

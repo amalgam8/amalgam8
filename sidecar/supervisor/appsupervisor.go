@@ -100,7 +100,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 	}
 
 	// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
-	reapZombies()
+	go reapZombies()
 
 	// Intercept SIGTERM/SIGINT and stop
 	sigChan := make(chan os.Signal, 1)
@@ -156,7 +156,6 @@ func (a *AppSupervisor) Shutdown(sig int) {
 }
 
 func terminateSubprocesses(procs []*process, sig os.Signal) {
-
 	for _, proc := range procs {
 		if proc.Cmd.Process != nil {
 
@@ -190,7 +189,7 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		if time.Now().After(timeout) {
 			for _, proc := range procs {
 				if proc.Cmd.Process != nil {
-					syscall.Kill(-proc.Cmd.Process.Pid, syscall.SIGKILL)
+					proc.Cmd.Process.Kill()
 				}
 			}
 			break
@@ -198,29 +197,25 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 
 		time.Sleep(100 * time.Millisecond)
 	}
-
 }
 
 // reapZombies cleans up any zombies sidecar may have inherited from terminated children
 // - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
 func reapZombies() {
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGCHLD)
-	go func() {
-		for _ = range sig {
-			for {
-				// only 1 SIGCHLD can be handled at a time from the channel,
-				// so we need to allow for the possibility that multiple child
-				// processes have terminated while one is already being reaped.
-				var wstatus syscall.WaitStatus
-				if _, err := syscall.Wait4(-1, &wstatus,
-					syscall.WNOHANG|syscall.WUNTRACED|syscall.WCONTINUED,
-					nil); err == syscall.EINTR {
-					continue
-				}
-				// no other zombies to reap
-				break
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGCHLD)
+
+	for range sigChan {
+		for {
+			_, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
+
+			// Spurious wakeup
+			if err == syscall.EINTR {
+				continue
 			}
+
+			// Done
+			break
 		}
-	}()
+	}
 }

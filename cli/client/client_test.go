@@ -17,11 +17,12 @@ package client_test
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+
+	. "github.com/amalgam8/amalgam8/cli/client"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
-	. "github.com/amalgam8/amalgam8/cli/client"
-	"net/http"
 )
 
 var _ = Describe("Amalgam8 Client", func() {

@@ -1,7 +1,5 @@
 package api
 
-import ()
-
 const (
 	rulesPath  = "/v1/rules"
 	routesPath = "/v1/rules/routes"

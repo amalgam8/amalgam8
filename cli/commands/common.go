@@ -15,11 +15,12 @@
 package commands
 
 import (
+	"os"
+	"strings"
+
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
-	"os"
-	"strings"
 )
 
 var (

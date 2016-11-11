@@ -16,6 +16,9 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/commands"
@@ -24,8 +27,6 @@ import (
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
-	"os"
-	"strings"
 )
 
 func init() {

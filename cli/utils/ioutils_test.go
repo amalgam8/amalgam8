@@ -17,12 +17,13 @@ package utils_test
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
+
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	. "github.com/amalgam8/amalgam8/cli/utils"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"io/ioutil"
 )
 
 var _ = Describe("ioutils", func() {

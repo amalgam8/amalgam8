@@ -17,6 +17,9 @@ package commands_test
 import (
 	"bytes"
 	"fmt"
+	"net/http"
+	"os"
+
 	cmds "github.com/amalgam8/amalgam8/cli/commands"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/flags"
@@ -26,8 +29,6 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/onsi/gomega/ghttp"
 	"github.com/urfave/cli"
-	"net/http"
-	"os"
 )
 
 var _ = Describe("Rule-Delete", func() {

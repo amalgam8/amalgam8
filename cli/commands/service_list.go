@@ -17,6 +17,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"

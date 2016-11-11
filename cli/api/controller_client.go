@@ -2,12 +2,13 @@ package api
 
 import (
 	"fmt"
+	"io"
+	"net/http"
+
 	api "github.com/amalgam8/amalgam8/cli/client"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
-	"io"
-	"net/http"
 )
 
 type controller struct {

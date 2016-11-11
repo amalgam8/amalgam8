@@ -15,10 +15,10 @@
 package flags_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 	"github.com/amalgam8/amalgam8/cli/flags"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 
 	"testing"
 )

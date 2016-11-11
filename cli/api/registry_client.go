@@ -3,11 +3,12 @@ package api
 import (
 	// "fmt"
 	"fmt"
+	"net/http"
+
 	api "github.com/amalgam8/amalgam8/cli/client"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
-	"net/http"
 )
 
 type registry struct {

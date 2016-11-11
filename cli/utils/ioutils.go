@@ -20,13 +20,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/amalgam8/amalgam8/cli/common"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/amalgam8/amalgam8/cli/common"
+	"gopkg.in/yaml.v2"
 )
 
 const (

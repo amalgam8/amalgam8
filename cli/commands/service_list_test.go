@@ -17,6 +17,7 @@ package commands_test
 import (
 	"bytes"
 	"fmt"
+
 	cmds "github.com/amalgam8/amalgam8/cli/commands"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/flags"

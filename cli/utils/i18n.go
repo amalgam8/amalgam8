@@ -15,9 +15,10 @@
 package utils
 
 import (
+	"path/filepath"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/nicksnyder/go-i18n/i18n"
-	"path/filepath"
 )
 
 var (

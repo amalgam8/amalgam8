@@ -15,10 +15,11 @@
 package commands_test
 
 import (
+	"testing"
+
+	"github.com/amalgam8/amalgam8/cli/commands"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-	"github.com/amalgam8/amalgam8/cli/commands"
-	"testing"
 )
 
 func TestCommands(t *testing.T) {

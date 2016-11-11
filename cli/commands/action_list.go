@@ -17,12 +17,13 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
-	"strings"
 )
 
 // ActionListCommand is used for the action-list command.

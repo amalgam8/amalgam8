@@ -41,9 +41,9 @@ type Server struct {
 
 // Config represents the DNS server configurations.
 type Config struct {
-	DiscoveryClient api.ServiceDiscovery
-	Port            uint16
-	Domain          string
+	Discovery api.ServiceDiscovery
+	Port      uint16
+	Domain    string
 }
 
 // NewServer creates a new instance of a DNS server with the given configurations
@@ -53,7 +53,7 @@ func NewServer(config Config) (*Server, error) {
 		return nil, err
 	}
 	s := &Server{
-		discovery:    config.DiscoveryClient,
+		discovery:    config.Discovery,
 		domain:       config.Domain,
 		domainLabels: len(dns.Split(config.Domain)),
 	}
@@ -428,7 +428,7 @@ func createSRVRecord(name string, port uint16, target string) *dns.SRV {
 }
 
 func validate(config *Config) error {
-	if config.DiscoveryClient == nil {
+	if config.Discovery == nil {
 		return fmt.Errorf("Discovery client is nil")
 	}
 

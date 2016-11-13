@@ -27,24 +27,26 @@ type ControllerListener interface {
 	RuleChange([]rules.Rule) error
 }
 
-// ControllerConfig options
+// ControllerConfig holds configuration options for the controller monitor.
 type ControllerConfig struct {
 	Client       client.Client
 	Listeners    []ControllerListener
 	PollInterval time.Duration
 }
 
-type controller struct {
+type controllerMonitor struct {
+	controller client.Client
+
 	ticker       *time.Ticker
-	controller   client.Client
 	pollInterval time.Duration
-	revision     int64
-	listeners    []ControllerListener
+
+	revision  int64
+	listeners []ControllerListener
 }
 
-// NewController instantiates a new instance
-func NewController(conf ControllerConfig) Monitor {
-	return &controller{
+// NewControllerMonitor instantiates a new controller monitor
+func NewControllerMonitor(conf ControllerConfig) Monitor {
+	return &controllerMonitor{
 		controller:   conf.Client,
 		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
@@ -53,7 +55,7 @@ func NewController(conf ControllerConfig) Monitor {
 }
 
 // Start monitoring the A8 controller. This is a blocking operation.
-func (c *controller) Start() error {
+func (c *controllerMonitor) Start() error {
 	// Stop existing ticker if necessary
 	if c.ticker != nil {
 		if err := c.Stop(); err != nil {
@@ -81,7 +83,7 @@ func (c *controller) Start() error {
 }
 
 // poll the A8 controller for changes and notify listeners
-func (c *controller) poll() error {
+func (c *controllerMonitor) poll() error {
 
 	// Get the latest rules from the A8 controller.
 	resp, err := c.controller.GetRules(rules.Filter{})
@@ -109,7 +111,7 @@ func (c *controller) poll() error {
 }
 
 // Stop monitoring the A8 controller
-func (c *controller) Stop() error {
+func (c *controllerMonitor) Stop() error {
 	// Stop ticker if necessary
 	if c.ticker != nil {
 		c.ticker.Stop()

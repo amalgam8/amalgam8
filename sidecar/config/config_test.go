@@ -92,9 +92,15 @@ var _ = Describe("Config", func() {
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
 				"--endpoint_type=https",
+				"--registry_backend=kubernetes",
 				"--registry_url=http://registry:8080",
 				"--registry_token=local",
 				"--registry_poll=5s",
+				"--kubernetes_url=http://kubernetes:8080",
+				"--kubernetes_token=12345",
+				"--kubernetes_namespace=default",
+				"--eureka_url=http://eureka1:9001",
+				"--eureka_url=http://eureka2:9002",
 				"--controller_url=http://controller:8080",
 				"--controller_token=local",
 				"--controller_poll=5s",
@@ -118,9 +124,14 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Registry.Token).To(Equal("local"))
-			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Backend).To(Equal("kubernetes"))
+			Expect(c.Registry.Amalgam8.URL).To(Equal("http://registry:8080"))
+			Expect(c.Registry.Amalgam8.Token).To(Equal("local"))
+			Expect(c.Registry.Amalgam8.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
+			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
+			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -155,9 +166,14 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
 			os.Setenv("A8_ENDPOINT_TYPE", "https")
+			os.Setenv("A8_REGISTRY_BACKEND", "kubernetes")
 			os.Setenv("A8_REGISTRY_URL", "http://registry:8080")
 			os.Setenv("A8_REGISTRY_TOKEN", "local")
 			os.Setenv("A8_REGISTRY_POLL", "5s")
+			os.Setenv("A8_KUBERNETES_URL", "http://kubernetes:8080")
+			os.Setenv("A8_KUBERNETES_TOKEN", "12345")
+			os.Setenv("A8_KUBERNETES_NAMESPACE", "default")
+			os.Setenv("A8_EUREKA_URL", "http://eureka1:9001,http://eureka2:9002")
 			os.Setenv("A8_CONTROLLER_URL", "http://controller:8080")
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
 			os.Setenv("A8_CONTROLLER_POLL", "5s")
@@ -180,8 +196,13 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_ENDPOINT_PORT")
 			os.Unsetenv("A8_ENDPOINT_TYPE")
 			os.Unsetenv("A8_REGISTRY_URL")
+			os.Unsetenv("A8_REGISTRY_BACKEND")
 			os.Unsetenv("A8_REGISTRY_TOKEN")
 			os.Unsetenv("A8_REGISTRY_POLL")
+			os.Unsetenv("A8_KUBERNETES_URL")
+			os.Unsetenv("A8_KUBERNETES_TOKEN")
+			os.Unsetenv("A8_KUBERNETES_NAMESPACE")
+			os.Unsetenv("A8_EUREKA_URL")
 			os.Unsetenv("A8_CONTROLLER_URL")
 			os.Unsetenv("A8_CONTROLLER_TOKEN")
 			os.Unsetenv("A8_CONTROLLER_POLL")
@@ -200,9 +221,14 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Registry.Token).To(Equal("local"))
-			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Backend).To(Equal("kubernetes"))
+			Expect(c.Registry.Amalgam8.URL).To(Equal("http://registry:8080"))
+			Expect(c.Registry.Amalgam8.Token).To(Equal("local"))
+			Expect(c.Registry.Amalgam8.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
+			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
+			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -245,15 +271,24 @@ endpoint:
   type: https
 
 registry:
-  url:   http://registry:8080
-  token: local
-  poll:  5s
+  backend: kubernetes
+  amalgam8:
+    url:   http://registry:8080
+    token: local
+    poll:  5s
+  kubernetes:
+    url:   http://kubernetes:8080
+    token: 12345
+    namespace: default
+  eureka:
+    urls:
+      - http://eureka1:9001
+      - http://eureka2:9002
 
 controller:
   url:   http://controller:8080
   token: local
   poll:  5s
-
 
 dnsconfig:
   port:   4056
@@ -306,9 +341,14 @@ log_level: debug
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Registry.Token).To(Equal("local"))
-			Expect(c.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Backend).To(Equal("kubernetes"))
+			Expect(c.Registry.Amalgam8.URL).To(Equal("http://registry:8080"))
+			Expect(c.Registry.Amalgam8.Token).To(Equal("local"))
+			Expect(c.Registry.Amalgam8.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Registry.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
+			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
+			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.Controller.Token).To(Equal("local"))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
@@ -334,13 +374,60 @@ log_level: debug
 		})
 	})
 
+	Context("config overiden with configuration file using deprecated registry configuration syntax", func() {
+
+		configFile := fmt.Sprintf("%s/%s", os.TempDir(), "sidecar-config.yaml")
+
+		BeforeEach(func() {
+			app := cli.NewApp()
+
+			app.Name = "sidecar"
+			app.Usage = "Amalgam8 Sidecar"
+			app.Flags = Flags
+			app.Action = func(context *cli.Context) error {
+				c, cErr = New(context)
+				return cErr
+			}
+
+			configYaml := `
+registry:
+  url:   http://registry:8080
+  token: local
+  poll:  5s
+`
+			err := ioutil.WriteFile(configFile, []byte(configYaml), 0777)
+			Expect(err).NotTo(HaveOccurred())
+
+			args := append(os.Args[:1], []string{
+				"--config=" + configFile,
+			}...)
+
+			Expect(app.Run(args)).NotTo(HaveOccurred())
+
+		})
+
+		AfterEach(func() {
+			os.Remove(configFile)
+		})
+
+		It("maintains backward compatibility with deprecated registry configuration syntax", func() {
+			Expect(c.Registry.Backend).To(Equal("amalgam8"))
+			Expect(c.Registry.Amalgam8.URL).To(Equal("http://registry:8080"))
+			Expect(c.Registry.Amalgam8.Token).To(Equal("local"))
+			Expect(c.Registry.Amalgam8.Poll).To(Equal(time.Duration(5) * time.Second))
+		})
+	})
+
 	Context("config validation", func() {
 
 		BeforeEach(func() {
 			c = &Config{
 				Registry: Registry{
-					URL:   "http://registry",
-					Token: "sd_token",
+					Backend: Amalgam8Backend,
+					Amalgam8: Amalgam8Registry{
+						URL:   "http://registry",
+						Token: "sd_token",
+					},
 				},
 				Controller: Controller{
 					Token: "token",

@@ -22,26 +22,31 @@ import (
 )
 
 const (
-	configFlag          = "config"
-	registerFlag        = "register"
-	proxyFlag           = "proxy"
-	serviceFlag         = "service"
-	endpointHostFlag    = "endpoint_host"
-	endpointPortFlag    = "endpoint_port"
-	endpointTypeFlag    = "endpoint_type"
-	registryTokenFlag   = "registry_token"
-	registryURLFlag     = "registry_url"
-	registryPollFlag    = "registry_poll"
-	controllerURLFlag   = "controller_url"
-	controllerTokenFlag = "controller_token"
-	controllerPollFlag  = "controller_poll"
-	superviseFlag       = "supervise"
-	healthchecksFlag    = "healthchecks"
-	logLevelFlag        = "log_level"
-	dnsFlag             = "dns"
-	dnsConfigPortFlag   = "dns_port"
-	dnsConfigDomainFlag = "dns_domain"
-	debugFlag           = "debug"
+	configFlag              = "config"
+	registerFlag            = "register"
+	proxyFlag               = "proxy"
+	serviceFlag             = "service"
+	endpointHostFlag        = "endpoint_host"
+	endpointPortFlag        = "endpoint_port"
+	endpointTypeFlag        = "endpoint_type"
+	registryBackendFlag     = "registry_backend"
+	registryURLFlag         = "registry_url"
+	registryTokenFlag       = "registry_token"
+	registryPollFlag        = "registry_poll"
+	kubernetesURLFlag       = "kubernetes_url"
+	kubernetesTokenFlag     = "kubernetes_token"
+	kubernetesNamespaceFlag = "kubernetes_namespace"
+	eurekaURLFlag           = "eureka_url"
+	controllerURLFlag       = "controller_url"
+	controllerTokenFlag     = "controller_token"
+	controllerPollFlag      = "controller_poll"
+	superviseFlag           = "supervise"
+	healthchecksFlag        = "healthchecks"
+	logLevelFlag            = "log_level"
+	dnsFlag                 = "dns"
+	dnsConfigPortFlag       = "dns_port"
+	dnsConfigDomainFlag     = "dns_domain"
+	debugFlag               = "debug"
 )
 
 // Flags is the set of supported flags
@@ -91,19 +96,44 @@ var Flags = []cli.Flag{
 		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
 	},
 	cli.StringFlag{
+		Name:   registryBackendFlag,
+		EnvVar: envVar(registryBackendFlag),
+		Usage:  "Registry backend type (amalgam8, kubernetes, eureka)",
+	},
+	cli.StringFlag{
 		Name:   registryURLFlag,
 		EnvVar: envVar(registryURLFlag),
-		Usage:  "URL for Registry",
+		Usage:  "URL for Amalgam8 Registry",
 	},
 	cli.StringFlag{
 		Name:   registryTokenFlag,
 		EnvVar: envVar(registryTokenFlag),
-		Usage:  "API token for Registry",
+		Usage:  "API token for Amalgam8 Registry",
 	},
 	cli.DurationFlag{
 		Name:   registryPollFlag,
 		EnvVar: envVar(registryPollFlag),
-		Usage:  "Interval for polling Controller",
+		Usage:  "Interval for polling Amalgam8 Registry",
+	},
+	cli.StringFlag{
+		Name:   kubernetesURLFlag,
+		EnvVar: envVar(kubernetesURLFlag),
+		Usage:  "URL for Kubernetes API server",
+	},
+	cli.StringFlag{
+		Name:   kubernetesTokenFlag,
+		EnvVar: envVar(kubernetesTokenFlag),
+		Usage:  "API token for Kubernetes API server",
+	},
+	cli.StringFlag{
+		Name:   kubernetesNamespaceFlag,
+		EnvVar: envVar(kubernetesNamespaceFlag),
+		Usage:  "Kubernetes API namespace",
+	},
+	cli.StringSliceFlag{
+		Name:   eurekaURLFlag,
+		EnvVar: envVar(eurekaURLFlag),
+		Usage:  "List of Eureka server URLs",
 	},
 	cli.StringFlag{
 		Name:   controllerURLFlag,

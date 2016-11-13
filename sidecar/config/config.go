@@ -38,6 +38,13 @@ const (
 	IgnoreProcess = "ignore"
 )
 
+// Supported Service Registry/Discovery backends
+const (
+	Amalgam8Backend   = "amalgam8"
+	KubernetesBackend = "kubernetes"
+	EurekaBackend     = "eureka"
+)
+
 // Command to be managed by sidecar app supervisor
 type Command struct {
 	Cmd    []string `yaml:"cmd"`
@@ -60,9 +67,15 @@ type Endpoint struct {
 
 // Registry configuration
 type Registry struct {
-	URL   string        `yaml:"url"`
-	Token string        `yaml:"token"`
-	Poll  time.Duration `yaml:"poll"`
+	Backend string `yaml:"backend"`
+
+	Amalgam8   Amalgam8Registry   `yaml:"amalgam8"`
+	Kubernetes KubernetesRegistry `yaml:"kubernetes"`
+	Eureka     EurekaRegistry     `yaml:"eureka"`
+
+	// for backward compatibility, support amalgam8 registry
+	// configuration directly under the `registry:` clause
+	Amalgam8Registry `yaml:",inline"`
 }
 
 // Controller configuration
@@ -76,6 +89,25 @@ type Controller struct {
 type Dnsconfig struct {
 	Port   int    `yaml:"port"`
 	Domain string `yaml:"domain"`
+}
+
+// Amalgam8Registry configuration
+type Amalgam8Registry struct {
+	URL   string        `yaml:"url"`
+	Token string        `yaml:"token"`
+	Poll  time.Duration `yaml:"poll"`
+}
+
+// KubernetesRegistry configuration
+type KubernetesRegistry struct {
+	URL       string `yaml:"url"`
+	Token     string `yaml:"token"`
+	Namespace string `yaml:"namespace"`
+}
+
+// EurekaRegistry configuration
+type EurekaRegistry struct {
+	URLs []string `yaml:"urls"`
 }
 
 // Health check types.
@@ -141,6 +173,13 @@ func New(context *cli.Context) (*Config, error) {
 		return nil, err
 	}
 
+	// for backward compatibility, support amalgam8 registry
+	// configuration directly under the `registry:` clause
+	if config.Registry.URL != "" {
+		config.Registry.Backend = Amalgam8Backend
+		config.Registry.Amalgam8 = config.Registry.Amalgam8Registry
+	}
+
 	if config.Endpoint.Host == "" {
 		logrus.Infof("No hostname is configured. Using local IP instead...")
 		config.Endpoint.Host = waitForLocalIP()
@@ -200,9 +239,14 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
-	loadFromContextIfSet(&c.Registry.URL, registryURLFlag)
-	loadFromContextIfSet(&c.Registry.Token, registryTokenFlag)
-	loadFromContextIfSet(&c.Registry.Poll, registryPollFlag)
+	loadFromContextIfSet(&c.Registry.Backend, registryBackendFlag)
+	loadFromContextIfSet(&c.Registry.Amalgam8.URL, registryURLFlag)
+	loadFromContextIfSet(&c.Registry.Amalgam8.Token, registryTokenFlag)
+	loadFromContextIfSet(&c.Registry.Amalgam8.Poll, registryPollFlag)
+	loadFromContextIfSet(&c.Registry.Kubernetes.URL, kubernetesURLFlag)
+	loadFromContextIfSet(&c.Registry.Kubernetes.Token, kubernetesTokenFlag)
+	loadFromContextIfSet(&c.Registry.Kubernetes.Namespace, kubernetesNamespaceFlag)
+	loadFromContextIfSet(&c.Registry.Eureka.URLs, eurekaURLFlag)
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
@@ -300,8 +344,13 @@ func (c *Config) Validate() error {
 		},
 	)
 
-	// Registry URL is needed for both proxying and registering.  Registry token is not required in all auth cases
-	validators = append(validators, IsValidURL("Registry URL", c.Registry.URL))
+	validators = append(validators,
+		IsInSet("Registry backend", c.Registry.Backend, []string{Amalgam8Backend, KubernetesBackend, EurekaBackend}),
+		IsEmptyOrValidURL("Amalgam8 Registry URL", c.Registry.Amalgam8.URL),
+		IsEmptyOrValidURL("Kubernetes URL", c.Registry.Kubernetes.URL))
+	for _, url := range c.Registry.Eureka.URLs {
+		validators = append(validators, IsEmptyOrValidURL("Eureka URL", url))
+	}
 
 	if c.Register {
 		// TODO: validate health checks

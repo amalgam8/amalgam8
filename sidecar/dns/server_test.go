@@ -68,9 +68,9 @@ func (suite *TestSuite) SetupTest() {
 	port := rand.Intn(9000-8000) + 8000
 
 	suite.config = Config{
-		DiscoveryClient: suite.myClient,
-		Port:            uint16(port),
-		Domain:          "amalgam8",
+		Discovery: suite.myClient,
+		Port:      uint16(port),
+		Domain:    "amalgam8",
 	}
 
 	suite.server, err = NewServer(suite.config)

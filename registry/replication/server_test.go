@@ -359,7 +359,7 @@ func TestGzippedReplication(t *testing.T) {
 				})
 			}
 
-			url := fmt.Sprintf("http://%s:%d/%s/%s", network.GetPrivateIP(), 6206, version, serviceType)
+			url := fmt.Sprintf("http://%s:%d/%s/%s", network.GetPrivateIPv4(), 6206, version, serviceType)
 			req, _ := http.NewRequest("GET", url, nil)
 			req.Header.Set("Accept-Encoding", encoding)
 			req.Header.Set(headerMemberID, "fake member id")
@@ -405,5 +405,5 @@ func createCluster() cluster.Cluster {
 }
 
 func createMember(port uint16) cluster.Member {
-	return cluster.NewMember(network.GetPrivateIP(), port)
+	return cluster.NewMember(network.GetPrivateIPv4(), port)
 }

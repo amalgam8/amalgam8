@@ -41,8 +41,8 @@ var basePort uint16 = 5080
 
 func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (replication.Replication, server.Server) {
 	var rep replication.Replication
-	var s server.Server
-	networkAvailable := network.WaitForPrivateNetwork()
+
+	networkAvailable := network.WaitForPrivateNetworkIPv4()
 	assert.NotNil(t, networkAvailable)
 
 	// Configure and create the cluster module
@@ -52,7 +52,7 @@ func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (
 	var err error
 
 	// Configure and create the replication module
-	self := cluster.NewMember(network.GetPrivateIP(), rep_port)
+	self := cluster.NewMember(network.GetPrivateIPv4(), rep_port)
 	repConfig := &replication.Config{
 		Membership:  cl.Membership(),
 		Registrator: cl.Registrator(self),
@@ -71,7 +71,7 @@ func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (
 	}
 
 	cm := store.New(cmConfig)
-	s, err = server.New(
+	s, err := server.New(
 		&server.Config{
 			HTTPAddressSpec: fmt.Sprintf(":%d", rest_port),
 			CatalogMap:      cm,

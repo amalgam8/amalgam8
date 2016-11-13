@@ -31,6 +31,10 @@ import (
 
 const defaultTimeout = time.Second * 30
 
+// Make sure we implement both the ServiceDiscovery and ServiceRegistry interfaces.
+var _ api.ServiceDiscovery = (*Client)(nil)
+var _ api.ServiceRegistry = (*Client)(nil)
+
 // Config stores the configurable attributes of the client.
 type Config struct {
 
@@ -47,7 +51,7 @@ type Config struct {
 	HTTPClient *http.Client
 }
 
-// Client implements the Discovery and Registry interfaces using Amalgam8 Registry REST API.
+// Client implements the ServiceDiscovery and ServiceRegistry interfaces using Amalgam8 Registry REST API.
 type Client struct {
 	config     Config
 	httpClient *http.Client

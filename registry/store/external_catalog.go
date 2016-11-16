@@ -287,7 +287,7 @@ func (ec *externalCatalog) Renew(instanceID string) (*ServiceInstance, error) {
 	if err != nil {
 		return nil, err
 	}
-	if si.ID == "" {
+	if si == nil || si.ID == "" {
 		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 
@@ -308,7 +308,7 @@ func (ec *externalCatalog) SetStatus(instanceID, status string) (*ServiceInstanc
 	if err != nil {
 		return nil, err
 	}
-	if si.ID == "" {
+	if si == nil || si.ID == "" {
 		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 
@@ -351,7 +351,7 @@ func (ec *externalCatalog) Instance(instanceID string) (*ServiceInstance, error)
 	if err != nil {
 		return nil, err
 	}
-	if si.ID == "" {
+	if si == nil || si.ID == "" {
 		return nil, NewError(ErrorNoSuchServiceInstance, "no such service instance", instanceID)
 	}
 

@@ -46,7 +46,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
@@ -62,8 +62,7 @@ spec:
         - name: A8_SERVICE
           value: gateway
         - name: A8_LOGSTASH_SERVER
-          #filebeat YAML issue workaround
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_CONTROLLER_POLL
           value: 5s
         - name: A8_REGISTRY_POLL
@@ -92,7 +91,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: servicereg
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -102,7 +101,7 @@ spec:
         - name: A8_SERVICE
           value: details:v1
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_ENDPOINT_HOST
@@ -134,7 +133,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: servicereg
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -144,7 +143,7 @@ spec:
         - name: A8_SERVICE
           value: ratings:v1
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_REGISTRY_URL
           value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
         - name: A8_ENDPOINT_HOST
@@ -176,7 +175,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -198,7 +197,7 @@ spec:
         - name: A8_SERVICE
           value: reviews:v1
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -228,7 +227,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -250,7 +249,7 @@ spec:
         - name: A8_SERVICE
           value: reviews:v2
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -280,7 +279,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -302,7 +301,7 @@ spec:
         - name: A8_SERVICE
           value: reviews:v3
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:
@@ -332,7 +331,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:alpine
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -354,7 +353,7 @@ spec:
         - name: A8_SERVICE
           value: productpage:v1
         - name: A8_LOGSTASH_SERVER
-          value: "'$(LOGSERVER_SERVICE_HOST):8092'"
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_ENDPOINT_HOST
           valueFrom:
             fieldRef:

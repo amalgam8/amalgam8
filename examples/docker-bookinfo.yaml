@@ -13,14 +13,14 @@
 #   limitations under the License.
 
 gateway:
-  image: amalgam8/a8-sidecar:alpine
+  image: amalgam8/a8-sidecar:latest
   environment:
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_REGISTRY_URL=http://registry:8080
     - A8_PROXY=true
     - A8_LOG=true
-    - A8_SERVICE=gateway
-    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_SERVICE=gateway:none
+    - A8_LOGSTASH_SERVER=logstash:8092
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
   ports:
@@ -65,7 +65,7 @@ reviews-v2:
   environment:
     - A8_PROXY=true
     - A8_SERVICE=reviews:v2
-    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_LOGSTASH_SERVER=logstash:8092
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
@@ -79,7 +79,7 @@ reviews-v3:
   environment:
     - A8_PROXY=true
     - A8_SERVICE=reviews:v3
-    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_LOGSTASH_SERVER=logstash:8092
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
@@ -91,7 +91,7 @@ reviews-v3:
 productpage-v1:
   image: amalgam8/a8-examples-bookinfo-productpage-sidecar:v1
   environment:
-    - A8_LOGSTASH_SERVER='logstash:8092'
+    - A8_LOGSTASH_SERVER=logstash:8092
   external_links:
     - logstash
     - controller

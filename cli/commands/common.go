@@ -15,12 +15,9 @@
 package commands
 
 import (
-	"os"
 	"strings"
 
-	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
-	"github.com/urfave/cli"
 )
 
 var (
@@ -36,21 +33,4 @@ var (
 type CommandTable struct {
 	header []string
 	body   [][]string
-}
-
-// GlobalCommands .
-func GlobalCommands(term terminal.UI) []cli.Command {
-	if term == nil {
-		term = terminal.NewUI(os.Stdin, os.Stdout)
-	}
-
-	return []cli.Command{
-		NewServiceListCommand(term).GetMetadata(),
-		NewRouteListCommand(term).GetMetadata(),
-		NewActionListCommand(term).GetMetadata(),
-		NewRuleCreateCommand(term).GetMetadata(),
-		NewRuleGetCommand(term).GetMetadata(),
-		NewRuleDeleteCommand(term).GetMetadata(),
-		NewInfoCommand(term).GetMetadata(),
-	}
 }

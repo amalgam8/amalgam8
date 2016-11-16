@@ -15,8 +15,6 @@
 package commands
 
 import (
-	"fmt"
-
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
@@ -48,15 +46,15 @@ func (cmd *RuleGetCommand) GetMetadata() cli.Command {
 		// TODO: Complete UsageText
 		UsageText: T("rule_get_name"),
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "id, i",
 				Usage: T("rule_get_id_usage"),
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "tag, t",
 				Usage: T("rule_get_tag_usage"),
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "destination, d",
 				Usage: T("rule_get_destination_usage"),
 			},
@@ -99,22 +97,24 @@ func (cmd *RuleGetCommand) Action(ctx *cli.Context) error {
 	}
 	// Update the controller
 	cmd.controller = controller
-
 	format := ctx.String("output")
-	if ctx.IsSet("id") {
-		return cmd.PrettyPrint(fmt.Sprintf("?id=%s", ctx.String("id")), format)
-	}
-
-	if ctx.IsSet("destination") {
-		return cmd.PrettyPrint(fmt.Sprintf("?destination=%s", ctx.String("destination")), format)
-	}
-
-	if ctx.IsSet("tag") {
-		return cmd.PrettyPrint(fmt.Sprintf("?tags=%s", ctx.String("tag")), format)
-	}
 
 	if ctx.IsSet("all") {
 		return cmd.PrettyPrint("", format)
+	}
+
+	query := cmd.controller.NewQuery()
+	if ctx.IsSet("id") || ctx.IsSet("i") || ctx.IsSet("destination") || ctx.IsSet("d") || ctx.IsSet("tag") || ctx.IsSet("t") {
+		for _, id := range ctx.StringSlice("id") {
+			query.Add("id", id)
+		}
+		for _, dest := range ctx.StringSlice("destination") {
+			query.Add("destination", dest)
+		}
+		for _, dest := range ctx.StringSlice("tag") {
+			query.Add("tags", dest)
+		}
+		return cmd.PrettyPrint(query.Encode(), format)
 	}
 
 	return cmd.DefaultAction(ctx)
@@ -126,8 +126,8 @@ func (cmd *RuleGetCommand) DefaultAction(ctx *cli.Context) error {
 }
 
 // PrettyPrint prints the rules returned by the controller in given format.
-func (cmd *RuleGetCommand) PrettyPrint(id string, format string) error {
-	rules, err := cmd.controller.Rules(id)
+func (cmd *RuleGetCommand) PrettyPrint(query string, format string) error {
+	rules, err := cmd.controller.Rules(query)
 	if err != nil {
 		return err
 	}

@@ -74,11 +74,56 @@ func (cmd *InfoCommand) Action(ctx *cli.Context) error {
 }
 
 // DefaultAction prints information about the registry and controller URL's and tokens.
+// Amalgam8 info...
+//
+// +---------------------+---------------------------------------+
+// | Env. Variable       | Value                                 |
+// +---------------------+---------------------------------------+
+// | A8_REGISTRY_URL     |                                       |
+// | A8_REGISTRY_TOKEN   |                                       |
+// | A8_CONTROLLER_URL   | http://gc-a8-controller.mybluemix.net |
+// | A8_CONTROLLER_TOKEN |                                       |
+// | A8_DEBUG            | false                                 |
+// +---------------------+---------------------------------------+
 func (cmd *InfoCommand) DefaultAction(ctx *cli.Context) error {
-	fmt.Fprintf(ctx.App.Writer, "\nAmalgam8 info...\n\n")
-	fmt.Fprintf(ctx.App.Writer, "Registry URL: %s\n", ctx.GlobalString(common.RegistryURL.Flag()))
-	fmt.Fprintf(ctx.App.Writer, "Registry Token: %s\n\n", ctx.GlobalString(common.RegistryToken.Flag()))
-	fmt.Fprintf(ctx.App.Writer, "Controller URL: %s\n", ctx.GlobalString(common.ControllerURL.Flag()))
-	fmt.Fprintf(ctx.App.Writer, "Controller Token: %s\n\n", ctx.GlobalString(common.ControllerToken.Flag()))
+	table := CommandTable{}
+	table.header = []string{"Env. Variable", "Value"}
+	table.body = append(
+		table.body,
+		[]string{
+			common.RegistryURL.EnvVar(),
+			ctx.GlobalString(common.RegistryURL.Flag()),
+		},
+	)
+	table.body = append(
+		table.body,
+		[]string{
+			common.RegistryToken.EnvVar(),
+			ctx.GlobalString(common.RegistryToken.Flag()),
+		},
+	)
+	table.body = append(
+		table.body,
+		[]string{
+			common.ControllerURL.EnvVar(),
+			ctx.GlobalString(common.ControllerURL.Flag()),
+		},
+	)
+	table.body = append(
+		table.body,
+		[]string{
+			common.ControllerToken.EnvVar(),
+			ctx.GlobalString(common.ControllerToken.Flag()),
+		},
+	)
+	table.body = append(
+		table.body,
+		[]string{
+			common.Debug.EnvVar(),
+			ctx.GlobalString(common.Debug.Flag()),
+		},
+	)
+	fmt.Fprintf(ctx.App.Writer, "\nAmalgam8 info...\n")
+	cmd.term.PrintTable(table.header, table.body)
 	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	api "github.com/amalgam8/amalgam8/cli/client"
 	"github.com/amalgam8/amalgam8/cli/common"
@@ -21,16 +22,17 @@ type controller struct {
 type ControllerClient interface {
 	Routes() (*RouteList, error)
 	GetActions() (*ActionList, error)
-	Rules(uri string) (*RuleList, error)
+	Rules(query string) (*RuleList, error)
 	SetRules(payload io.Reader) (interface{}, error)
-	DeleteRules(uri string) (interface{}, error)
+	DeleteRules(query string) (interface{}, error)
+	NewQuery() url.Values
 }
 
 // NewControllerClient .
 func NewControllerClient(ctx *cli.Context) (ControllerClient, error) {
 	url, err := ValidateControllerURL(ctx)
 	if err != nil {
-		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("\n%s: %q\n\n", err.Error(), url))
+		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), url))
 		return nil, err
 	}
 
@@ -49,8 +51,18 @@ func NewControllerClient(ctx *cli.Context) (ControllerClient, error) {
 	}, nil
 }
 
+// NewQuery() .
+func (c *controller) NewQuery() url.Values {
+	return url.Values{}
+}
+
 // Rules .
-func (c *controller) Rules(uri string) (*RuleList, error) {
+func (c *controller) Rules(query string) (*RuleList, error) {
+	var uri string
+	if query != "" {
+		uri = "?" + query
+	}
+
 	rules := &RuleList{}
 	err := c.client.GET(rulesPath+uri, c.debug, nil, rules)
 	if err != nil {
@@ -66,6 +78,7 @@ func (c *controller) SetRules(payload io.Reader) (interface{}, error) {
 	result := &struct {
 		IDs []string `json:"ids"`
 	}{}
+
 	err := c.client.POST(rulesPath, payload, c.debug, headers, result)
 	if err != nil {
 		return nil, err
@@ -75,7 +88,12 @@ func (c *controller) SetRules(payload io.Reader) (interface{}, error) {
 }
 
 // DeleteRules .
-func (c *controller) DeleteRules(uri string) (interface{}, error) {
+func (c *controller) DeleteRules(query string) (interface{}, error) {
+	var uri string
+	if query != "" {
+		uri = "?" + query
+	}
+
 	var result string
 	err := c.client.DELETE(rulesPath+uri, c.debug, nil, result)
 	if err != nil {

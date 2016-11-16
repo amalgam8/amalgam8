@@ -17,7 +17,6 @@ package commands_test
 import (
 	"testing"
 
-	"github.com/amalgam8/amalgam8/cli/commands"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -28,10 +27,4 @@ func TestCommands(t *testing.T) {
 }
 
 var _ = Describe("Commands", func() {
-	Describe("Load Commands function", func() {
-		It("should return an array of commands", func() {
-			cmds := commands.GlobalCommands(nil)
-			Expect(len(cmds)).NotTo(BeZero())
-		})
-	})
 })

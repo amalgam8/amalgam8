@@ -53,7 +53,7 @@ var _ = Describe("Amalgam8 Client", func() {
 			})
 
 			It("should not fail", func() {
-				client.SetRegistryURL(server.URL())
+				client.SetURL(server.URL())
 				client.SetHTTPClient(&http.Client{
 					Transport: nil,
 				})
@@ -64,7 +64,7 @@ var _ = Describe("Amalgam8 Client", func() {
 
 		Describe("set a new Registry Token", func() {
 			It("should not fail", func() {
-				client.SetRegistryToken("")
+				client.SetToken("")
 			})
 		})
 
@@ -80,7 +80,7 @@ var _ = Describe("Amalgam8 Client", func() {
 			})
 
 			It("should not fail", func() {
-				client.SetRegistryToken("Test")
+				client.SetToken("Test")
 				err := client.GET("/", false, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
 			})
@@ -241,7 +241,7 @@ var _ = Describe("Amalgam8 Client", func() {
 		Describe("set a new Registry URL", func() {
 			It("should fail", func() {
 
-				client.SetRegistryURL("")
+				client.SetURL("")
 				err := client.DELETE("/test", false, nil, nil)
 				Expect(err).To(HaveOccurred())
 			})

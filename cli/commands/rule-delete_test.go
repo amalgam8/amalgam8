@@ -22,7 +22,7 @@ import (
 
 	cmds "github.com/amalgam8/amalgam8/cli/commands"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/flags"
+	"github.com/amalgam8/amalgam8/cli/config"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	. "github.com/onsi/ginkgo"
@@ -33,7 +33,7 @@ import (
 
 var _ = Describe("Rule-Delete", func() {
 	fmt.Println()
-	utils.LoadLocales()
+	utils.LoadLocales("../locales")
 	T := utils.Language(common.DefaultLanguage)
 	var cmd *cmds.RuleDeleteCommand
 	var app *cli.App
@@ -44,12 +44,14 @@ var _ = Describe("Rule-Delete", func() {
 		app.Name = T("app_name")
 		app.Usage = T("app_usage")
 		app.Version = T("app_version")
-		app.Flags = flags.GlobalFlags()
+		app.Flags = config.GlobalFlags()
 		server = ghttp.NewServer()
 		term := terminal.NewUI(os.Stdin, os.Stdout)
 		cmd = cmds.NewRuleDeleteCommand(term)
 		app.Commands = []cli.Command{cmd.GetMetadata()}
-		app.Setup()
+		app.Before = config.Before
+		app.Action = config.DefaultAction
+		app.OnUsageError = config.OnUsageError
 	})
 
 	Describe("Delete Rules", func() {
@@ -74,8 +76,8 @@ var _ = Describe("Rule-Delete", func() {
 
 			It("should error", func() {
 				err := app.Run([]string{"app", "--controller_url=http://localhost", "--x"})
-				Expect(err).To(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Incorrect Usage"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(app.Name))
 			})
 
 		})
@@ -133,7 +135,7 @@ var _ = Describe("Rule-Delete", func() {
 			It("should delete the rule", func() {
 				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-i=" + ID})
 				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("rule_deleted")))
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
 				fmt.Println(app.Writer)
 			})
 
@@ -163,7 +165,7 @@ var _ = Describe("Rule-Delete", func() {
 			It("should delete rule", func() {
 				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-d=" + destination})
 				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("rule_deleted")))
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
 				fmt.Println(app.Writer)
 			})
 
@@ -193,7 +195,7 @@ var _ = Describe("Rule-Delete", func() {
 			It("should delete rule", func() {
 				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-t=" + tags})
 				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("rule_deleted")))
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
 				fmt.Println(app.Writer)
 			})
 
@@ -220,9 +222,9 @@ var _ = Describe("Rule-Delete", func() {
 			})
 
 			It("should delete rule", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-a=true"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-a=true", "-f=true"})
 				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("rule_deleted")))
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
 				fmt.Println(app.Writer)
 			})
 

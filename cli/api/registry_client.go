@@ -1,7 +1,6 @@
 package api
 
 import (
-	// "fmt"
 	"fmt"
 	"net/http"
 
@@ -27,7 +26,7 @@ type RegistryClient interface {
 func NewRegistryClient(ctx *cli.Context) (RegistryClient, error) {
 	url, err := ValidateRegistryURL(ctx)
 	if err != nil {
-		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("\n%s: %q\n\n", err.Error(), url))
+		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), url))
 		return nil, err
 	}
 

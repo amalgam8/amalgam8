@@ -22,7 +22,6 @@ import (
 // UI defines the UI Interface
 type UI interface {
 	PrintTable(header []string, body [][]string)
-	FontColor(color uint, weight uint, message interface{}) string
 }
 
 type term struct {

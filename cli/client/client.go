@@ -31,10 +31,10 @@ type Client interface {
 	POST(apiURL string, body io.Reader, debug bool, headers http.Header, result interface{}) error
 	PUT(apiURL string, body io.Reader, debug bool, headers http.Header, result interface{}) error
 	DELETE(apiURL string, debug bool, extraHeaders http.Header, result interface{}) error
-	SetHTTPClient(client *http.Client)
-	SetRegistryToken(token string)
-	SetRegistryURL(baseURL string)
 	NewHeader() http.Header
+	SetHTTPClient(client *http.Client)
+	SetURL(baseURL string)
+	SetToken(token string)
 }
 
 // A8client .
@@ -60,13 +60,13 @@ func NewClient(url, token string, HTTPclient *http.Client) Client {
 	}
 }
 
-// SetRegistryURL .
-func (c *A8client) SetRegistryURL(baseURL string) {
+// SetURL .
+func (c *A8client) SetURL(baseURL string) {
 	c.url = baseURL
 }
 
-// SetRegistryToken .
-func (c *A8client) SetRegistryToken(token string) {
+// SetToken .
+func (c *A8client) SetToken(token string) {
 	c.token = token
 }
 

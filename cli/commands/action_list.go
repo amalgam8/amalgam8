@@ -26,6 +26,15 @@ import (
 	"github.com/urfave/cli"
 )
 
+// prettyActionList is used to cover the table data into JSON or YAML
+type prettyActionList struct {
+	Destination string   `json:"destination" yaml:"destination"`
+	ID          string   `json:"id,omitempty" yaml:"id,omitempty"`
+	Priority    int      `json:"priority,omitempty" yaml:"priority,omitempty"`
+	Match       string   `json:"match,omitempty" yaml:"match,omitempty"`
+	Actions     []string `json:"actions,omitempty" yaml:"actions,omitempty"`
+}
+
 // ActionListCommand is used for the action-list command.
 type ActionListCommand struct {
 	ctx        *cli.Context
@@ -114,32 +123,63 @@ func (cmd *ActionListCommand) DefaultAction(ctx *cli.Context) error {
 }
 
 // PrettyPrint prints the list of services in the given format (json or yaml).
-func (cmd *ActionListCommand) PrettyPrint(service string, format string) error {
-	routes, err := cmd.controller.GetActions()
+func (cmd *ActionListCommand) PrettyPrint(serviceName string, format string) error {
+	actionList := []prettyActionList{}
+
+	actions, err := cmd.controller.GetActions()
 	if err != nil {
 		return err
 	}
 
-	if service != "" {
-		if route, ok := routes.ServiceActions[service]; ok {
-			return utils.MarshallReader(cmd.ctx.App.Writer, route, format)
+	// If not serviceName provided, show all Routes
+	if serviceName == "" {
+		for _, actionRules := range actions.ServiceActions {
+			for _, action := range actionRules {
+				actionList = append(
+					actionList,
+					prettyActionList{
+						Destination: action.Destination,
+						ID:          action.ID,
+						Priority:    action.Priority,
+						Match:       formatMatch(action.Match),
+						Actions:     formatActions(action.Actions),
+					},
+				)
+			}
 		}
-		return common.ErrNotFound
+	} else {
+		// Show routes fot the given serviceName
+		for _, actionRules := range actions.ServiceActions {
+			for _, action := range actionRules {
+				if action.Destination == serviceName {
+					actionList = append(
+						actionList,
+						prettyActionList{
+							Destination: action.Destination,
+							ID:          action.ID,
+							Priority:    action.Priority,
+							Match:       formatMatch(action.Match),
+							Actions:     formatActions(action.Actions),
+						},
+					)
+				}
+			}
+		}
 	}
 
-	return utils.MarshallReader(cmd.ctx.App.Writer, routes, format)
+	return utils.MarshallReader(cmd.ctx.App.Writer, actionList, format)
 }
 
 // ActionTable prints the list of actions as a table.
-// +-------------+----------+----------+---------------------------------------------------------+-----------------------------------+
-// | Destination | Rule Id  | Priority | Match                                                   | Actions (EXPERIMENTAL)            |
-// +-------------+----------+----------+---------------------------------------------------------+-----------------------------------+
-// | details     | 9c7198d7 | 10       | source="productpage:v1", header="Cookie:.*?user=jason"  | action=trace, tags=v1, prob=0,... |
-// | productpage | 0f12b977 | 10       | source="gateway                                         | action=trace, tags=v1, prob=0,... |
-// | ratings     | 454a8fb0 | 10       | source="reviews:v2"                                     | action=trace, tags=v1, prob=0,... |
-// | ratings     | dc8b5ffe | 20       | source="reviews:v2"                                     | action=delay, tags=v1, prob=1,... |
-// | reviews     | 2d381a94 | 10       | source="productpage:v1", header="Cookie:.*?user=jason"  | action=trace, tags=v2, prob=0,... |
-// +-------------+----------+----------+---------------------------------------------------------+-----------------------------------+
+// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
+// | Destination | Rule Id  | Priority | Match                                                     | Actions                             |
+// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
+// | details     | 9c7198d7 | 10       | (source="productpage:v1", header="Cookie:.*?user=jason")  | (action=trace, tags=v1, prob=0.5)   |
+// | productpage | 0f12b977 | 10       | (source="gateway)                                         | (action=trace, tags=v1, prob=0.25)  |
+// | ratings     | 454a8fb0 | 10       | (source="reviews:v2")                                     | (action=trace, tags=v1, prob=1)     |
+// | ratings     | dc8b5ffe | 20       | (source="reviews:v2")                                     | (action=delay, tags=v1, prob=1)     |
+// | reviews     | 2d381a94 | 10       | (source="productpage:v1", header="Cookie:.*?user=jason")  | (action=trace, tags=v2, prob=0.75)  |
+// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
 func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 	table := CommandTable{}
 	table.header = []string{
@@ -166,7 +206,7 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 						action.ID,
 						fmt.Sprint(action.Priority),
 						formatMatch(action.Match),
-						formatActions(action.Actions),
+						strings.Join(formatActions(action.Actions), ", "),
 					},
 				)
 			}
@@ -183,7 +223,7 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 							action.ID,
 							fmt.Sprint(action.Priority),
 							formatMatch(action.Match),
-							formatActions(action.Actions),
+							strings.Join(formatActions(action.Actions), ", "),
 						},
 					)
 				}
@@ -198,23 +238,25 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 func formatMatch(match *api.MatchRules) string {
 	buf := bytes.Buffer{}
 	if match.Source != nil {
-		fmt.Fprintf(&buf, "source=\"%s", match.Source.Name)
+		fmt.Fprintf(&buf, "(source=\"%s", match.Source.Name)
 		if len(match.Source.Tags) > 0 {
-			fmt.Fprintf(&buf, ":%s\"", strings.Join(match.Source.Tags, ","))
+			fmt.Fprintf(&buf, ":%s\", ", strings.Join(match.Source.Tags, ","))
 		}
 	}
-	buf.WriteString(", ")
+
+	headers := []string{}
 	for key, value := range match.Headers {
-		buf.WriteString("header=")
-		fmt.Fprintf(&buf, "\"%s:%s\" ", key, value)
+		headers = append(headers, fmt.Sprintf("\"%s:%s\"", key, value))
 	}
+	fmt.Fprintf(&buf, "headers=%s)", strings.Join(headers, " "))
 	return buf.String()
 }
 
-func formatActions(actions *api.ActionsRules) string {
-	buf := bytes.Buffer{}
+func formatActions(actions *api.ActionsRules) []string {
+	result := []string{}
 	if actions != nil {
 		for _, action := range *actions {
+			buf := bytes.Buffer{}
 			switch action.Action {
 			case "delay":
 				fmt.Fprintf(&buf, "(action=%s, tags=%s, prob=%g, dur=%g)", action.Action, strings.Join(action.Tags, ", "), action.Probability, action.Duration)
@@ -223,8 +265,8 @@ func formatActions(actions *api.ActionsRules) string {
 			case "trace":
 				fmt.Fprintf(&buf, "(action=%s, tags=%s, key=%s, val=%s)", action.Action, strings.Join(action.Tags, ", "), action.LogKey, action.LogValue)
 			}
-			buf.WriteString(" ")
+			result = append(result, buf.String())
 		}
 	}
-	return buf.String()
+	return result
 }

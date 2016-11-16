@@ -21,22 +21,20 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
-var (
-	localesPath = "locales"
-)
-
 // LoadLocales loads translation files
-func LoadLocales() error {
+func LoadLocales(path string) error {
 	logrus.Info("Loading locales")
 
-	filenames, err := filepath.Glob(localesPath + "/*.json")
+	if path == "" {
+		path = "locales"
+	}
+	filenames, err := filepath.Glob(path + "/*.json")
 	if err != nil {
 		return err
 	}
 
 	// For development use local files intead of the compiled resources.
-	// run "go-bindata -o utils/i18n_resources.go locales" to compile i18n
-	// TODO: compile i18n automatically before building binaries
+	// run "go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales" to compile i18n
 	if len(filenames) > 0 {
 		for _, filename := range filenames {
 			logrus.Debug(filename)

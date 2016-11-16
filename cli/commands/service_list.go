@@ -80,7 +80,7 @@ func (cmd *ServiceListCommand) OnUsageError(ctx *cli.Context, err error, isSubco
 func (cmd *ServiceListCommand) Action(ctx *cli.Context) error {
 	registry, err := api.NewRegistryClient(ctx)
 	if err != nil {
-		// Exit if the controller returned an error
+		// Exit if the registry returned an error
 		return nil
 	}
 	// Update the registry

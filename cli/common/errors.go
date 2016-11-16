@@ -29,6 +29,10 @@ var (
 	ErrControllerURLNotFound = errors.New("Controller URL has not been set")
 	// ErrUnsoportedFormat .
 	ErrUnsoportedFormat = errors.New("Unsupported format")
+	// ErrFileNotFound .
+	ErrFileNotFound = errors.New("File does not exist")
+	// ErrInvalidFile .
+	ErrInvalidFile = errors.New("Invalid file")
 	// ErrNotFound .
 	ErrNotFound = errors.New("Not found")
 	// ErrUnknowFlag .

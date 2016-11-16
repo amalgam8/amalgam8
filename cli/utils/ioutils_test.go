@@ -28,18 +28,19 @@ import (
 
 var _ = Describe("ioutils", func() {
 	fmt.Println("")
-	// TODO: Create test_files
-	JSONPath := "test_file.json"
-	YAMLPath := "test_file.yaml"
+
+	JSONFilePath := "testdata/test_file.json"
+	YAMLFilePath := "testdata/test_file.yaml"
+	TXTFilePath := "testdata/test_file.txt"
 
 	var _ = BeforeSuite(func() {
 		// Check JSON file
-		json, JSONerr := ioutil.ReadFile(JSONPath)
+		json, JSONerr := ioutil.ReadFile(JSONFilePath)
 		Expect(JSONerr).NotTo(HaveOccurred())
 		Expect(json).NotTo(BeEmpty())
 
 		// Check YAML file
-		yaml, YAMLerr := ioutil.ReadFile(YAMLPath)
+		yaml, YAMLerr := ioutil.ReadFile(YAMLFilePath)
 		Expect(YAMLerr).NotTo(HaveOccurred())
 		Expect(yaml).NotTo(BeEmpty())
 
@@ -47,9 +48,25 @@ var _ = Describe("ioutils", func() {
 
 	Describe("Parsing file", func() {
 
+		Context("when file does not exist", func() {
+			It("should return an error", func() {
+				_, _, err := ReadInputFile("test_file")
+				Expect(err).To(HaveOccurred())
+				Expect(err).Should(MatchError(common.ErrFileNotFound))
+			})
+		})
+
+		Context("when file is a directory", func() {
+			It("should return an error", func() {
+				_, _, err := ReadInputFile("../utils")
+				Expect(err).To(HaveOccurred())
+				Expect(err).Should(MatchError(common.ErrInvalidFile))
+			})
+		})
+
 		Context("when the data type is not JSON or YAML", func() {
 			It("should return an error", func() {
-				_, format, err := ReadInputFile("test.txt")
+				_, format, err := ReadInputFile(TXTFilePath)
 				Expect(format).To(Equal("TXT"))
 				Expect(err).To(HaveOccurred())
 				Expect(err).Should(MatchError(common.ErrUnsoportedFormat))
@@ -59,7 +76,7 @@ var _ = Describe("ioutils", func() {
 		Context("when the data is JSON", func() {
 
 			It("should not error", func() {
-				reader, format, err := ReadInputFile(JSONPath)
+				reader, format, err := ReadInputFile(JSONFilePath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(format).To(Equal(JSON))
 				rules := &api.Rule{}
@@ -82,7 +99,7 @@ var _ = Describe("ioutils", func() {
 		Context("when the data is YAML", func() {
 
 			It("should not error", func() {
-				reader, format, err := ReadInputFile(YAMLPath)
+				reader, format, err := ReadInputFile(YAMLFilePath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(format).To(Equal(YAML))
 				rules := &api.Rule{}
@@ -105,7 +122,7 @@ var _ = Describe("ioutils", func() {
 		Context("when converting from YAML to JSON", func() {
 
 			It("should not error", func() {
-				reader, format, err := ReadInputFile(YAMLPath)
+				reader, format, err := ReadInputFile(YAMLFilePath)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(format).To(Equal(YAML))
 				rules := &api.Rule{}

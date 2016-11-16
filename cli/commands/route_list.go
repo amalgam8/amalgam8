@@ -27,6 +27,13 @@ import (
 	"github.com/urfave/cli"
 )
 
+// prettyRouteList is used to cover the table data into JSON or YAML
+type prettyRouteList struct {
+	Service   string   `json:"service" yaml:"service"`
+	Default   string   `json:"default,omitempty" yaml:"default,omitempty"`
+	Selectors []string `json:"selectors,omitempty" yaml:"selectors,omitempty"`
+}
+
 // RouteListCommand is used for the route-list command.
 type RouteListCommand struct {
 	ctx        *cli.Context
@@ -88,7 +95,7 @@ func (cmd *RouteListCommand) OnUsageError(ctx *cli.Context, err error, isSubcomm
 func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
 	registry, err := api.NewRegistryClient(ctx)
 	if err != nil {
-		// Exit if the controller returned an error
+		// Exit if the registry returned an error
 		return nil
 	}
 	// Update the registry
@@ -124,20 +131,61 @@ func (cmd *RouteListCommand) DefaultAction(ctx *cli.Context) error {
 }
 
 // PrettyPrint prints the list of services in the given format (json or yaml).
-func (cmd *RouteListCommand) PrettyPrint(service string, format string) error {
+func (cmd *RouteListCommand) PrettyPrint(serviceName string, format string) error {
+	routeList := []prettyRouteList{}
+
 	routes, err := cmd.controller.Routes()
 	if err != nil {
 		return err
 	}
 
-	if service != "" {
-		if route, ok := routes.ServiceRoutes[service]; ok {
-			return utils.MarshallReader(cmd.ctx.App.Writer, route, format)
+	// If not serviceName provided, show all Routes
+	if serviceName == "" {
+		// add services that have routing rules
+		for serviceName, routingRules := range routes.ServiceRoutes {
+			defaultVersion, selectors := routeSelectors(routingRules)
+			routeList = append(
+				routeList,
+				prettyRouteList{
+					Service:   serviceName,
+					Default:   defaultVersion,
+					Selectors: selectors,
+				},
+			)
 		}
-		return common.ErrNotFound
+
+		services, err := cmd.registry.Services()
+		if err != nil {
+			return err
+		}
+
+		// add services that don't have routing rules
+		for _, service := range services.Services {
+			if _, ok := routes.ServiceRoutes[service]; !ok {
+				routeList = append(
+					routeList,
+					prettyRouteList{
+						Service: service,
+					},
+				)
+			}
+		}
+	} else {
+		// Show routes fot the given serviceName
+		if route, ok := routes.ServiceRoutes[serviceName]; ok {
+			defaultVersion, selectors := routeSelectors(route)
+			routeList = append(
+				routeList,
+				prettyRouteList{
+					Service:   serviceName,
+					Default:   defaultVersion,
+					Selectors: selectors,
+				},
+			)
+		}
 	}
 
-	return utils.MarshallReader(cmd.ctx.App.Writer, routes, format)
+	return utils.MarshallReader(cmd.ctx.App.Writer, routeList, format)
 }
 
 // RouteTable prints the a list of routes as a table.
@@ -233,10 +281,8 @@ func formatMatchSelector(version string, match *api.MatchRules, weight float32) 
 	buf := bytes.Buffer{}
 	buf.WriteString(version + "(")
 	if match.Source != nil {
-		fmt.Fprintf(&buf, " source=%s:%s", match.Source.Name, strings.Join(match.Source.Tags, ","))
+		fmt.Fprintf(&buf, " source=%s:%s,", match.Source.Name, strings.Join(match.Source.Tags, ","))
 	}
-
-	buf.WriteString(",")
 
 	for key, value := range match.Headers {
 		if key == "Cookie" && strings.HasPrefix(value, ".*?user=") {

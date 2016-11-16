@@ -48,26 +48,25 @@ func (cmd *RuleDeleteCommand) GetMetadata() cli.Command {
 		// TODO: Complete UsageText
 		UsageText: T("rule_delete_name"),
 		Flags: []cli.Flag{
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "id, i",
 				Usage: T("rule_delete_id_usage"),
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "tag, t",
 				Usage: T("rule_delete_tag_usage"),
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "destination, d",
 				Usage: T("rule_delete_destination_usage"),
-			},
-			cli.StringFlag{
-				Name:  "output, o",
-				Usage: T("rule_delete_output_usage"),
-				Value: "json",
 			},
 			cli.BoolFlag{
 				Name:  "all, a",
 				Usage: T("rule_delete_all_usage"),
+			},
+			cli.BoolFlag{
+				Name:  "force, f",
+				Usage: T("rule_delete_all_force_usage"),
 			},
 		},
 		Before:       cmd.Before,
@@ -92,6 +91,7 @@ func (cmd *RuleDeleteCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
+	T := utils.Language(common.DefaultLanguage)
 	controller, err := api.NewControllerClient(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
@@ -99,20 +99,35 @@ func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
 	}
 	// Update the controller
 	cmd.controller = controller
-	if ctx.IsSet("id") {
-		return cmd.DeleteRules(fmt.Sprintf("?id=%s", ctx.String("id")))
-	}
-
-	if ctx.IsSet("destination") {
-		return cmd.DeleteRules(fmt.Sprintf("?destination=%s", ctx.String("destination")))
-	}
-
-	if ctx.IsSet("tag") {
-		return cmd.DeleteRules(fmt.Sprintf("?tags=%s", ctx.String("tag")))
-	}
 
 	if ctx.IsSet("all") {
-		return cmd.DeleteRules("")
+		switch ctx.Bool("force") {
+		case true:
+			return cmd.DeleteRules("")
+		case false:
+			confirmation, err := utils.Confirmation(ctx.App.Writer, T("rule_delete_all_confirmation"))
+			if err != nil {
+				return err
+			}
+			if confirmation {
+				return cmd.DeleteRules("")
+			}
+			return nil
+		}
+	}
+
+	query := cmd.controller.NewQuery()
+	if ctx.IsSet("id") || ctx.IsSet("i") || ctx.IsSet("destination") || ctx.IsSet("d") || ctx.IsSet("tag") || ctx.IsSet("t") {
+		for _, id := range ctx.StringSlice("id") {
+			query.Add("id", id)
+		}
+		for _, dest := range ctx.StringSlice("destination") {
+			query.Add("destination", dest)
+		}
+		for _, dest := range ctx.StringSlice("tag") {
+			query.Add("tags", dest)
+		}
+		return cmd.DeleteRules(query.Encode())
 	}
 
 	return cmd.DefaultAction(ctx)
@@ -126,7 +141,7 @@ func (cmd *RuleDeleteCommand) DeleteRules(query string) error {
 		return err
 	}
 	// TODO: Add errors in client.
-	fmt.Fprintln(cmd.ctx.App.Writer, T("rule_deleted"))
+	fmt.Fprintln(cmd.ctx.App.Writer, T("request_completed"))
 	return nil
 }
 

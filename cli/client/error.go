@@ -28,14 +28,14 @@ type clientError struct {
 // Error constructs an error based on the status code and body
 func (e clientError) Error() string {
 	var buffer bytes.Buffer
-	buffer.WriteString("Client Error:")
+	buffer.WriteString("Request response:\n")
 
 	if e.StatusCode != 0 {
-		buffer.WriteString(fmt.Sprintf(" status_code=%v", e.StatusCode))
+		buffer.WriteString(fmt.Sprintf("status_code=%v\n", e.StatusCode))
 	}
 
 	if len(e.Body) > 0 {
-		buffer.WriteString(fmt.Sprintf(" body=%v", e.Body))
+		buffer.WriteString(fmt.Sprintf("body=%v\n", e.Body))
 	}
 
 	return buffer.String()

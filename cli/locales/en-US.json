@@ -40,8 +40,8 @@
     "translation": "Controller URL"
   },
   {
-    "id":"info",
-    "translation": "Rule Deleted"
+    "id":"request_completed",
+    "translation": "Request Completed"
   },
   {
     "id": "info_name",
@@ -189,6 +189,14 @@
   },
   {
     "id": "rule_delete_all_usage",
-    "translation": "The all rules."
+    "translation": "All rules."
+  },
+  {
+    "id": "rule_delete_all_force_usage",
+    "translation": "Force deletion without confirmation."
+  },
+  {
+    "id": "rule_delete_all_confirmation",
+    "translation": "Do you really want to delete all rules?"
   }
 ]

@@ -39,6 +39,16 @@ const (
 
 // ReadInputFile reads the content of a given file and retuns a reader and the extension of the file.
 func ReadInputFile(path string) (io.Reader, string, error) {
+	// Check if file exists
+	info, err := os.Stat(path)
+	if err != nil {
+		return nil, "", common.ErrFileNotFound
+	}
+	// Check if it's a folder
+	if info.IsDir() {
+		return nil, "", common.ErrInvalidFile
+	}
+
 	// Get the file extension
 	ext := strings.ToUpper(filepath.Ext(path)[1:])
 	if ext != JSON && ext != YAML {
@@ -159,4 +169,23 @@ func ScannerLines(writer io.Writer, description string) (io.Reader, string, erro
 		return nil, format, err
 	}
 	return &dataBuf, format, nil
+}
+
+// Confirmation .
+func Confirmation(writer io.Writer, description string) (bool, error) {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Fprintf(writer, "%s [Y/n]: ", description)
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			return false, err
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+		if response == "y" || response == "yes" {
+			return true, nil
+		}
+		return false, nil
+	}
 }

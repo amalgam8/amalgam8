@@ -22,7 +22,7 @@ import (
 
 	cmds "github.com/amalgam8/amalgam8/cli/commands"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/flags"
+	"github.com/amalgam8/amalgam8/cli/config"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	. "github.com/onsi/ginkgo"
@@ -33,7 +33,7 @@ import (
 
 var _ = Describe("Rule-Get", func() {
 	fmt.Println()
-	utils.LoadLocales()
+	utils.LoadLocales("../locales")
 	T := utils.Language(common.DefaultLanguage)
 	var cmd *cmds.RuleGetCommand
 	var app *cli.App
@@ -45,12 +45,14 @@ var _ = Describe("Rule-Get", func() {
 		app.Name = T("app_name")
 		app.Usage = T("app_usage")
 		app.Version = T("app_version")
-		app.Flags = flags.GlobalFlags()
+		app.Flags = config.GlobalFlags()
 		server = ghttp.NewServer()
 		term := terminal.NewUI(os.Stdin, os.Stdout)
 		cmd = cmds.NewRuleGetCommand(term)
 		app.Commands = []cli.Command{cmd.GetMetadata()}
-		app.Setup()
+		app.Before = config.Before
+		app.Action = config.DefaultAction
+		app.OnUsageError = config.OnUsageError
 
 		response["abc123"] = []byte(`
 			{
@@ -112,8 +114,6 @@ var _ = Describe("Rule-Get", func() {
 		response["v1"] = response["xyz123"]
 		allRules := fmt.Sprintf("{ \"rules\": [%s,%s]}", response["abc123"], response["xyz123"])
 		response["all_rules"] = []byte(allRules)
-		// err := json.Compact(&buf, response["all_rules"])
-		// fmt.Println(buf.String(), err)
 	})
 
 	Describe("Get Rules", func() {
@@ -138,8 +138,8 @@ var _ = Describe("Rule-Get", func() {
 
 			It("should error", func() {
 				err := app.Run([]string{"app", "--controller_url=http://localhost", "--x"})
-				Expect(err).To(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Incorrect Usage"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(app.Name))
 			})
 
 		})

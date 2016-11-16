@@ -22,7 +22,7 @@ import (
 
 	cmds "github.com/amalgam8/amalgam8/cli/commands"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/flags"
+	"github.com/amalgam8/amalgam8/cli/config"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
 	. "github.com/onsi/ginkgo"
@@ -33,24 +33,28 @@ import (
 
 var _ = Describe("Rule-Create", func() {
 	fmt.Println()
-	utils.LoadLocales()
+	utils.LoadLocales("../locales")
 	T := utils.Language(common.DefaultLanguage)
 	var cmd *cmds.RuleCreateCommand
 	var app *cli.App
 	var server *ghttp.Server
 	response := make(map[string][]byte)
+	JSONFilePath := "testdata/rule.json"
+	YAMLFilePath := "testdata/rule.yaml"
 
 	BeforeEach(func() {
 		app = cli.NewApp()
 		app.Name = T("app_name")
 		app.Usage = T("app_usage")
 		app.Version = T("app_version")
-		app.Flags = flags.GlobalFlags()
+		app.Flags = config.GlobalFlags()
 		server = ghttp.NewServer()
 		term := terminal.NewUI(os.Stdin, os.Stdout)
 		cmd = cmds.NewRuleCreateCommand(term)
 		app.Commands = []cli.Command{cmd.GetMetadata()}
-		app.Setup()
+		app.Before = config.Before
+		app.Action = config.DefaultAction
+		app.OnUsageError = config.OnUsageError
 
 		response["json_id"] = []byte(`
 			{
@@ -88,8 +92,8 @@ var _ = Describe("Rule-Create", func() {
 
 			It("should error", func() {
 				err := app.Run([]string{"app", "--controller_url=http://localhost", "--x"})
-				Expect(err).To(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Incorrect Usage"))
+				Expect(err).ToNot(HaveOccurred())
+				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(app.Name))
 			})
 
 		})
@@ -144,7 +148,7 @@ var _ = Describe("Rule-Create", func() {
 			})
 
 			It("should read rules from the JSON file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=fake_rule.json"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=" + JSONFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"json_id"`))
 				fmt.Println(app.Writer)
@@ -173,7 +177,7 @@ var _ = Describe("Rule-Create", func() {
 			})
 
 			It("should read rules from the YAML file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=fake_rule.yaml"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=" + YAMLFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"yaml_id"`))
 				fmt.Println(app.Writer)

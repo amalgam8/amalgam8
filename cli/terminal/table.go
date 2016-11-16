@@ -51,20 +51,12 @@ func (t *term) formatTable(table io.Writer, header []string, body [][]string) {
 	println()
 	// Construct Header
 	for _, cell := range header {
-		// TODO: Fix format for windows
-		// if !strings.Contains(cell, "\033[0m") {
-		// 	cell = fmt.Sprint(t.FontColor(Black, Normal, cell))
-		// }
 		fmt.Fprintf(w, "\t %s", cell)
 	}
 	fmt.Fprintln(w, "\t")
 	// Construct Body
 	for _, row := range body {
 		for _, cell := range row {
-			// TODO: Fix format for windows
-			// if !strings.Contains(cell, "\033[0m") {
-			// 	cell = fmt.Sprint(t.FontColor(Black, Normal, cell))
-			// }
 			fmt.Fprintf(w, "\t %s", cell)
 		}
 		fmt.Fprintln(w, "\t")

@@ -23,7 +23,7 @@ local io = require("io");
 -----situations. Hence, no effort has been made to protect accesses to the
 -----global shared state with locks. The performance of lua-resty-lock needs
 -----to be evaluated at high load.
-local Amalgam8 = { _VERSION = '0.4.0' }
+local Amalgam8 = { _VERSION = '0.4.3' }
 
 local delay_action, abort_action, trace_action = 1, 2, 3
 

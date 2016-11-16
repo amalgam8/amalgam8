@@ -66,6 +66,16 @@ func IsValidURL(name, value string) ValidatorFunc {
 	}
 }
 
+// IsEmptyOrValidURL ensures that the URL is either empty, or is a valid URL
+func IsEmptyOrValidURL(name, value string) ValidatorFunc {
+	return func() error {
+		if value == "" {
+			return nil
+		}
+		return IsValidURL(name, value)()
+	}
+}
+
 // IsInRange ensures the integer is within the specified inclusive range
 func IsInRange(name string, value, min, max int) ValidatorFunc {
 	return func() error {

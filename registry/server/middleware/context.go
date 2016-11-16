@@ -12,21 +12,25 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package nginx
+package middleware
 
 import (
-	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/api"
+	"context"
+
+	"github.com/ant0ine/go-json-rest/rest"
+
+	"github.com/amalgam8/amalgam8/registry/server/env"
 )
 
-// MockManager mocks interface
-type MockManager struct {
-	UpdateError error
-	UpdateCount int
-}
+// ContextMiddleware initializes a context and puts it in the request's env map
+type ContextMiddleware struct{}
 
-// Update mocks interface
-func (m *MockManager) Update([]api.ServiceInstance, []rules.Rule) error {
-	m.UpdateCount++
-	return m.UpdateError
+// MiddlewareFunc makes ContextMiddleware implement the Middleware interface.
+func (mw *ContextMiddleware) MiddlewareFunc(h rest.HandlerFunc) rest.HandlerFunc {
+	return func(w rest.ResponseWriter, r *rest.Request) {
+		r.Env[env.Context] = context.Background()
+
+		// Handle the request
+		h(w, r)
+	}
 }

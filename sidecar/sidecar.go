@@ -15,21 +15,22 @@
 package sidecar
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
-
-	"encoding/json"
-	"net/http"
 	"time"
 
+	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
+	"github.com/amalgam8/amalgam8/registry/adapters/eureka"
+	"github.com/amalgam8/amalgam8/registry/adapters/kubernetes"
+	registryapi "github.com/amalgam8/amalgam8/registry/api"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -41,6 +42,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
+	"github.com/urfave/cli"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -92,53 +94,49 @@ func Run(conf config.Config) error {
 	}
 	logrus.SetLevel(logrusLevel)
 
-	registryClient, err := registryclient.New(registryclient.Config{
-		URL:       conf.Registry.URL,
-		AuthToken: conf.Registry.Token,
-	})
-	if err != nil {
-		logrus.WithError(err).Error("Could not create registry client")
-		return err
-	}
-	// initial regsistryMonitor:
+	var discovery registryapi.ServiceDiscovery
 	if conf.DNS || conf.Proxy {
-		registryMonitor := monitor.NewRegistry(monitor.RegistryConfig{
-			PollInterval:   conf.Registry.Poll,
-			RegistryClient: registryClient,
-		})
-		if conf.Proxy {
-			if err = startProxy(&conf, registryMonitor); err != nil {
-				logrus.WithError(err).Error("Could not start proxy")
-			}
+		discovery, err = buildServiceDiscovery(&conf)
+		if err != nil {
+			logrus.WithError(err).Error("Could not create service discovery backend adapter")
+			return err
 		}
-		if conf.DNS {
-			dnsConfig := dns.Config{
-				DiscoveryClient: registryMonitor,
-				Port:            uint16(conf.Dnsconfig.Port),
-				Domain:          conf.Dnsconfig.Domain,
-			}
-			server, err := dns.NewServer(dnsConfig)
-			if err != nil {
-				logrus.WithError(err).Error("Could not start dns server")
-				return err
-			}
-			go server.ListenAndServe()
-		}
-
-		go func() {
-			if err = registryMonitor.Start(); err != nil {
-				logrus.WithError(err).Error("Registry monitor failed")
-			}
-		}()
 	}
+
+	if conf.DNS {
+		dnsConfig := dns.Config{
+			Discovery: discovery,
+			Port:      uint16(conf.Dnsconfig.Port),
+			Domain:    conf.Dnsconfig.Domain,
+		}
+		server, err := dns.NewServer(dnsConfig)
+		if err != nil {
+			logrus.WithError(err).Error("Could not start dns server")
+			return err
+		}
+		go server.ListenAndServe()
+	}
+
+	if conf.Proxy {
+		err := startProxy(&conf, discovery)
+		if err != nil {
+			logrus.WithError(err).Error("Could not start proxy")
+			return err
+		}
+	}
+
 	var lifecycle register.Lifecycle
 	if conf.Register {
+		registry, err := buildServiceRegistry(&conf)
+		if err != nil {
+			return err
+		}
 
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
-		serviceInstance := &registryclient.ServiceInstance{
+		serviceInstance := &registryapi.ServiceInstance{
 			ServiceName: conf.Service.Name,
 			Tags:        conf.Service.Tags,
-			Endpoint: registryclient.ServiceEndpoint{
+			Endpoint: registryapi.ServiceEndpoint{
 				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
@@ -146,7 +144,7 @@ func Run(conf config.Config) error {
 		}
 
 		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Client:          registryClient,
+			Registry:        registry,
 			ServiceInstance: serviceInstance,
 		})
 		if err != nil {
@@ -179,7 +177,52 @@ func Run(conf config.Config) error {
 	return nil
 }
 
-func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) error {
+func buildServiceRegistry(conf *config.Config) (registryapi.ServiceRegistry, error) {
+	switch strings.ToLower(conf.Registry.Backend) {
+	case config.Amalgam8Backend:
+		regConf := registryclient.Config{
+			URL:       conf.Registry.Amalgam8.URL,
+			AuthToken: conf.Registry.Amalgam8.Token,
+		}
+		return registryclient.New(regConf)
+	case "":
+		return nil, fmt.Errorf("no service registry backend specified")
+	default:
+		return nil, fmt.Errorf("registration using '%s' is not supported", conf.Registry.Backend)
+	}
+}
+
+func buildServiceDiscovery(conf *config.Config) (registryapi.ServiceDiscovery, error) {
+	switch strings.ToLower(conf.Registry.Backend) {
+	case config.Amalgam8Backend:
+		regConf := registryclient.CacheConfig{
+			Config: registryclient.Config{
+				URL:       conf.Registry.Amalgam8.URL,
+				AuthToken: conf.Registry.Amalgam8.Token,
+			},
+			PollInterval: conf.Registry.Poll,
+		}
+		return registryclient.NewCache(regConf)
+	case config.KubernetesBackend:
+		kubConf := kubernetes.Config{
+			URL:       conf.Registry.Kubernetes.URL,
+			Token:     conf.Registry.Kubernetes.Token,
+			Namespace: auth.NamespaceFrom(conf.Registry.Kubernetes.Namespace),
+		}
+		return kubernetes.New(kubConf)
+	case config.EurekaBackend:
+		eurConf := eureka.Config{
+			URLs: conf.Registry.Eureka.URLs,
+		}
+		return eureka.New(eurConf)
+	case "":
+		return nil, fmt.Errorf("no service discovery backend specified")
+	default:
+		return nil, fmt.Errorf("discovery using '%s' is not supported", conf.Registry.Backend)
+	}
+}
+
+func startProxy(conf *config.Config, discovery registryapi.ServiceDiscovery) error {
 	var err error
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
@@ -200,20 +243,31 @@ func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) er
 		return err
 	}
 
-	controllerMonitor := monitor.NewController(monitor.ControllerConfig{
+	controllerMonitor := monitor.NewControllerMonitor(monitor.ControllerConfig{
 		Client: controllerClient,
 		Listeners: []monitor.ControllerListener{
 			nginxProxy,
 		},
 		PollInterval: conf.Controller.Poll,
 	})
+
+	registryMonitor := monitor.NewRegistryMonitor(monitor.RegistryConfig{
+		Discovery: discovery,
+		Listeners: []monitor.RegistryListener{
+			nginxProxy,
+		},
+	})
+
 	go func() {
 		if err = controllerMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Controller monitor failed")
 		}
 	}()
-
-	registryMonitor.AddListener(nginxProxy)
+	go func() {
+		if err = registryMonitor.Start(); err != nil {
+			logrus.WithError(err).Error("Registry monitor failed")
+		}
+	}()
 
 	debugger := api.NewDebugAPI(nginxProxy)
 
@@ -221,16 +275,8 @@ func startProxy(conf *config.Config, registryMonitor monitor.RegistryMonitor) er
 	a.Use(
 		&rest.TimerMiddleware{},
 		&rest.RecorderMiddleware{},
-		&rest.RecoverMiddleware{
-			EnableResponseStackTrace: false,
-		},
+		&rest.RecoverMiddleware{EnableResponseStackTrace: false},
 		&rest.ContentTypeCheckerMiddleware{},
-		//&middleware.RequestIDMiddleware{},
-		//&middleware.LoggingMiddleware{},
-		//middleware.NewRequireHTTPS(middleware.CheckRequest{
-		//	IsSecure: middleware.IsUsingSecureConnection,
-		//	Disabled: !conf.RequireHTTPS,
-		//}),
 	)
 
 	routes := debugger.Routes()
@@ -291,8 +337,8 @@ func cliCommand(command string) {
 		}
 
 		sidecarstate := struct {
-			Instances []registryclient.ServiceInstance `json:"instances"`
-			Rules     []rules.Rule                     `json:"rules"`
+			Instances []registryapi.ServiceInstance `json:"instances"`
+			Rules     []rules.Rule                  `json:"rules"`
 		}{}
 
 		err = json.Unmarshal(respBytes, &sidecarstate)

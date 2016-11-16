@@ -33,10 +33,28 @@ var DefaultConfig = Config{
 	},
 
 	Registry: Registry{
-		URL:   "",
-		Token: "",
-		Poll:  time.Duration(15 * time.Second),
+		Backend: Amalgam8Backend,
+		Amalgam8: Amalgam8Registry{
+			URL:   "",
+			Token: "",
+			Poll:  time.Duration(15 * time.Second),
+		},
+		Kubernetes: KubernetesRegistry{
+			URL:       "",
+			Token:     "",
+			Namespace: "",
+		},
+		Eureka: EurekaRegistry{
+			URLs: []string{},
+		},
+
+		Amalgam8Registry: Amalgam8Registry{
+			URL:   "",
+			Token: "",
+			Poll:  time.Duration(15 * time.Second),
+		},
 	},
+
 	Controller: Controller{
 		URL:   "",
 		Token: "",

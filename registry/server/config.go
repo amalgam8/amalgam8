@@ -1,3 +1,6 @@
+// Copyright 2016 IBM Corporation
+//
+//   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
 //   You may obtain a copy of the License at
 //
@@ -9,21 +12,20 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package nginx
+package server
 
 import (
-	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/ant0ine/go-json-rest/rest"
+
+	"github.com/amalgam8/amalgam8/pkg/auth"
+	"github.com/amalgam8/amalgam8/registry/store"
 )
 
-// MockClient mocks NGINX Client interface
-type MockClient struct {
-	UpdateError error
-	UpdateCount int
-}
-
-// Update mocks interface
-func (m *MockClient) Update([]api.ServiceInstance, []rules.Rule) error {
-	m.UpdateCount++
-	return m.UpdateError
+// Config encapsulates REST server configuration parameters
+type Config struct {
+	HTTPAddressSpec string
+	CatalogMap      store.CatalogMap
+	Authenticator   auth.Authenticator
+	Middlewares     []rest.Middleware
+	RequireHTTPS    bool
 }

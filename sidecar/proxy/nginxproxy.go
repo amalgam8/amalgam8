@@ -19,7 +19,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 )
@@ -28,11 +28,11 @@ import (
 type NGINXProxy interface {
 	monitor.ControllerListener
 	monitor.RegistryListener
-	GetState() ([]client.ServiceInstance, []rules.Rule)
+	GetState() ([]api.ServiceInstance, []rules.Rule)
 }
 
 type nginxProxy struct {
-	instances []client.ServiceInstance
+	instances []api.ServiceInstance
 	rules     []rules.Rule
 	nginx     nginx.Manager
 	mutex     sync.Mutex
@@ -42,13 +42,13 @@ type nginxProxy struct {
 func NewNGINXProxy(nginxClient nginx.Manager) NGINXProxy {
 	return &nginxProxy{
 		rules:     []rules.Rule{},
-		instances: []client.ServiceInstance{},
+		instances: []api.ServiceInstance{},
 		nginx:     nginxClient,
 	}
 }
 
 // CatalogChange updates NGINX on a change in the catalog
-func (n *nginxProxy) CatalogChange(instances []client.ServiceInstance) error {
+func (n *nginxProxy) CatalogChange(instances []api.ServiceInstance) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
@@ -70,7 +70,7 @@ func (n *nginxProxy) updateNGINX() error {
 	return n.nginx.Update(n.instances, n.rules)
 }
 
-func (n *nginxProxy) GetState() ([]client.ServiceInstance, []rules.Rule) {
+func (n *nginxProxy) GetState() ([]api.ServiceInstance, []rules.Rule) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 

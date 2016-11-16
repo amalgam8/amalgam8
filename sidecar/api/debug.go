@@ -18,7 +18,7 @@ import (
 	"net/http"
 
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/ant0ine/go-json-rest/rest"
 )
@@ -54,8 +54,8 @@ func (d *DebugAPI) checkState(w rest.ResponseWriter, req *rest.Request) {
 	cachedInstances, cachedRules := d.nginxProxy.GetState()
 
 	state := struct {
-		Instances []client.ServiceInstance `json:"instances"`
-		Rules     []rules.Rule             `json:"rules"`
+		Instances []api.ServiceInstance `json:"instances"`
+		Rules     []rules.Rule          `json:"rules"`
 	}{
 		Instances: cachedInstances,
 		Rules:     cachedRules,

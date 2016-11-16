@@ -17,51 +17,55 @@ package monitor
 import (
 	"reflect"
 	"sort"
-	"sync"
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/registry/api"
 )
 
 // RegistryListener is notified of changes to the registry catalog
 type RegistryListener interface {
-	CatalogChange([]client.ServiceInstance) error
+	CatalogChange([]api.ServiceInstance) error
 }
 
-type registry struct {
-	pollInterval   time.Duration
-	registryClient client.Discovery
-	listeners      []RegistryListener
-	ticker         *time.Ticker
-	cache          map[string][]*client.ServiceInstance
-	lock           sync.RWMutex
-}
-
-// RegistryConfig options
+// RegistryConfig holds configuration options for the registry monitor.
 type RegistryConfig struct {
-	PollInterval   time.Duration
-	RegistryClient client.Discovery
+	Discovery    api.ServiceDiscovery
+	Listeners    []RegistryListener
+	PollInterval time.Duration
 }
 
-// RegistryMonitor Definition:
-type RegistryMonitor interface {
-	Monitor
-	client.Discovery
-	AddListener(listener RegistryListener)
+type registryMonitor struct {
+	discovery api.ServiceDiscovery
+
+	ticker       *time.Ticker
+	pollInterval time.Duration
+
+	cache     map[string][]*api.ServiceInstance
+	listeners []RegistryListener
 }
 
-// NewRegistry instantiates new instance
-func NewRegistry(conf RegistryConfig) RegistryMonitor {
-	return &registry{
-		listeners:      []RegistryListener{},
-		registryClient: conf.RegistryClient,
-		pollInterval:   conf.PollInterval,
+// DefaultRegistryPollInterval is the default used for the registry monitor's poll interval,
+// if no other value is specified. Currently, all existing ServiceDiscovery adapters use caching
+// with background polling, so the 1 second polling here is basically polling a local cache only.
+// Note: this will be removed once the ServiceDiscovery interface exposes a Watch() mechanism.
+const DefaultRegistryPollInterval = 1 * time.Second
+
+// NewRegistryMonitor instantiates a new registry monitor
+func NewRegistryMonitor(conf RegistryConfig) Monitor {
+	if conf.PollInterval == 0 {
+		conf.PollInterval = DefaultRegistryPollInterval
+	}
+
+	return &registryMonitor{
+		discovery:    conf.Discovery,
+		listeners:    conf.Listeners,
+		pollInterval: conf.PollInterval,
 	}
 }
 
 // Start monitoring registry
-func (m *registry) Start() error {
+func (m *registryMonitor) Start() error {
 	// Stop existing ticker if necessary
 	if m.ticker != nil {
 		if err := m.Stop(); err != nil {
@@ -89,9 +93,9 @@ func (m *registry) Start() error {
 }
 
 // poll registry for changes in the catalog
-func (m *registry) poll() error {
+func (m *registryMonitor) poll() error {
 	// Get newest catalog from registry
-	instances, err := m.getRegistryInstances()
+	instances, err := m.discovery.ListInstances()
 	if err != nil {
 		logrus.WithError(err).Warn("Could not get latest catalog from registry")
 		return err
@@ -105,14 +109,11 @@ func (m *registry) poll() error {
 	}
 
 	// Update cached catalog
-	m.lock.Lock()
 	m.cache = catalog
-	listeners := m.listeners
-	m.lock.Unlock()
 
 	// Notify the listeners
 	instancesByValue := instanceListAsValues(instances)
-	for _, listener := range listeners {
+	for _, listener := range m.listeners {
 		if err = listener.CatalogChange(instancesByValue); err != nil {
 			logrus.WithError(err).Warn("Registry listener failed")
 		}
@@ -124,10 +125,7 @@ func (m *registry) poll() error {
 // compareToCache compares the given catalog to the cached one, by comparing all instance attributes
 // except for heartbeat and TTL. Instance list for each service is assumed to be presorted.
 // Return 'true' if catalog match, and 'false' otherwise.
-func (m *registry) compareToCache(catalog map[string][]*client.ServiceInstance) bool {
-	m.lock.RLock()
-	defer m.lock.RUnlock()
-
+func (m *registryMonitor) compareToCache(catalog map[string][]*api.ServiceInstance) bool {
 	if len(catalog) != len(m.cache) {
 		return false
 	}
@@ -159,12 +157,8 @@ func (m *registry) compareToCache(catalog map[string][]*client.ServiceInstance) 
 	return true
 }
 
-func (m *registry) getRegistryInstances() ([]*client.ServiceInstance, error) {
-	return m.registryClient.ListInstances(client.InstanceFilter{})
-}
-
 // Stop monitoring registry
-func (m *registry) Stop() error {
+func (m *registryMonitor) Stop() error {
 	// Stop ticker if necessary
 	if m.ticker != nil {
 		m.ticker.Stop()
@@ -175,7 +169,7 @@ func (m *registry) Stop() error {
 }
 
 // ByID sorts by ID
-type ByID []*client.ServiceInstance
+type ByID []*api.ServiceInstance
 
 // Len of the array
 func (a ByID) Len() int {
@@ -192,60 +186,8 @@ func (a ByID) Less(i, j int) bool {
 	return a[i].ID < a[j].ID
 }
 
-func (m *registry) ListServices() ([]string, error) {
-	keys := make([]string, 0, len(m.cache))
-	m.lock.RLock()
-	for k := range m.cache {
-		keys = append(keys, k)
-	}
-	m.lock.RUnlock()
-	return keys, nil
-}
-
-func (m *registry) ListInstances(filter client.InstanceFilter) ([]*client.ServiceInstance, error) {
-	servicesToReturn := []*client.ServiceInstance{}
-	count := 0
-	m.lock.RLock()
-	serviceInstances := m.cache[filter.ServiceName]
-	m.lock.RUnlock()
-	for _, service := range serviceInstances {
-		if service.ServiceName == filter.ServiceName {
-			for _, tag := range filter.Tags {
-				for _, serviceTag := range service.Tags {
-					if tag == serviceTag {
-						count++
-					}
-				}
-			}
-			if count == len(filter.Tags) {
-				servicesToReturn = append(servicesToReturn, service)
-			}
-		}
-	}
-	return servicesToReturn, nil
-}
-
-func (m *registry) ListServiceInstances(serviceName string) ([]*client.ServiceInstance, error) {
-	servicesToReturn := []*client.ServiceInstance{}
-	m.lock.RLock()
-	if instances, ok := m.cache[serviceName]; ok {
-		servicesToReturn = instances
-	}
-	m.lock.RUnlock()
-	return servicesToReturn, nil
-}
-
-func (m *registry) AddListener(listener RegistryListener) {
-	m.lock.Lock()
-	copyOfListeners := m.listeners
-	copyOfListeners = append(m.listeners, listener)
-	m.listeners = copyOfListeners
-	m.lock.Unlock()
-
-}
-
-func instanceListAsValues(instances []*client.ServiceInstance) []client.ServiceInstance {
-	values := make([]client.ServiceInstance, len(instances))
+func instanceListAsValues(instances []*api.ServiceInstance) []api.ServiceInstance {
+	values := make([]api.ServiceInstance, len(instances))
 
 	for i, instance := range instances {
 		values[i] = *instance
@@ -254,12 +196,12 @@ func instanceListAsValues(instances []*client.ServiceInstance) []client.ServiceI
 	return values
 }
 
-func instanceListAsMap(instances []*client.ServiceInstance) map[string][]*client.ServiceInstance {
+func instanceListAsMap(instances []*api.ServiceInstance) map[string][]*api.ServiceInstance {
 	// Assume 3 instances per service by average, for initial map capacity
 	// TODO: can improve based on length of previously stored map
 	numOfServices := len(instances) / 3
 
-	m := make(map[string][]*client.ServiceInstance, numOfServices)
+	m := make(map[string][]*api.ServiceInstance, numOfServices)
 	for _, instance := range instances {
 		m[instance.ServiceName] = append(m[instance.ServiceName], instance)
 	}

@@ -35,14 +35,14 @@ const (
 	requestTimeout = time.Duration(60) * time.Second
 )
 
-type eurekaClient struct {
+type client struct {
 	httpClient *http.Client
 	eurekaURLs []string
 
 	logger *log.Entry
 }
 
-func newEurekaClient(eurekaURLs []string) (*eurekaClient, error) {
+func newClient(eurekaURLs []string) (*client, error) {
 	var httpsRequired bool
 	logger := logging.GetLogger(module)
 
@@ -74,21 +74,21 @@ func newEurekaClient(eurekaURLs []string) (*eurekaClient, error) {
 		}
 	}
 
-	return &eurekaClient{
+	return &client{
 		httpClient: hc,
 		eurekaURLs: urls,
 		logger:     logger,
 	}, nil
 }
 
-func (client *eurekaClient) getApplications(path string) (*eurekaapi.Applications, error) {
+func (c *client) getApplications(path string) (*eurekaapi.Applications, error) {
 	var err error
 
-	for _, eurl := range client.eurekaURLs {
+	for _, eurl := range c.eurekaURLs {
 		req, _ := http.NewRequest("GET", fmt.Sprintf("%s/%s", eurl, path), nil)
 		req.Header.Set("Accept", "application/json")
 
-		resp, err2 := client.httpClient.Do(req)
+		resp, err2 := c.httpClient.Do(req)
 		if err2 != nil {
 			err = err2
 			continue
@@ -115,12 +115,12 @@ func (client *eurekaClient) getApplications(path string) (*eurekaapi.Application
 	return nil, err
 }
 
-func (client *eurekaClient) getApplicationsFull() (*eurekaapi.Applications, error) {
-	return client.getApplications("apps")
+func (c *client) getApplicationsFull() (*eurekaapi.Applications, error) {
+	return c.getApplications("apps")
 }
 
-func (client *eurekaClient) getApplicationsDelta() (*eurekaapi.Applications, error) {
-	apps, err := client.getApplications("apps/delta")
+func (c *client) getApplicationsDelta() (*eurekaapi.Applications, error) {
+	apps, err := c.getApplications("apps/delta")
 	if err != nil {
 		return nil, err
 	}

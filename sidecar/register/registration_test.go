@@ -15,9 +15,9 @@
 package register
 
 import (
-	"github.com/amalgam8/amalgam8/registry/client"
-
 	"time"
+
+	"github.com/amalgam8/amalgam8/registry/api"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -26,15 +26,15 @@ import (
 var _ = Describe("Registration agent", func() {
 	mockClient := &mockRegistryClient{}
 	config := RegistrationConfig{
-		ServiceInstance: &client.ServiceInstance{
+		ServiceInstance: &api.ServiceInstance{
 			ServiceName: "test_service",
-			Endpoint: client.ServiceEndpoint{
+			Endpoint: api.ServiceEndpoint{
 				Type:  "http",
 				Value: "http://172.17.0.10:8080",
 			},
 			TTL: 1,
 		},
-		Client: mockClient,
+		Registry: mockClient,
 	}
 
 	var agent *RegistrationAgent
@@ -96,10 +96,10 @@ type mockRegistryClient struct {
 	lastHeartbeat time.Time
 }
 
-func (c *mockRegistryClient) Register(instance *client.ServiceInstance) (*client.ServiceInstance, error) {
+func (c *mockRegistryClient) Register(instance *api.ServiceInstance) (*api.ServiceInstance, error) {
 	c.registered = true
 	c.lastHeartbeat = time.Now()
-	return &client.ServiceInstance{
+	return &api.ServiceInstance{
 		ID:            "1234567890",
 		ServiceName:   instance.ServiceName,
 		Endpoint:      instance.Endpoint,

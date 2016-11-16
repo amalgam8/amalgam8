@@ -25,10 +25,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/amalgam8/amalgam8/registry/api"
-	"github.com/amalgam8/amalgam8/registry/api/protocol/amalgam8"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/server"
+	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/utils/network"
 )
@@ -39,9 +39,9 @@ const (
 
 var basePort uint16 = 5080
 
-func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (replication.Replication, api.Server) {
+func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (replication.Replication, server.Server) {
 	var rep replication.Replication
-	var server api.Server
+
 	networkAvailable := network.WaitForPrivateNetworkIPv4()
 	assert.NotNil(t, networkAvailable)
 
@@ -71,21 +71,21 @@ func setupServer(t *testing.T, rest_port, rep_port uint16, cl cluster.Cluster) (
 	}
 
 	cm := store.New(cmConfig)
-	server, err = api.NewServer(
-		&api.Config{
+	s, err := server.New(
+		&server.Config{
 			HTTPAddressSpec: fmt.Sprintf(":%d", rest_port),
 			CatalogMap:      cm,
 		},
 	)
 
 	assert.NoError(t, err)
-	assert.NotNil(t, server)
+	assert.NotNil(t, s)
 
 	// Start the API server, and "wait" for it to bind
-	go server.Start()
+	go s.Start()
 	time.Sleep(100 * time.Millisecond)
 
-	return rep, server
+	return rep, s
 }
 
 var instances = []amalgam8.InstanceRegistration{

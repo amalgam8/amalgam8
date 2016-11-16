@@ -23,14 +23,15 @@ import (
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
+	"github.com/amalgam8/amalgam8/registry/adapters/filesystem"
+	"github.com/amalgam8/amalgam8/registry/adapters/kubernetes"
 	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
 	"github.com/amalgam8/amalgam8/registry/replication"
+	"github.com/amalgam8/amalgam8/registry/server"
 	"github.com/amalgam8/amalgam8/registry/store"
 	"github.com/amalgam8/amalgam8/registry/store/eureka"
-	"github.com/amalgam8/amalgam8/registry/store/filesystem"
-	"github.com/amalgam8/amalgam8/registry/store/kubernetes"
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/amalgam8/amalgam8/registry/utils/metrics"
@@ -147,16 +148,19 @@ func Run(conf *config.Values) error {
 	}
 
 	catalogsExt := []store.CatalogFactory{}
-	// See whether kubernetes catalog is enabled
+	// See whether kubernetes adapter is enabled
 	if conf.K8sURL != "" {
-		k8sFactory, err := kubernetes.New(&kubernetes.K8sConfig{K8sURL: conf.K8sURL, K8sToken: conf.K8sToken})
-		if err != nil {
-			return err
-		}
+		k8sFactory := store.NewDiscoveryAdapter(func(namespace auth.Namespace) (api.ServiceDiscovery, error) {
+			return kubernetes.New(kubernetes.Config{
+				URL:       conf.K8sURL,
+				Token:     conf.K8sToken,
+				Namespace: namespace,
+			})
+		})
 		catalogsExt = append(catalogsExt, k8sFactory)
 	}
 
-	// See whether eureka catalog is enabled
+	// See whether eureka adapter is enabled
 	if len(conf.EurekaURLs) > 0 {
 		eurekaFactory, err := eureka.New(&eureka.Config{EurekaURLs: conf.EurekaURLs})
 		if err != nil {
@@ -165,12 +169,14 @@ func Run(conf *config.Values) error {
 		catalogsExt = append(catalogsExt, eurekaFactory)
 	}
 
-	// See whether FileSystem catalog is enabled
+	// See whether Filesystem adapter is enabled
 	if conf.FSCatalog != "" {
-		fsFactory, err := filesystem.New(&filesystem.Config{Dir: conf.FSCatalog})
-		if err != nil {
-			return err
-		}
+		fsFactory := store.NewDiscoveryAdapter(func(namespace auth.Namespace) (api.ServiceDiscovery, error) {
+			return filesystem.New(filesystem.Config{
+				Dir:       conf.FSCatalog,
+				Namespace: namespace,
+			})
+		})
 		catalogsExt = append(catalogsExt, fsFactory)
 	}
 
@@ -188,13 +194,13 @@ func Run(conf *config.Values) error {
 	}
 	cm := store.New(cmConfig)
 
-	serverConfig := &api.Config{
+	serverConfig := &server.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.APIPort),
 		CatalogMap:      cm,
 		Authenticator:   authenticator,
 		RequireHTTPS:    conf.RequireHTTPS,
 	}
-	server, err := api.NewServer(serverConfig)
+	server, err := server.New(serverConfig)
 	if err != nil {
 		return err
 	}

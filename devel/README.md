@@ -39,7 +39,7 @@ Registry and the Amalgam8 Sidecar, run the following commands:
 
 ```bash
 cd $GOPATH/src/github.com/amalgam8/amalgam8
-make build dockerize
+GOOS=linux GOARCH=amd64 make build dockerize
 ```
 
 You should now have three docker images, namely `a8-controller:latest`,
@@ -64,10 +64,33 @@ The Go-based components can also be run outside of a docker container as Go
 binaries.  While this is not recommended for production, it can be useful
 for development or easier integration with your local Go tools.
 
-The `make build` command builds binaries for the controller, registry and
-the sidecar. The binaries can be found under the `bin` folder under the
+The `GOOS=linux GOARCH=amd64 make build` command builds linux binaries for
+the controller, registry and the sidecar irrespective of the host OS and architecture.
+The binaries can be found under the `bin` folder under the
 repository root directory (`$GOPATH/src/github.com/amalgam8/amalgam8`).
 
+## Running Local Integration Tests
+
+End-to-end integration tests can be run using the following make target:
+
+```bash
+make test.integration
+```
+
+The above command would run the integration test for both Docker Compose
+and Kubernetes. To disable testing on kubernetes (i.e. test with just
+Docker compose), run
+
+```bash
+A8_TEST_K8S=false make test.integration
+```
+
+Similarlu, to disable testing with Docker Compose (i.e. test with just
+Kubernetes), run
+
+```bash
+A8_TEST_DOCKER=false make test.integration
+```
 
 ## Makefile Targets
 

@@ -17,8 +17,21 @@
 set -x
 set -o errexit
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+if [ -z "$A8_TEST_DOCKER" ]; then
+    A8_TEST_DOCKER="true"
+fi
 
+if [ -z "$A8_TEST_K8S" ]; then
+    A8_TEST_K8S="true"
+fi
+
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 $SCRIPTDIR/build-scripts/build-amalgam8.sh
-$SCRIPTDIR/docker/test-docker.sh
-$SCRIPTDIR/kubernetes/test-kubernetes.sh
+
+if [ "$A8_TEST_DOCKER" == "true" ]; then
+    $SCRIPTDIR/docker/test-docker.sh
+fi
+
+if [ "$A8_TEST_K8S" == "true" ]; then
+    $SCRIPTDIR/kubernetes/test-kubernetes.sh
+fi

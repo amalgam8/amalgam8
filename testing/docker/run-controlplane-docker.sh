@@ -20,7 +20,7 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
-    echo "starting Control plane components (ELK stack, registry, and controller)"
+    echo "starting Control plane components (registry, and controller)"
     docker-compose -f $SCRIPTDIR/controlplane.yaml up -d
     echo "waiting for the cluster to initialize.."
 

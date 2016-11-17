@@ -205,6 +205,7 @@ release.sidecar:
 		$(BUILDDIR)/opt/a8_lualib \
 		$(BUILDDIR)/opt/openresty_dist \
 		$(BUILDDIR)/etc/nginx \
+		$(BUILDDIR)/etc/nginx/stream \
 		$(BUILDDIR)/usr/bin \
 		$(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
 	@cp sidecar/nginx/conf/*.conf $(BUILDDIR)/etc/nginx/

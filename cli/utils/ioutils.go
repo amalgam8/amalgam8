@@ -138,6 +138,12 @@ func MarshallReader(writer io.Writer, data interface{}, format string) error {
 	default:
 		return errors.New("Invalid Format")
 	}
+
+	// escape "<", ">" and "&"
+	pretty = bytes.Replace(pretty, []byte("\\u003c"), []byte("<"), -1)
+	pretty = bytes.Replace(pretty, []byte("\\u003e"), []byte(">"), -1)
+	pretty = bytes.Replace(pretty, []byte("\\u0026"), []byte("&"), -1)
+
 	fmt.Fprintf(writer, "\n%+v\n\n", string(pretty))
 	return nil
 }

@@ -26,13 +26,14 @@ import (
 	"github.com/urfave/cli"
 )
 
-// prettyActionList is used to cover the table data into JSON or YAML
+// prettyActionList is used to convert the table data into JSON or YAML
 type prettyActionList struct {
 	Destination string   `json:"destination" yaml:"destination"`
 	ID          string   `json:"id,omitempty" yaml:"id,omitempty"`
 	Priority    int      `json:"priority,omitempty" yaml:"priority,omitempty"`
 	Match       string   `json:"match,omitempty" yaml:"match,omitempty"`
 	Actions     []string `json:"actions,omitempty" yaml:"actions,omitempty"`
+	Headers     []string `json:"headers,ommitempty" yaml:"headers,omitempty"`
 }
 
 // ActionListCommand is used for the action-list command.
@@ -143,6 +144,7 @@ func (cmd *ActionListCommand) PrettyPrint(serviceName string, format string) err
 						Priority:    action.Priority,
 						Match:       formatMatch(action.Match),
 						Actions:     formatActions(action.Actions),
+						Headers:     formatHeaders(action.Match),
 					},
 				)
 			}
@@ -160,6 +162,7 @@ func (cmd *ActionListCommand) PrettyPrint(serviceName string, format string) err
 							Priority:    action.Priority,
 							Match:       formatMatch(action.Match),
 							Actions:     formatActions(action.Actions),
+							Headers:     formatHeaders(action.Match),
 						},
 					)
 				}
@@ -171,23 +174,24 @@ func (cmd *ActionListCommand) PrettyPrint(serviceName string, format string) err
 }
 
 // ActionTable prints the list of actions as a table.
-// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
-// | Destination | Rule Id  | Priority | Match                                                     | Actions                             |
-// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
-// | details     | 9c7198d7 | 10       | (source="productpage:v1", header="Cookie:.*?user=jason")  | (action=trace, tags=v1, prob=0.5)   |
-// | productpage | 0f12b977 | 10       | (source="gateway)                                         | (action=trace, tags=v1, prob=0.25)  |
-// | ratings     | 454a8fb0 | 10       | (source="reviews:v2")                                     | (action=trace, tags=v1, prob=1)     |
-// | ratings     | dc8b5ffe | 20       | (source="reviews:v2")                                     | (action=delay, tags=v1, prob=1)     |
-// | reviews     | 2d381a94 | 10       | (source="productpage:v1", header="Cookie:.*?user=jason")  | (action=trace, tags=v2, prob=0.75)  |
-// +-------------+----------+----------+-----------------------------------------------------------+-------------------------------------+
+// +-------------+----------------+----------------------+----------+-----------------------------+--------------------------------------+
+// | Destination | Source         | Headers              | Priority | Actions                     | Rule Id                              |
+// +-------------+----------------+----------------------+----------+-----------------------------+--------------------------------------+
+// | reviews     | productpage:v1 | Cookie:.*?user=jason | 10       | v2(trace)                   | 2d381a94-1796-45c3-a1d8-3965051b61b1 |
+// | ratings     | reviews:v2     | Cookie:.*?user=jason | 10       | v1(trace), v1(1->delay=7.0) | 454a8fb0-d260-4832-8007-5b5344c03c1f |
+// | ratings     | reviews:v2     | Cookie:.*?user=jason | 10       | v1(1.0->delay=7.0)          | c2d98e32-8fd0-4e0d-a363-8adff99b0692 |
+// | details     | productpage:v1 | Cookie:.*?user=jason | 10       | v1(trace)                   | 9c7198d7-d037-4cb6-8d48-b573608c7de9 |
+// | productpage | gateway        | Cookie:.*?user=jason | 10       | v1(trace)                   | 0f12b977-9ab9-4d69-8dfe-3eae07c8f115 |
+// +-------------+----------------+----------------------+----------+-----------------------------+--------------------------------------+
 func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 	table := CommandTable{}
 	table.header = []string{
 		"Destination",
-		"Rule Id",
+		"Source",
+		"Headers",
 		"Priority",
-		"Match",
 		"Actions",
+		"Rule ID",
 	}
 
 	actions, err := cmd.controller.GetActions()
@@ -203,10 +207,11 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 					table.body,
 					[]string{
 						action.Destination,
-						action.ID,
-						fmt.Sprint(action.Priority),
 						formatMatch(action.Match),
+						strings.Join(formatHeaders(action.Match), ", "),
+						fmt.Sprint(action.Priority),
 						strings.Join(formatActions(action.Actions), ", "),
+						action.ID,
 					},
 				)
 			}
@@ -220,10 +225,11 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 						table.body,
 						[]string{
 							action.Destination,
-							action.ID,
-							fmt.Sprint(action.Priority),
 							formatMatch(action.Match),
+							strings.Join(formatHeaders(action.Match), ", "),
+							fmt.Sprint(action.Priority),
 							strings.Join(formatActions(action.Actions), ", "),
+							action.ID,
 						},
 					)
 				}
@@ -238,18 +244,20 @@ func (cmd *ActionListCommand) ActionTable(serviceName string) error {
 func formatMatch(match *api.MatchRules) string {
 	buf := bytes.Buffer{}
 	if match.Source != nil {
-		fmt.Fprintf(&buf, "(source=\"%s", match.Source.Name)
+		fmt.Fprintf(&buf, "%s", match.Source.Name)
 		if len(match.Source.Tags) > 0 {
-			fmt.Fprintf(&buf, ":%s\", ", strings.Join(match.Source.Tags, ","))
+			fmt.Fprintf(&buf, ":%s", strings.Join(match.Source.Tags, ","))
 		}
 	}
+	return buf.String()
+}
 
+func formatHeaders(match *api.MatchRules) []string {
 	headers := []string{}
 	for key, value := range match.Headers {
-		headers = append(headers, fmt.Sprintf("\"%s:%s\"", key, value))
+		headers = append(headers, fmt.Sprintf("%s:%s", key, value))
 	}
-	fmt.Fprintf(&buf, "headers=%s)", strings.Join(headers, " "))
-	return buf.String()
+	return headers
 }
 
 func formatActions(actions *api.ActionsRules) []string {
@@ -259,11 +267,11 @@ func formatActions(actions *api.ActionsRules) []string {
 			buf := bytes.Buffer{}
 			switch action.Action {
 			case "delay":
-				fmt.Fprintf(&buf, "(action=%s, tags=%s, prob=%g, dur=%g)", action.Action, strings.Join(action.Tags, ", "), action.Probability, action.Duration)
+				fmt.Fprintf(&buf, "%s(%g->delay=%g)", strings.Join(action.Tags, ","), action.Probability, action.Duration)
 			case "abort":
-				fmt.Fprintf(&buf, "(action=%s, tags=%s, code=%d)", action.Action, strings.Join(action.Tags, ", "), action.ReturnCode)
+				fmt.Fprintf(&buf, "%s(%g->abort=%d)", strings.Join(action.Tags, ","), action.Probability, action.ReturnCode)
 			case "trace":
-				fmt.Fprintf(&buf, "(action=%s, tags=%s, key=%s, val=%s)", action.Action, strings.Join(action.Tags, ", "), action.LogKey, action.LogValue)
+				fmt.Fprintf(&buf, "%s(trace)", strings.Join(action.Tags, ","))
 			}
 			result = append(result, buf.String())
 		}

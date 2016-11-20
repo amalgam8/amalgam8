@@ -156,11 +156,11 @@ lint: tools.golint
 
 depend.update: tools.glide
 	@echo "--> updating dependencies from glide.yaml"
-	@glide update --strip-vcs --strip-vendor --update-vendored
+	@glide update --strip-vendor
 
 depend.install:	tools.glide
 	@echo "--> installing dependencies from glide.lock "
-	@glide install --strip-vcs --strip-vendor --update-vendored
+	@glide install --strip-vendor
 
 #---------------
 #-- dockerize
@@ -250,7 +250,10 @@ tools.golint:
 tools.glide:
 	@command -v glide >/dev/null ; if [ $$? -ne 0 ]; then \
 		echo "--> installing glide"; \
-		mkdir -p /tmp/glide-0.10.2-linux-amd64; \
-		wget -qO- https://github.com/Masterminds/glide/releases/download/0.10.2/glide-0.10.2-linux-amd64.tar.gz | tar xz -C /tmp/glide-0.10.2-linux-amd64; \
-		cp /tmp/glide-0.10.2-linux-amd64/linux-amd64/glide ~/bin; \
+		GLIDE_VERSION="v0.12.3"; \
+		GLIDE_ARCH="$(GOOS)-$(GOARCH)"; \
+		GLIDE_RELEASE="glide-$$GLIDE_VERSION-$$GLIDE_ARCH"; \
+		mkdir -p /tmp/$$GLIDE_RELEASE; \
+		wget -qO- https://github.com/Masterminds/glide/releases/download/$$GLIDE_VERSION/$$GLIDE_RELEASE.tar.gz | tar xz -C /tmp/$$GLIDE_RELEASE; \
+		cp /tmp/$$GLIDE_RELEASE/$$GLIDE_ARCH/glide ~/bin; \
     fi

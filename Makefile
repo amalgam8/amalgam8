@@ -33,8 +33,8 @@ ifndef GOARCH
 endif
 
 GOFILES		= $(shell find . -type f -name '*.go' -not -path "./vendor/*")
-GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vxFf <(go list -f '{{.Dir}}' ./vendor/...))
-GOPKGS		= $(shell go list ./... | grep -vxFf <(go list ./vendor/...))
+GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vFf <(go list -f '{{.Dir}}' ./vendor/...))
+GOPKGS		= $(shell go list ./... | grep -vFf <(go list ./vendor/...))
 
 APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
 

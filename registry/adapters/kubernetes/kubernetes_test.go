@@ -19,64 +19,65 @@ import (
 
 	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/client-go/pkg/api/v1"
 )
 
 func TestParseEndpoint(t *testing.T) {
 	cases := []struct {
-		addr             EndpointAddress
-		port             EndpointPort
+		addr             v1.EndpointAddress
+		port             v1.EndpointPort
 		expectedEndpoint *api.ServiceEndpoint
 		expectedError    bool
 	}{
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 53, Protocol: Protocol("UDP")},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 53, Protocol: v1.ProtocolUDP},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "udp", Value: "10.0.1.1:53"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 5000, Protocol: Protocol("TCP")},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 5000, Protocol: v1.ProtocolTCP},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "tcp", Value: "10.0.1.1:5000"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 5000, Protocol: Protocol("TCP"), Name: "donald-duck"},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 5000, Protocol: v1.ProtocolTCP, Name: "donald-duck"},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "tcp", Value: "10.0.1.1:5000"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "http"},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 80, Protocol: v1.ProtocolTCP, Name: "http"},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 80, Protocol: Protocol("TCP"), Name: "HTTP"},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 80, Protocol: v1.ProtocolTCP, Name: "HTTP"},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "http", Value: "10.0.1.1:80"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "https"},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 943, Protocol: v1.ProtocolTCP, Name: "https"},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
-			addr:             EndpointAddress{IP: "10.0.1.1"},
-			port:             EndpointPort{Port: 943, Protocol: Protocol("TCP"), Name: "HTTPS"},
+			addr:             v1.EndpointAddress{IP: "10.0.1.1"},
+			port:             v1.EndpointPort{Port: 943, Protocol: v1.ProtocolTCP, Name: "HTTPS"},
 			expectedEndpoint: &api.ServiceEndpoint{Type: "https", Value: "10.0.1.1:943"},
 		},
 		{
-			addr:          EndpointAddress{IP: "10.0.1.1"},
-			port:          EndpointPort{Port: 80, Protocol: Protocol("WTF")},
+			addr:          v1.EndpointAddress{IP: "10.0.1.1"},
+			port:          v1.EndpointPort{Port: 80, Protocol: v1.Protocol("WTF")},
 			expectedError: true,
 		},
 		{
-			addr:          EndpointAddress{IP: "10.0.1.1"},
-			port:          EndpointPort{Port: 80, Protocol: Protocol("")},
+			addr:          v1.EndpointAddress{IP: "10.0.1.1"},
+			port:          v1.EndpointPort{Port: 80, Protocol: v1.Protocol("")},
 			expectedError: true,
 		},
 	}
 
 	for i, c := range cases {
-		endpoint, err := parseEndpoint(c.addr, c.port)
+		endpoint, err := buildEndpointFromAddress(c.addr, c.port)
 
 		if c.expectedError {
 			assert.Error(t, err, "Expected non-nil error for test-case %d", i)

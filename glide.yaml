@@ -12,62 +12,57 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-package: github.com/amalgam8/amalgam8
+##########################################################################
+###   NOTES:
+###   1. Please use glide v0.12.3 or newer to regenerate the vendor tree
+###   2. Please you sematic versioning wherever applicable
+##########################################################################
 
+package: github.com/amalgam8/amalgam8
 
 import:
 
 - package: github.com/Sirupsen/logrus
   version: 0.8.7
-  subpackages:
-  - formatters/logstash
 
 - package: github.com/ant0ine/go-json-rest
   version: 3.3.1
-  subpackages:
-  - rest
 
-- package: github.com/garyburd/redigo/redis
+- package: github.com/garyburd/redigo
   version: 80f7de34463b0ed3d7c61303e5619efe1b227f92
 
 - package: github.com/xeipuuv/gojsonschema
   version: 0a98b2bd93655a563d1f23c4407e8f01791b6b31
 
 - package: github.com/urfave/cli
-  version: 168c95418e66e019fe17b8f4f5c45aa62ff80e23
+  version: 1.19.0
 
 - package: github.com/dgrijalva/jwt-go
   version: 2.3.0
 
 - package: github.com/nicksnyder/go-i18n
   version: 1.4.0
-  subpackages:
-  - i18n
 
 - package: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 
 - package: github.com/cactus/go-statsd-client
   version: 3.0.2
-  subpackages:
-  - statsd
 
 - package: github.com/pborman/uuid
-  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
-
-- package: github.com/stretchr/testify
-  version: 9f9027faeb0dad515336ed2f28317f9f8f527ab4
-
-- package: github.com/onsi/ginkgo
-  version: 1.2.0
-
-- package: github.com/onsi/gomega
-  version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1
+  version: 1.0.0
 
 - package: github.com/miekg/dns
   version: db96a2b759cdef4f11a34506a42eb8d1290c598e
 
 - package: github.com/shirou/gopsutil
   version: 2.1.0
-  subpackages:
-  - load
+
+- package: github.com/stretchr/testify
+  version: 1.1.4
+
+- package: github.com/onsi/ginkgo
+  version: 1.2.0
+
+- package: github.com/onsi/gomega
+  version: 0fe204460da2c8fa1babcaac196e694de8f1aaa1

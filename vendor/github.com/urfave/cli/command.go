@@ -46,6 +46,11 @@ type Command struct {
 	Flags []Flag
 	// Treat all flags as normal arguments if true
 	SkipFlagParsing bool
+	// Skip argument reordering which attempts to move flags before arguments,
+	// but only works if all flags appear after all arguments. This behavior was
+	// removed n version 2 since it only works under specific conditions so we
+	// backport here by exposing it as an option for compatibility.
+	SkipArgReorder bool
 	// Boolean to hide built-in help command
 	HideHelp bool
 	// Boolean to hide this command from help or completion
@@ -86,10 +91,15 @@ func (c Command) Run(ctx *Context) (err error) {
 		c.Flags = append(c.Flags, BashCompletionFlag)
 	}
 
-	set := flagSet(c.Name, c.Flags)
+	set, err := flagSet(c.Name, c.Flags)
+	if err != nil {
+		return err
+	}
 	set.SetOutput(ioutil.Discard)
 
-	if !c.SkipFlagParsing {
+	if c.SkipFlagParsing {
+		err = set.Parse(append([]string{"--"}, ctx.Args().Tail()...))
+	} else if !c.SkipArgReorder {
 		firstFlagIndex := -1
 		terminatorIndex := -1
 		for index, arg := range ctx.Args() {
@@ -122,9 +132,7 @@ func (c Command) Run(ctx *Context) (err error) {
 			err = set.Parse(ctx.Args().Tail())
 		}
 	} else {
-		if c.SkipFlagParsing {
-			err = set.Parse(append([]string{"--"}, ctx.Args().Tail()...))
-		}
+		err = set.Parse(ctx.Args().Tail())
 	}
 
 	if err != nil {
@@ -133,7 +141,7 @@ func (c Command) Run(ctx *Context) (err error) {
 			HandleExitCoder(err)
 			return err
 		}
-		fmt.Fprintln(ctx.App.Writer, "Incorrect Usage.")
+		fmt.Fprintln(ctx.App.Writer, "Incorrect Usage:", err.Error())
 		fmt.Fprintln(ctx.App.Writer)
 		ShowCommandHelp(ctx, c.Name)
 		return err
@@ -180,6 +188,10 @@ func (c Command) Run(ctx *Context) (err error) {
 			HandleExitCoder(err)
 			return err
 		}
+	}
+
+	if c.Action == nil {
+		c.Action = helpSubcommand.Action
 	}
 
 	context.Command = c

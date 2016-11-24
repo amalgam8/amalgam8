@@ -1,5 +1,5 @@
-hash: be96d25fe6684689937c28f66b3eb5d5c4cedb925529ad046dbacc1288a1f0bb
-updated: 2016-11-09T13:06:50.369339839-06:00
+hash: 5c6a230e1c292a11ba891633e606c119879721a10a0b889c663fe5dfe5b84039
+updated: 2016-11-20T13:07:53.698279046+02:00
 imports:
 - name: github.com/ant0ine/go-json-rest
   version: 37ad7dc626602a8355801da6acd85155655520f8
@@ -8,8 +8,6 @@ imports:
   - rest/trie
 - name: github.com/cactus/go-statsd-client
   version: 622d25e1032a3c551f821cf36267f2286c426531
-  subpackages:
-  - statsd
 - name: github.com/dgrijalva/jwt-go
   version: e5cb38552fb8426fe9f0f2b3bc8408f238b97b87
 - name: github.com/garyburd/redigo
@@ -58,7 +56,7 @@ imports:
   - matchers/support/goraph/util
   - types
 - name: github.com/pborman/uuid
-  version: dee7705ef7b324f27ceb85a121c61f2c2e8ce988
+  version: a97ce2ca70fa5a848076093f05e639a89ca34d06
 - name: github.com/rcrowley/go-metrics
   version: 1ce93efbc8f9c568886b2ef85ce305b2217b3de3
 - name: github.com/shirou/gopsutil
@@ -71,14 +69,14 @@ imports:
   subpackages:
   - formatters/logstash
 - name: github.com/stretchr/testify
-  version: 9f9027faeb0dad515336ed2f28317f9f8f527ab4
+  version: 69483b4bd14f5845b5a1e55bca19e954e827f1d0
   subpackages:
   - assert
   - mock
   - require
   - suite
 - name: github.com/urfave/cli
-  version: 168c95418e66e019fe17b8f4f5c45aa62ff80e23
+  version: a8fc36b690712e61212d8cb9450eabf2be359fca
 - name: github.com/xeipuuv/gojsonpointer
   version: e0fe6f68307607d540ed8eac07a342c33fa1b54a
 - name: github.com/xeipuuv/gojsonreference
@@ -89,7 +87,7 @@ imports:
   version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports:
 - name: github.com/davecgh/go-spew
-  version: 2df174808ee097f90d259e432cc04442cf60be21
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
 - name: github.com/pmezard/go-difflib

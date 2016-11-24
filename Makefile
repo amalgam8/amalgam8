@@ -197,7 +197,7 @@ compress: COMPRESSED_FILE :=
 compress:
 	@upx -qqt $(COMPRESSED_FILE); RESULT=$$?; if [ $$RESULT -eq 2 ]; then \
 		echo "--> compressing $(COMPRESSED_FILE)"; \
-		upx -qq --best --ultra-brute $(COMPRESSED_FILE); \
+		upx -qq --best $(COMPRESSED_FILE); \
 	elif [ $$RESULT -eq 1 ]; then \
 		false; \
 	fi

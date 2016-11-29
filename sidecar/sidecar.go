@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"os/exec"
+
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
@@ -43,7 +45,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/urfave/cli"
-	"os/exec"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable

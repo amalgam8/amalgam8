@@ -43,6 +43,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/urfave/cli"
+	"os/exec"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -66,6 +67,17 @@ func Main() {
 }
 
 func sidecarCommand(context *cli.Context) error {
+	if os.Getenv("A8_CHILD") == "" {
+		fmt.Println(os.Args[1:])
+		cmd := exec.Command("a8sidecar", os.Args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Env = append([]string{"A8_CHILD=yes"}, os.Environ()...)
+		// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
+		go supervisor.ReapZombies()
+		return cmd.Run()
+	}
+
 	conf, err := config.New(context)
 	if err != nil {
 		return err

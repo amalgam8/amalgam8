@@ -22,10 +22,18 @@ var DefaultConfig = Config{
 	Proxy:    false,
 	DNS:      false,
 
+	ProxyConfig: ProxyConfig{
+		Type         : "http",
+		CertPath     : "",
+		CertKeyPath  : "",
+		CACertPath   : "",
+	},
+
 	Service: Service{
 		Name: "",
 		Tags: nil,
 	},
+
 	Endpoint: Endpoint{
 		Host: "",
 		Port: 0,
@@ -67,6 +75,8 @@ var DefaultConfig = Config{
 	},
 
 	HealthChecks: nil,
+
+	HealthChecksCACertPath: "",
 
 	LogLevel: "info",
 

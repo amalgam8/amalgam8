@@ -63,3 +63,10 @@ tar -xzf /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz -C /
 #Cleanup
 rm -rf ${A8TMP}
 rm /tmp/a8sidecar-${A8SIDECAR_RELEASE}-linux-amd64.tar.gz
+
+if [ $HAVE_WGET -eq 1 ]; then
+    wget -qO /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64
+else
+    curl -sSL -o /usr/bin/dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.0/dumb-init_1.2.0_amd64
+fi
+chmod +x /usr/bin/dumb-init

@@ -14,8 +14,8 @@
 
 FROM node:4-onbuild
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.2/a8sidecar.sh | sh
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.3/a8sidecar.sh | sh
 
 EXPOSE 9080
 
-ENTRYPOINT ["a8sidecar", "node", "ratings.js", "9080"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--", "a8sidecar", "node", "ratings.js", "9080"]

@@ -19,4 +19,4 @@ COPY productpage /opt/microservices/
 
 EXPOSE 9080
 
-ENTRYPOINT ["a8sidecar", "/opt/microservices/productpage", "9080", "http://localhost:6379"]
+CMD ["/opt/microservices/productpage", "9080", "http://localhost:6379"]

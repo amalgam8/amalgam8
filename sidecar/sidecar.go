@@ -70,6 +70,12 @@ func sidecarCommand(context *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	if conf.Proxy {
+		err = conf.GenProxyConfig()
+		if err != nil {
+			return err
+		}
+	}
 	return Run(*conf)
 }
 

@@ -21,9 +21,11 @@ type controller struct {
 // ControllerClient .
 type ControllerClient interface {
 	Routes() (*RouteList, error)
+	ServiceRoutes(service string) (*RuleList, error)
 	GetActions() (*ActionList, error)
 	Rules(query string) (*RuleList, error)
 	SetRules(payload io.Reader) (interface{}, error)
+	UpdateRules(payload io.Reader) (interface{}, error)
 	DeleteRules(query string) (interface{}, error)
 	NewQuery() url.Values
 }
@@ -87,6 +89,22 @@ func (c *controller) SetRules(payload io.Reader) (interface{}, error) {
 	return result, nil
 }
 
+// UpdateRules .
+func (c *controller) UpdateRules(payload io.Reader) (interface{}, error) {
+	headers := c.client.NewHeader()
+	headers.Add("Accept", "application/json")
+	result := &struct {
+		IDs []string `json:"ids"`
+	}{}
+
+	err := c.client.PUT(rulesPath, payload, c.debug, headers, result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // DeleteRules .
 func (c *controller) DeleteRules(query string) (interface{}, error) {
 	var uri string
@@ -106,6 +124,19 @@ func (c *controller) DeleteRules(query string) (interface{}, error) {
 func (c *controller) Routes() (*RouteList, error) {
 	routes := &RouteList{}
 	err := c.client.GET(routesPath, c.debug, nil, routes)
+	if err != nil {
+		return nil, err
+	}
+	return routes, nil
+}
+
+// ServiceRoutes .
+func (c *controller) ServiceRoutes(service string) (*RuleList, error) {
+	if service != "" {
+		service = "/" + service
+	}
+	routes := &RuleList{}
+	err := c.client.GET(routesPath+service, c.debug, nil, routes)
 	if err != nil {
 		return nil, err
 	}

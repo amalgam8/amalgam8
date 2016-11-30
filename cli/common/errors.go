@@ -39,4 +39,11 @@ var (
 	ErrUnknowFlag = errors.New("flag provided but not defined")
 	// ErrInvalidFlagArg .
 	ErrInvalidFlagArg = errors.New("flag needs an argument")
+	// ErrIncorrectAmountRange .
+	ErrIncorrectAmountRange = errors.New("--amount must be between 0 and 100")
+	// ErrNotRulesFoundForService .
+	ErrNotRulesFoundForService = errors.New("No rules found for service")
+	// ErrInvalidStateForTrafficStart .
+	ErrInvalidStateForTrafficStart = errors.New("Invalid state for start operation")
+	// ErrInvalidStateForTrafficStep .
 )

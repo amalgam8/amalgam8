@@ -198,5 +198,29 @@
   {
     "id": "rule_delete_all_confirmation",
     "translation": "Do you really want to delete all rules?"
-  }
+  },
+  {
+  "id": "traffic_start_name",
+  "translation": "traffic-start"
+},
+{
+  "id": "traffic_start_description",
+  "translation": "Start trasferring traffic to a new version of a microservice."
+},
+{
+  "id": "traffic_start_usage",
+  "translation": "Start trasferring traffic to a new version of a microservice."
+},
+{
+  "id": "traffic_start_service_usage",
+  "translation": "The service name."
+},
+{
+  "id": "traffic_start_version_usage",
+  "translation": "The new version to traffic."
+},
+{
+  "id": "traffic_start_output_usage",
+  "translation": "A percentage of traffic 0-100 to send to the new version (default is 10 percent)."
+}
 ]

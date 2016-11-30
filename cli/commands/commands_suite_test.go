@@ -26,5 +26,133 @@ func TestCommands(t *testing.T) {
 	RunSpecs(t, "Commands Suite")
 }
 
+var response = make(map[string][]byte)
+
 var _ = Describe("Commands", func() {
+	response["traffic_stopped"] = []byte(`
+		{
+			"rules": [
+				{
+					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
+					"priority": 1,
+					"destination": "reviews",
+					"route": {
+						"backends": [
+							{
+								"tags": [
+									"v1"
+								]
+							}
+						]
+					}
+				}
+			],
+			"revision": 1
+		}`)
+
+	response["traffic_started"] = []byte(`
+		{
+			"rules": [
+				{
+					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
+					"priority": 1,
+					"destination": "reviews",
+					"route": {
+						"backends": [
+							{
+								"tags": [
+									"v2"
+								],
+								"weight": 0.1
+							},
+							{
+								"tags": [
+									"v1"
+								]
+							}
+						]
+					}
+				}
+			],
+			"revision": 2
+		}`)
+
+	response["weight_not_zero"] = []byte(`
+			{
+				"rules": [
+					{
+						"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
+						"priority": 1,
+						"destination": "reviews",
+						"route": {
+							"backends": [
+								{
+									"tags": [
+										"v1"
+									],
+									"weight": 0.1
+								}
+							]
+						}
+					}
+				],
+				"revision": 1
+			}`)
+
+	response["no_rules"] = []byte(`
+		{"rules":[],"revision":1}
+	`)
+
+	response["inactive"] = []byte(`
+		{"Error":"Failed to enumerate service names"}
+	`)
+
+	response["reviews"] = []byte(`
+		{
+			"service_name": "reviews",
+			"instances": [
+				{
+					"id": "5f940f0ddee732bb",
+					"service_name": "reviews",
+					"endpoint": {
+						"type": "http",
+						"value": "172.17.0.9:9080"
+					},
+					"ttl": 60,
+					"status": "UP",
+					"last_heartbeat": "2016-11-22T22:25:56.02658653Z",
+					"tags": [
+						"v3"
+					]
+				},
+				{
+					"id": "9b9776db6ac79b56",
+					"service_name": "reviews",
+					"endpoint": {
+						"type": "http",
+						"value": "172.17.0.14:9080"
+					},
+					"ttl": 60,
+					"status": "UP",
+					"last_heartbeat": "2016-11-22T22:25:51.192761423Z",
+					"tags": [
+						"v2"
+					]
+				},
+				{
+					"id": "eea7a5a4d9b10a1f",
+					"service_name": "reviews",
+					"endpoint": {
+						"type": "http",
+						"value": "172.17.0.11:9080"
+					},
+					"ttl": 60,
+					"status": "UP",
+					"last_heartbeat": "2016-11-22T22:25:51.011945888Z",
+					"tags": [
+						"v1"
+					]
+				}
+			]
+		}`)
 })

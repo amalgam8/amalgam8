@@ -43,12 +43,15 @@ type MatchRules struct {
 
 // RouteRules .
 type RouteRules struct {
-	Backends []struct {
-		Name    string   `json:"name,omitempty" yaml:"name,omitempty"`
-		Timeout string   `json:"timeout,omitempty" yaml:"timeout,omitempty"`
-		Tags    []string `json:"tags,omitempty" yaml:"tags,omitempty"`
-		Weight  float32  `json:"weight,omitempty" yaml:"weight,omitempty"`
-	} `json:"backends,omitempty" yaml:"backends,omitempty"`
+	Backends []Backend `json:"backends,omitempty" yaml:"backends,omitempty"`
+}
+
+// Backend .
+type Backend struct {
+	Name    string   `json:"name,omitempty" yaml:"name,omitempty"`
+	Timeout string   `json:"timeout,omitempty" yaml:"timeout,omitempty"`
+	Tags    []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Weight  float32  `json:"weight,omitempty" yaml:"weight,omitempty"`
 }
 
 // ActionsRules .

@@ -182,7 +182,7 @@ func Confirmation(writer io.Writer, description string) (bool, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	for {
-		fmt.Fprintf(writer, "%s [Y/n]: ", description)
+		fmt.Fprintf(writer, "%s [y/N]: ", description)
 		response, err := reader.ReadString('\n')
 		if err != nil {
 			return false, err

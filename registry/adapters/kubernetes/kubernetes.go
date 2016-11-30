@@ -62,11 +62,16 @@ type Config struct {
 
 // Adapter for Kubernetes Service Discovery.
 type Adapter struct {
+	// endpointsCache caches service endpoints resources from Kubernetes API
 	endpointsCache      cache.Store
 	endpointsController cache.ControllerInterface
 
+	// podCache caches pod resources from Kubernetes API
 	podCache      cache.Store
 	podController cache.ControllerInterface
+
+	// workqueue is used to queue and process events send from the cache controllers
+	workqueue *workqueue
 
 	// services maps a service name to a list of service instances.
 	// This is stored precomputed so we won't have to recompute it
@@ -79,10 +84,17 @@ type Adapter struct {
 	servicePods map[string]datastructures.StringSet
 	podServices map[string]datastructures.StringSet
 
+	// namespace from which to sync endpoints/pods
 	namespace string
 
+	// stopChan for stop signals
 	stopChan chan struct{}
-	mutex    sync.RWMutex
+
+	// mutex is used to synchronize access to the 'services' map,
+	// which is read by the ListXXX() methods (externally),
+	// and is written by the cache event handlers (internally).
+	// Given that we expect a single reader only, we use a regular sync.Mutex rather than a sync.RWMutex.
+	mutex sync.Mutex
 }
 
 // New creates and starts a new Kubernetes Service Discovery adapter.
@@ -104,7 +116,9 @@ func New(config Config) (*Adapter, error) {
 		namespace = "default"
 	}
 
+	workqueue := newWorkqueue()
 	adapter := &Adapter{
+		workqueue:   workqueue,
 		services:    make(map[string][]*api.ServiceInstance),
 		podServices: make(map[string]datastructures.StringSet),
 		servicePods: make(map[string]datastructures.StringSet),
@@ -116,9 +130,9 @@ func New(config Config) (*Adapter, error) {
 		&v1.Endpoints{},
 		EndpointsCacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    adapter.addEndpoints,
-			UpdateFunc: adapter.updateEndpoints,
-			DeleteFunc: adapter.deleteEndpoints,
+			AddFunc:    workqueue.EnqueueingAddFunc(adapter.addEndpoints),
+			UpdateFunc: workqueue.EnqueueingUpdateFunc(adapter.updateEndpoints),
+			DeleteFunc: workqueue.EnqueueingDeleteFunc(adapter.deleteEndpoints),
 		},
 	)
 
@@ -127,9 +141,9 @@ func New(config Config) (*Adapter, error) {
 		&v1.Pod{},
 		PodCacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc:    adapter.addPod,
-			UpdateFunc: adapter.updatePod,
-			DeleteFunc: adapter.deletePod,
+			AddFunc:    workqueue.EnqueueingAddFunc(adapter.addPod),
+			UpdateFunc: workqueue.EnqueueingUpdateFunc(adapter.updatePod),
+			DeleteFunc: workqueue.EnqueueingDeleteFunc(adapter.deletePod),
 		},
 	)
 
@@ -147,6 +161,8 @@ func (a *Adapter) Start() error {
 		return err
 	}
 	a.stopChan = make(chan struct{})
+
+	a.workqueue.Start()
 
 	go a.endpointsController.Run(a.stopChan)
 	go a.podController.Run(a.stopChan)
@@ -167,13 +183,15 @@ func (a *Adapter) Stop() error {
 	close(a.stopChan)
 	a.stopChan = nil
 
+	a.workqueue.Stop()
+
 	return nil
 }
 
 // ListServices queries for the list of services for which instances are currently registered.
 func (a *Adapter) ListServices() ([]string, error) {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
 	services := make([]string, 0, len(a.services))
 	for service := range a.services {
@@ -185,8 +203,8 @@ func (a *Adapter) ListServices() ([]string, error) {
 
 // ListInstances queries for the list of service instances currently registered.
 func (a *Adapter) ListInstances() ([]*api.ServiceInstance, error) {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
 	instances := make([]*api.ServiceInstance, 0, len(a.services)*3)
 	for _, service := range a.services {
@@ -198,8 +216,8 @@ func (a *Adapter) ListInstances() ([]*api.ServiceInstance, error) {
 
 // ListServiceInstances queries for the list of service instances currently registered for the given service.
 func (a *Adapter) ListServiceInstances(serviceName string) ([]*api.ServiceInstance, error) {
-	a.mutex.RLock()
-	defer a.mutex.RUnlock()
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
 	service := a.services[serviceName]
 	instances := make([]*api.ServiceInstance, 0, len(service))
@@ -210,9 +228,6 @@ func (a *Adapter) ListServiceInstances(serviceName string) ([]*api.ServiceInstan
 
 // addEndpoints is the callback invoked by the Kubernetes cache when an endpoints API resource is added.
 func (a *Adapter) addEndpoints(obj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
 	endpoints, ok := obj.(*v1.Endpoints)
 	if !ok {
 		logger.Warnf("Invalid endpoint added: object is of type %T", obj)
@@ -225,24 +240,28 @@ func (a *Adapter) addEndpoints(obj interface{}) {
 
 // updateEndpoints is the callback invoked by the Kubernetes cache when an endpoints API resource is updated.
 func (a *Adapter) updateEndpoints(oldObj, newObj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	endpoints, ok := newObj.(*v1.Endpoints)
+	oldEndpoints, ok := oldObj.(*v1.Endpoints)
+	if !ok {
+		logger.Warnf("Invalid endpoint update: old object is of type %T", oldObj)
+		return
+	}
+	newEndpoints, ok := newObj.(*v1.Endpoints)
 	if !ok {
 		logger.Warnf("Invalid endpoint update: new object is of type %T", newObj)
 		return
 	}
 
-	logger.Debugf("Endpoints object updated: %s", endpoints.Name)
-	a.reloadServiceFromEndpoints(endpoints)
+	// If resource version hasn't changed (i.e., on full resync), ignore
+	if oldEndpoints.ResourceVersion >= newEndpoints.ResourceVersion {
+		return
+	}
+
+	logger.Debugf("Endpoints object updated: %s", newEndpoints.Name)
+	a.reloadServiceFromEndpoints(newEndpoints)
 }
 
 // deleteEndpoints is the callback invoked by the Kubernetes cache when an endpoints API resource is deleted.
 func (a *Adapter) deleteEndpoints(obj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
 	endpoints, ok := extractDeletedObject(obj).(*v1.Endpoints)
 	if !ok {
 		logger.Warnf("Invalid endpoint deleted: object is of type %T", obj)
@@ -255,9 +274,6 @@ func (a *Adapter) deleteEndpoints(obj interface{}) {
 
 // addPod is the callback invoked by the Kubernetes cache when a pod API resource is added.
 func (a *Adapter) addPod(obj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
 	pod, ok := obj.(*v1.Pod)
 	if !ok {
 		logger.Warnf("Invalid pod added: object is of type %T", obj)
@@ -273,9 +289,6 @@ func (a *Adapter) addPod(obj interface{}) {
 
 // updatePod is the callback invoked by the Kubernetes cache when a pod API resource is updated.
 func (a *Adapter) updatePod(oldObj, newObj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
 	oldPod, ok := oldObj.(*v1.Pod)
 	if !ok {
 		logger.Warnf("Invalid pod update: old object is of type %T", oldObj)
@@ -284,6 +297,11 @@ func (a *Adapter) updatePod(oldObj, newObj interface{}) {
 	newPod, ok := newObj.(*v1.Pod)
 	if !ok {
 		logger.Warnf("Invalid pod update: new object is of type %T", newObj)
+		return
+	}
+
+	// If resource version hasn't changed (i.e., on full resync), ignore
+	if oldPod.ResourceVersion >= newPod.ResourceVersion {
 		return
 	}
 
@@ -301,9 +319,6 @@ func (a *Adapter) updatePod(oldObj, newObj interface{}) {
 
 // deletePod is the callback invoked by the Kubernetes cache when a pod API resource is deleted.
 func (a *Adapter) deletePod(obj interface{}) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
 	pod, ok := extractDeletedObject(obj).(*v1.Pod)
 	if !ok {
 		logger.Warnf("Invalid pod deleted: object is of type %T", obj)
@@ -350,8 +365,6 @@ func (a *Adapter) reloadServiceFromEndpoints(endpoints *v1.Endpoints) {
 		}
 	}
 
-	a.services[endpoints.Name] = instances
-
 	prevPods := a.servicePods[endpoints.Name]
 	a.servicePods[endpoints.Name] = pods
 
@@ -369,10 +382,18 @@ func (a *Adapter) reloadServiceFromEndpoints(endpoints *v1.Endpoints) {
 		}
 		podServices.Add(endpoints.Name)
 	}
+
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
+	a.services[endpoints.Name] = instances
 }
 
 // deleteService deletes any stored service instance for the given service.
 func (a *Adapter) deleteService(serviceName string) {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+
 	delete(a.services, serviceName)
 }
 

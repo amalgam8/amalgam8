@@ -110,7 +110,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 			// forwarding signal to supervised applications to exit gracefully
 			terminateSubprocesses(a.processes, sig)
 
-			a.Shutdown(0)
+			a.shutdown(0)
 		case err := <-appChan:
 			exitCode := 0
 			if err.Err == nil {
@@ -135,7 +135,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 			case config.TerminateProcess:
 				log.WithError(err.Err).Errorf("App '%v' with args '%v' exited.  Exiting", err.Proc.Cmd.Args[0], strings.Join(err.Proc.Cmd.Args[1:], " "))
 				terminateSubprocesses(a.processes, syscall.SIGTERM)
-				a.Shutdown(exitCode)
+				a.shutdown(exitCode)
 			}
 
 		}
@@ -143,7 +143,7 @@ func (a *AppSupervisor) DoAppSupervision() {
 }
 
 // Shutdown deregister the app with registry and exit sidecar
-func (a *AppSupervisor) Shutdown(sig int) {
+func (a *AppSupervisor) shutdown(sig int) {
 	if a.registration != nil {
 		a.registration.Stop()
 	}
@@ -197,26 +197,5 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 		}
 
 		time.Sleep(100 * time.Millisecond)
-	}
-}
-
-// reapZombies cleans up any zombies sidecar may have inherited from terminated children
-// - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
-func ReapZombies() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGCHLD)
-
-	for range sigChan {
-		for {
-			_, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
-
-			// Spurious wakeup
-			if err == syscall.EINTR {
-				continue
-			}
-			log.Debug("Zombie reaped")
-			// Done
-			break
-		}
 	}
 }

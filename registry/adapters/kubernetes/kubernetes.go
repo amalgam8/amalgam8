@@ -15,24 +15,20 @@
 package kubernetes
 
 import (
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
-	"encoding/json"
-
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/datastructures"
 	"github.com/amalgam8/amalgam8/pkg/errors"
 	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
-	"k8s.io/client-go/kubernetes"
-	kubeapi "k8s.io/client-go/pkg/api"
+
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/runtime"
-	"k8s.io/client-go/pkg/watch"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
@@ -41,7 +37,7 @@ const (
 	// EndpointsCacheResyncPeriod is the period in which we do a full resync of the endpoints cache.
 	EndpointsCacheResyncPeriod = time.Duration(60) * time.Second
 
-	// PodCacheResyncPeriod is the period in which we do a full resync of the endpoints cache.
+	// PodCacheResyncPeriod is the period in which we do a full resync of the pod cache.
 	PodCacheResyncPeriod = time.Duration(60) * time.Second
 )
 
@@ -61,7 +57,7 @@ type Config struct {
 	// If no client is provided, then a client is created
 	// according the specified URL/Token/Namespace, if provided,
 	// or from the local service account, if running within a Kubernetes pod.
-	Client kubernetes.Interface
+	Client *rest.RESTClient
 }
 
 // Adapter for Kubernetes Service Discovery.
@@ -72,14 +68,18 @@ type Adapter struct {
 	podCache      cache.Store
 	podController cache.ControllerInterface
 
-	// services maps a service name to a list of service instances
+	// services maps a service name to a list of service instances.
+	// This is stored precomputed so we won't have to recompute it
+	// with every ListInstance()/ListServiceInstances() call.
 	services map[string][]*api.ServiceInstance
 
-	// servicePods maps a service name to a set of pods implementing it
+	// servicePods maps a service name to a set of pod names implementing it.
+	// podServices maps a pod name to a set of service names implemented by it.
+	// These are maintained mainly for supporting dynamic label updates on pods.
 	servicePods map[string]datastructures.StringSet
-
-	// podService maps a pod UID to a set of services implemented by it
 	podServices map[string]datastructures.StringSet
+
+	namespace string
 
 	stopChan chan struct{}
 	mutex    sync.RWMutex
@@ -87,7 +87,7 @@ type Adapter struct {
 
 // New creates and starts a new Kubernetes Service Discovery adapter.
 func New(config Config) (*Adapter, error) {
-	var client kubernetes.Interface
+	var client *rest.RESTClient
 	if config.Client != nil {
 		client = config.Client
 	} else {
@@ -108,18 +108,11 @@ func New(config Config) (*Adapter, error) {
 		services:    make(map[string][]*api.ServiceInstance),
 		podServices: make(map[string]datastructures.StringSet),
 		servicePods: make(map[string]datastructures.StringSet),
+		namespace:   namespace,
 	}
 
-	endpointsClient := client.Core().Endpoints(namespace)
 	adapter.endpointsCache, adapter.endpointsController = cache.NewInformer(
-		&cache.ListWatch{
-			ListFunc: func(opts kubeapi.ListOptions) (runtime.Object, error) {
-				return endpointsClient.List(convertListOptions(opts))
-			},
-			WatchFunc: func(opts kubeapi.ListOptions) (watch.Interface, error) {
-				return endpointsClient.Watch(convertListOptions(opts))
-			},
-		},
+		cache.NewListWatchFromClient(client, "endpoints", namespace, nil),
 		&v1.Endpoints{},
 		EndpointsCacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
@@ -129,16 +122,8 @@ func New(config Config) (*Adapter, error) {
 		},
 	)
 
-	podsClient := client.Core().Pods(namespace)
 	adapter.podCache, adapter.podController = cache.NewInformer(
-		&cache.ListWatch{
-			ListFunc: func(opts kubeapi.ListOptions) (runtime.Object, error) {
-				return podsClient.List(convertListOptions(opts))
-			},
-			WatchFunc: func(opts kubeapi.ListOptions) (watch.Interface, error) {
-				return podsClient.Watch(convertListOptions(opts))
-			},
-		},
+		cache.NewListWatchFromClient(client, "pods", namespace, nil),
 		&v1.Pod{},
 		PodCacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
@@ -280,7 +265,7 @@ func (a *Adapter) addPod(obj interface{}) {
 	}
 
 	// Reload any services implemented by the pod
-	services := a.podServices[string(pod.UID)]
+	services := a.podServices[pod.Name]
 	for service := range services {
 		a.reloadServiceFromCache(service)
 	}
@@ -308,7 +293,7 @@ func (a *Adapter) updatePod(oldObj, newObj interface{}) {
 	}
 
 	// Reload any services implemented by the pod
-	services := a.podServices[string(newPod.UID)]
+	services := a.podServices[newPod.Name]
 	for service := range services {
 		a.reloadServiceFromCache(service)
 	}
@@ -325,7 +310,7 @@ func (a *Adapter) deletePod(obj interface{}) {
 		return
 	}
 
-	delete(a.podServices, string(pod.UID))
+	delete(a.podServices, pod.Name)
 }
 
 // reloadServiceFromCache rebuilds and stores the service instances for the given service,
@@ -360,7 +345,7 @@ func (a *Adapter) reloadServiceFromEndpoints(endpoints *v1.Endpoints) {
 			}
 
 			if address.TargetRef != nil {
-				pods.Add(string(address.TargetRef.UID))
+				pods.Add(address.TargetRef.Name)
 			}
 		}
 	}
@@ -373,7 +358,7 @@ func (a *Adapter) reloadServiceFromEndpoints(endpoints *v1.Endpoints) {
 	for pod := range prevPods.Difference(pods) {
 		podServices := a.podServices[pod]
 		if podServices != nil {
-			delete(podServices, pod)
+			podServices.Remove(endpoints.Name)
 		}
 	}
 	for pod := range pods.Difference(prevPods) {
@@ -403,7 +388,7 @@ func (a *Adapter) createServiceInstance(serviceName string, address v1.EndpointA
 	// Extract the pod implementing the service
 	var pod *v1.Pod
 	if address.TargetRef != nil {
-		pod = a.getCachedPod(string(address.TargetRef.UID))
+		pod = a.getCachedPod(address.TargetRef.Name)
 	}
 
 	// Determine the ID of the service instance.
@@ -440,38 +425,46 @@ func (a *Adapter) createServiceInstance(serviceName string, address v1.EndpointA
 
 // getCachedServiceEndpoints returns the cached endpoints resource for the given service, or nil if doesn't exist.
 func (a *Adapter) getCachedServiceEndpoints(serviceName string) *v1.Endpoints {
-	// TODO implement more efficiently using an Indexer
-	for _, obj := range a.endpointsCache.List() {
-		endpoints := obj.(*v1.Endpoints)
-		if endpoints.Name == serviceName {
-			return endpoints
-		}
-	}
-	return nil
-}
-
-// getCachedServiceEndpoints returns the cached pod resource for the given UID, or nil if doesn't exist.
-func (a *Adapter) getCachedPod(podUID string) *v1.Pod {
-	// TODO implement more efficiently using an Indexer
-	for _, obj := range a.podCache.List() {
-		pod := obj.(*v1.Pod)
-		if string(pod.UID) == podUID {
-			return pod
-		}
-	}
-	return nil
-}
-
-// convertListOptions converts the internal api.ListOptions struct into the versioned v1.ListOptions struct.
-// This is used as a temporary workaround until all public APIs from the kubernetes/client-go packages finish migrating
-// to the versioned API interfaces.
-func convertListOptions(apiOpts kubeapi.ListOptions) v1.ListOptions {
-	v1Opts := v1.ListOptions{}
-	err := v1.Convert_api_ListOptions_To_v1_ListOptions(&apiOpts, &v1Opts, nil)
+	key, err := cache.MetaNamespaceKeyFunc(&v1.Endpoints{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: a.namespace,
+			Name:      serviceName,
+		},
+	})
 	if err != nil {
-		logger.WithError(err).Errorf("Error converting Kubernetes API-->V1 ListOptions object")
+		return nil
 	}
-	return v1Opts
+	obj, exist, err := a.endpointsCache.GetByKey(key)
+	if err != nil || !exist {
+		return nil
+	}
+	endpoints, ok := obj.(*v1.Endpoints)
+	if !ok {
+		return nil
+	}
+	return endpoints
+}
+
+// getCachedPod returns the cached pod resource for the given pod name, or nil if doesn't exist.
+func (a *Adapter) getCachedPod(podName string) *v1.Pod {
+	key, err := cache.MetaNamespaceKeyFunc(&v1.Pod{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: a.namespace,
+			Name:      podName,
+		},
+	})
+	if err != nil {
+		return nil
+	}
+	obj, exist, err := a.podCache.GetByKey(key)
+	if err != nil || !exist {
+		return nil
+	}
+	pod, ok := obj.(*v1.Pod)
+	if !ok {
+		return nil
+	}
+	return pod
 }
 
 // extractDeletedObject is used within "deleteXXX" cache callbacks, where the provided
@@ -532,10 +525,10 @@ func buildMetadataFromAnnotations(annotations map[string]string) json.RawMessage
 	return json.RawMessage(bytes)
 }
 
-// buildClientFromConfig creates a new Kubernetes client based on the given configuration.
+// buildClientFromConfig creates a new Kubernetes REST client based on the given configuration.
 // If no URL and Token are specified, then these values are attempted to be read from the
 // service account (if running within a Kubernetes pod).
-func buildClientFromConfig(config Config) (kubernetes.Interface, error) {
+func buildClientFromConfig(config Config) (*rest.RESTClient, error) {
 	var kubeConfig *rest.Config
 	if config.URL != "" || config.Token != "" {
 		kubeConfig = &rest.Config{
@@ -551,9 +544,9 @@ func buildClientFromConfig(config Config) (kubernetes.Interface, error) {
 		}
 	}
 
-	client, err := kubernetes.NewForConfig(kubeConfig)
+	client, err := rest.RESTClientFor(kubeConfig)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed creating Kubernetes client")
+		return nil, errors.Wrap(err, "Failed creating Kubernetes REST client")
 	}
 	return client, nil
 }

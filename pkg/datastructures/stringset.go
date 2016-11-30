@@ -14,6 +14,10 @@
 
 package datastructures
 
+import (
+	"github.com/amalgam8/amalgam8/pkg/math"
+)
+
 // StringSet is a set of strings, supporting basic set and inter-set operations.
 // The StringSet is abstracted on top of a map[string]struct{}, so it also supports range-style iteration,
 // as well as direct map operations.
@@ -54,7 +58,7 @@ func (set StringSet) Exists(s string) bool {
 
 // Union creates a set containing all elements in either the receiver set or the given set.
 func (set StringSet) Union(otherSet StringSet) StringSet {
-	newSet := NewStringSet(max(len(set), len(otherSet)))
+	newSet := NewStringSet(math.Max(len(set), len(otherSet)))
 
 	for elem := range set {
 		newSet.Add(elem)
@@ -69,7 +73,7 @@ func (set StringSet) Union(otherSet StringSet) StringSet {
 
 // Intersection creates a set containing all elements in both the receiver set and the given set.
 func (set StringSet) Intersection(otherSet StringSet) StringSet {
-	newSet := NewStringSet(min(len(set), len(otherSet)))
+	newSet := NewStringSet(math.Min(len(set), len(otherSet)))
 
 	if set == nil || otherSet == nil {
 		return newSet
@@ -99,18 +103,4 @@ func (set StringSet) Difference(otherSet StringSet) StringSet {
 	}
 
 	return newSet
-}
-
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
-func max(x, y int) int {
-	if x < y {
-		return y
-	}
-	return x
 }

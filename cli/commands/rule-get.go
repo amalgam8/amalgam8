@@ -61,7 +61,7 @@ func (cmd *RuleGetCommand) GetMetadata() cli.Command {
 			cli.StringFlag{
 				Name:  "output, o",
 				Usage: T("rule_get_output_usage"),
-				Value: "json",
+				Value: YAML,
 			},
 			cli.BoolFlag{
 				Name:  "all, a",

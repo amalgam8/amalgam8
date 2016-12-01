@@ -195,7 +195,7 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-a"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-a", "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"id": "abc123"`))
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"id": "xyz123"`))
@@ -203,7 +203,7 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as YAML", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-a", "-o=yaml"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-a"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("- id: abc123"))
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("- id: xyz123"))
@@ -234,7 +234,7 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-i=" + ID})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-i=" + ID, "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"id": "` + ID + `"`))
 				fmt.Println(app.Writer)
@@ -242,7 +242,7 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as YAML", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-i=" + ID, "-o=yaml"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-i=" + ID})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`- id: ` + ID))
 				fmt.Println(app.Writer)
@@ -272,14 +272,14 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-d=" + destination})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-d=" + destination, "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"destination": "` + destination + `"`))
 				fmt.Println(app.Writer)
 			})
 
-			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-d=" + destination, "-o=yaml"})
+			It("should print rules as YAML", func() {
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-d=" + destination})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`destination: ` + destination))
 				fmt.Println(app.Writer)
@@ -309,15 +309,15 @@ var _ = Describe("Rule-Get", func() {
 			})
 
 			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-t=" + tags})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-t=" + tags, "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"tags"`))
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"` + tags + `"`))
 				fmt.Println(app.Writer)
 			})
 
-			It("should print rules as JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-t=" + tags, "-o=yaml"})
+			It("should print rules as YAML", func() {
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-get", "-t=" + tags})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`- ` + tags))
 				fmt.Println(app.Writer)

@@ -19,4 +19,4 @@ COPY ratings /opt/microservices/
 
 EXPOSE 9080
 
-ENTRYPOINT ["a8sidecar", "/opt/microservices/ratings", "9080" ]
+CMD ["/opt/microservices/ratings", "9080" ]

@@ -19,4 +19,4 @@ COPY details /opt/microservices/
 
 EXPOSE 9080
 
-ENTRYPOINT ["a8sidecar", "/opt/microservices/details", "9080" ]
+CMD ["/opt/microservices/details", "9080" ]

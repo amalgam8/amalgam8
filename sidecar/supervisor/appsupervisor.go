@@ -99,9 +99,6 @@ func (a *AppSupervisor) DoAppSupervision() {
 		}
 	}
 
-	// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
-	go reapZombies()
-
 	// Intercept SIGTERM/SIGINT and stop
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
@@ -205,7 +202,7 @@ func terminateSubprocesses(procs []*process, sig os.Signal) {
 
 // reapZombies cleans up any zombies sidecar may have inherited from terminated children
 // - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
-func reapZombies() {
+func ReapZombies() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGCHLD)
 
@@ -217,7 +214,7 @@ func reapZombies() {
 			if err == syscall.EINTR {
 				continue
 			}
-
+			log.Debug("Zombie reaped")
 			// Done
 			break
 		}

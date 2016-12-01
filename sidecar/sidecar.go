@@ -23,6 +23,8 @@ import (
 	"strings"
 	"time"
 
+	"os/exec"
+
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
@@ -66,6 +68,17 @@ func Main() {
 }
 
 func sidecarCommand(context *cli.Context) error {
+	if os.Getenv("A8_CHILD") == "" {
+		fmt.Println(os.Args[1:])
+		cmd := exec.Command("a8sidecar", os.Args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		cmd.Env = append([]string{"A8_CHILD=yes"}, os.Environ()...)
+		// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
+		go supervisor.ReapZombies()
+		return cmd.Run()
+	}
+
 	conf, err := config.New(context)
 	if err != nil {
 		return err

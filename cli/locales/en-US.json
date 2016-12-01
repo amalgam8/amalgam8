@@ -12,35 +12,35 @@
     "translation": "0.0.1"
   },
   {
-    "id":"debug_usage",
+    "id": "debug_usage",
     "translation": "Show REST communication with Amalgam8 Controller as it is performed."
   },
   {
-    "id":"json_usage",
+    "id": "json_usage",
     "translation": "Show output in JSON format"
   },
   {
-    "id":"yaml_usage",
+    "id": "yaml_usage",
     "translation": "Show output in YAML format"
   },
   {
-    "id":"invalid_url",
+    "id": "invalid_url",
     "translation": "Invalid URL or empty."
   },
   {
-    "id":"registry_url_usage",
+    "id": "registry_url_usage",
     "translation": "Registry URL"
   },
   {
-    "id":"registry_token_usage",
+    "id": "registry_token_usage",
     "translation": "Registry Token"
   },
   {
-    "id":"controller_url_usage",
+    "id": "controller_url_usage",
     "translation": "Controller URL"
   },
   {
-    "id":"request_completed",
+    "id": "request_completed",
     "translation": "Request Completed"
   },
   {
@@ -56,7 +56,7 @@
     "translation": "Shows information about the configuration of the CLI."
   },
   {
-    "id":"rule_deleted",
+    "id": "rule_deleted",
     "translation": "Rule Deleted"
   },
   {
@@ -200,47 +200,63 @@
     "translation": "Do you really want to delete all rules?"
   },
   {
-  "id": "traffic_start_name",
-  "translation": "traffic-start"
-},
-{
-  "id": "traffic_start_description",
-  "translation": "Start transferring traffic to a new version of a microservice."
-},
-{
-  "id": "traffic_start_usage",
-  "translation": "Start transferring traffic to a new version of a microservice."
-},
-{
-  "id": "traffic_start_service_usage",
-  "translation": "The service name."
-},
-{
-  "id": "traffic_start_version_usage",
-  "translation": "The new version to traffic."
-},
-{
-  "id": "traffic_start_output_usage",
-  "translation": "A percentage of traffic 0-100 to send to the new version (default is 10 percent)."
-},
-{
-  "id": "traffic_step_name",
-  "translation": "traffic-step"
-},
-{
-  "id": "traffic_step_description",
-  "translation": "Step up the amount of traffic to a new version of a microservice."
-},
-{
-  "id": "traffic_step_usage",
-  "translation": "Step up the amount of traffic to a new version of a microservice."
-},
-{
-  "id": "traffic_step_service_usage",
-  "translation": "The service name."
-},
-{
-  "id": "traffic_step_amount_usage",
-  "translation": "A percentage of traffic 0-100 to send to the new version."
-}
+    "id": "traffic_start_name",
+    "translation": "traffic-start"
+  },
+  {
+    "id": "traffic_start_description",
+    "translation": "Start transferring traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_start_usage",
+    "translation": "Start transferring traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_start_service_usage",
+    "translation": "The service name."
+  },
+  {
+    "id": "traffic_start_version_usage",
+    "translation": "The new version to traffic."
+  },
+  {
+    "id": "traffic_start_output_usage",
+    "translation": "A percentage of traffic 0-100 to send to the new version (default is 10 percent)."
+  },
+  {
+    "id": "traffic_step_name",
+    "translation": "traffic-step"
+  },
+  {
+    "id": "traffic_step_description",
+    "translation": "Step up the amount of traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_step_usage",
+    "translation": "Step up the amount of traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_step_service_usage",
+    "translation": "The service name."
+  },
+  {
+    "id": "traffic_step_amount_usage",
+    "translation": "A percentage of traffic 0-100 to send to the new version."
+  },
+  {
+    "id": "traffic_abort_name",
+    "translation": "traffic-abort"
+  },
+  {
+    "id": "traffic_abort_description",
+    "translation": "Abort transferring traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_abort_usage",
+    "translation": "Abort transferring traffic to a new version of a microservice."
+  },
+  {
+    "id": "traffic_abort_service_usage",
+    "translation": "The service name."
+  }
 ]

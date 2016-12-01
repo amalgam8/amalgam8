@@ -23,6 +23,7 @@ func GlobalCommands(term terminal.UI) []cli.Command {
 		cmds.NewRuleDeleteCommand(term).GetMetadata(),
 		cmds.NewTrafficStartCommand(term).GetMetadata(),
 		cmds.NewTrafficStepCommand(term).GetMetadata(),
+		cmds.NewTrafficAbortCommand(term).GetMetadata(),
 		cmds.NewInfoCommand(term).GetMetadata(),
 	}
 }

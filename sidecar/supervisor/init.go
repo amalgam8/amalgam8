@@ -26,31 +26,59 @@ import (
 // Init launches new sidecar process with same args and env vars as current process
 // and runs zombie process cleanup for any inherited orphans
 func Init() {
-	cmd := exec.Command("a8sidecar", os.Args[1:]...)
+	cmd := exec.Command(os.Args[0], os.Args[1:]...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	cmd.Env = os.Environ()
 
-	// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
-	go reapZombies()
+	if err := cmd.Start(); err != nil {
+		shutdown(err)
+	}
 
-	go launchChild(cmd)
+	go handleSignals(cmd.Process)
 
-	// Intercept SIGTERM/SIGINT and stop
+	err := cmd.Wait()
+	shutdown(err)
+
+}
+
+func handleSignals(proc *os.Process) {
+	// Trap all signals
 	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGTERM, syscall.SIGINT)
-	select {
-	case sig := <-sigChan:
-		logrus.Infof("Intercepted signal '%v'", sig)
+	signal.Notify(sigChan)
 
-		// forwarding signal to supervised applications to exit gracefully
-		cmd.Process.Signal(sig)
-		shutdown(0)
+	for sig := range sigChan {
+		switch sig {
+		case syscall.SIGCHLD:
+			reapZombies()
+		default:
+			forwardSignal(proc, sig)
+		}
 	}
 }
 
-func launchChild(cmd *exec.Cmd) {
-	err := cmd.Run()
+// reapZombies cleans up any zombies sidecar may have inherited from terminated children
+// - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
+func reapZombies() {
+	for {
+		_, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
+
+		// Spurious wakeup
+		if err == syscall.EINTR {
+			continue
+		}
+		logrus.Debug("Zombie reaped")
+		// Done
+		break
+	}
+}
+
+func forwardSignal(proc *os.Process, sig os.Signal) {
+	if proc != nil {
+		proc.Signal(sig)
+	}
+}
+
+func shutdown(err error) {
 	exitCode := 0
 	if err == nil {
 		logrus.Info("App terminated with exit code 0")
@@ -65,31 +93,7 @@ func launchChild(cmd *exec.Cmd) {
 			logrus.Errorf("App failed to start: %v", err)
 		}
 	}
-	shutdown(exitCode)
-}
 
-// reapZombies cleans up any zombies sidecar may have inherited from terminated children
-// - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
-func reapZombies() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGCHLD)
-
-	for range sigChan {
-		for {
-			_, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
-
-			// Spurious wakeup
-			if err == syscall.EINTR {
-				continue
-			}
-			logrus.Debug("Zombie reaped")
-			// Done
-			break
-		}
-	}
-}
-
-func shutdown(sig int) {
-	logrus.Infof("Shutting down with exit code %v", sig)
-	os.Exit(sig)
+	logrus.Infof("Shutting down with exit code %v", exitCode)
+	os.Exit(exitCode)
 }

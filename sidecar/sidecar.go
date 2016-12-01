@@ -69,6 +69,9 @@ func sidecarCommand(context *cli.Context) error {
 	// when PID=1, launch new sidecar process and assume init responsibilities
 	if os.Getpid() == 1 {
 		supervisor.Init()
+
+		// Init should never return
+		return nil
 	}
 
 	conf, err := config.New(context)
@@ -76,6 +79,7 @@ func sidecarCommand(context *cli.Context) error {
 		return err
 	}
 	return Run(*conf)
+
 }
 
 // Run the sidecar with the given configuration

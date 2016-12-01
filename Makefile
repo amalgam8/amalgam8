@@ -56,8 +56,17 @@ SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 
 EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
-# build flags to create a statically linked binary (required for scratch-based image)
-BUILDFLAGS	:= -a -installsuffix nocgo -tags netgo
+# build flags
+BUILDFLAGS	:= 
+
+# linker flags 
+LDFLAGS     :=
+
+# linker flags to strip symbol tables and debug information
+LDFLAGS     += -s -w
+
+# linker flags to enable static linking
+LDFLAGS     += -linkmode external -extldflags -static
 
 # linker flags to set build info variables
 BUILD_SYM	:= github.com/amalgam8/amalgam8/pkg/version
@@ -185,10 +194,29 @@ dockerize.sidecar:
 #-- release
 #---------------
 
-.PHONY: release release.registry release.controller release.sidecar release.examples
+.PHONY: release release.registry release.controller release.sidecar release.examples compress compress.registry compress.controller compress.sidecar
 
 release: release.registry release.controller release.sidecar release.examples
 
+
+compress: COMPRESSED_FILE := 
+compress:
+	@upx -qqt $(COMPRESSED_FILE); RESULT=$$?; if [ $$RESULT -eq 2 ]; then \
+		echo "--> compressing $(COMPRESSED_FILE)"; \
+		upx -qq --best $(COMPRESSED_FILE); \
+	elif [ $$RESULT -eq 1 ]; then \
+		false; \
+	fi
+	
+compress.registry: tools.upx
+	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(REGISTRY_APP_NAME)
+	
+compress.controller: tools.upx
+	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(CONTROLLER_APP_NAME)
+
+compress.sidecar: tools.upx
+	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(SIDECAR_APP_NAME)
+	
 release.registry:
 	@echo "--> packaging registry for release"
 	@mkdir -p $(RELEASEDIR) 
@@ -225,9 +253,9 @@ release.examples:
 #---------------
 #-- tools
 #---------------
-.PHONY: tools tools.goimports tools.golint tools.govet tools.glide
+.PHONY: tools tools.goimports tools.golint tools.govet tools.glide tools.upx
 
-tools: tools.goimports tools.golint tools.govet tools.glide
+tools: tools.goimports tools.golint tools.govet tools.glide tools.upx
 
 tools.goimports:
 	@command -v goimports >/dev/null ; if [ $$? -ne 0 ]; then \
@@ -257,3 +285,14 @@ tools.glide:
 		wget -qO- https://github.com/Masterminds/glide/releases/download/$$GLIDE_VERSION/$$GLIDE_RELEASE.tar.gz | tar xz -C /tmp/$$GLIDE_RELEASE; \
 		cp /tmp/$$GLIDE_RELEASE/$$GLIDE_ARCH/glide ~/bin; \
     fi
+
+tools.upx:
+	@command -v upx >/dev/null ; if [ $$? -ne 0 ]; then \
+		echo "--> installing upx"; \
+		UPX_VERSION="3.91"; \
+		UPX_ARCH="$(GOARCH)_$(GOOS)" # only linux (amd64|i386) are supported; \
+		UPX_RELEASE="upx-$$UPX_VERSION-$$UPX_ARCH"; \
+		mkdir -p /tmp/$$UPX_RELEASE; \
+		wget -qO- https://github.com/upx/upx/releases/download/v$$UPX_VERSION/$$UPX_RELEASE.tar.bz2 | tar xj -C /tmp/$$UPX_RELEASE; \
+		cp /tmp/$$UPX_RELEASE/$$UPX_RELEASE/upx ~/bin; \
+	fi

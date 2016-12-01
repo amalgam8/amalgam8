@@ -217,17 +217,17 @@ compress.controller: tools.upx
 compress.sidecar: tools.upx
 	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(SIDECAR_APP_NAME)
 	
-release.registry: compress.registry
+release.registry:
 	@echo "--> packaging registry for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(REGISTRY_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(REGISTRY_APP_NAME) README.md LICENSE
 
-release.controller: compress.controller
+release.controller:
 	@echo "--> packaging controller for release"
 	@mkdir -p $(RELEASEDIR) 
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
-release.sidecar: compress.sidecar
+release.sidecar:
 	@echo "--> packaging sidecar for release"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/opt/a8_lualib \

@@ -155,4 +155,39 @@ var _ = Describe("Commands", func() {
 				}
 			]
 		}`)
+
+	response["two_rules"] = []byte(`
+		{
+			"rules": [
+				{
+					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
+					"priority": 1,
+					"destination": "reviews",
+					"route": {
+						"backends": [
+							{
+								"tags": [
+									"v1"
+								]
+							}
+						]
+					}
+				},
+				{
+					"id": "41202250-8b4d-4fb4-a000-74ebb04857e5",
+					"priority": 1,
+					"destination": "reviews",
+					"route": {
+						"backends": [
+							{
+								"tags": [
+									"v2"
+								]
+							}
+						]
+					}
+				}
+			],
+			"revision": 1
+		}`)
 })

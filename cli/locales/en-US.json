@@ -205,11 +205,11 @@
 },
 {
   "id": "traffic_start_description",
-  "translation": "Start trasferring traffic to a new version of a microservice."
+  "translation": "Start transferring traffic to a new version of a microservice."
 },
 {
   "id": "traffic_start_usage",
-  "translation": "Start trasferring traffic to a new version of a microservice."
+  "translation": "Start transferring traffic to a new version of a microservice."
 },
 {
   "id": "traffic_start_service_usage",
@@ -222,5 +222,25 @@
 {
   "id": "traffic_start_output_usage",
   "translation": "A percentage of traffic 0-100 to send to the new version (default is 10 percent)."
+},
+{
+  "id": "traffic_step_name",
+  "translation": "traffic-step"
+},
+{
+  "id": "traffic_step_description",
+  "translation": "Step up the amount of traffic to a new version of a microservice."
+},
+{
+  "id": "traffic_step_usage",
+  "translation": "Step up the amount of traffic to a new version of a microservice."
+},
+{
+  "id": "traffic_step_service_usage",
+  "translation": "The service name."
+},
+{
+  "id": "traffic_step_amount_usage",
+  "translation": "A percentage of traffic 0-100 to send to the new version."
 }
 ]

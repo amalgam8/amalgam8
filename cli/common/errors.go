@@ -46,4 +46,5 @@ var (
 	// ErrInvalidStateForTrafficStart .
 	ErrInvalidStateForTrafficStart = errors.New("Invalid state for start operation")
 	// ErrInvalidStateForTrafficStep .
+	ErrInvalidStateForTrafficStep = errors.New("Invalid state for step operation")
 )

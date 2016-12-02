@@ -27,17 +27,16 @@ import (
 // and runs zombie process cleanup for any inherited orphans
 func Init() {
 	cmd := exec.Command(os.Args[0], os.Args[1:]...)
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
-		shutdown(err)
+		logrus.Errorf("Sidecar failed to start: %v", err)
+		os.Exit(1)
 	}
 
-	go handleSignals(cmd.Process)
-
-	err := cmd.Wait()
-	shutdown(err)
+	handleSignals(cmd.Process)
 
 }
 
@@ -60,10 +59,11 @@ func handleSignals(proc *os.Process) {
 // - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
 func reapZombies(proc *os.Process) {
 	for {
-		pid, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
-
+		var waitStatus syscall.WaitStatus
+		pid, err := syscall.Wait4(-1, &waitStatus, syscall.WNOHANG, nil)
 		if proc != nil && proc.Pid == pid {
-			shutdown(err)
+			logrus.Debugf("Sidecar exited with exit code %v", waitStatus.ExitStatus())
+			os.Exit(waitStatus.ExitStatus())
 		}
 
 		// Spurious wakeup
@@ -80,24 +80,4 @@ func forwardSignal(proc *os.Process, sig os.Signal) {
 	if proc != nil {
 		proc.Signal(sig)
 	}
-}
-
-func shutdown(err error) {
-	exitCode := 0
-	if err == nil {
-		logrus.Info("App terminated with exit code 0")
-	} else {
-		exitCode = 1
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if waitStatus, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-				exitCode = waitStatus.ExitStatus()
-			}
-			logrus.Errorf("App terminated with exit code %v", exitCode)
-		} else {
-			logrus.Errorf("App failed to start: %v", err)
-		}
-	}
-
-	logrus.Infof("Shutting down with exit code %v", exitCode)
-	os.Exit(exitCode)
 }

@@ -49,7 +49,7 @@ func handleSignals(proc *os.Process) {
 	for sig := range sigChan {
 		switch sig {
 		case syscall.SIGCHLD:
-			reapZombies()
+			reapZombies(proc)
 		default:
 			forwardSignal(proc, sig)
 		}
@@ -58,9 +58,13 @@ func handleSignals(proc *os.Process) {
 
 // reapZombies cleans up any zombies sidecar may have inherited from terminated children
 // - on SIGCHLD send wait4() (ref http://linux.die.net/man/2/waitpid)
-func reapZombies() {
+func reapZombies(proc *os.Process) {
 	for {
-		_, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
+		pid, err := syscall.Wait4(-1, nil, syscall.WNOHANG, nil)
+
+		if proc != nil && proc.Pid == pid {
+			shutdown(err)
+		}
 
 		// Spurious wakeup
 		if err == syscall.EINTR {

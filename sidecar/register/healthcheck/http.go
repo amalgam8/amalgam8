@@ -15,15 +15,16 @@
 package healthcheck
 
 import (
-	"fmt"
-	"net/http"
-	"time"
-	"net/url"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"io/ioutil"
-	"github.com/amalgam8/amalgam8/sidecar/config"
+	"net/http"
+	"net/url"
+	"time"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/config"
 )
 
 const (
@@ -50,7 +51,7 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 	var client *http.Client
 	//if conf.UpstreamTrustPath != "" {
 	if conf.Type == config.HTTPSHealthCheck &&
-	   conf.CACertPath != "" {
+		conf.CACertPath != "" {
 
 		logrus.Debug("HTTPS HealthCheck, CA cert path = " + conf.CACertPath)
 		// Load trusted CA certs
@@ -65,15 +66,15 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 		tlsConfig.BuildNameToCertificate()
 		transport := &http.Transport{TLSClientConfig: tlsConfig}
 		client = &http.Client{Transport: transport,
-				      Timeout:   conf.Timeout,}
+			Timeout: conf.Timeout}
 	} else {
 		logrus.Debug("HTTP HealthCheck: " + conf.Type + " " + conf.CACertPath)
-		client = &http.Client{Timeout: conf.Timeout,}	
+		client = &http.Client{Timeout: conf.Timeout}
 	}
 	return &HTTP{
-		url: conf.Value,
+		url:    conf.Value,
 		client: client,
-        method: conf.Method,
+		method: conf.Method,
 		code:   conf.Code,
 	}, nil
 }

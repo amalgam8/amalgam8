@@ -88,7 +88,7 @@ var _ = Describe("Config", func() {
 				"--register=true",
 				"--proxy=true",
 				"--dns=true",
-				"--proxy_type=https",
+				"--proxy_tls=false",
 				"--proxy_cert_path=/etc/certs/server.pem",
 				"--proxy_cert_key_path=/etc/certs/server_key.pem",
 				"--proxy_ca_cert_path=/etc/certs/ca.pem",
@@ -112,7 +112,6 @@ var _ = Describe("Config", func() {
 				"--dns_domain=someServer",
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
-				"--healthchecks_ca_cert_path=/etc/certs/ca.pem",
 				"--log_level=debug",
 				"python", "productpage.py",
 			}...)
@@ -124,7 +123,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
-			Expect(c.ProxyConfig.Type).To(Equal("https"))
+			Expect(c.ProxyConfig.Tls).To(Equal(false))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
 			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
 			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
@@ -147,9 +146,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
-			Expect(c.HealthChecks[0].CACertPath).To(Equal("/etc/certs/ca.pem"))
+			Expect(c.HealthChecks[0].CACertPath).To(Equal(""))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
-			Expect(c.HealthChecks[1].CACertPath).To(Equal("/etc/certs/ca.pem"))
+			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
 			Expect(c.Commands).To(HaveLen(1))
 			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
@@ -173,7 +172,7 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_REGISTER", "true")
 			os.Setenv("A8_PROXY", "true")
 			os.Setenv("A8_DNS", "true")
-			os.Setenv("A8_PROXY_TYPE", "https")
+			os.Setenv("A8_PROXY_TLS", "false")
 			os.Setenv("A8_PROXY_CERT_PATH", "/etc/certs/server.pem")
 			os.Setenv("A8_PROXY_CERT_KEY_PATH", "/etc/certs/server_key.pem")
 			os.Setenv("A8_PROXY_CA_CERT_PATH", "/etc/certs/ca.pem")
@@ -195,7 +194,6 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_DNS_PORT", "4056")
 			os.Setenv("A8_DNS_DOMAIN", "someServer")
 			os.Setenv("A8_HEALTHCHECKS", "http://localhost:8082/health1,http://localhost:8082/health2")
-			os.Setenv("A8_HEALTHCHECKS_CA_CERT_PATH", "/etc/certs/ca.pem")
 			os.Setenv("A8_LOG_LEVEL", "debug")
 			args := append(os.Args[:1], []string{
 				"python", "productpage.py",
@@ -207,7 +205,7 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_REGISTER")
 			os.Unsetenv("A8_PROXY")
 			os.Unsetenv("A8_DNS")
-			os.Unsetenv("A8_PROXY_TYPE")
+			os.Unsetenv("A8_PROXY_TLS")
 			os.Unsetenv("A8_PROXY_CERT_PATH")
 			os.Unsetenv("A8_PROXY_CERT_KEY_PATH")
 			os.Unsetenv("A8_PROXY_CA_CERT_PATH")
@@ -229,7 +227,6 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_DNS_PORT")
 			os.Unsetenv("A8_DNS_DOMAIN")
 			os.Unsetenv("A8_HEALTHCHECKS")
-			os.Unsetenv("A8_HEALTHCHECKS_CA_CERT_PATH")
 			os.Unsetenv("A8_LOG_LEVEL")
 		})
 
@@ -237,7 +234,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
-			Expect(c.ProxyConfig.Type).To(Equal("https"))
+			Expect(c.ProxyConfig.Tls).To(Equal(false))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
 			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
 			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
@@ -260,9 +257,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
-			Expect(c.HealthChecks[0].CACertPath).To(Equal("/etc/certs/ca.pem"))
+			Expect(c.HealthChecks[0].CACertPath).To(Equal(""))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
-			Expect(c.HealthChecks[1].CACertPath).To(Equal("/etc/certs/ca.pem"))
+			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
 		})
 	})
@@ -288,7 +285,7 @@ proxy: true
 dns: true
 
 proxyconfig:
-  type:          https
+  tls:           true
   cert_path:     /etc/certs/server.pem
   cert_key_path: /etc/certs/server_key.pem
   ca_cert_path:  /etc/certs/ca.pem
@@ -372,7 +369,7 @@ log_level: debug
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
-			Expect(c.ProxyConfig.Type).To(Equal("https"))
+			Expect(c.ProxyConfig.Tls).To(Equal(true))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
 			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
 			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))

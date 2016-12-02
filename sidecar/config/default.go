@@ -23,10 +23,10 @@ var DefaultConfig = Config{
 	DNS:      false,
 
 	ProxyConfig: ProxyConfig{
-		Type         : "http",
-		CertPath     : "",
-		CertKeyPath  : "",
-		CACertPath   : "",
+		Tls:         false,
+		CertPath:    "",
+		CertKeyPath: "",
+		CACertPath:  "",
 	},
 
 	Service: Service{
@@ -75,8 +75,6 @@ var DefaultConfig = Config{
 	},
 
 	HealthChecks: nil,
-
-	HealthChecksCACertPath: "",
 
 	LogLevel: "info",
 

@@ -19,11 +19,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"reflect"
-	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"net/url"
@@ -136,12 +133,11 @@ type HealthCheck struct {
 
 // Proxy configuration.
 type ProxyConfig struct {
-	Type         string `yaml:"type"`
-	CertPath     string `yaml:"cert_path"`
-	CertKeyPath  string `yaml:"cert_key_path"`
-	CACertPath   string `yaml:"ca_cert_path"`
+	Tls         bool   `yaml:"tls"`
+	CertPath    string `yaml:"cert_path"`
+	CertKeyPath string `yaml:"cert_key_path"`
+	CACertPath  string `yaml:"ca_cert_path"`
 }
-
 
 // Config stores the various configuration options for the sidecar
 type Config struct {
@@ -159,9 +155,8 @@ type Config struct {
 	Supervise bool `yaml:"supervise"`
 
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
-	HealthChecksCACertPath string `yaml:"healthchecks_ca_cert_path"`
 
-	ProxyConfig ProxyConfig  `yaml:"proxyconfig"`
+	ProxyConfig ProxyConfig `yaml:"proxyconfig"`
 
 	LogLevel string `yaml:"log_level"`
 
@@ -252,7 +247,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
-	loadFromContextIfSet(&c.ProxyConfig.Type, proxyTypeFlag)
+	loadFromContextIfSet(&c.ProxyConfig.Tls, proxyTlsFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CertPath, proxyCertPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CertKeyPath, proxyCertKeyPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CACertPath, proxyCACertPathFlag)
@@ -271,7 +266,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
 	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
 	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
-	loadFromContextIfSet(&c.HealthChecksCACertPath, healthchecksCACertPathFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
@@ -322,9 +316,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 				}
 			}
 
-			if hc.CACertPath == "" && c.HealthChecksCACertPath != "" {
-				hc.CACertPath = c.HealthChecksCACertPath
-			}
 			c.HealthChecks = append(c.HealthChecks, hc)
 		}
 	}
@@ -449,67 +440,4 @@ func parseServiceNameAndTags(service string) (name string, tags []string) {
 		tags = strings.Split(service[i+1:], ",")
 	}
 	return
-}
-
-type A8ServicesNginxConfData struct {
-	SSLFlag          string
-	CertPath         string
-	CertKeyPath      string
-	CACertPath string
-}
-
-// Proxy nginx configuration values.
-const (
-	A8ServicesConfTemplatePath        = "/etc/nginx/amalgam8-services.conf.tmpl"
-	A8ServicesConfPath                = "/etc/nginx/amalgam8-services.conf"
-	NginxSSLFlag                      = " ssl"
-	NginxSSLCertDirective             = "ssl_certificate "
-	NginxSSLCertKeyDirective          = "ssl_certificate_key "
-	NginxProxySSLTrustedCertDirective = "proxy_ssl_trusted_certificate "
-)
-
-
-// Generate proxy config
-func (c *Config) GenProxyConfig() error {
-    // Generate amalgam8-services.conf 
-    err := c.GenNginxA8ServicesConf()
-    return err
-}
-
-func (c *Config) GenNginxA8ServicesConf() error {
-	var a8ServicesData *A8ServicesNginxConfData
-	logrus.Debug("GenProxyConfig " + strconv.FormatBool(c.Proxy) + " " + c.ProxyConfig.Type)
-	if !c.Proxy || c.ProxyConfig.Type != "https" {
-		a8ServicesData = &A8ServicesNginxConfData{"", "", "", "",}
-	} else {
-		a8ServicesData = &A8ServicesNginxConfData{
-			NginxSSLFlag,
-			NginxSSLCertDirective + c.ProxyConfig.CertPath + ";",
-			NginxSSLCertKeyDirective + c.ProxyConfig.CertKeyPath + ";",
-			NginxProxySSLTrustedCertDirective + c.ProxyConfig.CACertPath + ";",
-		}
-	}
-	svcTemplate, err := template.ParseFiles(A8ServicesConfTemplatePath)
-	if err != nil {
-		return err
-	}
-	if _, err := os.Stat(A8ServicesConfPath); !os.IsNotExist(err) {
-		err := os.Remove(A8ServicesConfPath)
-		if err != nil {
-			return err
-		}
-	}
-	file, err := os.Create(A8ServicesConfPath)
-	if err != nil {
-		return err
-	}
-	err = svcTemplate.Execute(file, a8ServicesData)
-	if err != nil {
-		return err
-	}
-	err = file.Close()
-	if err != nil {
-		return err
-	}
-	return err
 }

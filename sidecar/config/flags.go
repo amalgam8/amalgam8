@@ -22,36 +22,35 @@ import (
 )
 
 const (
-	configFlag                  = "config"
-	registerFlag                = "register"
-	proxyFlag                   = "proxy"
-	proxyTypeFlag               = "proxy_type"
-	proxyCertPathFlag           = "proxy_cert_path"
-	proxyCertKeyPathFlag        = "proxy_cert_key_path"
-	proxyCACertPathFlag         = "proxy_ca_cert_path"
-	serviceFlag                 = "service"
-	endpointHostFlag            = "endpoint_host"
-	endpointPortFlag            = "endpoint_port"
-	endpointTypeFlag            = "endpoint_type"
-	registryBackendFlag         = "registry_backend"
-	registryURLFlag             = "registry_url"
-	registryTokenFlag           = "registry_token"
-	registryPollFlag            = "registry_poll"
-	kubernetesURLFlag           = "kubernetes_url"
-	kubernetesTokenFlag         = "kubernetes_token"
-	kubernetesNamespaceFlag     = "kubernetes_namespace"
-	eurekaURLFlag               = "eureka_url"
-	controllerURLFlag           = "controller_url"
-	controllerTokenFlag         = "controller_token"
-	controllerPollFlag          = "controller_poll"
-	superviseFlag               = "supervise"
-	healthchecksFlag            = "healthchecks"
-	healthchecksCACertPathFlag  = "healthchecks_ca_cert_path"
-	logLevelFlag                = "log_level"
-	dnsFlag                     = "dns"
-	dnsConfigPortFlag           = "dns_port"
-	dnsConfigDomainFlag         = "dns_domain"
-	debugFlag                   = "debug"
+	configFlag              = "config"
+	registerFlag            = "register"
+	proxyFlag               = "proxy"
+	proxyTlsFlag            = "proxy_tls"
+	proxyCertPathFlag       = "proxy_cert_path"
+	proxyCertKeyPathFlag    = "proxy_cert_key_path"
+	proxyCACertPathFlag     = "proxy_ca_cert_path"
+	serviceFlag             = "service"
+	endpointHostFlag        = "endpoint_host"
+	endpointPortFlag        = "endpoint_port"
+	endpointTypeFlag        = "endpoint_type"
+	registryBackendFlag     = "registry_backend"
+	registryURLFlag         = "registry_url"
+	registryTokenFlag       = "registry_token"
+	registryPollFlag        = "registry_poll"
+	kubernetesURLFlag       = "kubernetes_url"
+	kubernetesTokenFlag     = "kubernetes_token"
+	kubernetesNamespaceFlag = "kubernetes_namespace"
+	eurekaURLFlag           = "eureka_url"
+	controllerURLFlag       = "controller_url"
+	controllerTokenFlag     = "controller_token"
+	controllerPollFlag      = "controller_poll"
+	superviseFlag           = "supervise"
+	healthchecksFlag        = "healthchecks"
+	logLevelFlag            = "log_level"
+	dnsFlag                 = "dns"
+	dnsConfigPortFlag       = "dns_port"
+	dnsConfigDomainFlag     = "dns_domain"
+	debugFlag               = "debug"
 )
 
 // Flags is the set of supported flags
@@ -81,9 +80,9 @@ var Flags = []cli.Flag{
 		Usage:  "Enable DNS server",
 	},
 	cli.StringFlag{
-		Name:   proxyTypeFlag,
-		EnvVar: envVar(proxyTypeFlag),
-		Usage:  "Proxy type (http, https)",
+		Name:   proxyTlsFlag,
+		EnvVar: envVar(proxyTlsFlag),
+		Usage:  "Enable proxy TLS communication",
 	},
 	cli.StringFlag{
 		Name:   proxyCertPathFlag,
@@ -195,11 +194,6 @@ var Flags = []cli.Flag{
 		Name:   healthchecksFlag,
 		EnvVar: envVar(healthchecksFlag),
 		Usage:  "List of health check URLs",
-	},
-	cli.StringFlag{
-		Name:   healthchecksCACertPathFlag,
-		EnvVar: envVar(healthchecksCACertPathFlag),
-		Usage:  "Location of trusted CA certificate(s) for https health checks. Health checks configured in the YAML configuration file may override this with their own CA cert paths.", 
 	},
 	cli.StringFlag{
 		Name:   logLevelFlag,

@@ -108,7 +108,7 @@ func UnmarshallReader(data io.Reader, format string, dest interface{}) error {
 		}
 
 	default:
-		return errors.New("Invalid Format")
+		return common.ErrInvalidFormat
 	}
 
 	return nil
@@ -136,7 +136,7 @@ func MarshallReader(writer io.Writer, data interface{}, format string) error {
 		}
 
 	default:
-		return errors.New("Invalid Format")
+		return common.ErrInvalidFormat
 	}
 
 	// escape "<", ">" and "&"
@@ -157,7 +157,7 @@ func ScannerLines(writer io.Writer, description string) (io.Reader, string, erro
 		".json": JSON,
 		".yaml": YAML,
 	}
-	fmt.Fprintf(writer, "\n%s\n%s:\n\n", "*** Write .json or .yaml in a new line when finished ***", description)
+	fmt.Fprintf(writer, "\n%s\n%s:\n\n", "#########################################################################\nPress (CTRL+D) on Unix-like systems or (Ctrl+Z) in Windows when finished.\nYou can also write .json or .yaml in a new line to finish.\n#########################################################################\n", description)
 	for scanner.Scan() {
 		for k := range breakers {
 			if strings.ToLower(scanner.Text()) == k {
@@ -170,10 +170,26 @@ func ScannerLines(writer io.Writer, description string) (io.Reader, string, erro
 		}
 		fmt.Fprintln(&dataBuf, scanner.Text())
 	}
+
 	err := scanner.Err()
 	if err != nil {
 		return nil, format, err
 	}
+
+	// If buffer is empty
+	if dataBuf.Len() == 0 {
+		return nil, format, errors.New("No Rules")
+	}
+
+	// When format is empty, probably EOF was used.
+	// findFormat() will try to guess the format of the rules.
+	if format == "" {
+		format, err = findFormat(dataBuf)
+		if err != nil {
+			return nil, format, err
+		}
+	}
+
 	return &dataBuf, format, nil
 }
 
@@ -194,4 +210,14 @@ func Confirmation(writer io.Writer, description string) (bool, error) {
 		}
 		return false, nil
 	}
+}
+
+func findFormat(buf bytes.Buffer) (string, error) {
+	var data map[string]interface{}
+	if json.Unmarshal(buf.Bytes(), &data) == nil {
+		return JSON, nil
+	} else if yaml.Unmarshal(buf.Bytes(), &data) == nil {
+		return YAML, nil
+	}
+	return "", common.ErrInvalidFormat
 }

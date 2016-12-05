@@ -33,6 +33,8 @@ var (
 	ErrGremlinURLNotFound = errors.New("Gremlin URL has not been set")
 	// ErrUnsoportedFormat .
 	ErrUnsoportedFormat = errors.New("Unsupported format")
+	// ErrInvalidFormat .
+	ErrInvalidFormat = errors.New("Invalid format")
 	// ErrFileNotFound .
 	ErrFileNotFound = errors.New("File does not exist")
 	// ErrInvalidFile .

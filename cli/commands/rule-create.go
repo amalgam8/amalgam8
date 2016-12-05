@@ -15,6 +15,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
@@ -109,8 +111,12 @@ func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
 // DefaultAction captures the rules provided in the terminal.
 func (cmd *RuleCreateCommand) DefaultAction(ctx *cli.Context) error {
 	reader, format, err := utils.ScannerLines(cmd.ctx.App.Writer, "Enter DSL Rules")
+
+	fmt.Fprintf(cmd.ctx.App.Writer, "\n\n")
+
 	if err != nil {
-		return err
+		fmt.Fprintf(cmd.ctx.App.Writer, "%s\n\n", err.Error())
+		return nil
 	}
 
 	// Convert YAML to JSON

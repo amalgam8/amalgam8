@@ -10,7 +10,7 @@ import (
 
 	"sort"
 
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/suite"
 )

@@ -19,7 +19,7 @@ import (
 
 	"sync"
 
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 // Make sure we implement the ServiceDiscovery and ServiceRegistry interface.

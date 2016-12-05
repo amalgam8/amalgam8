@@ -23,19 +23,17 @@ import (
 	"strings"
 	"time"
 
-	"os/exec"
-
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/pkg/adapters/registry/eureka"
+	"github.com/amalgam8/amalgam8/pkg/adapters/registry/kubernetes"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
-	"github.com/amalgam8/amalgam8/registry/adapters/eureka"
-	"github.com/amalgam8/amalgam8/registry/adapters/kubernetes"
-	registryapi "github.com/amalgam8/amalgam8/registry/api"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
-	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
+	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
@@ -68,15 +66,12 @@ func Main() {
 }
 
 func sidecarCommand(context *cli.Context) error {
-	if os.Getenv("A8_CHILD") == "" {
-		fmt.Println(os.Args[1:])
-		cmd := exec.Command("a8sidecar", os.Args[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = append([]string{"A8_CHILD=yes"}, os.Environ()...)
-		// listen for SIGCHLDs from any of the supervised processes and any orphans spun off from those
-		go supervisor.ReapZombies()
-		return cmd.Run()
+	// when PID=1, launch new sidecar process and assume init responsibilities
+	if os.Getpid() == 1 {
+		supervisor.Init()
+
+		// Init should never return
+		return nil
 	}
 
 	conf, err := config.New(context)
@@ -84,6 +79,7 @@ func sidecarCommand(context *cli.Context) error {
 		return err
 	}
 	return Run(*conf)
+
 }
 
 // Run the sidecar with the given configuration
@@ -107,7 +103,7 @@ func Run(conf config.Config) error {
 	}
 	logrus.SetLevel(logrusLevel)
 
-	var discovery registryapi.ServiceDiscovery
+	var discovery api.ServiceDiscovery
 	if conf.DNS || conf.Proxy {
 		discovery, err = buildServiceDiscovery(&conf)
 		if err != nil {
@@ -146,10 +142,10 @@ func Run(conf config.Config) error {
 		}
 
 		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
-		serviceInstance := &registryapi.ServiceInstance{
+		serviceInstance := &api.ServiceInstance{
 			ServiceName: conf.Service.Name,
 			Tags:        conf.Service.Tags,
-			Endpoint: registryapi.ServiceEndpoint{
+			Endpoint: api.ServiceEndpoint{
 				Type:  conf.Endpoint.Type,
 				Value: address,
 			},
@@ -190,7 +186,7 @@ func Run(conf config.Config) error {
 	return nil
 }
 
-func buildServiceRegistry(conf *config.Config) (registryapi.ServiceRegistry, error) {
+func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
 	switch strings.ToLower(conf.Registry.Backend) {
 	case config.Amalgam8Backend:
 		regConf := registryclient.Config{
@@ -205,7 +201,7 @@ func buildServiceRegistry(conf *config.Config) (registryapi.ServiceRegistry, err
 	}
 }
 
-func buildServiceDiscovery(conf *config.Config) (registryapi.ServiceDiscovery, error) {
+func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 	switch strings.ToLower(conf.Registry.Backend) {
 	case config.Amalgam8Backend:
 		regConf := registryclient.CacheConfig{
@@ -235,7 +231,7 @@ func buildServiceDiscovery(conf *config.Config) (registryapi.ServiceDiscovery, e
 	}
 }
 
-func startProxy(conf *config.Config, discovery registryapi.ServiceDiscovery) error {
+func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 	var err error
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
@@ -282,7 +278,7 @@ func startProxy(conf *config.Config, discovery registryapi.ServiceDiscovery) err
 		}
 	}()
 
-	debugger := api.NewDebugAPI(nginxProxy)
+	debugger := debug.NewAPI(nginxProxy)
 
 	a := rest.NewApi()
 	a.Use(
@@ -350,8 +346,8 @@ func cliCommand(command string) {
 		}
 
 		sidecarstate := struct {
-			Instances []registryapi.ServiceInstance `json:"instances"`
-			Rules     []rules.Rule                  `json:"rules"`
+			Instances []api.ServiceInstance `json:"instances"`
+			Rules     []rules.Rule          `json:"rules"`
 		}{}
 
 		err = json.Unmarshal(respBytes, &sidecarstate)

@@ -22,10 +22,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/datastructures"
 	"github.com/amalgam8/amalgam8/pkg/errors"
-	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 
 	"k8s.io/client-go/kubernetes"

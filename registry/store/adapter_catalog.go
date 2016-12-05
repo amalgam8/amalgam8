@@ -17,8 +17,8 @@ package store
 import (
 	"time"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
-	"github.com/amalgam8/amalgam8/registry/api"
 )
 
 // DiscoveryFactory is a function which accepts a namespace and returns a discovery object for that namespace

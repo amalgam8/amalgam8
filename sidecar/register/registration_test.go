@@ -17,7 +17,7 @@ package register
 import (
 	"time"
 
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

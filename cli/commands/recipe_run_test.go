@@ -291,7 +291,7 @@ var _ = Describe("RecipeRun Command", func() {
 					app.Writer = bytes.NewBufferString("")
 					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
-					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Recipe created but verified"))
+					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Recipe created but not verified"))
 				})
 
 			})

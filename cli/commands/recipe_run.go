@@ -208,7 +208,7 @@ func (cmd *RecipeRunCommand) Action(ctx *cli.Context) error {
 			return cmd.RecipeResultsTable(recipeResults)
 		}
 	} else {
-		fmt.Fprintf(ctx.App.Writer, "Recipe created but verified. No checks file provided\n\n")
+		fmt.Fprintf(ctx.App.Writer, "Recipe created but not verified. No checks file provided\n\n")
 		return nil
 	}
 

@@ -69,3 +69,17 @@ redis:
   ports:
     - "31400:6379"
   container_name: redis
+
+#######Gremlin###########
+
+gremlin:
+  image: amalgam8/gremlin
+  ports:
+    - "31500:5000"
+  links:
+    - es
+    - kibana
+    - logstash
+    - controller
+    - registry
+  container_name: gremlin

@@ -214,3 +214,43 @@ spec:
         env:
         - name: ELASTICSEARCH_URL
           value: "http://localhost:9200"
+---
+##################################################################################################
+# Amalgam8 Gremlin
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: gremlin
+spec:
+  ports:
+  - port: 5000
+    targetPort: 5000
+    nodePort: 31500
+    protocol: TCP
+  selector:
+    name: gremlin
+  type: NodePort
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: gremlin
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: gremlin
+    spec:
+      containers:
+      - name: gremlin
+        image: amalgam8/gremlin:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 5000
+        env:
+        - name: A8_CONTROLLER_URL
+          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
+        - name: A8_LOG_SERVER
+          value: http://$(LOGSERVER_SERVICE_HOST):9200

@@ -21,11 +21,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/adapters/filesystem"
 	"github.com/amalgam8/amalgam8/registry/adapters/kubernetes"
-	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
 	"github.com/amalgam8/amalgam8/registry/replication"

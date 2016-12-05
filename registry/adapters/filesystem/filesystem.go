@@ -28,8 +28,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
-	"github.com/amalgam8/amalgam8/registry/api"
 	"github.com/amalgam8/amalgam8/registry/server/protocol/amalgam8"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )

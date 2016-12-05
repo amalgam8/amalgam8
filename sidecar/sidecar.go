@@ -30,7 +30,7 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/adapters/eureka"
 	"github.com/amalgam8/amalgam8/registry/adapters/kubernetes"
-	registryapi "github.com/amalgam8/amalgam8/registry/api"
+	registryapi "github.com/amalgam8/amalgam8/pkg/api"
 	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"

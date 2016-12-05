@@ -19,7 +19,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 // Manager of updates to NGINX

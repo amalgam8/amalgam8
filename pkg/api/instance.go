@@ -20,32 +20,6 @@ import (
 	"time"
 )
 
-// ServiceDiscovery defines the interface used for discovering service instances.
-type ServiceDiscovery interface {
-
-	// ListServices queries for the list of services for which instances are currently registered.
-	ListServices() ([]string, error)
-
-	// ListInstances queries for the list of service instances currently registered.
-	ListInstances() ([]*ServiceInstance, error)
-
-	// ListServiceInstances queries for the list of service instances currently registered for the given service.
-	ListServiceInstances(serviceName string) ([]*ServiceInstance, error)
-}
-
-// ServiceRegistry defines the interface used for registering service instances.
-type ServiceRegistry interface {
-
-	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
-	Register(instance *ServiceInstance) (*ServiceInstance, error)
-
-	// Deregister removes a registered service instance, identified by the given ID, from the registry.
-	Deregister(id string) error
-
-	// Renew sends a heartbeat for the service instance identified by the given ID.
-	Renew(id string) error
-}
-
 // ServiceInstance describes an instance of a service.
 type ServiceInstance struct {
 
@@ -72,15 +46,4 @@ type ServiceInstance struct {
 
 	// LastHeartbeat is the timestamp in which heartbeat has been last received for this service instance.
 	LastHeartbeat time.Time `json:"last_heartbeat,omitempty"`
-}
-
-// ServiceEndpoint describes a network endpoint of a service.
-type ServiceEndpoint struct {
-
-	// Type is the endpoint's type, normally a protocol name, like "http", "https", "tcp", or "udp".
-	Type string `json:"type"`
-
-	// Value is the endpoint's value according to its type,
-	// e.g. "172.135.10.1:8080" or "http://myapp.ng.bluemix.net/api/v1".
-	Value string `json:"value"`
 }

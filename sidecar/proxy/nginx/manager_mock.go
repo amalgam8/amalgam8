@@ -16,7 +16,7 @@ package nginx
 
 import (
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 // MockManager mocks interface

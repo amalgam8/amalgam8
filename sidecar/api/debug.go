@@ -18,7 +18,7 @@ import (
 	"net/http"
 
 	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/registry/api"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/ant0ine/go-json-rest/rest"
 )

@@ -13,19 +13,16 @@
 #   limitations under the License.
 
 ##################################################################################################
-# Amalgam8 controller service
+# Redis datastore backend for Amalgam8 Controller
 ##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
   name: redis
-  labels:
-    name: redis
 spec:
   ports:
   - port: 6379
     targetPort: 6379
-    nodePort: 31400
     protocol: TCP
   selector:
     name: redis
@@ -35,12 +32,8 @@ apiVersion: v1
 kind: ReplicationController
 metadata:
   name: redis
-  labels:
-    name: redis
 spec:
   replicas: 1
-  selector:
-    name: redis
   template:
     metadata:
       labels:

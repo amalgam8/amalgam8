@@ -13,14 +13,12 @@
 #   limitations under the License.
 
 ##################################################################################################
-# Amalgam8 controller service
+# Amalgam8 Controller service
 ##################################################################################################
 apiVersion: v1
 kind: Service
 metadata:
   name: controller
-  labels:
-    name: controller
 spec:
   ports:
   - port: 6080
@@ -35,12 +33,8 @@ apiVersion: v1
 kind: ReplicationController
 metadata:
   name: controller
-  labels:
-    name: controller
 spec:
   replicas: 1
-  selector:
-    name: controller
   template:
     metadata:
       labels:
@@ -59,3 +53,4 @@ spec:
           value: redis://$(REDIS_SERVICE_HOST):$(REDIS_SERVICE_PORT)
         ports:
         - containerPort: 8080
+          name: http

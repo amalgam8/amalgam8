@@ -56,8 +56,6 @@ elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     kubectl delete -f $SCRIPTDIR/$cfile
     sleep 3
-    kubectl delete -f $SCRIPTDIR/$rfile
-    sleep 3
     kubectl delete -f $SCRIPTDIR/$rdsfile
 else
     echo "usage: $0 start|stop"

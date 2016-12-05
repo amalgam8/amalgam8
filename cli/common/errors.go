@@ -27,6 +27,10 @@ var (
 	ErrControllerURLInvalid = errors.New("Invalid Controller URL")
 	// ErrControllerURLNotFound .
 	ErrControllerURLNotFound = errors.New("Controller URL has not been set")
+	// ErrGremlinURLInvalid .
+	ErrGremlinURLInvalid = errors.New("Invalid Gremlin URL")
+	// ErrGremlinURLNotFound .
+	ErrGremlinURLNotFound = errors.New("Gremlin URL has not been set")
 	// ErrUnsoportedFormat .
 	ErrUnsoportedFormat = errors.New("Unsupported format")
 	// ErrFileNotFound .
@@ -47,4 +51,6 @@ var (
 	ErrInvalidStateForTrafficStart = errors.New("Invalid state for start operation")
 	// ErrInvalidStateForTrafficStep .
 	ErrInvalidStateForTrafficStep = errors.New("Invalid state for step operation")
+	// ErrTopologyOrScenariosNotFound .
+	ErrTopologyOrScenariosNotFound = errors.New("You must specify -topology and -scenarios")
 )

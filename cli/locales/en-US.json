@@ -221,7 +221,7 @@
   },
   {
     "id": "traffic_start_output_usage",
-    "translation": "A percentage of traffic 0-100 to send to the new version (default is 10 percent)."
+    "translation": "A percentage of traffic 0-100 to send to the new version."
   },
   {
     "id": "traffic_step_name",
@@ -258,5 +258,53 @@
   {
     "id": "traffic_abort_service_usage",
     "translation": "The service name."
+  },
+  {
+    "id": "recipe_run_name",
+    "translation": "recipe-run"
+  },
+  {
+    "id": "recipe_run_usage",
+    "translation": "Setup a failure scenario and assertion to test against the application."
+  },
+  {
+    "id": "recipe_run_description",
+    "translation": "Setup a failure scenario and assertion to test against the application."
+  },
+  {
+    "id": "recipe_run_topology_usage",
+    "translation": "The application's logical topology."
+  },
+  {
+    "id": "recipe_run_scenarios_usage",
+    "translation": "The failure scenarios."
+  },
+  {
+    "id": "recipe_run_checks_usage",
+    "translation": "Validations on the behavior of the microservices during the failure."
+  },
+  {
+    "id": "recipe_run_load_script_usage",
+    "translation": "Script to inject test load into the application."
+  },
+  {
+    "id": "recipe_run_header_usage",
+    "translation": "Specify the request tracking header used by the application."
+  },
+  {
+    "id": "recipe_run_pattern_usage",
+    "translation": "Select only requests whose request tracking header matches the pattern."
+  },
+  {
+    "id": "recipe_run_output_usage",
+    "translation": "Output format. Supported values are 'json' or 'yaml'."
+  },
+  {
+    "id": "recipe_run_wait_usage",
+    "translation": "Time to wait before checking the results. Supported time units are 'ms', 's', 'm'."
+  },
+  {
+    "id": "recipe_run_force_usage",
+    "translation": "Skip the keyboard input."
   }
 ]

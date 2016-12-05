@@ -43,6 +43,24 @@ func GlobalFlags() []cli.Flag {
 			Usage:  T("controller_url_usage"),
 		},
 
+		cli.StringFlag{
+			Name:   common.ControllerToken.Flag(),
+			EnvVar: common.ControllerToken.EnvVar(),
+			Usage:  T("controller_token_usage"),
+		},
+
+		cli.StringFlag{
+			Name:   common.GremlinURL.Flag(),
+			EnvVar: common.GremlinURL.EnvVar(),
+			Usage:  T("gremlin_url_usage"),
+		},
+
+		cli.StringFlag{
+			Name:   common.GremlinToken.Flag(),
+			EnvVar: common.GremlinToken.EnvVar(),
+			Usage:  T("gremlin_token_usage"),
+		},
+
 		cli.BoolFlag{
 			Name:   common.Debug.Flag(),
 			EnvVar: common.Debug.EnvVar(),

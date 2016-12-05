@@ -29,6 +29,10 @@ const (
 	ControllerURL Const = "CONTROLLER_URL"
 	// ContrllerToken .
 	ControllerToken Const = "CONTROLLER_TOKEN"
+	// ControllerURL .
+	GremlinURL Const = "GREMLIN_URL"
+	// ContrllerToken .
+	GremlinToken Const = "GREMLIN_TOKEN"
 
 	// Debug .
 	Debug Const = "DEBUG"
@@ -44,6 +48,12 @@ const (
 const (
 	// Terminal .
 	Terminal = "term"
+)
+
+// Other
+const (
+	// Empty .
+	Empty = "empty"
 )
 
 // Const .

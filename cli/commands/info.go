@@ -76,15 +76,17 @@ func (cmd *InfoCommand) Action(ctx *cli.Context) error {
 // DefaultAction prints information about the registry and controller URL's and tokens.
 // Amalgam8 info...
 //
-// +---------------------+---------------------------------------+
-// | Env. Variable       | Value                                 |
-// +---------------------+---------------------------------------+
-// | A8_REGISTRY_URL     |                                       |
-// | A8_REGISTRY_TOKEN   |                                       |
-// | A8_CONTROLLER_URL   | http://gc-a8-controller.mybluemix.net |
-// | A8_CONTROLLER_TOKEN |                                       |
-// | A8_DEBUG            | false                                 |
-// +---------------------+---------------------------------------+
+// +---------------------+----------------------------+
+// | Env. Variable       | Value                      |
+// +---------------------+----------------------------+
+// | A8_REGISTRY_URL     | http://192.168.0.100:31300 |
+// | A8_REGISTRY_TOKEN   |                            |
+// | A8_CONTROLLER_URL   | http://192.168.0.100:31200 |
+// | A8_CONTROLLER_TOKEN |                            |
+// | A8_GREMLIN_URL      | http://192.168.0.100:31500 |
+// | A8_GREMLIN_TOKEN    |                            |
+// | A8_DEBUG            | false                      |
+// +---------------------+----------------------------+
 func (cmd *InfoCommand) DefaultAction(ctx *cli.Context) error {
 	table := CommandTable{}
 	table.header = []string{"Env. Variable", "Value"}
@@ -94,30 +96,26 @@ func (cmd *InfoCommand) DefaultAction(ctx *cli.Context) error {
 			common.RegistryURL.EnvVar(),
 			ctx.GlobalString(common.RegistryURL.Flag()),
 		},
-	)
-	table.body = append(
-		table.body,
 		[]string{
 			common.RegistryToken.EnvVar(),
 			ctx.GlobalString(common.RegistryToken.Flag()),
 		},
-	)
-	table.body = append(
-		table.body,
 		[]string{
 			common.ControllerURL.EnvVar(),
 			ctx.GlobalString(common.ControllerURL.Flag()),
 		},
-	)
-	table.body = append(
-		table.body,
 		[]string{
 			common.ControllerToken.EnvVar(),
 			ctx.GlobalString(common.ControllerToken.Flag()),
 		},
-	)
-	table.body = append(
-		table.body,
+		[]string{
+			common.GremlinURL.EnvVar(),
+			ctx.GlobalString(common.GremlinURL.Flag()),
+		},
+		[]string{
+			common.GremlinToken.EnvVar(),
+			ctx.GlobalString(common.GremlinToken.Flag()),
+		},
 		[]string{
 			common.Debug.EnvVar(),
 			ctx.GlobalString(common.Debug.Flag()),

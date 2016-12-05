@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package api
+package debug
 
 import (
 	"net/http"
@@ -23,20 +23,20 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-// DebugAPI handles debugging API calls to sidecar for checking state
-type DebugAPI struct {
+// API handles debugging API calls to sidecar for checking state
+type API struct {
 	nginxProxy proxy.NGINXProxy
 }
 
-// NewDebugAPI creates struct
-func NewDebugAPI(nginxProxy proxy.NGINXProxy) *DebugAPI {
-	return &DebugAPI{
+// NewAPI creates struct
+func NewAPI(nginxProxy proxy.NGINXProxy) *API {
+	return &API{
 		nginxProxy: nginxProxy,
 	}
 }
 
 // Routes for debug API
-func (d *DebugAPI) Routes(middlewares ...rest.Middleware) []*rest.Route {
+func (d *API) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Get("/state", d.checkState),
 	}
@@ -49,7 +49,7 @@ func (d *DebugAPI) Routes(middlewares ...rest.Middleware) []*rest.Route {
 
 // checkState returns the cached rules from controller and cached instances
 // from registry stored in sidecar memory
-func (d *DebugAPI) checkState(w rest.ResponseWriter, req *rest.Request) {
+func (d *API) checkState(w rest.ResponseWriter, req *rest.Request) {
 
 	cachedInstances, cachedRules := d.nginxProxy.GetState()
 

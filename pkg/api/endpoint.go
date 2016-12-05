@@ -12,21 +12,16 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package nginx
+// Package api defines core types used in the registry
+package api
 
-import (
-	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/pkg/api"
-)
+// ServiceEndpoint describes a network endpoint of a service.
+type ServiceEndpoint struct {
 
-// MockManager mocks interface
-type MockManager struct {
-	UpdateError error
-	UpdateCount int
-}
+	// Type is the endpoint's type, normally a protocol name, like "http", "https", "tcp", or "udp".
+	Type string `json:"type"`
 
-// Update mocks interface
-func (m *MockManager) Update([]api.ServiceInstance, []rules.Rule) error {
-	m.UpdateCount++
-	return m.UpdateError
+	// Value is the endpoint's value according to its type,
+	// e.g. "172.135.10.1:8080" or "http://myapp.ng.bluemix.net/api/v1".
+	Value string `json:"value"`
 }

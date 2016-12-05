@@ -12,21 +12,18 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package nginx
+// Package api defines core types used in the registry
+package api
 
-import (
-	"github.com/amalgam8/amalgam8/controller/rules"
-	"github.com/amalgam8/amalgam8/pkg/api"
-)
+// ServiceRegistry defines the interface used for registering service instances.
+type ServiceRegistry interface {
 
-// MockManager mocks interface
-type MockManager struct {
-	UpdateError error
-	UpdateCount int
-}
+	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
+	Register(instance *ServiceInstance) (*ServiceInstance, error)
 
-// Update mocks interface
-func (m *MockManager) Update([]api.ServiceInstance, []rules.Rule) error {
-	m.UpdateCount++
-	return m.UpdateError
+	// Deregister removes a registered service instance, identified by the given ID, from the registry.
+	Deregister(id string) error
+
+	// Renew sends a heartbeat for the service instance identified by the given ID.
+	Renew(id string) error
 }

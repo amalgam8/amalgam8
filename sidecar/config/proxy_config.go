@@ -18,6 +18,7 @@ import (
 	"os"
 	"strconv"
 	"text/template"
+
 	"github.com/Sirupsen/logrus"
 )
 

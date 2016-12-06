@@ -19,12 +19,17 @@ $ a8ctl-beta -h
 
 Commands
 --------
-- a8ctl-beta rule-create
-- a8ctl-beta rule-get
-- a8ctl-beta rule-delete
 - a8ctl-beta service-list
 - a8ctl-beta route-list
 - a8ctl-beta action-list
+- a8ctl-beta rule-create
+- a8ctl-beta rule-update
+- a8ctl-beta rule-get
+- a8ctl-beta rule-delete
+- a8ctl-beta traffic-start
+- a8ctl-beta traffic-step
+- a8ctl-beta traffic-abort
+- a8ctl-beta recipe-run
 - a8ctl-beta info
 
 Examples
@@ -40,12 +45,15 @@ in the specified JSON or YAML file. If the -f option is not specified, the Rules
 
 * $ a8ctl-beta rule-create
 ```
-*** Write .json or .yaml in a new line when finished ***
+#########################################################################
+Press (CTRL+D) on Unix-like systems or (Ctrl+Z) in Windows when finished.
+You can also write .json or .yaml in a new line to finish.
+#########################################################################
+
 Enter DSL Rules:
 
 rules:
-- id: yaml_id
-  destination: yaml_destination
+- destination: yaml_destination
   route:
     backends:
       - name: service1
@@ -55,6 +63,36 @@ rules:
 .yaml
 ```
 * $ a8ctl-beta rule-create -f rules.json
+
+#### rule-update
+```
+a8ctl-beta rule-update [ -f rules.yaml|rules.json ]
+```
+Update one or more routing or action rules described
+by the [Rules DSL](https://www.amalgam8.io/docs/control-plane/controller/rules-dsl/)
+in the specified JSON or YAML file. If the -f option is not specified, the Rules DSL is read from stdin.
+
+* $ a8ctl-beta rule-update
+```
+#########################################################################
+Press (CTRL+D) on Unix-like systems or (Ctrl+Z) in Windows when finished.
+You can also write .json or .yaml in a new line to finish.
+#########################################################################
+
+Enter DSL Rules:
+
+rules:
+- id: f5f084aa-f813-4c94-b2a3-036c8779e5ed
+  destination: yaml_destination
+  route:
+    backends:
+      - name: service1
+        tags: [ v11, v12 ]
+      - name: service2
+        tags: [ v21, v22, beta ]
+.yaml
+```
+* $ a8ctl-beta rule-update -f rules.json
 
 #### rule-get
 ```
@@ -222,6 +260,57 @@ Output a table listing all of the currently defined action-type rules.
 +-------------+--------------------------------------+----------+---------------------------------------------------------+-----------------------------------+
 ```
 
+#### traffic-start
+```
+a8ctl-beta traffic-start [-s service] [-v version] [-a amount]
+```
+Start transferring traffic from one version of a microservice to another.
+If the -a option is not specified, the default value will be used [-a 10].
+
+* a8ctl-beta traffic-start -s reviews -v v3
+```
+Transfer starting for "reviews": diverting 10% of traffic from "v1" to "v3"
+```
+
+#### traffic-step
+```
+a8ctl-beta traffic-step [-s service] [-a amount]
+```
+Increase the amount of traffic sent to an specific version of a microservice.
+
+* a8ctl-beta traffic-step -s reviews
+```
+Transfer step for reviews: diverting 20% of traffic from v1 to v3
+```
+* a8ctl-beta traffic-step -s reviews -a 90
+```
+Transfer step for reviews: diverting 90% of traffic from v1 to v3
+```
+* a8ctl-beta traffic-step -s reviews
+```
+Transfer complete for reviews: sending 100% of traffic to v3
+```
+
+#### traffic-abort
+```
+a8ctl-beta traffic-abort [-s service]
+```
+Stop transferring traffic to another version of a microservice.
+
+* a8ctl-beta traffic-abort -s reviews
+```
+Transfer aborted for reviews: all traffic reverted to v1
+```
+
+#### recipe-run
+```
+a8ctl-beta recipe-run [-t topology] [-s scenarios] [-c checks] [-r run-load-script] [-H header] [-p pattern] [-w wait] [-f force] [-o output]
+```
+Run a gremlin recipe that describes the application topology, scenario and a set of assertions for fault injection and automated verification.
+
+* a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p user=jason
+
+
 #### info
 * $ a8ctl-beta info
 
@@ -235,6 +324,8 @@ Amalgam8 info...
 | A8_REGISTRY_TOKEN   |                        |
 | A8_CONTROLLER_URL   | http://127.0.0.1:31200 |
 | A8_CONTROLLER_TOKEN |                        |
+| A8_GREMLIN_URL      | http://127.0.0.1:31500 |
+| A8_GREMLIN_TOKEN    |                        |
 | A8_DEBUG            | true                   |
 +---------------------+------------------------+
 ```

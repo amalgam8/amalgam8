@@ -17,7 +17,6 @@ package nginx
 import (
 	"errors"
 
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -30,7 +29,7 @@ var _ = Describe("Manager", func() {
 		s         *MockService
 		m         Manager
 		instances []api.ServiceInstance
-		a8Rules   []rules.Rule
+		a8Rules   []api.Rule
 	)
 
 	BeforeEach(func() {
@@ -41,7 +40,7 @@ var _ = Describe("Manager", func() {
 			Client:  c,
 		})
 		instances = []api.ServiceInstance{}
-		a8Rules = []rules.Rule{}
+		a8Rules = []api.Rule{}
 	})
 
 	It("Manager successfully Updates", func() {

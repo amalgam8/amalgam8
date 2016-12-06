@@ -38,11 +38,11 @@ const (
 	IgnoreProcess = "ignore"
 )
 
-// Supported Service Registry/Discovery backends
+// Supported Service Registry/Discovery/Rules types
 const (
-	Amalgam8Backend   = "amalgam8"
-	KubernetesBackend = "kubernetes"
-	EurekaBackend     = "eureka"
+	Amalgam8Type   = "amalgam8"
+	KubernetesType = "kubernetes"
+	EurekaType     = "eureka"
 )
 
 // Command to be managed by sidecar app supervisor
@@ -66,48 +66,34 @@ type Endpoint struct {
 	Type string `yaml:"type"`
 }
 
-// Registry configuration
-type Registry struct {
-	Backend string `yaml:"backend"`
-
-	Amalgam8   Amalgam8Registry   `yaml:"amalgam8"`
-	Kubernetes KubernetesRegistry `yaml:"kubernetes"`
-	Eureka     EurekaRegistry     `yaml:"eureka"`
-
-	// for backward compatibility, support amalgam8 registry
-	// configuration directly under the `registry:` clause
-	Amalgam8Registry `yaml:",inline"`
-}
-
-// Controller configuration
-type Controller struct {
-	URL   string        `yaml:"url"`
-	Token string        `yaml:"token"`
-	Poll  time.Duration `yaml:"poll"`
-}
-
 // Dnsconfig - DNS server configuration
 type Dnsconfig struct {
 	Port   int    `yaml:"port"`
 	Domain string `yaml:"domain"`
 }
 
-// Amalgam8Registry configuration
-type Amalgam8Registry struct {
+// Amalgam8Endpoint configuration
+type Amalgam8Endpoint struct {
 	URL   string        `yaml:"url"`
 	Token string        `yaml:"token"`
 	Poll  time.Duration `yaml:"poll"`
 }
 
-// KubernetesRegistry configuration
-type KubernetesRegistry struct {
+// Amalgam8 configuration
+type Amalgam8 struct {
+	Registry   Amalgam8Endpoint `yaml:"registry"`
+	Controller Amalgam8Endpoint `yaml:"controller"`
+}
+
+// Kubernetes configuration
+type Kubernetes struct {
 	URL       string `yaml:"url"`
 	Token     string `yaml:"token"`
 	Namespace string `yaml:"namespace"`
 }
 
-// EurekaRegistry configuration
-type EurekaRegistry struct {
+// Eureka configuration
+type Eureka struct {
 	URLs []string `yaml:"urls"`
 }
 
@@ -139,9 +125,14 @@ type Config struct {
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
 
-	Registry   Registry   `yaml:"registry"`
-	Controller Controller `yaml:"controller"`
-	Dnsconfig  Dnsconfig  `yaml:"dnsconfig"`
+	DiscoveryType string `yaml:"discovery_type"`
+	RulesType     string `yaml:"rules_type"`
+
+	Amalgam8   Amalgam8   `yaml:"amalgam8"`
+	Kubernetes Kubernetes `yaml:"kubernetes"`
+	Eureka     Eureka     `yaml:"eureka"`
+
+	Dnsconfig Dnsconfig `yaml:"dnsconfig"`
 
 	Supervise bool `yaml:"supervise"`
 
@@ -172,13 +163,6 @@ func New(context *cli.Context) (*Config, error) {
 	err := config.loadFromContext(context)
 	if err != nil {
 		return nil, err
-	}
-
-	// for backward compatibility, support amalgam8 registry
-	// configuration directly under the `registry:` clause
-	if config.Registry.URL != "" {
-		config.Registry.Backend = Amalgam8Backend
-		config.Registry.Amalgam8 = config.Registry.Amalgam8Registry
 	}
 
 	if config.Endpoint.Host == "" {
@@ -240,17 +224,18 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
-	loadFromContextIfSet(&c.Registry.Backend, registryBackendFlag)
-	loadFromContextIfSet(&c.Registry.Amalgam8.URL, registryURLFlag)
-	loadFromContextIfSet(&c.Registry.Amalgam8.Token, registryTokenFlag)
-	loadFromContextIfSet(&c.Registry.Amalgam8.Poll, registryPollFlag)
-	loadFromContextIfSet(&c.Registry.Kubernetes.URL, kubernetesURLFlag)
-	loadFromContextIfSet(&c.Registry.Kubernetes.Token, kubernetesTokenFlag)
-	loadFromContextIfSet(&c.Registry.Kubernetes.Namespace, kubernetesNamespaceFlag)
-	loadFromContextIfSet(&c.Registry.Eureka.URLs, eurekaURLFlag)
-	loadFromContextIfSet(&c.Controller.URL, controllerURLFlag)
-	loadFromContextIfSet(&c.Controller.Token, controllerTokenFlag)
-	loadFromContextIfSet(&c.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.DiscoveryType, discoveryTypeFlag)
+	loadFromContextIfSet(&c.RulesType, rulesTypeFlag)
+	loadFromContextIfSet(&c.Amalgam8.Registry.URL, registryURLFlag)
+	loadFromContextIfSet(&c.Amalgam8.Registry.Token, registryTokenFlag)
+	loadFromContextIfSet(&c.Amalgam8.Registry.Poll, registryPollFlag)
+	loadFromContextIfSet(&c.Amalgam8.Controller.URL, controllerURLFlag)
+	loadFromContextIfSet(&c.Amalgam8.Controller.Token, controllerTokenFlag)
+	loadFromContextIfSet(&c.Amalgam8.Controller.Poll, controllerPollFlag)
+	loadFromContextIfSet(&c.Kubernetes.URL, kubernetesURLFlag)
+	loadFromContextIfSet(&c.Kubernetes.Token, kubernetesTokenFlag)
+	loadFromContextIfSet(&c.Kubernetes.Namespace, kubernetesNamespaceFlag)
+	loadFromContextIfSet(&c.Eureka.URLs, eurekaURLFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
@@ -347,11 +332,17 @@ func (c *Config) Validate() error {
 	)
 
 	validators = append(validators,
-		IsInSet("Registry backend", c.Registry.Backend, []string{Amalgam8Backend, KubernetesBackend, EurekaBackend}),
-		IsEmptyOrValidURL("Amalgam8 Registry URL", c.Registry.Amalgam8.URL),
-		IsEmptyOrValidURL("Kubernetes URL", c.Registry.Kubernetes.URL))
-	for _, url := range c.Registry.Eureka.URLs {
+		IsInSet("Discovery type", c.DiscoveryType, []string{Amalgam8Type, KubernetesType, EurekaType}),
+		IsEmptyOrValidURL("Amalgam8 Registry URL", c.Amalgam8.Registry.URL),
+		IsEmptyOrValidURL("Kubernetes URL", c.Kubernetes.URL))
+	for _, url := range c.Eureka.URLs {
 		validators = append(validators, IsEmptyOrValidURL("Eureka URL", url))
+	}
+
+	if c.DiscoveryType == Amalgam8Type {
+		validators = append(validators,
+			IsValidURL("Amalgam8 Registry URL", c.Amalgam8.Registry.URL),
+			IsInRangeDuration("Amalgam8 Registry polling interval", c.Amalgam8.Registry.Poll, 5*time.Second, 1*time.Hour))
 	}
 
 	if c.Register {
@@ -365,11 +356,12 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Proxy {
-		validators = append(validators,
-			IsValidURL("Controller URL", c.Controller.URL),
-			IsInRangeDuration("Controller polling interval", c.Controller.Poll, 5*time.Second, 1*time.Hour),
-		)
-
+		validators = append(validators, IsInSet("Rules service type", c.RulesType, []string{Amalgam8Type, KubernetesType}))
+		if c.RulesType == Amalgam8Type {
+			validators = append(validators,
+				IsValidURL("Amalgam8 Controller URL", c.Amalgam8.Controller.URL),
+				IsInRangeDuration("Amalgam8 Controller polling interval", c.Amalgam8.Controller.Poll, 5*time.Second, 1*time.Hour))
+		}
 	}
 
 	if c.DNS {

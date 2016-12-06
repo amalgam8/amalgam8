@@ -29,7 +29,7 @@ const (
 	endpointHostFlag        = "endpoint_host"
 	endpointPortFlag        = "endpoint_port"
 	endpointTypeFlag        = "endpoint_type"
-	registryBackendFlag     = "registry_backend"
+	discoveryTypeFlag       = "discovery_type"
 	registryURLFlag         = "registry_url"
 	registryTokenFlag       = "registry_token"
 	registryPollFlag        = "registry_poll"
@@ -37,6 +37,7 @@ const (
 	kubernetesTokenFlag     = "kubernetes_token"
 	kubernetesNamespaceFlag = "kubernetes_namespace"
 	eurekaURLFlag           = "eureka_url"
+	rulesTypeFlag           = "rules_type"
 	controllerURLFlag       = "controller_url"
 	controllerTokenFlag     = "controller_token"
 	controllerPollFlag      = "controller_poll"
@@ -96,9 +97,9 @@ var Flags = []cli.Flag{
 		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
 	},
 	cli.StringFlag{
-		Name:   registryBackendFlag,
-		EnvVar: envVar(registryBackendFlag),
-		Usage:  "Registry backend type (amalgam8, kubernetes, eureka)",
+		Name:   discoveryTypeFlag,
+		EnvVar: envVar(discoveryTypeFlag),
+		Usage:  fmt.Sprintf("Discovery type (%s, %s, %s)", Amalgam8Type, KubernetesType, EurekaType),
 	},
 	cli.StringFlag{
 		Name:   registryURLFlag,
@@ -136,21 +137,25 @@ var Flags = []cli.Flag{
 		Usage:  "List of Eureka server URLs",
 	},
 	cli.StringFlag{
+		Name:   rulesTypeFlag,
+		EnvVar: envVar(rulesTypeFlag),
+		Usage:  fmt.Sprintf("Rules service type (%s, %s)", Amalgam8Type, KubernetesType),
+	},
+	cli.StringFlag{
 		Name:   controllerURLFlag,
 		EnvVar: envVar(controllerURLFlag),
-		Usage:  "URL for Controller service",
+		Usage:  "URL for Rules service",
 	},
 	cli.StringFlag{
 		Name:   controllerTokenFlag,
 		EnvVar: envVar(controllerTokenFlag),
-		Usage:  "Amalgam8 controller token",
+		Usage:  "Amalgam8 rules token",
 	},
 	cli.DurationFlag{
 		Name:   controllerPollFlag,
 		EnvVar: envVar(controllerPollFlag),
-		Usage:  "Interval for polling Controller",
+		Usage:  "Interval for polling Amalgam8 Rules",
 	},
-
 	cli.StringFlag{
 		Name:   dnsConfigPortFlag,
 		EnvVar: envVar(dnsConfigPortFlag),

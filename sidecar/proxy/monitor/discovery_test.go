@@ -22,7 +22,7 @@ import (
 )
 
 func TestCatalogComparison(t *testing.T) {
-	r := registryMonitor{}
+	r := discoveryMonitor{}
 
 	cases := []struct {
 		A, B  map[string][]*api.ServiceInstance

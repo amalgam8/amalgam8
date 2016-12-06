@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -34,7 +33,7 @@ type Config struct {
 }
 
 // New constructs a new A8 controller client.
-func New(conf Config) (api.RulesStore, error) {
+func New(conf Config) (api.ServiceRules, error) {
 	if err := normalizeConfig(&conf); err != nil {
 		return nil, err
 	}
@@ -73,12 +72,12 @@ type client struct {
 	httpClient *http.Client
 }
 
-func (c *client) ListRules(filter api.Filter) (api.RuleSet, error) {
-	var ruleSet api.RuleSet
+func (c *client) ListRules(filter *api.Filter) (*api.RulesSet, error) {
+	var rulesSet api.RulesSet
 
 	u, err := url.Parse(c.url + "/v1/rules")
 	if err != nil {
-		return ruleSet, err
+		return &rulesSet, err
 	}
 
 	query := u.Query()
@@ -94,14 +93,14 @@ func (c *client) ListRules(filter api.Filter) (api.RuleSet, error) {
 	req, err := http.NewRequest("GET", u.String(), nil)
 	if err != nil {
 		logrus.WithError(err).Warn("Error building request to get rules from controller")
-		return ruleSet, err
+		return &rulesSet, err
 	}
 	c.setAuthHeader(req)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		logrus.WithError(err).Warn("Failed to retrieve rules from controller")
-		return ruleSet, err
+		return &rulesSet, err
 	}
 	defer resp.Body.Close()
 
@@ -112,7 +111,7 @@ func (c *client) ListRules(filter api.Filter) (api.RuleSet, error) {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"request_id": requestID,
 		}).Warn("Error reading response from controller")
-		return ruleSet, err
+		return &rulesSet, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -121,17 +120,17 @@ func (c *client) ListRules(filter api.Filter) (api.RuleSet, error) {
 			"request_id":  requestID,
 			"body":        string(data),
 		}).Warn("Controller returned unexpected response code")
-		return ruleSet, errors.New("client: received unexpected response code") // FIXME: custom error?
+		return &rulesSet, errors.New("client: received unexpected response code") // FIXME: custom error?
 	}
 
-	if err = json.Unmarshal(data, &ruleSet); err != nil {
+	if err = json.Unmarshal(data, &rulesSet); err != nil {
 		logrus.WithError(err).WithFields(logrus.Fields{
 			"request_id": requestID,
 		}).Warn("Error reading rules JSON from controller")
-		return ruleSet, err
+		return &rulesSet, err
 	}
 
-	return ruleSet, nil
+	return &rulesSet, nil
 }
 
 // setAuthHeader optionally sets an authorization header. If the token is empty we assume no authentication is enabled

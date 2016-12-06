@@ -32,33 +32,32 @@ var DefaultConfig = Config{
 		Type: "http",
 	},
 
-	Registry: Registry{
-		Backend: Amalgam8Backend,
-		Amalgam8: Amalgam8Registry{
+	DiscoveryType: Amalgam8Type,
+
+	Amalgam8: Amalgam8{
+		Registry: Amalgam8Endpoint{
 			URL:   "",
 			Token: "",
 			Poll:  time.Duration(15 * time.Second),
 		},
-		Kubernetes: KubernetesRegistry{
-			URL:       "",
-			Token:     "",
-			Namespace: "",
-		},
-		Eureka: EurekaRegistry{
-			URLs: []string{},
-		},
 
-		Amalgam8Registry: Amalgam8Registry{
+		Controller: Amalgam8Endpoint{
 			URL:   "",
 			Token: "",
 			Poll:  time.Duration(15 * time.Second),
 		},
 	},
 
-	Controller: Controller{
-		URL:   "",
-		Token: "",
-		Poll:  time.Duration(15 * time.Second),
+	RulesType: Amalgam8Type,
+
+	Kubernetes: Kubernetes{
+		URL:       "",
+		Token:     "",
+		Namespace: "",
+	},
+
+	Eureka: Eureka{
+		URLs: []string{},
 	},
 
 	Dnsconfig: Dnsconfig{

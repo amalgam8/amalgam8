@@ -56,8 +56,11 @@ var _ = Describe("Config", func() {
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
-			Expect(c.Registry).To(Equal(DefaultConfig.Registry))
-			Expect(c.Controller).To(Equal(DefaultConfig.Controller))
+			Expect(c.DiscoveryType).To(Equal(DefaultConfig.DiscoveryType))
+			Expect(c.RulesType).To(Equal(DefaultConfig.RulesType))
+			Expect(c.Amalgam8).To(Equal(DefaultConfig.Amalgam8))
+			Expect(c.Kubernetes).To(Equal(DefaultConfig.Kubernetes))
+			Expect(c.Eureka).To(Equal(DefaultConfig.Eureka))
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
@@ -132,9 +135,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Controller.Token).To(Equal("local"))
-			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Rules.URL).To(Equal("http://controller:8080"))
+			Expect(c.Rules.Token).To(Equal("local"))
+			Expect(c.Rules.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -229,9 +232,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Controller.Token).To(Equal("local"))
-			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Rules.URL).To(Equal("http://controller:8080"))
+			Expect(c.Rules.Token).To(Equal("local"))
+			Expect(c.Rules.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -349,11 +352,11 @@ log_level: debug
 			Expect(c.Registry.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Registry.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Registry.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Controller.Token).To(Equal("local"))
+			Expect(c.Rules.URL).To(Equal("http://controller:8080"))
+			Expect(c.Rules.Token).To(Equal("local"))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
-			Expect(c.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.Rules.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.HealthChecks[0].Type).To(Equal("http"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
 			Expect(c.HealthChecks[0].Interval).To(Equal(time.Duration(15) * time.Second))
@@ -423,13 +426,13 @@ registry:
 		BeforeEach(func() {
 			c = &Config{
 				Registry: Registry{
-					Backend: Amalgam8Backend,
+					Backend: Amalgam8Type,
 					Amalgam8: Amalgam8Registry{
 						URL:   "http://registry",
 						Token: "sd_token",
 					},
 				},
-				Controller: Controller{
+				Rules: Rules{
 					Token: "token",
 					URL:   "http://controller",
 					Poll:  60 * time.Second,
@@ -462,12 +465,12 @@ registry:
 		})
 
 		It("rejects an invalid URL", func() {
-			c.Controller.URL = "123456"
+			c.Rules.URL = "123456"
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 
 		It("rejects an excessively large poll interval", func() {
-			c.Controller.Poll = 48 * time.Hour
+			c.Rules.Poll = 48 * time.Hour
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 

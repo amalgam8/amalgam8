@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
@@ -33,7 +32,7 @@ const clientTimeout = 30 * time.Second
 
 // Client for NGINX
 type Client interface {
-	Update([]api.ServiceInstance, []rules.Rule) error
+	Update([]api.ServiceInstance, []api.Rule) error
 }
 
 type client struct {
@@ -52,10 +51,10 @@ func NewClient(url string) Client {
 }
 
 // Update the NGINX server
-func (c *client) Update(newInstances []api.ServiceInstance, newRules []rules.Rule) error {
+func (c *client) Update(newInstances []api.ServiceInstance, newRules []api.Rule) error {
 	conf := struct {
 		Instances []api.ServiceInstance `json:"instances"`
-		Rules     []rules.Rule          `json:"rules"`
+		Rules     []api.Rule            `json:"rules"`
 	}{
 		Instances: newInstances,
 		Rules:     newRules,

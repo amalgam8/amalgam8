@@ -25,7 +25,6 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	controllerclient "github.com/amalgam8/amalgam8/controller/client"
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/adapters/registry/eureka"
 	"github.com/amalgam8/amalgam8/pkg/adapters/registry/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/api"
@@ -187,47 +186,64 @@ func Run(conf config.Config) error {
 }
 
 func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
-	switch strings.ToLower(conf.Registry.Backend) {
-	case config.Amalgam8Backend:
+	switch strings.ToLower(conf.DiscoveryType) {
+	case config.Amalgam8Type:
 		regConf := registryclient.Config{
-			URL:       conf.Registry.Amalgam8.URL,
-			AuthToken: conf.Registry.Amalgam8.Token,
+			URL:       conf.Amalgam8.Registry.URL,
+			AuthToken: conf.Amalgam8.Registry.Token,
 		}
 		return registryclient.New(regConf)
 	case "":
-		return nil, fmt.Errorf("no service registry backend specified")
+		return nil, fmt.Errorf("no service discovery type specified")
 	default:
-		return nil, fmt.Errorf("registration using '%s' is not supported", conf.Registry.Backend)
+		return nil, fmt.Errorf("registration using '%s' is not supported", conf.DiscoveryType)
 	}
 }
 
 func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
-	switch strings.ToLower(conf.Registry.Backend) {
-	case config.Amalgam8Backend:
+	switch strings.ToLower(conf.DiscoveryType) {
+	case config.Amalgam8Type:
 		regConf := registryclient.CacheConfig{
 			Config: registryclient.Config{
-				URL:       conf.Registry.Amalgam8.URL,
-				AuthToken: conf.Registry.Amalgam8.Token,
+				URL:       conf.Amalgam8.Registry.URL,
+				AuthToken: conf.Amalgam8.Registry.Token,
 			},
-			PollInterval: conf.Registry.Poll,
+			PollInterval: conf.Amalgam8.Registry.Poll,
 		}
 		return registryclient.NewCache(regConf)
-	case config.KubernetesBackend:
+	case config.KubernetesType:
 		kubConf := kubernetes.Config{
-			URL:       conf.Registry.Kubernetes.URL,
-			Token:     conf.Registry.Kubernetes.Token,
-			Namespace: auth.NamespaceFrom(conf.Registry.Kubernetes.Namespace),
+			URL:       conf.Kubernetes.URL,
+			Token:     conf.Kubernetes.Token,
+			Namespace: auth.NamespaceFrom(conf.Kubernetes.Namespace),
 		}
 		return kubernetes.New(kubConf)
-	case config.EurekaBackend:
+	case config.EurekaType:
 		eurConf := eureka.Config{
-			URLs: conf.Registry.Eureka.URLs,
+			URLs: conf.Eureka.URLs,
 		}
 		return eureka.New(eurConf)
 	case "":
-		return nil, fmt.Errorf("no service discovery backend specified")
+		return nil, fmt.Errorf("no service discovery type specified")
 	default:
-		return nil, fmt.Errorf("discovery using '%s' is not supported", conf.Registry.Backend)
+		return nil, fmt.Errorf("discovery using '%s' is not supported", conf.DiscoveryType)
+	}
+}
+
+func buildServiceRules(conf *config.Config) (api.ServiceRules, error) {
+	switch strings.ToLower(conf.RulesType) {
+	case config.Amalgam8Type:
+		return controllerclient.New(controllerclient.Config{
+			URL:       conf.Amalgam8.Controller.URL,
+			AuthToken: conf.Amalgam8.Controller.Token,
+		})
+	case config.KubernetesType:
+		// TODO: return kuberenets rules fetcher
+		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesType)
+	case "":
+		return nil, fmt.Errorf("no service rules type specified")
+	default:
+		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesType)
 	}
 }
 
@@ -243,37 +259,34 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 	)
 	nginxProxy := proxy.NewNGINXProxy(nginxManager)
 
-	controllerClient, err := controllerclient.New(controllerclient.Config{
-		URL:       conf.Controller.URL,
-		AuthToken: conf.Controller.Token,
-	})
+	rules, err := buildServiceRules(conf)
 	if err != nil {
-		logrus.WithError(err).Error("Could not create controller client")
+		logrus.WithError(err).Error("Could not create service rules client")
 		return err
 	}
 
-	controllerMonitor := monitor.NewControllerMonitor(monitor.ControllerConfig{
-		Client: controllerClient,
-		Listeners: []monitor.ControllerListener{
+	rulesMonitor := monitor.NewRulesMonitor(monitor.RulesConfig{
+		Rules: rules,
+		Listeners: []monitor.RulesListener{
 			nginxProxy,
 		},
-		PollInterval: conf.Controller.Poll,
+		PollInterval: conf.Amalgam8.Controller.Poll,
 	})
 
-	registryMonitor := monitor.NewRegistryMonitor(monitor.RegistryConfig{
+	discoveryMonitor := monitor.NewDiscoveryMonitor(monitor.DiscoveryConfig{
 		Discovery: discovery,
-		Listeners: []monitor.RegistryListener{
+		Listeners: []monitor.DiscoveryListener{
 			nginxProxy,
 		},
 	})
 
 	go func() {
-		if err = controllerMonitor.Start(); err != nil {
+		if err = rulesMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Controller monitor failed")
 		}
 	}()
 	go func() {
-		if err = registryMonitor.Start(); err != nil {
+		if err = discoveryMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Registry monitor failed")
 		}
 	}()
@@ -315,9 +328,9 @@ type Instance struct {
 
 // NGINXState nginx cached lua state
 type NGINXState struct {
-	Routes    map[string][]rules.Rule `json:"routes"`
-	Instances map[string][]Instance   `json:"instances"`
-	Actions   map[string][]rules.Rule `json:"actions"`
+	Routes    map[string][]api.Rule `json:"routes"`
+	Instances map[string][]Instance `json:"instances"`
+	Actions   map[string][]api.Rule `json:"actions"`
 }
 
 func cliCommand(command string) {
@@ -347,7 +360,7 @@ func cliCommand(command string) {
 
 		sidecarstate := struct {
 			Instances []api.ServiceInstance `json:"instances"`
-			Rules     []rules.Rule          `json:"rules"`
+			Rules     []api.Rule            `json:"rules"`
 		}{}
 
 		err = json.Unmarshal(respBytes, &sidecarstate)

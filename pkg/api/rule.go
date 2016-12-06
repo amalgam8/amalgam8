@@ -1,9 +1,3 @@
-package api
-
-import "encoding/json"
-
-
-
 // Copyright 2016 IBM Corporation
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
@@ -18,6 +12,9 @@ import "encoding/json"
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
+package api
+
+import "encoding/json"
 
 // Rule represents an individual rule.
 type Rule struct {

@@ -12,7 +12,6 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-// Package api defines core types used in the registry
 package api
 
 // ServiceEndpoint describes a network endpoint of a service.

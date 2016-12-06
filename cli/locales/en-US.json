@@ -132,6 +132,22 @@
     "translation": "Read a JSON or YAML file containing a description of rules to create. Reads from stdin by default."
   },
   {
+    "id": "rule_update_name",
+    "translation": "rule-update"
+  },
+  {
+    "id": "rule_update_description",
+    "translation": "Update rules for a microservice."
+  },
+  {
+    "id": "rule_update_usage",
+    "translation": "Update rules for a microservice."
+  },
+  {
+    "id": "rule_update_file_usage",
+    "translation": "Read a JSON or YAML file containing a description of rules to update. Reads from stdin by default."
+  },
+  {
     "id": "rule_get_name",
     "translation": "rule-get"
   },

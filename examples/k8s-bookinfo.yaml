@@ -57,7 +57,7 @@ spec:
         - name: A8_REGISTRY_BACKEND
           value: kubernetes
         - name: A8_SERVICE
-          value: gateway
+          value: gateway:none
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_CONTROLLER_POLL

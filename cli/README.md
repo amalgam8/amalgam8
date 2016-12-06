@@ -37,7 +37,7 @@ Examples
 
 #### rule-create
 ```
-a8ctl-beta rule-create [ -f rules.yaml|rules.json ]
+a8ctl-beta rule-create [-f rules.yaml|rules.json] [-r]
 ```
 Create one or more routing or action rules described
 by the [Rules DSL](https://www.amalgam8.io/docs/control-plane/controller/rules-dsl/)
@@ -64,9 +64,23 @@ rules:
 ```
 * $ a8ctl-beta rule-create -f rules.json
 
+* Input Redirection:
+```
+cat << EOF | a8ctl-beta rule-create -r
+rules:
+- destination: yaml_destination
+  route:
+    backends:
+      - name: service1
+        tags: [ v11, v12 ]
+      - name: service2
+        tags: [ v21, v22, yaml ]
+EOF
+```
+
 #### rule-update
 ```
-a8ctl-beta rule-update [ -f rules.yaml|rules.json ]
+a8ctl-beta rule-update [-f rules.yaml|rules.json] [-r]
 ```
 Update one or more routing or action rules described
 by the [Rules DSL](https://www.amalgam8.io/docs/control-plane/controller/rules-dsl/)
@@ -93,6 +107,39 @@ rules:
 .yaml
 ```
 * $ a8ctl-beta rule-update -f rules.json
+
+* Input Redirection:
+```
+cat << EOF | a8ctl-beta rule-update -r
+{
+  "rules": [
+    {
+      "id": "f5f084aa-f813-4c94-b2a3-036c8779e5ed",
+      "destination": "yaml_destination",
+      "route": {
+        "backends": [
+          {
+            "name": "service1",
+            "tags": [
+              "v11",
+              "v12"
+            ]
+          },
+          {
+            "name": "service2",
+            "tags": [
+              "v21",
+              "v22",
+              "beta"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+EOF
+```
 
 #### rule-get
 ```

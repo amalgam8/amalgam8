@@ -52,6 +52,10 @@ func (cmd *RuleCreateCommand) GetMetadata() cli.Command {
 				Name:  "file, f",
 				Usage: T("rule_create_file_usage"),
 			},
+			cli.BoolFlag{
+				Name:  "redirection, r",
+				Usage: T("rule_create_input_redirection_usage"),
+			},
 		},
 		Before:       cmd.Before,
 		OnUsageError: cmd.OnUsageError,
@@ -110,7 +114,8 @@ func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
 
 // DefaultAction captures the rules provided in the terminal.
 func (cmd *RuleCreateCommand) DefaultAction(ctx *cli.Context) error {
-	reader, format, err := utils.ScannerLines(cmd.ctx.App.Writer, "Enter DSL Rules")
+
+	reader, format, err := utils.ScannerLines(cmd.ctx.App.Writer, "Enter DSL Rules", ctx.Bool("redirection"))
 
 	fmt.Fprintf(cmd.ctx.App.Writer, "\n\n")
 

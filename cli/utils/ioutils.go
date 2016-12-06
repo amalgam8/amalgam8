@@ -149,7 +149,7 @@ func MarshallReader(writer io.Writer, data interface{}, format string) error {
 }
 
 // ScannerLines returns a reader with the rules provided in the console.
-func ScannerLines(writer io.Writer, description string) (io.Reader, string, error) {
+func ScannerLines(writer io.Writer, description string, instructions bool) (io.Reader, string, error) {
 	scanner := bufio.NewScanner(os.Stdin)
 	dataBuf := bytes.Buffer{}
 	var format string
@@ -157,7 +157,11 @@ func ScannerLines(writer io.Writer, description string) (io.Reader, string, erro
 		".json": JSON,
 		".yaml": YAML,
 	}
-	fmt.Fprintf(writer, "\n%s\n%s:\n\n", "#########################################################################\nPress (CTRL+D) on Unix-like systems or (Ctrl+Z) in Windows when finished.\nYou can also write .json or .yaml in a new line to finish.\n#########################################################################\n", description)
+
+	if !instructions {
+		fmt.Fprintf(writer, "\n%s\n%s:\n\n", "#########################################################################\nPress (CTRL+D) on Unix-like systems or (Ctrl+Z) in Windows when finished.\nYou can also write .json or .yaml in a new line to finish.\n#########################################################################\n", description)
+	}
+
 	for scanner.Scan() {
 		for k := range breakers {
 			if strings.ToLower(scanner.Text()) == k {

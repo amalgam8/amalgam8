@@ -19,12 +19,13 @@ import (
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/xeipuuv/gojsonschema"
 )
 
 // Validator validates rules against the rule schema.
 type Validator interface {
-	Validate(Rule) error
+	Validate(api.Rule) error
 }
 
 type validator struct {
@@ -46,7 +47,7 @@ func NewValidator() (Validator, error) {
 }
 
 // Validate a rule
-func (v *validator) Validate(rule Rule) error {
+func (v *validator) Validate(rule api.Rule) error {
 	ruleLoader := gojsonschema.NewGoLoader(&rule)
 	result, err := v.schema.Validate(ruleLoader)
 	if err != nil {

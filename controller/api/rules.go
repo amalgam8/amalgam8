@@ -23,13 +23,14 @@ import (
 	"github.com/amalgam8/amalgam8/controller/metrics"
 	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/controller/util/i18n"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
 // RuleList is used to output the results of rule queries.
 type RuleList struct {
-	Rules    []rules.Rule `json:"rules"`
-	Revision int64        `json:"revision"`
+	Rules    []api.Rule `json:"rules"`
+	Revision int64      `json:"revision"`
 }
 
 // Rule API.
@@ -116,17 +117,17 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
 
-	filter := rules.Filter{
+	filter := api.Filter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: destinations,
-		RuleType:     rules.RuleAny,
+		RuleType:     api.RuleAny,
 	}
 
 	return r.get(namespace, filter, w, req)
 }
 
-func (r *Rule) get(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+func (r *Rule) get(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
 	res, err := r.manager.GetRules(ns, f)
 	if err != nil {
 		handleManagerError(w, req, err)
@@ -174,11 +175,11 @@ func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
 }
 
 func (r *Rule) getRoutes(w rest.ResponseWriter, req *rest.Request) error {
-	return r.getByRuleType(rules.RuleRoute, w, req)
+	return r.getByRuleType(api.RuleRoute, w, req)
 }
 
 func (r *Rule) getActions(w rest.ResponseWriter, req *rest.Request) error {
-	return r.getByRuleType(rules.RuleAction, w, req)
+	return r.getByRuleType(api.RuleAction, w, req)
 }
 
 func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Request) error {
@@ -187,7 +188,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
 
-	filter := rules.Filter{
+	filter := api.Filter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: destinations,
@@ -201,19 +202,19 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	}
 
 	respJSON := struct {
-		Services map[string][]rules.Rule `json:"services"`
+		Services map[string][]api.Rule `json:"services"`
 	}{
-		Services: make(map[string][]rules.Rule),
+		Services: make(map[string][]api.Rule),
 	}
 
-	services := make(map[string][]rules.Rule)
+	services := make(map[string][]api.Rule)
 	for _, rule := range retrievedRules.Rules {
 		if _, ok := services[rule.Destination]; ok {
 			rulesByService := services[rule.Destination]
 			rulesByService = append(rulesByService, rule)
 			services[rule.Destination] = rulesByService
 		} else {
-			rulesByService := []rules.Rule{rule}
+			rulesByService := []api.Rule{rule}
 			services[rule.Destination] = rulesByService
 		}
 	}
@@ -226,7 +227,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	return nil
 }
 
-func (r *Rule) delete(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+func (r *Rule) delete(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
 	if err := r.manager.DeleteRules(ns, f); err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -242,7 +243,7 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	tags := getQueries("tag", req)
 	dests := getQueries("destination", req)
 
-	f := rules.Filter{
+	f := api.Filter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: dests,
@@ -251,7 +252,7 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	return r.delete(ns, f, w, req)
 }
 
-func (r *Rule) set(ns string, f rules.Filter, w rest.ResponseWriter, req *rest.Request) error {
+func (r *Rule) set(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
 	ruleList := RuleList{}
 	if err := req.DecodeJsonPayload(&ruleList); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
@@ -285,9 +286,9 @@ func (r *Rule) setRouteDestination(w rest.ResponseWriter, req *rest.Request) err
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleRoute,
+		RuleType:     api.RuleRoute,
 	}
 
 	return r.set(ns, f, w, req)
@@ -297,9 +298,9 @@ func (r *Rule) setActionDestination(w rest.ResponseWriter, req *rest.Request) er
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleAction,
+		RuleType:     api.RuleAction,
 	}
 
 	return r.set(ns, f, w, req)
@@ -309,9 +310,9 @@ func (r *Rule) getRouteDestination(w rest.ResponseWriter, req *rest.Request) err
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleRoute,
+		RuleType:     api.RuleRoute,
 	}
 
 	return r.get(ns, f, w, req)
@@ -321,9 +322,9 @@ func (r *Rule) getActionDestination(w rest.ResponseWriter, req *rest.Request) er
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleAction,
+		RuleType:     api.RuleAction,
 	}
 
 	return r.get(ns, f, w, req)
@@ -333,9 +334,9 @@ func (r *Rule) deleteRouteDestination(w rest.ResponseWriter, req *rest.Request) 
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleRoute,
+		RuleType:     api.RuleRoute,
 	}
 
 	return r.delete(ns, f, w, req)
@@ -345,9 +346,9 @@ func (r *Rule) deleteActionDestination(w rest.ResponseWriter, req *rest.Request)
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := rules.Filter{
+	f := api.Filter{
 		Destinations: []string{dest},
-		RuleType:     rules.RuleAction,
+		RuleType:     api.RuleAction,
 	}
 
 	return r.delete(ns, f, w, req)

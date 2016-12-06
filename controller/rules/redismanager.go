@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/pborman/uuid"
 )
 
@@ -36,7 +37,7 @@ type redisManager struct {
 	db        *redisDB
 }
 
-func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error) {
+func (r *redisManager) AddRules(namespace string, rules []api.Rule) (NewRules, error) {
 	if len(rules) == 0 {
 		return NewRules{}, errors.New("rules: no rules provided")
 	}
@@ -78,8 +79,8 @@ func (r *redisManager) AddRules(namespace string, rules []Rule) (NewRules, error
 	}, nil
 }
 
-func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules, error) {
-	results := []Rule{}
+func (r *redisManager) GetRules(namespace string, filter api.Filter) (RetrievedRules, error) {
+	results := []api.Rule{}
 
 	var stringRules []string
 	var err error
@@ -104,9 +105,9 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 		}
 	}
 
-	results = make([]Rule, len(stringRules))
+	results = make([]api.Rule, len(stringRules))
 	for index, entry := range stringRules {
-		rule := Rule{}
+		rule := api.Rule{}
 		if err = json.Unmarshal([]byte(entry), &rule); err != nil {
 			logrus.WithError(err).WithFields(logrus.Fields{
 				"namespace": namespace,
@@ -125,7 +126,7 @@ func (r *redisManager) GetRules(namespace string, filter Filter) (RetrievedRules
 	}, nil
 }
 
-func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {
+func (r *redisManager) SetRules(namespace string, filter api.Filter, rules []api.Rule) (NewRules, error) {
 	for i := range rules {
 		rules[i].ID = uuid.New()
 	}
@@ -152,7 +153,7 @@ func (r *redisManager) SetRules(namespace string, filter Filter, rules []Rule) (
 	}, nil
 }
 
-func (r *redisManager) UpdateRules(namespace string, rules []Rule) error {
+func (r *redisManager) UpdateRules(namespace string, rules []api.Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
 	}
@@ -184,6 +185,6 @@ func (r *redisManager) UpdateRules(namespace string, rules []Rule) error {
 	return nil
 }
 
-func (r *redisManager) DeleteRules(namespace string, filter Filter) error {
-	return r.db.SetByDestination(namespace, filter, []Rule{})
+func (r *redisManager) DeleteRules(namespace string, filter api.Filter) error {
+	return r.db.SetByDestination(namespace, filter, []api.Rule{})
 }

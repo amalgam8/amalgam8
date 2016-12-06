@@ -17,6 +17,8 @@ package rules
 import (
 	"reflect"
 	"testing"
+
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 func TestFilterRules(t *testing.T) {
@@ -39,7 +41,7 @@ func TestFilterRules(t *testing.T) {
 
 	cases := []struct {
 		In, Out []Rule
-		Filter  Filter
+		Filter  api.Filter
 	}{
 		{ // Empty filter does not do anything
 			In: []Rule{
@@ -48,7 +50,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{},
+			Filter: api.Filter{},
 		},
 		{ // Filter by tags
 			In: []Rule{
@@ -58,7 +60,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{
+			Filter: api.Filter{
 				Tags: []string{"tag1"},
 			},
 		},
@@ -70,7 +72,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule2,
 			},
-			Filter: Filter{
+			Filter: api.Filter{
 				Destinations: []string{"service2"},
 			},
 		},
@@ -82,8 +84,8 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{
-				RuleType: RuleAction,
+			Filter: api.Filter{
+				RuleType: api.RuleAction,
 			},
 		},
 		{ // Filter route rules
@@ -94,8 +96,8 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule2,
 			},
-			Filter: Filter{
-				RuleType: RuleRoute,
+			Filter: api.Filter{
+				RuleType: api.RuleRoute,
 			},
 		},
 	}

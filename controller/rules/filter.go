@@ -15,51 +15,11 @@
 package rules
 
 import (
-	"fmt"
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
-
-const (
-	// RuleAny denotes any rule type
-	RuleAny = iota
-
-	// RuleRoute denotes rules with a routing field
-	RuleRoute
-
-	// RuleAction denotes rules with an action field
-	RuleAction
-)
-
-// Filter to apply to sets of rules.
-type Filter struct {
-	// IDs is the set of acceptable rule IDs. A rule will pass the filter if its ID is a member of this set.
-	// This field is ignored when len(IDs) <= 0.
-	IDs []string
-
-	// Tags is the set of tags each rule must contain. A rule will pass the filter if its tags are a subset of this
-	// set. This field is ignored when len(Tags) <= 0.
-	Tags []string
-
-	// Destinations is the set of acceptable rule destinations. A rule will pass the filter if its destination is
-	// a member of this set. This field is ignored when len(Destinations) <= 0.
-	Destinations []string
-
-	// RuleType is the type of rule to filter by.
-	RuleType int
-}
-
-// Empty returns whether the filter has any attributes that would cause rules to be filtered out. A filter is considered
-// empty if no rules would be filtered out from any set of rules.
-func (f Filter) Empty() bool {
-	return len(f.IDs) == 0 && len(f.Tags) == 0 && len(f.Destinations) == 0 && f.RuleType == RuleAny
-}
-
-// String representation of the filter
-func (f Filter) String() string {
-	return fmt.Sprintf("%#v", f)
-}
 
 // FilterRules returns a list of filtered rules.
-func FilterRules(f Filter, rules []Rule) []Rule {
+func FilterRules(f api.Filter, rules []api.Rule) []api.Rule {
 	// Before we begin filtering we build sets of each filter field to avoid N^2 lookups.
 
 	// Build set of acceptable IDs
@@ -90,7 +50,7 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 	}
 
 	// Iterate through the rules, building a new list of rules that pass the filter
-	res := make([]Rule, 0, len(rules)) // Filtered rules
+	res := make([]api.Rule, 0, len(rules)) // Filtered rules
 	for _, rule := range rules {
 		// Filter by ID. The ID must be a member of the set of acceptable IDs.
 		if ids != nil {
@@ -100,8 +60,8 @@ func FilterRules(f Filter, rules []Rule) []Rule {
 		}
 
 		// Filter by rule type
-		if (f.RuleType == RuleAction && len(rule.Actions) == 0) ||
-			(f.RuleType == RuleRoute && len(rule.Route) == 0) {
+		if (f.RuleType == api.RuleAction && len(rule.Actions) == 0) ||
+			(f.RuleType == api.RuleRoute && len(rule.Route) == 0) {
 			continue
 		}
 

@@ -17,6 +17,8 @@ package rules
 import (
 	"errors"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -79,7 +81,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("now contains the rule", func() {
-					f := Filter{
+					f := api.Filter{
 						IDs: newRules.IDs,
 					}
 					retrievedRules, err := manager.GetRules(namespace, f)
@@ -89,7 +91,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("updates the revision", func() {
-					retrievedRules, err := manager.GetRules(namespace, Filter{})
+					retrievedRules, err := manager.GetRules(namespace, api.Filter{})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(retrievedRules.Revision).To(Equal(int64(1)))
 				})
@@ -116,7 +118,7 @@ var _ = Describe("Manager", func() {
 							var retrievedRules RetrievedRules
 
 							JustBeforeEach(func() {
-								f := Filter{
+								f := api.Filter{
 									IDs: newRules.IDs,
 								}
 								retrievedRules, err = manager.GetRules(namespace, f)
@@ -140,7 +142,7 @@ var _ = Describe("Manager", func() {
 
 				Describe("deleting the rule", func() {
 					JustBeforeEach(func() {
-						filter := Filter{
+						filter := api.Filter{
 							IDs: newRules.IDs,
 						}
 						err = manager.DeleteRules(namespace, filter)
@@ -154,7 +156,7 @@ var _ = Describe("Manager", func() {
 						var retrievedRules RetrievedRules
 
 						JustBeforeEach(func() {
-							retrievedRules, err = manager.GetRules(namespace, Filter{})
+							retrievedRules, err = manager.GetRules(namespace, api.Filter{})
 						})
 
 						It("should not error", func() {
@@ -191,7 +193,7 @@ var _ = Describe("Manager", func() {
 					var retrievedRules RetrievedRules
 
 					JustBeforeEach(func() {
-						retrievedRules, err = manager.GetRules(namespace, Filter{})
+						retrievedRules, err = manager.GetRules(namespace, api.Filter{})
 					})
 
 					It("should not error", func() {

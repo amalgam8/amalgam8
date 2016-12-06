@@ -21,8 +21,8 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
 
-	"github.com/amalgam8/amalgam8/pkg/adapters/registry/filesystem"
-	"github.com/amalgam8/amalgam8/pkg/adapters/registry/kubernetes"
+	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/filesystem"
+	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"

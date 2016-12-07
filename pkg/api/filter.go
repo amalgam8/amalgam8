@@ -29,8 +29,8 @@ const (
 	RuleAction
 )
 
-// Filter to apply to sets of rules.
-type Filter struct {
+// RuleFilter to apply to sets of rules.
+type RuleFilter struct {
 	// IDs is the set of acceptable rule IDs. A rule will pass the filter if its ID is a member of this set.
 	// This field is ignored when len(IDs) <= 0.
 	IDs []string
@@ -49,11 +49,87 @@ type Filter struct {
 
 // Empty returns whether the filter has any attributes that would cause rules to be filtered out. A filter is considered
 // empty if no rules would be filtered out from any set of rules.
-func (f Filter) Empty() bool {
+func (f RuleFilter) Empty() bool {
 	return len(f.IDs) == 0 && len(f.Tags) == 0 && len(f.Destinations) == 0 && f.RuleType == RuleAny
 }
 
 // String representation of the filter
-func (f Filter) String() string {
+func (f RuleFilter) String() string {
 	return fmt.Sprintf("%#v", f)
+}
+
+// FilterRules returns a list of filtered rules.
+func FilterRules(f RuleFilter, rules []Rule) []Rule {
+	// Before we begin filtering we build sets of each filter field to avoid N^2 lookups.
+
+	// Build set of acceptable IDs
+	var ids map[string]bool
+	if len(f.IDs) > 0 {
+		ids = make(map[string]bool)
+		for _, id := range f.IDs {
+			ids[id] = true
+		}
+	}
+
+	// Build set of acceptable destinations
+	var dests map[string]bool
+	if len(f.Destinations) > 0 {
+		dests = make(map[string]bool)
+		for _, d := range f.Destinations {
+			dests[d] = true
+		}
+	}
+
+	// Build set of tags the rule must contain
+	var tags map[string]bool
+	if len(f.Tags) > 0 {
+		tags = make(map[string]bool)
+		for _, t := range f.Tags {
+			tags[t] = true
+		}
+	}
+
+	// Iterate through the rules, building a new list of rules that pass the filter
+	res := make([]Rule, 0, len(rules)) // Filtered rules
+	for _, rule := range rules {
+		// Filter by ID. The ID must be a member of the set of acceptable IDs.
+		if ids != nil {
+			if _, exists := ids[rule.ID]; !exists {
+				continue
+			}
+		}
+
+		// Filter by rule type
+		if (f.RuleType == RuleAction && len(rule.Actions) == 0) ||
+			(f.RuleType == RuleRoute && len(rule.Route) == 0) {
+			continue
+		}
+
+		// Filter by destination. If the destination is not in the set
+		// of accepted destinations, filter the rule out.
+		if dests != nil {
+			if _, exists := dests[rule.Destination]; !exists {
+				continue
+			}
+		}
+
+		// Ensure rule's tags are a subset of the tags specified by the filter.
+		if tags != nil {
+			c := 0
+			for _, t := range rule.Tags {
+				if _, exists := tags[t]; exists {
+					c++
+				}
+			}
+
+			if c != len(f.Tags) {
+				continue
+			}
+		}
+
+		// The rule has passed all the filters, so we add it to the list of filtered rules.
+		res = append(res, rule)
+	}
+
+	return res
 }

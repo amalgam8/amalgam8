@@ -28,13 +28,13 @@ type RulesListener interface {
 
 // RulesConfig holds configuration options for the rules monitor.
 type RulesConfig struct {
-	Rules        api.ServiceRules
+	Rules        api.RulesService
 	Listeners    []RulesListener
 	PollInterval time.Duration
 }
 
 type rulesMonitor struct {
-	rules api.ServiceRules
+	rules api.RulesService
 
 	ticker       *time.Ticker
 	pollInterval time.Duration
@@ -85,7 +85,7 @@ func (c *rulesMonitor) Start() error {
 func (c *rulesMonitor) poll() error {
 
 	// Get the latest rules from the A8 controller.
-	rulesset, err := c.rules.ListRules(&api.Filter{})
+	rulesset, err := c.rules.ListRules(&api.RuleFilter{})
 	if err != nil {
 		logrus.WithError(err).Error("Call to rules service failed")
 		return err

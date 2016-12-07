@@ -33,7 +33,7 @@ type Config struct {
 }
 
 // New constructs a new A8 controller client.
-func New(conf Config) (api.ServiceRules, error) {
+func New(conf Config) (api.RulesService, error) {
 	if err := normalizeConfig(&conf); err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ type client struct {
 	httpClient *http.Client
 }
 
-func (c *client) ListRules(filter *api.Filter) (*api.RulesSet, error) {
+func (c *client) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 	var rulesSet api.RulesSet
 
 	u, err := url.Parse(c.url + "/v1/rules")

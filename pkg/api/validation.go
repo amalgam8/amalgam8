@@ -12,20 +12,19 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/xeipuuv/gojsonschema"
 )
 
 // Validator validates rules against the rule schema.
 type Validator interface {
-	Validate(api.Rule) error
+	Validate(Rule) error
 }
 
 type validator struct {
@@ -34,7 +33,7 @@ type validator struct {
 
 // NewValidator returns a new Validator.
 func NewValidator() (Validator, error) {
-	sl := gojsonschema.NewReferenceLoader("file://./schema.json")
+	sl := gojsonschema.NewReferenceLoader("file://./rules-schema.json")
 
 	schema, err := gojsonschema.NewSchema(sl)
 	if err != nil {
@@ -47,7 +46,7 @@ func NewValidator() (Validator, error) {
 }
 
 // Validate a rule
-func (v *validator) Validate(rule api.Rule) error {
+func (v *validator) Validate(rule Rule) error {
 	ruleLoader := gojsonschema.NewGoLoader(&rule)
 	result, err := v.schema.Validate(ruleLoader)
 	if err != nil {

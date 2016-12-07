@@ -186,39 +186,39 @@ func Run(conf config.Config) error {
 }
 
 func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
-	switch strings.ToLower(conf.DiscoveryType) {
-	case config.Amalgam8Type:
+	switch strings.ToLower(conf.DiscoveryBackend) {
+	case config.Amalgam8Backend:
 		regConf := registryclient.Config{
-			URL:       conf.Amalgam8.Registry.URL,
-			AuthToken: conf.Amalgam8.Registry.Token,
+			URL:       conf.A8Registry.URL,
+			AuthToken: conf.A8Registry.Token,
 		}
 		return registryclient.New(regConf)
 	case "":
 		return nil, fmt.Errorf("no service discovery type specified")
 	default:
-		return nil, fmt.Errorf("registration using '%s' is not supported", conf.DiscoveryType)
+		return nil, fmt.Errorf("registration using '%s' is not supported", conf.DiscoveryBackend)
 	}
 }
 
 func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
-	switch strings.ToLower(conf.DiscoveryType) {
-	case config.Amalgam8Type:
+	switch strings.ToLower(conf.DiscoveryBackend) {
+	case config.Amalgam8Backend:
 		regConf := registryclient.CacheConfig{
 			Config: registryclient.Config{
-				URL:       conf.Amalgam8.Registry.URL,
-				AuthToken: conf.Amalgam8.Registry.Token,
+				URL:       conf.A8Registry.URL,
+				AuthToken: conf.A8Registry.Token,
 			},
-			PollInterval: conf.Amalgam8.Registry.Poll,
+			PollInterval: conf.A8Registry.Poll,
 		}
 		return registryclient.NewCache(regConf)
-	case config.KubernetesType:
+	case config.KubernetesBackend:
 		kubConf := kubernetes.Config{
 			URL:       conf.Kubernetes.URL,
 			Token:     conf.Kubernetes.Token,
 			Namespace: auth.NamespaceFrom(conf.Kubernetes.Namespace),
 		}
 		return kubernetes.New(kubConf)
-	case config.EurekaType:
+	case config.EurekaBackend:
 		eurConf := eureka.Config{
 			URLs: conf.Eureka.URLs,
 		}
@@ -226,24 +226,24 @@ func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 	case "":
 		return nil, fmt.Errorf("no service discovery type specified")
 	default:
-		return nil, fmt.Errorf("discovery using '%s' is not supported", conf.DiscoveryType)
+		return nil, fmt.Errorf("discovery using '%s' is not supported", conf.DiscoveryBackend)
 	}
 }
 
-func buildServiceRules(conf *config.Config) (api.ServiceRules, error) {
-	switch strings.ToLower(conf.RulesType) {
-	case config.Amalgam8Type:
+func buildServiceRules(conf *config.Config) (api.RulesService, error) {
+	switch strings.ToLower(conf.RulesBackend) {
+	case config.Amalgam8Backend:
 		return controllerclient.New(controllerclient.Config{
-			URL:       conf.Amalgam8.Controller.URL,
-			AuthToken: conf.Amalgam8.Controller.Token,
+			URL:       conf.A8Controller.URL,
+			AuthToken: conf.A8Controller.Token,
 		})
-	case config.KubernetesType:
+	case config.KubernetesBackend:
 		// TODO: return kuberenets rules fetcher
-		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesType)
+		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesBackend)
 	case "":
 		return nil, fmt.Errorf("no service rules type specified")
 	default:
-		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesType)
+		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesBackend)
 	}
 }
 
@@ -270,7 +270,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 		Listeners: []monitor.RulesListener{
 			nginxProxy,
 		},
-		PollInterval: conf.Amalgam8.Controller.Poll,
+		PollInterval: conf.A8Controller.Poll,
 	})
 
 	discoveryMonitor := monitor.NewDiscoveryMonitor(monitor.DiscoveryConfig{

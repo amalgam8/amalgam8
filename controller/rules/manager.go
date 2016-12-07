@@ -22,17 +22,17 @@ type Manager interface {
 	AddRules(namespace string, rules []api.Rule) (NewRules, error)
 
 	// GetRules returns a collection of filtered rules from the namespace.
-	GetRules(namespace string, filter api.Filter) (RetrievedRules, error)
+	GetRules(namespace string, filter api.RuleFilter) (RetrievedRules, error)
 
 	// UpdateRules updates rules by ID in the namespace.
 	UpdateRules(namespace string, rules []api.Rule) error
 
 	// DeleteRules deletes rules that match the filter in the namespace.
-	DeleteRules(namespace string, filter api.Filter) error
+	DeleteRules(namespace string, filter api.RuleFilter) error
 
 	// SetRules deletes the rules that match the filter and adds the new rules as a single
 	// atomic transaction.
-	SetRules(namespace string, filter api.Filter, rules []api.Rule) (NewRules, error)
+	SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error)
 }
 
 // NewRules provides information about newly added rules.

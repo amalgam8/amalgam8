@@ -34,7 +34,7 @@ func (m *MockValidator) Validate(r api.Rule) error {
 var _ = Describe("Manager", func() {
 
 	var (
-		validator Validator
+		validator api.Validator
 		manager   Manager
 		namespace string
 	)
@@ -81,7 +81,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("now contains the rule", func() {
-					f := api.Filter{
+					f := api.RuleFilter{
 						IDs: newRules.IDs,
 					}
 					retrievedRules, err := manager.GetRules(namespace, f)
@@ -91,7 +91,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("updates the revision", func() {
-					retrievedRules, err := manager.GetRules(namespace, api.Filter{})
+					retrievedRules, err := manager.GetRules(namespace, api.RuleFilter{})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(retrievedRules.Revision).To(Equal(int64(1)))
 				})
@@ -118,7 +118,7 @@ var _ = Describe("Manager", func() {
 							var retrievedRules RetrievedRules
 
 							JustBeforeEach(func() {
-								f := api.Filter{
+								f := api.RuleFilter{
 									IDs: newRules.IDs,
 								}
 								retrievedRules, err = manager.GetRules(namespace, f)
@@ -142,7 +142,7 @@ var _ = Describe("Manager", func() {
 
 				Describe("deleting the rule", func() {
 					JustBeforeEach(func() {
-						filter := api.Filter{
+						filter := api.RuleFilter{
 							IDs: newRules.IDs,
 						}
 						err = manager.DeleteRules(namespace, filter)
@@ -156,7 +156,7 @@ var _ = Describe("Manager", func() {
 						var retrievedRules RetrievedRules
 
 						JustBeforeEach(func() {
-							retrievedRules, err = manager.GetRules(namespace, api.Filter{})
+							retrievedRules, err = manager.GetRules(namespace, api.RuleFilter{})
 						})
 
 						It("should not error", func() {
@@ -193,7 +193,7 @@ var _ = Describe("Manager", func() {
 					var retrievedRules RetrievedRules
 
 					JustBeforeEach(func() {
-						retrievedRules, err = manager.GetRules(namespace, api.Filter{})
+						retrievedRules, err = manager.GetRules(namespace, api.RuleFilter{})
 					})
 
 					It("should not error", func() {

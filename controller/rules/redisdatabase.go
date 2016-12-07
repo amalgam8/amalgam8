@@ -248,7 +248,7 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 	return err
 }
 
-func (rdb *redisDB) SetByDestination(namespace string, filter api.Filter, rules []api.Rule) error {
+func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, rules []api.Rule) error {
 	var err error
 
 	key := buildRulesKey(namespace)
@@ -302,7 +302,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter api.Filter, rules 
 		existingRules[i] = rule
 	}
 
-	rulesToDelete := FilterRules(filter, existingRules)
+	rulesToDelete := api.FilterRules(filter, existingRules)
 	logrus.WithFields(logrus.Fields{
 		"pre_filtered": existingRules,
 		"filtered":     rulesToDelete,

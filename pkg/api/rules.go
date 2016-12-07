@@ -14,8 +14,8 @@
 
 package api
 
-// ServiceRules defines the interface used for rules service
-type ServiceRules interface {
+// RulesService defines the interface used for rules service
+type RulesService interface {
 	// ListRules returns the rules that match the filter.
-	ListRules(f *Filter) (*RulesSet, error)
+	ListRules(f *RuleFilter) (*RulesSet, error)
 }

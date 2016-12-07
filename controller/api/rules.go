@@ -27,12 +27,6 @@ import (
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
-// RuleList is used to output the results of rule queries.
-type RuleList struct {
-	Rules    []api.Rule `json:"rules"`
-	Revision int64      `json:"revision"`
-}
-
 // Rule API.
 type Rule struct {
 	manager  rules.Manager
@@ -77,24 +71,24 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 func (r *Rule) add(w rest.ResponseWriter, req *rest.Request) error {
 	namespace := GetNamespace(req)
 
-	ruleList := RuleList{}
-	if err := req.DecodeJsonPayload(&ruleList); err != nil {
+	rulesSet := api.RulesSet{}
+	if err := req.DecodeJsonPayload(&rulesSet); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	if len(ruleList.Rules) == 0 {
+	if len(rulesSet.Rules) == 0 {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
-	for i := range ruleList.Rules {
-		if ruleList.Rules[i].Tags == nil {
-			ruleList.Rules[i].Tags = []string{}
+	for i := range rulesSet.Rules {
+		if rulesSet.Rules[i].Tags == nil {
+			rulesSet.Rules[i].Tags = []string{}
 		}
 	}
 
-	newRules, err := r.manager.AddRules(namespace, ruleList.Rules)
+	newRules, err := r.manager.AddRules(namespace, rulesSet.Rules)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -117,7 +111,7 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
 
-	filter := api.Filter{
+	filter := api.RuleFilter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: destinations,
@@ -127,14 +121,14 @@ func (r *Rule) list(w rest.ResponseWriter, req *rest.Request) error {
 	return r.get(namespace, filter, w, req)
 }
 
-func (r *Rule) get(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
+func (r *Rule) get(ns string, f api.RuleFilter, w rest.ResponseWriter, req *rest.Request) error {
 	res, err := r.manager.GetRules(ns, f)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
 
-	resp := RuleList{
+	resp := api.RulesSet{
 		Rules:    res.Rules,
 		Revision: res.Revision,
 	}
@@ -148,24 +142,24 @@ func (r *Rule) get(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Req
 func (r *Rule) update(w rest.ResponseWriter, req *rest.Request) error {
 	namespace := GetNamespace(req)
 
-	ruleList := RuleList{}
-	if err := req.DecodeJsonPayload(&ruleList); err != nil {
+	rulesSet := api.RulesSet{}
+	if err := req.DecodeJsonPayload(&rulesSet); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	if len(ruleList.Rules) == 0 {
+	if len(rulesSet.Rules) == 0 {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorNoRulesProvided)
 		return errors.New("no_rules_provided")
 	}
 
-	for i := range ruleList.Rules {
-		if ruleList.Rules[i].Tags == nil {
-			ruleList.Rules[i].Tags = []string{}
+	for i := range rulesSet.Rules {
+		if rulesSet.Rules[i].Tags == nil {
+			rulesSet.Rules[i].Tags = []string{}
 		}
 	}
 
-	if err := r.manager.UpdateRules(namespace, ruleList.Rules); err != nil {
+	if err := r.manager.UpdateRules(namespace, rulesSet.Rules); err != nil {
 		handleManagerError(w, req, err)
 		return err
 	}
@@ -188,7 +182,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	tags := getQueries("tag", req)
 	destinations := getQueries("destination", req)
 
-	filter := api.Filter{
+	filter := api.RuleFilter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: destinations,
@@ -227,7 +221,7 @@ func (r *Rule) getByRuleType(ruleType int, w rest.ResponseWriter, req *rest.Requ
 	return nil
 }
 
-func (r *Rule) delete(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
+func (r *Rule) delete(ns string, f api.RuleFilter, w rest.ResponseWriter, req *rest.Request) error {
 	if err := r.manager.DeleteRules(ns, f); err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -243,7 +237,7 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	tags := getQueries("tag", req)
 	dests := getQueries("destination", req)
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		IDs:          ruleIDs,
 		Tags:         tags,
 		Destinations: dests,
@@ -252,20 +246,20 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	return r.delete(ns, f, w, req)
 }
 
-func (r *Rule) set(ns string, f api.Filter, w rest.ResponseWriter, req *rest.Request) error {
-	ruleList := RuleList{}
-	if err := req.DecodeJsonPayload(&ruleList); err != nil {
+func (r *Rule) set(ns string, f api.RuleFilter, w rest.ResponseWriter, req *rest.Request) error {
+	rulesSet := api.RulesSet{}
+	if err := req.DecodeJsonPayload(&rulesSet); err != nil {
 		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
 		return err
 	}
 
-	for i := range ruleList.Rules {
-		if ruleList.Rules[i].Tags == nil {
-			ruleList.Rules[i].Tags = []string{}
+	for i := range rulesSet.Rules {
+		if rulesSet.Rules[i].Tags == nil {
+			rulesSet.Rules[i].Tags = []string{}
 		}
 	}
 
-	newRules, err := r.manager.SetRules(ns, f, ruleList.Rules)
+	newRules, err := r.manager.SetRules(ns, f, rulesSet.Rules)
 	if err != nil {
 		handleManagerError(w, req, err)
 		return err
@@ -286,7 +280,7 @@ func (r *Rule) setRouteDestination(w rest.ResponseWriter, req *rest.Request) err
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleRoute,
 	}
@@ -298,7 +292,7 @@ func (r *Rule) setActionDestination(w rest.ResponseWriter, req *rest.Request) er
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleAction,
 	}
@@ -310,7 +304,7 @@ func (r *Rule) getRouteDestination(w rest.ResponseWriter, req *rest.Request) err
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleRoute,
 	}
@@ -322,7 +316,7 @@ func (r *Rule) getActionDestination(w rest.ResponseWriter, req *rest.Request) er
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleAction,
 	}
@@ -334,7 +328,7 @@ func (r *Rule) deleteRouteDestination(w rest.ResponseWriter, req *rest.Request) 
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleRoute,
 	}
@@ -346,7 +340,7 @@ func (r *Rule) deleteActionDestination(w rest.ResponseWriter, req *rest.Request)
 	ns := GetNamespace(req)
 	dest := req.PathParam("destination")
 
-	f := api.Filter{
+	f := api.RuleFilter{
 		Destinations: []string{dest},
 		RuleType:     api.RuleAction,
 	}

@@ -25,7 +25,7 @@ import (
 )
 
 // NewRedisManager creates a Redis backed manager implementation.
-func NewRedisManager(host, pass string, v Validator) Manager {
+func NewRedisManager(host, pass string, v api.Validator) Manager {
 	return &redisManager{
 		validator: v,
 		db:        newRedisDB(host, pass),
@@ -33,7 +33,7 @@ func NewRedisManager(host, pass string, v Validator) Manager {
 }
 
 type redisManager struct {
-	validator Validator
+	validator api.Validator
 	db        *redisDB
 }
 
@@ -79,7 +79,7 @@ func (r *redisManager) AddRules(namespace string, rules []api.Rule) (NewRules, e
 	}, nil
 }
 
-func (r *redisManager) GetRules(namespace string, filter api.Filter) (RetrievedRules, error) {
+func (r *redisManager) GetRules(namespace string, filter api.RuleFilter) (RetrievedRules, error) {
 	results := []api.Rule{}
 
 	var stringRules []string
@@ -118,7 +118,7 @@ func (r *redisManager) GetRules(namespace string, filter api.Filter) (RetrievedR
 		results[index] = rule
 	}
 
-	results = FilterRules(filter, results)
+	results = api.FilterRules(filter, results)
 
 	return RetrievedRules{
 		Rules:    results,
@@ -126,7 +126,7 @@ func (r *redisManager) GetRules(namespace string, filter api.Filter) (RetrievedR
 	}, nil
 }
 
-func (r *redisManager) SetRules(namespace string, filter api.Filter, rules []api.Rule) (NewRules, error) {
+func (r *redisManager) SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error) {
 	for i := range rules {
 		rules[i].ID = uuid.New()
 	}
@@ -185,6 +185,6 @@ func (r *redisManager) UpdateRules(namespace string, rules []api.Rule) error {
 	return nil
 }
 
-func (r *redisManager) DeleteRules(namespace string, filter api.Filter) error {
+func (r *redisManager) DeleteRules(namespace string, filter api.RuleFilter) error {
 	return r.db.SetByDestination(namespace, filter, []api.Rule{})
 }

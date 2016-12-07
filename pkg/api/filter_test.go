@@ -12,17 +12,15 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
 import (
 	"reflect"
 	"testing"
-
-	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 func TestFilterRules(t *testing.T) {
-	rule1 := api.Rule{
+	rule1 := Rule{
 		ID:          "id1",
 		Priority:    1,
 		Tags:        []string{"tag1", "tag2"},
@@ -30,7 +28,7 @@ func TestFilterRules(t *testing.T) {
 		Match:       []byte(`{}`),
 		Actions:     []byte(`{}`),
 	}
-	rule2 := api.Rule{
+	rule2 := Rule{
 		ID:          "id1",
 		Priority:    1,
 		Tags:        []string{},
@@ -40,64 +38,64 @@ func TestFilterRules(t *testing.T) {
 	}
 
 	cases := []struct {
-		In, Out []api.Rule
-		Filter  api.Filter
+		In, Out []Rule
+		Filter  RuleFilter
 	}{
 		{ // Empty filter does not do anything
-			In: []api.Rule{
+			In: []Rule{
 				rule1,
 			},
-			Out: []api.Rule{
+			Out: []Rule{
 				rule1,
 			},
-			Filter: api.Filter{},
+			Filter: RuleFilter{},
 		},
 		{ // Filter by tags
-			In: []api.Rule{
+			In: []Rule{
 				rule1,
 				rule2,
 			},
-			Out: []api.Rule{
+			Out: []Rule{
 				rule1,
 			},
-			Filter: api.Filter{
+			Filter: RuleFilter{
 				Tags: []string{"tag1"},
 			},
 		},
 		{ // Filter by destination
-			In: []api.Rule{
+			In: []Rule{
 				rule1,
 				rule2,
 			},
-			Out: []api.Rule{
+			Out: []Rule{
 				rule2,
 			},
-			Filter: api.Filter{
+			Filter: RuleFilter{
 				Destinations: []string{"service2"},
 			},
 		},
 		{ // Filter action rules
-			In: []api.Rule{
+			In: []Rule{
 				rule1,
 				rule2,
 			},
-			Out: []api.Rule{
+			Out: []Rule{
 				rule1,
 			},
-			Filter: api.Filter{
-				RuleType: api.RuleAction,
+			Filter: RuleFilter{
+				RuleType: RuleAction,
 			},
 		},
 		{ // Filter route rules
-			In: []api.Rule{
+			In: []Rule{
 				rule1,
 				rule2,
 			},
-			Out: []api.Rule{
+			Out: []Rule{
 				rule2,
 			},
-			Filter: api.Filter{
-				RuleType: api.RuleRoute,
+			Filter: RuleFilter{
+				RuleType: RuleRoute,
 			},
 		},
 	}

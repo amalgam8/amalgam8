@@ -29,6 +29,7 @@ import (
 	"github.com/amalgam8/amalgam8/controller/middleware"
 	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/controller/util/i18n"
+	pkgapi "github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
 )
@@ -83,7 +84,7 @@ func Run(conf *config.Config) error {
 
 	healthAPI := api.NewHealth(reporter)
 
-	validator, err := rules.NewValidator()
+	validator, err := pkgapi.NewValidator()
 	if err != nil {
 		logrus.WithError(err).Error("Validator creation failed")
 		setupHandler.SetError(err)

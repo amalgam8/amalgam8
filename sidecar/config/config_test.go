@@ -56,10 +56,10 @@ var _ = Describe("Config", func() {
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
-			Expect(c.DiscoveryType).To(Equal(DefaultConfig.DiscoveryType))
-			Expect(c.RulesType).To(Equal(DefaultConfig.RulesType))
-			Expect(c.RulesType).To(Equal(DefaultConfig.RulesType))
-			Expect(c.Amalgam8).To(Equal(DefaultConfig.Amalgam8))
+			Expect(c.DiscoveryBackend).To(Equal(DefaultConfig.DiscoveryBackend))
+			Expect(c.RulesBackend).To(Equal(DefaultConfig.RulesBackend))
+			Expect(c.A8Registry).To(Equal(DefaultConfig.A8Registry))
+			Expect(c.A8Controller).To(Equal(DefaultConfig.A8Controller))
 			Expect(c.Kubernetes).To(Equal(DefaultConfig.Kubernetes))
 			Expect(c.Eureka).To(Equal(DefaultConfig.Eureka))
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
@@ -96,8 +96,8 @@ var _ = Describe("Config", func() {
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
 				"--endpoint_type=https",
-				"--discovery_type=kubernetes",
-				"--rules_type=kubernetes",
+				"--discovery_backend=kubernetes",
+				"--rules_backend=kubernetes",
 				"--registry_url=http://registry:8080",
 				"--registry_token=local",
 				"--registry_poll=5s",
@@ -129,18 +129,18 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryType).To(Equal("kubernetes"))
-			Expect(c.RulesType).To(Equal("kubernetes"))
-			Expect(c.Amalgam8.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Amalgam8.Registry.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
+			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
+			Expect(c.A8Registry.Token).To(Equal("local"))
+			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Amalgam8.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Amalgam8.Controller.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
+			Expect(c.A8Controller.Token).To(Equal("local"))
+			Expect(c.A8Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -172,8 +172,8 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
 			os.Setenv("A8_ENDPOINT_TYPE", "https")
-			os.Setenv("A8_DISCOVERY_TYPE", "kubernetes")
-			os.Setenv("A8_RULES_TYPE", "kubernetes")
+			os.Setenv("A8_DISCOVERY_BACKEND", "kubernetes")
+			os.Setenv("A8_RULES_BACKEND", "kubernetes")
 			os.Setenv("A8_REGISTRY_URL", "http://registry:8080")
 			os.Setenv("A8_REGISTRY_TOKEN", "local")
 			os.Setenv("A8_REGISTRY_POLL", "5s")
@@ -203,8 +203,8 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_ENDPOINT_PORT")
 			os.Unsetenv("A8_ENDPOINT_TYPE")
 			os.Unsetenv("A8_REGISTRY_URL")
-			os.Unsetenv("A8_DISCOVERY_TYPE")
-			os.Unsetenv("A8_RULES_TYPE")
+			os.Unsetenv("A8_DISCOVERY_BACKEND")
+			os.Unsetenv("A8_RULES_BACKEND")
 			os.Unsetenv("A8_REGISTRY_TOKEN")
 			os.Unsetenv("A8_REGISTRY_POLL")
 			os.Unsetenv("A8_KUBERNETES_URL")
@@ -229,18 +229,18 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryType).To(Equal("kubernetes"))
-			Expect(c.RulesType).To(Equal("kubernetes"))
-			Expect(c.Amalgam8.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Amalgam8.Registry.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
+			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
+			Expect(c.A8Registry.Token).To(Equal("local"))
+			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Amalgam8.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Amalgam8.Controller.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
+			Expect(c.A8Controller.Token).To(Equal("local"))
+			Expect(c.A8Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
@@ -279,17 +279,18 @@ endpoint:
   port: 9080
   type: https
 
-discovery_type: kubernetes
-rules_type: kubernetes
-amalgam8:
-  registry:
-    url:   http://registry:8080
-    token: local
-    poll:  5s
-  controller:
-    url:   http://controller:8080
-    token: local
-    poll:  5s
+discovery_backend: kubernetes
+rules_backend: kubernetes
+
+registry:
+  url:   http://registry:8080
+  token: local
+  poll:  5s
+
+controller:
+  url:   http://controller:8080
+  token: local
+  poll:  5s
 
 kubernetes:
   url:   http://kubernetes:8080
@@ -351,18 +352,18 @@ log_level: debug
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryType).To(Equal("kubernetes"))
-			Expect(c.RulesType).To(Equal("kubernetes"))
-			Expect(c.Amalgam8.Registry.URL).To(Equal("http://registry:8080"))
-			Expect(c.Amalgam8.Registry.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Registry.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
+			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
+			Expect(c.A8Registry.Token).To(Equal("local"))
+			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
-			Expect(c.Amalgam8.Controller.URL).To(Equal("http://controller:8080"))
-			Expect(c.Amalgam8.Controller.Token).To(Equal("local"))
-			Expect(c.Amalgam8.Controller.Poll).To(Equal(time.Duration(5) * time.Second))
+			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
+			Expect(c.A8Controller.Token).To(Equal("local"))
+			Expect(c.A8Controller.Poll).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Type).To(Equal("http"))
@@ -389,19 +390,17 @@ log_level: debug
 
 		BeforeEach(func() {
 			c = &Config{
-				DiscoveryType: Amalgam8Type,
-				RulesType:     Amalgam8Type,
-				Amalgam8: Amalgam8{
-					Registry: Amalgam8Endpoint{
-						URL:   "http://registry",
-						Token: "sd_token",
-						Poll:  60 * time.Second,
-					},
-					Controller: Amalgam8Endpoint{
-						Token: "token",
-						URL:   "http://controller",
-						Poll:  60 * time.Second,
-					},
+				DiscoveryBackend: Amalgam8Backend,
+				RulesBackend:     Amalgam8Backend,
+				A8Registry: Amalgam8Registry{
+					URL:   "http://registry",
+					Token: "sd_token",
+					Poll:  60 * time.Second,
+				},
+				A8Controller: Amalgam8Controller{
+					Token: "token",
+					URL:   "http://controller",
+					Poll:  60 * time.Second,
 				},
 				Dnsconfig: Dnsconfig{
 					Port:   8053,
@@ -431,12 +430,12 @@ log_level: debug
 		})
 
 		It("rejects an invalid URL", func() {
-			c.Amalgam8.Controller.URL = "123456"
+			c.A8Controller.URL = "123456"
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 
 		It("rejects an excessively large poll interval", func() {
-			c.Amalgam8.Controller.Poll = 48 * time.Hour
+			c.A8Controller.Poll = 48 * time.Hour
 			Expect(c.Validate()).To(HaveOccurred())
 		})
 

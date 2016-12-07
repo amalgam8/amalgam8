@@ -32,28 +32,26 @@ var DefaultConfig = Config{
 		Type: "http",
 	},
 
-	DiscoveryType: Amalgam8Type,
+	DiscoveryBackend: Amalgam8Backend,
 
-	Amalgam8: Amalgam8{
-		Registry: Amalgam8Endpoint{
-			URL:   "",
-			Token: "",
-			Poll:  time.Duration(15 * time.Second),
-		},
-
-		Controller: Amalgam8Endpoint{
-			URL:   "",
-			Token: "",
-			Poll:  time.Duration(15 * time.Second),
-		},
+	A8Registry: Amalgam8Registry{
+		URL:   "",
+		Token: "",
+		Poll:  time.Duration(15 * time.Second),
 	},
 
-	RulesType: Amalgam8Type,
+	A8Controller: Amalgam8Controller{
+		URL:   "",
+		Token: "",
+		Poll:  time.Duration(15 * time.Second),
+	},
+
+	RulesBackend: Amalgam8Backend,
 
 	Kubernetes: Kubernetes{
 		URL:       "",
 		Token:     "",
-		Namespace: "",
+		Namespace: "default",
 	},
 
 	Eureka: Eureka{

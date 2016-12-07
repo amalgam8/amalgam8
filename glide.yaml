@@ -58,6 +58,15 @@ import:
 - package: github.com/shirou/gopsutil
   version: 2.1.0
 
+- package: k8s.io/client-go
+  version: 2.0.0-alpha.0
+  repo:    git@github.com:kubernetes/client-go
+
+# Workaround to resolve dependency version conflicts between k8s.io/client-go
+# and github.com/docker/distribution (vendored by k8s.io/client-go)
+- package: golang.org/x/net
+  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
+  
 - package: github.com/stretchr/testify
   version: 1.1.4
 

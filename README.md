@@ -78,8 +78,8 @@ resilience testing, etc.
 ## Amalgam8 - Components
 
 * The Amalgam8 Control Plane consists of two multi-tenant components:
-    * [Service Registry](https://amalgam8.io/docs/registry/)
-    * [Route Controller](https://amalgam8.io/docs/controller/)
+    * [Service Registry](https://www.amalgam8.io/docs/control-plane-registry.html)
+    * [Route Controller](https://www.amalgam8.io/docs/control-plane-controller.html)
 
     The registry and the controller store their state in a Redis backend.
 

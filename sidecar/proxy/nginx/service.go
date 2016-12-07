@@ -37,6 +37,7 @@ type Service interface {
 // NewService creates new instance.
 func NewService(serviceName string, tags []string) Service {
 	serviceEnvVar := fmt.Sprintf("%v:%v", serviceName, strings.Join(tags, ","))
+
 	return &service{
 		serviceEnvVar: serviceEnvVar,
 		stop:          make(chan struct{}),

@@ -18,10 +18,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"net/http"
 
 	"github.com/Sirupsen/logrus"
 	amalgam8registry "github.com/amalgam8/amalgam8/pkg/adapters/discovery/amalgam8"
@@ -37,7 +38,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
-	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
@@ -46,10 +46,10 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-// Main is the entrypoint for the sidecar when running as an executable
+// Main is the entry point for the sidecar.
 func Main() {
 	logrus.ErrorKey = "error"
-	logrus.SetLevel(logrus.DebugLevel) // Initial logging until we parse the user provided log level argument
+	logrus.SetLevel(logrus.DebugLevel) // Initial logging level until we parse the user provided log level argument
 	logrus.SetOutput(os.Stderr)
 
 	app := cli.NewApp()
@@ -67,7 +67,7 @@ func Main() {
 }
 
 func sidecarCommand(context *cli.Context) error {
-	// when PID=1, launch new sidecar process and assume init responsibilities
+	// When PID=1, launch new sidecar process and assume init responsibilities.
 	if os.Getpid() == 1 {
 		supervisor.Init()
 
@@ -83,7 +83,7 @@ func sidecarCommand(context *cli.Context) error {
 
 }
 
-// Run the sidecar with the given configuration
+// Run the sidecar with the given configuration.
 func Run(conf config.Config) error {
 	var err error
 
@@ -135,7 +135,7 @@ func Run(conf config.Config) error {
 		}
 		server, err := dns.NewServer(dnsConfig)
 		if err != nil {
-			logrus.WithError(err).Error("Could not start dns server")
+			logrus.WithError(err).Error("Could not start DNS server")
 			return err
 		}
 		go server.ListenAndServe()
@@ -251,7 +251,7 @@ func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (ap
 		}
 		return amalgam8controller.NewCachedRulesAdapter(controllerConf, conf.A8Controller.Poll)
 	case config.KubernetesBackend:
-		// TODO: return kuberenets rules fetcher
+		// TODO: return kubernetes rules fetcher
 		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesBackend)
 	case "":
 		return nil, fmt.Errorf("no service rules type specified")
@@ -260,30 +260,16 @@ func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (ap
 	}
 }
 
+func buildProxyAdapter(conf *config.Config, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor) (proxy.Adapter, error) {
+	switch conf.ProxyAdapter {
+	case config.NGINXAdapter:
+		return proxy.NewNGINXAdapter(conf, discovery, rules)
+	default:
+		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
+	}
+}
+
 func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
-	var err error
-
-	if conf.ProxyConfig.TLS {
-		if err := nginx.GenerateConfig(conf.ProxyConfig); err != nil {
-			logrus.WithError(err).Error("Could not generate NGINX SSL config")
-			return err
-		}
-	}
-
-	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
-	if err := service.Start(); err != nil {
-		logrus.WithError(err).Error("NGINX service failed to start")
-		return err
-	}
-
-	nginxClient := nginx.NewClient("http://localhost:5813")
-	nginxManager := nginx.NewManager(
-		nginx.ManagerConfig{
-			Client: nginxClient,
-		},
-	)
-	nginxProxy := proxy.NewNGINXProxy(nginxManager)
-
 	rules, err := buildServiceRules(conf, kubeClient)
 	if err != nil {
 		logrus.WithError(err).Error("Could not create service rules client")
@@ -291,32 +277,25 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 	}
 
 	rulesMonitor := monitor.NewRulesMonitor(monitor.RulesConfig{
-		Rules: rules,
-		Listeners: []monitor.RulesListener{
-			nginxProxy,
-		},
+		Rules:        rules,
 		PollInterval: conf.A8Controller.Poll,
 	})
 
 	discoveryMonitor := monitor.NewDiscoveryMonitor(monitor.DiscoveryConfig{
 		Discovery: discovery,
-		Listeners: []monitor.DiscoveryListener{
-			nginxProxy,
-		},
 	})
+	proxyAdapter, err := buildProxyAdapter(conf, discoveryMonitor, rulesMonitor)
+	if err != nil {
+		logrus.WithError(err).Error("Could not build proxy adapter")
+		return err
+	}
 
-	go func() {
-		if err = rulesMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Controller monitor failed")
-		}
-	}()
-	go func() {
-		if err = discoveryMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Registry monitor failed")
-		}
-	}()
+	if err := proxyAdapter.Start(); err != nil {
+		logrus.WithError(err).Error("Could not start proxy adapter")
+		return err
+	}
 
-	debugger := debug.NewAPI(nginxProxy)
+	debugger := debug.NewAPI(proxyAdapter)
 
 	a := rest.NewApi()
 	a.Use(

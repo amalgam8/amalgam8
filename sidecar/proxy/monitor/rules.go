@@ -33,6 +33,13 @@ type RulesConfig struct {
 	PollInterval time.Duration
 }
 
+// RulesMonitor interface.
+type RulesMonitor interface {
+	Monitor
+	Listeners() []RulesListener
+	SetListeners(listeners []RulesListener)
+}
+
 type rulesMonitor struct {
 	rules api.RulesService
 
@@ -44,7 +51,7 @@ type rulesMonitor struct {
 }
 
 // NewRulesMonitor instantiates a new rules monitor
-func NewRulesMonitor(conf RulesConfig) Monitor {
+func NewRulesMonitor(conf RulesConfig) RulesMonitor {
 	return &rulesMonitor{
 		rules:        conf.Rules,
 		listeners:    conf.Listeners,
@@ -53,27 +60,37 @@ func NewRulesMonitor(conf RulesConfig) Monitor {
 	}
 }
 
+// Not safe if monitor has started
+func (m *rulesMonitor) Listeners() []RulesListener {
+	return m.listeners
+}
+
+// Not safe if monitor has started
+func (m *rulesMonitor) SetListeners(listeners []RulesListener) {
+	m.listeners = listeners
+}
+
 // Start monitoring the rules service. This is a blocking operation.
-func (c *rulesMonitor) Start() error {
+func (m *rulesMonitor) Start() error {
 	// Stop existing ticker if necessary
-	if c.ticker != nil {
-		if err := c.Stop(); err != nil {
+	if m.ticker != nil {
+		if err := m.Stop(); err != nil {
 			logrus.WithError(err).Error("Could not stop existing periodic poll")
 			return err
 		}
 	}
 
 	// Create new ticker
-	c.ticker = time.NewTicker(c.pollInterval)
+	m.ticker = time.NewTicker(m.pollInterval)
 
 	// Do initial poll
-	if err := c.poll(); err != nil {
+	if err := m.poll(); err != nil {
 		logrus.WithError(err).Error("Poll failed")
 	}
 
 	// Start periodic poll
-	for range c.ticker.C {
-		if err := c.poll(); err != nil {
+	for range m.ticker.C {
+		if err := m.poll(); err != nil {
 			logrus.WithError(err).Error("Poll failed")
 		}
 	}
@@ -82,25 +99,25 @@ func (c *rulesMonitor) Start() error {
 }
 
 // poll the rules service for changes and notify listeners
-func (c *rulesMonitor) poll() error {
+func (m *rulesMonitor) poll() error {
 
 	// Get the latest rules from the A8 controller.
-	rulesset, err := c.rules.ListRules(&api.RuleFilter{})
+	rulesset, err := m.rules.ListRules(&api.RuleFilter{})
 	if err != nil {
 		logrus.WithError(err).Error("Call to rules service failed")
 		return err
 	}
 
 	// Short-circuit if the controller's revision is not newer than our revision
-	if c.revision >= rulesset.Revision {
+	if m.revision >= rulesset.Revision {
 		return nil
 	}
 
 	// Update our revision
-	c.revision = rulesset.Revision
+	m.revision = rulesset.Revision
 
 	// Notify listeners
-	for _, listener := range c.listeners {
+	for _, listener := range m.listeners {
 		if err := listener.RuleChange(rulesset.Rules); err != nil {
 			logrus.WithError(err).Warn("Rules listener failed")
 		}
@@ -110,11 +127,11 @@ func (c *rulesMonitor) poll() error {
 }
 
 // Stop monitoring the rules service
-func (c *rulesMonitor) Stop() error {
+func (m *rulesMonitor) Stop() error {
 	// Stop ticker if necessary
-	if c.ticker != nil {
-		c.ticker.Stop()
-		c.ticker = nil
+	if m.ticker != nil {
+		m.ticker.Stop()
+		m.ticker = nil
 	}
 
 	return nil

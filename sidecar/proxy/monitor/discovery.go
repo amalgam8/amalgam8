@@ -35,6 +35,13 @@ type DiscoveryConfig struct {
 	PollInterval time.Duration
 }
 
+// DiscoveryMonitor interface.
+type DiscoveryMonitor interface {
+	Monitor
+	Listeners() []DiscoveryListener
+	SetListeners(listeners []DiscoveryListener)
+}
+
 type discoveryMonitor struct {
 	discovery api.ServiceDiscovery
 
@@ -52,7 +59,7 @@ type discoveryMonitor struct {
 const DefaultDiscoveryPollInterval = 1 * time.Second
 
 // NewDiscoveryMonitor instantiates a new discovery monitor
-func NewDiscoveryMonitor(conf DiscoveryConfig) Monitor {
+func NewDiscoveryMonitor(conf DiscoveryConfig) DiscoveryMonitor {
 	if conf.PollInterval == 0 {
 		conf.PollInterval = DefaultDiscoveryPollInterval
 	}
@@ -62,6 +69,16 @@ func NewDiscoveryMonitor(conf DiscoveryConfig) Monitor {
 		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
 	}
+}
+
+// Not safe if monitor has started
+func (m *discoveryMonitor) Listeners() []DiscoveryListener {
+	return m.listeners
+}
+
+// Not safe if monitor has started
+func (m *discoveryMonitor) SetListeners(listeners []DiscoveryListener) {
+	m.listeners = listeners
 }
 
 // Start monitoring discovery

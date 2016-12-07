@@ -25,6 +25,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/controller/util/encryption"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/garyburd/redigo/redis"
 )
 
@@ -247,7 +248,7 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 	return err
 }
 
-func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Rule) error {
+func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, rules []api.Rule) error {
 	var err error
 
 	key := buildRulesKey(namespace)
@@ -290,9 +291,9 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 	}
 
 	// Unmarshal
-	existingRules := make([]Rule, len(existingEntries))
+	existingRules := make([]api.Rule, len(existingEntries))
 	for i, entry := range existingEntries {
-		rule := Rule{}
+		rule := api.Rule{}
 		err := json.Unmarshal([]byte(entry), &rule)
 		if err != nil {
 			return err
@@ -301,7 +302,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter Filter, rules []Ru
 		existingRules[i] = rule
 	}
 
-	rulesToDelete := FilterRules(filter, existingRules)
+	rulesToDelete := api.FilterRules(filter, existingRules)
 	logrus.WithFields(logrus.Fields{
 		"pre_filtered": existingRules,
 		"filtered":     rulesToDelete,

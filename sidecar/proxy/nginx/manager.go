@@ -18,14 +18,13 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
 // Manager of updates to NGINX
 type Manager interface {
 	// Update NGINX with the provided configuration
-	Update([]api.ServiceInstance, []rules.Rule) error
+	Update([]api.ServiceInstance, []api.Rule) error
 }
 
 type manager struct {
@@ -50,7 +49,7 @@ func NewManager(conf Config) Manager {
 }
 
 // Update NGINX
-func (n *manager) Update(instances []api.ServiceInstance, rules []rules.Rule) error {
+func (n *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 

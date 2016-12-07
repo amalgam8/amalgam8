@@ -12,7 +12,6 @@
 package nginx
 
 import (
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
@@ -23,7 +22,7 @@ type MockClient struct {
 }
 
 // Update mocks interface
-func (m *MockClient) Update([]api.ServiceInstance, []rules.Rule) error {
+func (m *MockClient) Update([]api.ServiceInstance, []api.Rule) error {
 	m.UpdateCount++
 	return m.UpdateError
 }

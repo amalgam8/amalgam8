@@ -17,7 +17,7 @@ FROM scratch
 WORKDIR /opt/a8controller
 COPY bin/a8controller /opt/a8controller/a8controller
 COPY controller/locales /opt/a8controller/locales
-COPY controller/schema.json /opt/a8controller/schema.json
+COPY pkg/api/rules-schema.json /opt/a8controller/rules-schema.json
 
 EXPOSE 8080
 

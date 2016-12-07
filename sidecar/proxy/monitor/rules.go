@@ -18,44 +18,43 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/controller/client"
-	"github.com/amalgam8/amalgam8/controller/rules"
+	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
-// ControllerListener is notified of changes to controller
-type ControllerListener interface {
-	RuleChange([]rules.Rule) error
+// RulesListener is notified of changes to rules
+type RulesListener interface {
+	RuleChange([]api.Rule) error
 }
 
-// ControllerConfig holds configuration options for the controller monitor.
-type ControllerConfig struct {
-	Client       client.Client
-	Listeners    []ControllerListener
+// RulesConfig holds configuration options for the rules monitor.
+type RulesConfig struct {
+	Rules        api.RulesService
+	Listeners    []RulesListener
 	PollInterval time.Duration
 }
 
-type controllerMonitor struct {
-	controller client.Client
+type rulesMonitor struct {
+	rules api.RulesService
 
 	ticker       *time.Ticker
 	pollInterval time.Duration
 
 	revision  int64
-	listeners []ControllerListener
+	listeners []RulesListener
 }
 
-// NewControllerMonitor instantiates a new controller monitor
-func NewControllerMonitor(conf ControllerConfig) Monitor {
-	return &controllerMonitor{
-		controller:   conf.Client,
+// NewRulesMonitor instantiates a new rules monitor
+func NewRulesMonitor(conf RulesConfig) Monitor {
+	return &rulesMonitor{
+		rules:        conf.Rules,
 		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
 		revision:     -1,
 	}
 }
 
-// Start monitoring the A8 controller. This is a blocking operation.
-func (c *controllerMonitor) Start() error {
+// Start monitoring the rules service. This is a blocking operation.
+func (c *rulesMonitor) Start() error {
 	// Stop existing ticker if necessary
 	if c.ticker != nil {
 		if err := c.Stop(); err != nil {
@@ -82,36 +81,36 @@ func (c *controllerMonitor) Start() error {
 	return nil
 }
 
-// poll the A8 controller for changes and notify listeners
-func (c *controllerMonitor) poll() error {
+// poll the rules service for changes and notify listeners
+func (c *rulesMonitor) poll() error {
 
 	// Get the latest rules from the A8 controller.
-	resp, err := c.controller.GetRules(rules.Filter{})
+	rulesset, err := c.rules.ListRules(&api.RuleFilter{})
 	if err != nil {
-		logrus.WithError(err).Error("Call to controller failed")
+		logrus.WithError(err).Error("Call to rules service failed")
 		return err
 	}
 
 	// Short-circuit if the controller's revision is not newer than our revision
-	if c.revision >= resp.Revision {
+	if c.revision >= rulesset.Revision {
 		return nil
 	}
 
 	// Update our revision
-	c.revision = resp.Revision
+	c.revision = rulesset.Revision
 
 	// Notify listeners
 	for _, listener := range c.listeners {
-		if err := listener.RuleChange(resp.Rules); err != nil {
-			logrus.WithError(err).Warn("Controller listener failed")
+		if err := listener.RuleChange(rulesset.Rules); err != nil {
+			logrus.WithError(err).Warn("Rules listener failed")
 		}
 	}
 
 	return nil
 }
 
-// Stop monitoring the A8 controller
-func (c *controllerMonitor) Stop() error {
+// Stop monitoring the rules service
+func (c *rulesMonitor) Stop() error {
 	// Stop ticker if necessary
 	if c.ticker != nil {
 		c.ticker.Stop()

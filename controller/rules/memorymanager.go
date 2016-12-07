@@ -19,13 +19,14 @@ import (
 
 	"sync"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/pborman/uuid"
 )
 
 // NewMemoryManager constructs a new in memory manager.
-func NewMemoryManager(validator Validator) Manager {
+func NewMemoryManager(validator api.Validator) Manager {
 	return &memory{
-		rules:     make(map[string]map[string]Rule),
+		rules:     make(map[string]map[string]api.Rule),
 		revision:  make(map[string]int64),
 		validator: validator,
 		mutex:     &sync.Mutex{},
@@ -33,13 +34,13 @@ func NewMemoryManager(validator Validator) Manager {
 }
 
 type memory struct {
-	rules     map[string]map[string]Rule
+	rules     map[string]map[string]api.Rule
 	revision  map[string]int64
-	validator Validator
+	validator api.Validator
 	mutex     *sync.Mutex
 }
 
-func (m *memory) AddRules(namespace string, rules []Rule) (NewRules, error) {
+func (m *memory) AddRules(namespace string, rules []api.Rule) (NewRules, error) {
 	if len(rules) == 0 {
 		return NewRules{}, errors.New("rules: no rules provided")
 	}
@@ -68,10 +69,10 @@ func (m *memory) AddRules(namespace string, rules []Rule) (NewRules, error) {
 	}, nil
 }
 
-func (m *memory) addRules(namespace string, rules []Rule) {
+func (m *memory) addRules(namespace string, rules []api.Rule) {
 	_, exists := m.rules[namespace]
 	if !exists {
-		m.rules[namespace] = make(map[string]Rule)
+		m.rules[namespace] = make(map[string]api.Rule)
 	}
 
 	for _, rule := range rules {
@@ -81,7 +82,7 @@ func (m *memory) addRules(namespace string, rules []Rule) {
 	m.revision[namespace]++
 }
 
-func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, error) {
+func (m *memory) GetRules(namespace string, filter api.RuleFilter) (RetrievedRules, error) {
 	m.mutex.Lock()
 
 	revision := m.revision[namespace]
@@ -90,14 +91,14 @@ func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, erro
 	if !exists {
 		m.mutex.Unlock()
 		return RetrievedRules{
-			Rules:    []Rule{},
+			Rules:    []api.Rule{},
 			Revision: revision,
 		}, nil
 	}
 
-	var results []Rule
+	var results []api.Rule
 	if len(filter.IDs) == 0 {
-		results = make([]Rule, len(m.rules[namespace]))
+		results = make([]api.Rule, len(m.rules[namespace]))
 
 		index := 0
 		for _, rule := range rules {
@@ -105,7 +106,7 @@ func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, erro
 			index++
 		}
 	} else {
-		results = make([]Rule, 0, len(filter.IDs))
+		results = make([]api.Rule, 0, len(filter.IDs))
 		for _, id := range filter.IDs {
 			rule, exists := m.rules[namespace][id]
 			if !exists {
@@ -119,7 +120,7 @@ func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, erro
 
 	m.mutex.Unlock()
 
-	results = FilterRules(filter, results)
+	results = api.FilterRules(filter, results)
 
 	return RetrievedRules{
 		Rules:    results,
@@ -127,7 +128,7 @@ func (m *memory) GetRules(namespace string, filter Filter) (RetrievedRules, erro
 	}, nil
 }
 
-func (m *memory) UpdateRules(namespace string, rules []Rule) error {
+func (m *memory) UpdateRules(namespace string, rules []api.Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
 	}
@@ -164,7 +165,7 @@ func (m *memory) UpdateRules(namespace string, rules []Rule) error {
 	return nil
 }
 
-func (m *memory) DeleteRules(namespace string, filter Filter) error {
+func (m *memory) DeleteRules(namespace string, filter api.RuleFilter) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
@@ -172,7 +173,7 @@ func (m *memory) DeleteRules(namespace string, filter Filter) error {
 	return m.deleteRulesByFilter(namespace, filter)
 }
 
-func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error) {
+func (m *memory) SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error) {
 	// Validate rules
 	if err := m.validateRules(rules); err != nil {
 		return NewRules{}, err
@@ -201,20 +202,20 @@ func (m *memory) SetRules(namespace string, filter Filter, rules []Rule) (NewRul
 	}, nil
 }
 
-func (m *memory) deleteRulesByFilter(namespace string, filter Filter) error {
+func (m *memory) deleteRulesByFilter(namespace string, filter api.RuleFilter) error {
 	ruleMap, exists := m.rules[namespace]
 	if !exists {
 		return nil
 	}
 
-	rules := make([]Rule, len(m.rules[namespace]))
+	rules := make([]api.Rule, len(m.rules[namespace]))
 	i := 0
 	for _, rule := range ruleMap {
 		rules[i] = rule
 		i++
 	}
 
-	rules = FilterRules(filter, rules)
+	rules = api.FilterRules(filter, rules)
 
 	for _, rule := range rules {
 		delete(m.rules[namespace], rule.ID)
@@ -223,13 +224,13 @@ func (m *memory) deleteRulesByFilter(namespace string, filter Filter) error {
 	return nil
 }
 
-func (m *memory) generateRuleIDs(rules []Rule) {
+func (m *memory) generateRuleIDs(rules []api.Rule) {
 	for i := range rules {
 		rules[i].ID = uuid.New() // Generate an ID for each rule
 	}
 }
 
-func (m *memory) validateRules(rules []Rule) error {
+func (m *memory) validateRules(rules []api.Rule) error {
 	for _, rule := range rules {
 		if err := m.validator.Validate(rule); err != nil {
 			return err

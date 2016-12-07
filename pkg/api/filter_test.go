@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
 import (
 	"reflect"
@@ -39,7 +39,7 @@ func TestFilterRules(t *testing.T) {
 
 	cases := []struct {
 		In, Out []Rule
-		Filter  Filter
+		Filter  RuleFilter
 	}{
 		{ // Empty filter does not do anything
 			In: []Rule{
@@ -48,7 +48,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{},
+			Filter: RuleFilter{},
 		},
 		{ // Filter by tags
 			In: []Rule{
@@ -58,7 +58,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{
+			Filter: RuleFilter{
 				Tags: []string{"tag1"},
 			},
 		},
@@ -70,7 +70,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule2,
 			},
-			Filter: Filter{
+			Filter: RuleFilter{
 				Destinations: []string{"service2"},
 			},
 		},
@@ -82,7 +82,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule1,
 			},
-			Filter: Filter{
+			Filter: RuleFilter{
 				RuleType: RuleAction,
 			},
 		},
@@ -94,7 +94,7 @@ func TestFilterRules(t *testing.T) {
 			Out: []Rule{
 				rule2,
 			},
-			Filter: Filter{
+			Filter: RuleFilter{
 				RuleType: RuleRoute,
 			},
 		},

@@ -12,17 +12,13 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
-import "encoding/json"
+// RulesSet is the information returned from a rule query.
+type RulesSet struct {
+	// Rules that matched the filter.
+	Rules []Rule `json:"rules"`
 
-// Rule represents an individual rule.
-type Rule struct {
-	ID          string          `json:"id"`
-	Priority    int             `json:"priority"`
-	Tags        []string        `json:"tags,omitempty"`
-	Destination string          `json:"destination"`
-	Match       json.RawMessage `json:"match,omitempty"`
-	Route       json.RawMessage `json:"route,omitempty"`
-	Actions     json.RawMessage `json:"actions,omitempty"`
+	// Revision of the rules for this namespace.
+	Revision int64 `json:"revision"`
 }

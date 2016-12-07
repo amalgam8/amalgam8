@@ -14,15 +14,8 @@
 
 package api
 
-// ServiceRegistry defines the interface used for registering service instances.
-type ServiceRegistry interface {
-
-	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
-	Register(instance *ServiceInstance) (*ServiceInstance, error)
-
-	// Deregister removes a registered service instance, identified by the given ID, from the registry.
-	Deregister(id string) error
-
-	// Renew sends a heartbeat for the service instance identified by the given ID.
-	Renew(id string) error
+// RulesService defines the interface used for rules service
+type RulesService interface {
+	// ListRules returns the rules that match the filter.
+	ListRules(f *RuleFilter) (*RulesSet, error)
 }

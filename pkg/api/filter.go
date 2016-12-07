@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
 import (
 	"fmt"
@@ -29,8 +29,8 @@ const (
 	RuleAction
 )
 
-// Filter to apply to sets of rules.
-type Filter struct {
+// RuleFilter to apply to sets of rules.
+type RuleFilter struct {
 	// IDs is the set of acceptable rule IDs. A rule will pass the filter if its ID is a member of this set.
 	// This field is ignored when len(IDs) <= 0.
 	IDs []string
@@ -49,17 +49,17 @@ type Filter struct {
 
 // Empty returns whether the filter has any attributes that would cause rules to be filtered out. A filter is considered
 // empty if no rules would be filtered out from any set of rules.
-func (f Filter) Empty() bool {
+func (f RuleFilter) Empty() bool {
 	return len(f.IDs) == 0 && len(f.Tags) == 0 && len(f.Destinations) == 0 && f.RuleType == RuleAny
 }
 
 // String representation of the filter
-func (f Filter) String() string {
+func (f RuleFilter) String() string {
 	return fmt.Sprintf("%#v", f)
 }
 
 // FilterRules returns a list of filtered rules.
-func FilterRules(f Filter, rules []Rule) []Rule {
+func FilterRules(f RuleFilter, rules []Rule) []Rule {
 	// Before we begin filtering we build sets of each filter field to avoid N^2 lookups.
 
 	// Build set of acceptable IDs

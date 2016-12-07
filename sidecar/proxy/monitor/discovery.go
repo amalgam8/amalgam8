@@ -23,49 +23,49 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
-// RegistryListener is notified of changes to the registry catalog
-type RegistryListener interface {
+// DiscoveryListener is notified of changes to the discovery catalog
+type DiscoveryListener interface {
 	CatalogChange([]api.ServiceInstance) error
 }
 
-// RegistryConfig holds configuration options for the registry monitor.
-type RegistryConfig struct {
+// DiscoveryConfig holds configuration options for the discovery monitor
+type DiscoveryConfig struct {
 	Discovery    api.ServiceDiscovery
-	Listeners    []RegistryListener
+	Listeners    []DiscoveryListener
 	PollInterval time.Duration
 }
 
-type registryMonitor struct {
+type discoveryMonitor struct {
 	discovery api.ServiceDiscovery
 
 	ticker       *time.Ticker
 	pollInterval time.Duration
 
 	cache     map[string][]*api.ServiceInstance
-	listeners []RegistryListener
+	listeners []DiscoveryListener
 }
 
-// DefaultRegistryPollInterval is the default used for the registry monitor's poll interval,
+// DefaultDiscoveryPollInterval is the default used for the discovery monitor's poll interval,
 // if no other value is specified. Currently, all existing ServiceDiscovery adapters use caching
 // with background polling, so the 1 second polling here is basically polling a local cache only.
 // Note: this will be removed once the ServiceDiscovery interface exposes a Watch() mechanism.
-const DefaultRegistryPollInterval = 1 * time.Second
+const DefaultDiscoveryPollInterval = 1 * time.Second
 
-// NewRegistryMonitor instantiates a new registry monitor
-func NewRegistryMonitor(conf RegistryConfig) Monitor {
+// NewDiscoveryMonitor instantiates a new discovery monitor
+func NewDiscoveryMonitor(conf DiscoveryConfig) Monitor {
 	if conf.PollInterval == 0 {
-		conf.PollInterval = DefaultRegistryPollInterval
+		conf.PollInterval = DefaultDiscoveryPollInterval
 	}
 
-	return &registryMonitor{
+	return &discoveryMonitor{
 		discovery:    conf.Discovery,
 		listeners:    conf.Listeners,
 		pollInterval: conf.PollInterval,
 	}
 }
 
-// Start monitoring registry
-func (m *registryMonitor) Start() error {
+// Start monitoring discovery
+func (m *discoveryMonitor) Start() error {
 	// Stop existing ticker if necessary
 	if m.ticker != nil {
 		if err := m.Stop(); err != nil {
@@ -92,12 +92,12 @@ func (m *registryMonitor) Start() error {
 	return nil
 }
 
-// poll registry for changes in the catalog
-func (m *registryMonitor) poll() error {
-	// Get newest catalog from registry
+// poll discovery for changes in the catalog
+func (m *discoveryMonitor) poll() error {
+	// Get newest catalog from discovery
 	instances, err := m.discovery.ListInstances()
 	if err != nil {
-		logrus.WithError(err).Warn("Could not get latest catalog from registry")
+		logrus.WithError(err).Warn("Could not get latest catalog from discovery")
 		return err
 	}
 	catalog := instanceListAsMap(instances)
@@ -125,7 +125,7 @@ func (m *registryMonitor) poll() error {
 // compareToCache compares the given catalog to the cached one, by comparing all instance attributes
 // except for heartbeat and TTL. Instance list for each service is assumed to be presorted.
 // Return 'true' if catalog match, and 'false' otherwise.
-func (m *registryMonitor) compareToCache(catalog map[string][]*api.ServiceInstance) bool {
+func (m *discoveryMonitor) compareToCache(catalog map[string][]*api.ServiceInstance) bool {
 	if len(catalog) != len(m.cache) {
 		return false
 	}
@@ -157,8 +157,8 @@ func (m *registryMonitor) compareToCache(catalog map[string][]*api.ServiceInstan
 	return true
 }
 
-// Stop monitoring registry
-func (m *registryMonitor) Stop() error {
+// Stop monitoring discovery
+func (m *discoveryMonitor) Stop() error {
 	// Stop ticker if necessary
 	if m.ticker != nil {
 		m.ticker.Stop()

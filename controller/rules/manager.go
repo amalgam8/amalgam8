@@ -14,23 +14,25 @@
 
 package rules
 
+import "github.com/amalgam8/amalgam8/pkg/api"
+
 // Manager is an interface for managing collections of rules mapped by namespace.
 type Manager interface {
 	// AddRules validates the rules and adds them to the collection for the namespace.
-	AddRules(namespace string, rules []Rule) (NewRules, error)
+	AddRules(namespace string, rules []api.Rule) (NewRules, error)
 
 	// GetRules returns a collection of filtered rules from the namespace.
-	GetRules(namespace string, filter Filter) (RetrievedRules, error)
+	GetRules(namespace string, filter api.RuleFilter) (RetrievedRules, error)
 
 	// UpdateRules updates rules by ID in the namespace.
-	UpdateRules(namespace string, rules []Rule) error
+	UpdateRules(namespace string, rules []api.Rule) error
 
 	// DeleteRules deletes rules that match the filter in the namespace.
-	DeleteRules(namespace string, filter Filter) error
+	DeleteRules(namespace string, filter api.RuleFilter) error
 
 	// SetRules deletes the rules that match the filter and adds the new rules as a single
 	// atomic transaction.
-	SetRules(namespace string, filter Filter, rules []Rule) (NewRules, error)
+	SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error)
 }
 
 // NewRules provides information about newly added rules.
@@ -42,7 +44,7 @@ type NewRules struct {
 // RetrievedRules are the results of a read from a manager.
 type RetrievedRules struct {
 	// Rules that passed the filter.
-	Rules []Rule
+	Rules []api.Rule
 
 	// Revision of the rules for this namespace. Each time the collection of rules for the namespace are changed
 	// the revision is incremented.

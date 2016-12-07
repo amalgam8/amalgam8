@@ -14,15 +14,15 @@
 
 package api
 
-// ServiceRegistry defines the interface used for registering service instances.
-type ServiceRegistry interface {
+import "encoding/json"
 
-	// Register adds a service instance, described by the given ServiceInstance structure, to the registry.
-	Register(instance *ServiceInstance) (*ServiceInstance, error)
-
-	// Deregister removes a registered service instance, identified by the given ID, from the registry.
-	Deregister(id string) error
-
-	// Renew sends a heartbeat for the service instance identified by the given ID.
-	Renew(id string) error
+// Rule represents an individual rule.
+type Rule struct {
+	ID          string          `json:"id"`
+	Priority    int             `json:"priority"`
+	Tags        []string        `json:"tags,omitempty"`
+	Destination string          `json:"destination"`
+	Match       json.RawMessage `json:"match,omitempty"`
+	Route       json.RawMessage `json:"route,omitempty"`
+	Actions     json.RawMessage `json:"actions,omitempty"`
 }

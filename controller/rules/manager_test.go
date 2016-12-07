@@ -17,6 +17,8 @@ package rules
 import (
 	"errors"
 
+	"github.com/amalgam8/amalgam8/pkg/api"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -25,14 +27,14 @@ type MockValidator struct {
 	Error error
 }
 
-func (m *MockValidator) Validate(r Rule) error {
+func (m *MockValidator) Validate(r api.Rule) error {
 	return m.Error
 }
 
 var _ = Describe("Manager", func() {
 
 	var (
-		validator Validator
+		validator api.Validator
 		manager   Manager
 		namespace string
 	)
@@ -49,7 +51,7 @@ var _ = Describe("Manager", func() {
 	Describe("simple CRUD operations", func() {
 		Describe("adding a rule", func() {
 			var (
-				rules    []Rule
+				rules    []api.Rule
 				newRules NewRules
 				err      error
 			)
@@ -62,7 +64,7 @@ var _ = Describe("Manager", func() {
 				const Destination = "DestinationX"
 
 				BeforeEach(func() {
-					rules = []Rule{
+					rules = []api.Rule{
 						{
 							Destination: Destination,
 						},
@@ -79,7 +81,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("now contains the rule", func() {
-					f := Filter{
+					f := api.RuleFilter{
 						IDs: newRules.IDs,
 					}
 					retrievedRules, err := manager.GetRules(namespace, f)
@@ -89,7 +91,7 @@ var _ = Describe("Manager", func() {
 				})
 
 				It("updates the revision", func() {
-					retrievedRules, err := manager.GetRules(namespace, Filter{})
+					retrievedRules, err := manager.GetRules(namespace, api.RuleFilter{})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(retrievedRules.Revision).To(Equal(int64(1)))
 				})
@@ -98,7 +100,7 @@ var _ = Describe("Manager", func() {
 					const NewDestination = "DestinationY"
 
 					JustBeforeEach(func() {
-						rules = []Rule{
+						rules = []api.Rule{
 							{
 								ID:          newRules.IDs[0],
 								Destination: NewDestination,
@@ -116,7 +118,7 @@ var _ = Describe("Manager", func() {
 							var retrievedRules RetrievedRules
 
 							JustBeforeEach(func() {
-								f := Filter{
+								f := api.RuleFilter{
 									IDs: newRules.IDs,
 								}
 								retrievedRules, err = manager.GetRules(namespace, f)
@@ -140,7 +142,7 @@ var _ = Describe("Manager", func() {
 
 				Describe("deleting the rule", func() {
 					JustBeforeEach(func() {
-						filter := Filter{
+						filter := api.RuleFilter{
 							IDs: newRules.IDs,
 						}
 						err = manager.DeleteRules(namespace, filter)
@@ -154,7 +156,7 @@ var _ = Describe("Manager", func() {
 						var retrievedRules RetrievedRules
 
 						JustBeforeEach(func() {
-							retrievedRules, err = manager.GetRules(namespace, Filter{})
+							retrievedRules, err = manager.GetRules(namespace, api.RuleFilter{})
 						})
 
 						It("should not error", func() {
@@ -191,7 +193,7 @@ var _ = Describe("Manager", func() {
 					var retrievedRules RetrievedRules
 
 					JustBeforeEach(func() {
-						retrievedRules, err = manager.GetRules(namespace, Filter{})
+						retrievedRules, err = manager.GetRules(namespace, api.RuleFilter{})
 					})
 
 					It("should not error", func() {

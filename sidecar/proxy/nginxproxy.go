@@ -18,7 +18,6 @@ import (
 	"sync"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
@@ -26,14 +25,14 @@ import (
 
 // NGINXProxy updates NGINX to reflect changes in the A8 controller and A8 registry
 type NGINXProxy interface {
-	monitor.ControllerListener
-	monitor.RegistryListener
-	GetState() ([]api.ServiceInstance, []rules.Rule)
+	monitor.RulesListener
+	monitor.DiscoveryListener
+	GetState() ([]api.ServiceInstance, []api.Rule)
 }
 
 type nginxProxy struct {
 	instances []api.ServiceInstance
-	rules     []rules.Rule
+	rules     []api.Rule
 	nginx     nginx.Manager
 	mutex     sync.Mutex
 }
@@ -41,7 +40,7 @@ type nginxProxy struct {
 // NewNGINXProxy instantiates a new instance
 func NewNGINXProxy(nginxClient nginx.Manager) NGINXProxy {
 	return &nginxProxy{
-		rules:     []rules.Rule{},
+		rules:     []api.Rule{},
 		instances: []api.ServiceInstance{},
 		nginx:     nginxClient,
 	}
@@ -57,7 +56,7 @@ func (n *nginxProxy) CatalogChange(instances []api.ServiceInstance) error {
 }
 
 // RuleChange updates NGINX on a change in the proxy configuration
-func (n *nginxProxy) RuleChange(rules []rules.Rule) error {
+func (n *nginxProxy) RuleChange(rules []api.Rule) error {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
@@ -70,7 +69,7 @@ func (n *nginxProxy) updateNGINX() error {
 	return n.nginx.Update(n.instances, n.rules)
 }
 
-func (n *nginxProxy) GetState() ([]api.ServiceInstance, []rules.Rule) {
+func (n *nginxProxy) GetState() ([]api.ServiceInstance, []api.Rule) {
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 

@@ -17,7 +17,6 @@ package debug
 import (
 	"net/http"
 
-	"github.com/amalgam8/amalgam8/controller/rules"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -55,7 +54,7 @@ func (d *API) checkState(w rest.ResponseWriter, req *rest.Request) {
 
 	state := struct {
 		Instances []api.ServiceInstance `json:"instances"`
-		Rules     []rules.Rule          `json:"rules"`
+		Rules     []api.Rule            `json:"rules"`
 	}{
 		Instances: cachedInstances,
 		Rules:     cachedRules,

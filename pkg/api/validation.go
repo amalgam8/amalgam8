@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package rules
+package api
 
 import (
 	"errors"
@@ -33,7 +33,7 @@ type validator struct {
 
 // NewValidator returns a new Validator.
 func NewValidator() (Validator, error) {
-	sl := gojsonschema.NewReferenceLoader("file://./schema.json")
+	sl := gojsonschema.NewReferenceLoader("file://./rules-schema.json")
 
 	schema, err := gojsonschema.NewSchema(sl)
 	if err != nil {

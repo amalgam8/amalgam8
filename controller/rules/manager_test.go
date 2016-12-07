@@ -27,7 +27,7 @@ type MockValidator struct {
 	Error error
 }
 
-func (m *MockValidator) Validate(r Rule) error {
+func (m *MockValidator) Validate(r api.Rule) error {
 	return m.Error
 }
 
@@ -51,7 +51,7 @@ var _ = Describe("Manager", func() {
 	Describe("simple CRUD operations", func() {
 		Describe("adding a rule", func() {
 			var (
-				rules    []Rule
+				rules    []api.Rule
 				newRules NewRules
 				err      error
 			)
@@ -64,7 +64,7 @@ var _ = Describe("Manager", func() {
 				const Destination = "DestinationX"
 
 				BeforeEach(func() {
-					rules = []Rule{
+					rules = []api.Rule{
 						{
 							Destination: Destination,
 						},
@@ -100,7 +100,7 @@ var _ = Describe("Manager", func() {
 					const NewDestination = "DestinationY"
 
 					JustBeforeEach(func() {
-						rules = []Rule{
+						rules = []api.Rule{
 							{
 								ID:          newRules.IDs[0],
 								Destination: NewDestination,

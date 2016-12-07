@@ -22,7 +22,7 @@ import (
 )
 
 func TestFilterRules(t *testing.T) {
-	rule1 := Rule{
+	rule1 := api.Rule{
 		ID:          "id1",
 		Priority:    1,
 		Tags:        []string{"tag1", "tag2"},
@@ -30,7 +30,7 @@ func TestFilterRules(t *testing.T) {
 		Match:       []byte(`{}`),
 		Actions:     []byte(`{}`),
 	}
-	rule2 := Rule{
+	rule2 := api.Rule{
 		ID:          "id1",
 		Priority:    1,
 		Tags:        []string{},
@@ -40,24 +40,24 @@ func TestFilterRules(t *testing.T) {
 	}
 
 	cases := []struct {
-		In, Out []Rule
+		In, Out []api.Rule
 		Filter  api.Filter
 	}{
 		{ // Empty filter does not do anything
-			In: []Rule{
+			In: []api.Rule{
 				rule1,
 			},
-			Out: []Rule{
+			Out: []api.Rule{
 				rule1,
 			},
 			Filter: api.Filter{},
 		},
 		{ // Filter by tags
-			In: []Rule{
+			In: []api.Rule{
 				rule1,
 				rule2,
 			},
-			Out: []Rule{
+			Out: []api.Rule{
 				rule1,
 			},
 			Filter: api.Filter{
@@ -65,11 +65,11 @@ func TestFilterRules(t *testing.T) {
 			},
 		},
 		{ // Filter by destination
-			In: []Rule{
+			In: []api.Rule{
 				rule1,
 				rule2,
 			},
-			Out: []Rule{
+			Out: []api.Rule{
 				rule2,
 			},
 			Filter: api.Filter{
@@ -77,11 +77,11 @@ func TestFilterRules(t *testing.T) {
 			},
 		},
 		{ // Filter action rules
-			In: []Rule{
+			In: []api.Rule{
 				rule1,
 				rule2,
 			},
-			Out: []Rule{
+			Out: []api.Rule{
 				rule1,
 			},
 			Filter: api.Filter{
@@ -89,11 +89,11 @@ func TestFilterRules(t *testing.T) {
 			},
 		},
 		{ // Filter route rules
-			In: []Rule{
+			In: []api.Rule{
 				rule1,
 				rule2,
 			},
-			Out: []Rule{
+			Out: []api.Rule{
 				rule2,
 			},
 			Filter: api.Filter{

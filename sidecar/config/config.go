@@ -45,6 +45,12 @@ const (
 	EurekaBackend     = "eureka"
 )
 
+// Supported proxy adapters
+const (
+	NGINXAdapter = "nginx"
+	EnvoyAdapter = "envoy"
+)
+
 // Command to be managed by sidecar app supervisor
 type Command struct {
 	Cmd       []string `yaml:"cmd"`
@@ -128,9 +134,10 @@ type ProxyConfig struct {
 
 // Config stores the various configuration options for the sidecar
 type Config struct {
-	Register bool `yaml:"register"`
-	Proxy    bool `yaml:"proxy"`
-	DNS      bool `yaml:"dns"`
+	Register     bool   `yaml:"register"`
+	Proxy        bool   `yaml:"proxy"`
+	ProxyAdapter string `yaml:"proxy_adapter"`
+	DNS          bool   `yaml:"dns"`
 
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
@@ -237,6 +244,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.ProxyConfig.CertPath, proxyCertPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CertKeyPath, proxyCertKeyPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CACertPath, proxyCACertPathFlag)
+	loadFromContextIfSet(&c.ProxyAdapter, proxyAdapterFlag)
 	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
@@ -373,7 +381,10 @@ func (c *Config) Validate() error {
 	}
 
 	if c.Proxy {
-		validators = append(validators, IsInSet("Rules service backend", c.RulesBackend, []string{Amalgam8Backend, KubernetesBackend}))
+		validators = append(
+			validators,
+			IsInSet("Rules service backend", c.RulesBackend, []string{Amalgam8Backend, KubernetesBackend}),
+			IsInSet("Proxy adapter", c.ProxyAdapter, []string{NGINXAdapter, EnvoyAdapter}))
 		if c.RulesBackend == Amalgam8Backend {
 			validators = append(validators,
 				IsValidURL("Amalgam8 Controller URL", c.A8Controller.URL),

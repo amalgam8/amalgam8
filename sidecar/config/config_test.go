@@ -445,9 +445,10 @@ log_level: debug
 					Port:   8053,
 					Domain: "amalgam8",
 				},
-				Proxy:    true,
-				Register: true,
-				DNS:      true,
+				Proxy:        true,
+				ProxyAdapter: NGINXAdapter,
+				Register:     true,
+				DNS:          true,
 				Service: Service{
 					Name: "mock",
 				},

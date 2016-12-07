@@ -37,9 +37,8 @@ type CacheConfig struct {
 // The cache is refreshed periodically using the non-caching, REST API-based Amalagam8 Controller client.
 type Cache struct {
 	client api.RulesService
-	cache api.RulesSet
-	mutex sync.RWMutex
-	pollCount int64
+	cache  api.RulesSet
+	mutex  sync.RWMutex
 }
 
 // NewCache constructs a new Caching Client using the given configuration.
@@ -64,14 +63,13 @@ func (c *Cache) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
-	filteredRules :=api.FilterRules(*filter, c.cache.Rules)
+	filteredRules := api.FilterRules(*filter, c.cache.Rules)
 
-	filteredRuleSet :=api.RulesSet {Rules:filteredRules,
-		                        Revision:c.cache.Revision}
+	filteredRuleSet := api.RulesSet{Rules: filteredRules,
+		Revision: c.cache.Revision}
 
 	return &filteredRuleSet, nil
 }
-
 
 func (c *Cache) maintain(pollInterval time.Duration) {
 	go c.refresh()
@@ -90,5 +88,4 @@ func (c *Cache) refresh() {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 	c.cache = *ruleList
-	c.pollCount+=1
 }

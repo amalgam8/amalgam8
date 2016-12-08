@@ -36,15 +36,13 @@ type manager struct {
 
 // Config options
 type Config struct {
-	Service Service
-	Client  Client
+	Client Client
 }
 
 // NewManager creates new a instance
 func NewManager(conf Config) Manager {
 	return &manager{
-		service: conf.Service,
-		client:  conf.Client,
+		client: conf.Client,
 	}
 }
 
@@ -53,25 +51,7 @@ func (n *manager) Update(instances []api.ServiceInstance, rules []api.Rule) erro
 	n.mutex.Lock()
 	defer n.mutex.Unlock()
 
-	var err error
-
-	// Ensure NGINX is running
-	running, err := n.service.Running()
-	if err != nil {
-		logrus.WithError(err).Error("Could not get status of NGINX service")
-		return err
-	}
-
-	if !running {
-		// NGINX is not running; attempt to start NGINX
-		logrus.Info("Starting NGINX")
-		if err := n.service.Start(); err != nil {
-			logrus.WithError(err).Error("Failed to start NGINX service")
-			return err
-		}
-	}
-
-	if err = n.client.Update(instances, rules); err != nil {
+	if err := n.client.Update(instances, rules); err != nil {
 		logrus.WithError(err).Error("Failed to update HTTP upstreams with NGINX")
 		return err
 	}

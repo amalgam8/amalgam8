@@ -15,93 +15,123 @@
 package nginx
 
 import (
-	"errors"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"os/exec"
 	"strings"
-	"syscall"
+	"sync"
+	"time"
+
+	"github.com/Sirupsen/logrus"
 )
 
-// Service provides management operations for the NGINX service
+// MinimumRestartWait the minimum amount of time to allow between restarts of the NGINX service.
+const MinimumRestartWait = 15 * time.Second
+
+// Service maintains a NGINX service.
 type Service interface {
 	Start() error
-	Reload() error
-	Running() (bool, error)
+	Stop() error
 }
 
-// NewService creates new instance
-func NewService(name string) Service {
+// NewService creates new instance.
+func NewService(serviceName string, tags []string) Service {
+	serviceEnvVar := fmt.Sprintf("%v:%v", serviceName, strings.Join(tags, ","))
 	return &service{
-		name: name,
+		serviceEnvVar: serviceEnvVar,
+		stop:          make(chan struct{}),
 	}
 }
 
 type service struct {
-	name string
+	serviceEnvVar string
+	running       bool
+	stop          chan struct{}
+	mutex         sync.Mutex
 }
 
-// Start the NGINX service
+// Start maintaining the NGINX service.
 func (s *service) Start() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 
-	cmd := exec.Command("nginx", "-g", "daemon on;")
+	if s.running {
+		return nil
+	}
+
+	cmd := s.build()
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+
+	s.running = true
+	go s.maintain(cmd)
+
+	return nil
+}
+
+// build the NGINX service command.
+func (s *service) build() *exec.Cmd {
+	cmd := exec.Command("nginx", "-g", "daemon off;")
 	cmdEnv := os.Environ()
-	cmdEnv = append(cmdEnv, "A8_SERVICE="+s.name)
+	cmdEnv = append(cmdEnv, "A8_SERVICE="+s.serviceEnvVar)
 	cmd.Env = cmdEnv
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return errors.New(err.Error() + ": " + string(out))
-	}
-
-	return nil
+	return cmd
 }
 
-// Reload the NGINX service
-func (s *service) Reload() error {
-	out, err := exec.Command("nginx", "-s", "reload").CombinedOutput()
-	if err != nil {
-		return errors.New(err.Error() + ": " + string(out))
-	}
+// maintain the NGINX service. Automatically restart the service if it exits.
+func (s *service) maintain(cmd *exec.Cmd) {
+	start := time.Now()
+	status := make(chan error)
+	go func() {
+		status <- cmd.Wait()
+	}()
 
-	return nil
-}
-
-// Running indicates whether or not the NGINX service is currently running
-func (s *service) Running() (bool, error) {
-	pidBytes, err := ioutil.ReadFile("/var/run/nginx.pid")
-	if err != nil {
-		// Assume that service is not running
-		return false, nil
-	}
-
-	pidString := strings.TrimSpace(string(pidBytes))
-
-	// The command "kill -s 0 <pid>" has an exit code of 0 when the service is running and 1 when the service is
-	// not running.
-	out, err := exec.Command("kill", "-s", "0", pidString).CombinedOutput()
-	if err != nil {
-		// An error is returned from exec.Command when there is an issue executing the command OR if a non-zero
-		// exit code is returned.
-
-		// Check if the error is a non-zero exit code error
-		if exitErr, ok := err.(*exec.ExitError); ok {
-			if status, ok := exitErr.Sys().(syscall.WaitStatus); ok {
-				// Check if exit code is 1 (process is not running)
-				if status.ExitStatus() == 1 {
-					return false, nil
-				}
-			}
+	select {
+	case err := <-status:
+		if err != nil {
+			logrus.WithError(err).Error("NGINX exited with error")
+		} else {
+			logrus.Error("NGINX exited")
 		}
 
-		// Unknown error
-		return false, err
+		// Ensure that we always wait at least a minimum amount of time between restarts.
+		delta := time.Now().Sub(start)
+		if delta < MinimumRestartWait {
+			time.Sleep(MinimumRestartWait - delta)
+		}
+
+		// Restart NGINX.
+		cmd = s.build()
+		for {
+			err := cmd.Start()
+			if err == nil {
+				break
+			}
+
+			logrus.WithError(err).Error("NGINX failed to start")
+			time.Sleep(MinimumRestartWait)
+		}
+
+		go s.maintain(cmd)
+	case <-s.stop:
+		if err := cmd.Process.Kill(); err != nil {
+			logrus.WithError(err).Error("NGINX did not terminate cleanly")
+		}
+	}
+}
+
+// Stop maintaining the NGINX service and terminate any running NGINX service.
+func (s *service) Stop() error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if !s.running {
+		return nil
 	}
 
-	// Output also indicates an error, even if the return code is 0
-	if len(out) != 0 {
-		return false, errors.New(string(out))
-	}
+	s.stop <- struct{}{}
+	s.running = false
 
-	return true, nil
+	return nil
 }

@@ -58,8 +58,8 @@ spec:
           value: kubernetes
         - name: A8_SERVICE
           value: gateway:none
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_CONTROLLER_POLL
           value: 5s
 ---
@@ -209,8 +209,8 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_SERVICE
           value: reviews:version=v2
 ---
@@ -249,8 +249,8 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_SERVICE
           value: reviews:version=v3
 ---
@@ -306,7 +306,7 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_SERVICE
           value: productpage:version=v1

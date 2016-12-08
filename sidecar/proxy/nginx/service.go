@@ -95,33 +95,45 @@ func (s *service) maintain(cmd *exec.Cmd) {
 			logrus.Error("NGINX exited")
 		}
 
-		// Ensure that we always wait at least a minimum amount of time between restarts.
+		// Ensure that we always wait at least the minimum amount of time between restarts.
 		delta := time.Now().Sub(start)
 		if delta < MinimumRestartWait {
 			time.Sleep(MinimumRestartWait - delta)
 		}
 
 		// Restart NGINX.
-		cmd = s.build()
-		for {
-			err := cmd.Start()
-			if err == nil {
-				break
-			}
-
-			logrus.WithError(err).Error("NGINX failed to start")
-			time.Sleep(MinimumRestartWait)
-		}
-
-		go s.maintain(cmd)
+		go s.restart()
 	case <-s.stop:
-		if err := cmd.Process.Kill(); err != nil {
-			logrus.WithError(err).Error("NGINX did not terminate cleanly")
+		if cmd.Process != nil {
+			if err := cmd.Process.Kill(); err != nil {
+				logrus.WithError(err).Error("NGINX did not terminate cleanly")
+			}
 		}
 	}
 }
 
-// Stop maintaining the NGINX service and terminate any running NGINX service.
+// restart the NGINX service. Retry indefinitely on restart failure. On restart success maintain the service.
+func (s *service) restart() {
+	var cmd *exec.Cmd
+	for {
+		cmd = s.build()
+		err := cmd.Start()
+		if err == nil {
+			break
+		}
+
+		logrus.WithError(err).Error("NGINX failed to start")
+		select {
+		case <-time.After(MinimumRestartWait):
+			continue
+		case <-s.stop:
+			return
+		}
+	}
+	go s.maintain(cmd)
+}
+
+// Stop maintaining the NGINX service and terminate the running NGINX service.
 func (s *service) Stop() error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

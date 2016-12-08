@@ -233,10 +233,14 @@ func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	switch strings.ToLower(conf.RulesBackend) {
 	case config.Amalgam8Backend:
-		return controllerclient.New(controllerclient.Config{
-			URL:       conf.A8Controller.URL,
-			AuthToken: conf.A8Controller.Token,
-		})
+		controllerConf := controllerclient.CacheConfig{
+			Config: controllerclient.Config{
+				URL:       conf.A8Controller.URL,
+				AuthToken: conf.A8Controller.Token,
+			},
+			PollInterval: conf.A8Controller.Poll,
+		}
+		return controllerclient.NewCache(controllerConf)
 	case config.KubernetesBackend:
 		// TODO: return kuberenets rules fetcher
 		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesBackend)

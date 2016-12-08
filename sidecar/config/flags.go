@@ -25,6 +25,10 @@ const (
 	configFlag              = "config"
 	registerFlag            = "register"
 	proxyFlag               = "proxy"
+	proxyTLSFlag            = "proxy_tls"
+	proxyCertPathFlag       = "proxy_cert_path"
+	proxyCertKeyPathFlag    = "proxy_cert_key_path"
+	proxyCACertPathFlag     = "proxy_ca_cert_path"
 	serviceFlag             = "service"
 	endpointHostFlag        = "endpoint_host"
 	endpointPortFlag        = "endpoint_port"
@@ -75,6 +79,26 @@ var Flags = []cli.Flag{
 		Name:   dnsFlag,
 		EnvVar: envVar(dnsFlag),
 		Usage:  "Enable DNS server",
+	},
+	cli.StringFlag{
+		Name:   proxyTLSFlag,
+		EnvVar: envVar(proxyTLSFlag),
+		Usage:  "Enable proxy TLS communication",
+	},
+	cli.StringFlag{
+		Name:   proxyCertPathFlag,
+		EnvVar: envVar(proxyCertPathFlag),
+		Usage:  "Location of server certificate for proxy inbound https requests",
+	},
+	cli.StringFlag{
+		Name:   proxyCertKeyPathFlag,
+		EnvVar: envVar(proxyCertKeyPathFlag),
+		Usage:  "Location of server private key for proxy inbound https requests",
+	},
+	cli.StringFlag{
+		Name:   proxyCACertPathFlag,
+		EnvVar: envVar(proxyCACertPathFlag),
+		Usage:  "Location of trusted CA certificate(s) for proxy outbound https services",
 	},
 	cli.StringFlag{
 		Name:   serviceFlag,

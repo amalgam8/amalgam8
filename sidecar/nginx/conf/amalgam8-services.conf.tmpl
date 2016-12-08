@@ -1,0 +1,33 @@
+include /etc/nginx/amalgam8-access-logging.conf;
+include /etc/nginx/amalgam8-dynupstreams.conf;
+include /etc/nginx/nginx-customizations.conf;
+
+### A8 Sidecar proxy configuration
+server {
+       listen 6379{{.SSLFlag}};
+
+       ## Comment the previous line and enable the latter two if you are using the sidecar as a gateway
+       #listen 80;
+       #listen 443 ssl;
+
+       ## For using the A8 proxy as a gateway with SSL support
+       # eventhough the key and cert are stored in same file, only cert is
+       # sent to client
+       {{.CertPath}}
+       {{.CertKeyPath}}
+
+       location ~ ^/(?<service_name>.*?)(?<reqpath>/(.*))?$ {
+         include /etc/nginx/amalgam8-rules.conf;
+         # Add proxy SSL verification directives here:
+         {{.CACertPath}}
+         # proxy_ssl_verify        on;
+         # proxy_ssl_verify_depth  2;
+         # proxy_ssl_session_reuse on;
+       }
+
+       # Other location blocks
+       # location / {
+       # }
+
+       access_log /var/log/nginx/a8_access.log a8log;
+}

@@ -33,6 +33,7 @@ var DefaultConfig = Config{
 		Name: "",
 		Tags: nil,
 	},
+
 	Endpoint: Endpoint{
 		Host: "",
 		Port: 0,

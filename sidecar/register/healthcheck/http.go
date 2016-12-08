@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
-
 	"net/url"
+	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"

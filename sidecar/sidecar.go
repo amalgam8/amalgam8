@@ -24,13 +24,13 @@ import (
 	"time"
 
 	"github.com/Sirupsen/logrus"
-	controllerclient "github.com/amalgam8/amalgam8/controller/client"
+	amalgam8registry "github.com/amalgam8/amalgam8/pkg/adapters/discovery/amalgam8"
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/eureka"
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
+	amalgam8controller "github.com/amalgam8/amalgam8/pkg/adapters/rules/amalgam8"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/version"
-	registryclient "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
@@ -188,11 +188,11 @@ func Run(conf config.Config) error {
 func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
 	switch strings.ToLower(conf.DiscoveryBackend) {
 	case config.Amalgam8Backend:
-		regConf := registryclient.Config{
+		regConf := amalgam8registry.RegistryConfig{
 			URL:       conf.A8Registry.URL,
 			AuthToken: conf.A8Registry.Token,
 		}
-		return registryclient.New(regConf)
+		return amalgam8registry.NewRegistryAdapter(regConf)
 	case "":
 		return nil, fmt.Errorf("no service discovery type specified")
 	default:
@@ -203,14 +203,11 @@ func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
 func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 	switch strings.ToLower(conf.DiscoveryBackend) {
 	case config.Amalgam8Backend:
-		regConf := registryclient.CacheConfig{
-			Config: registryclient.Config{
-				URL:       conf.A8Registry.URL,
-				AuthToken: conf.A8Registry.Token,
-			},
-			PollInterval: conf.A8Registry.Poll,
+		regConf := amalgam8registry.RegistryConfig{
+			URL:       conf.A8Registry.URL,
+			AuthToken: conf.A8Registry.Token,
 		}
-		return registryclient.NewCache(regConf)
+		return amalgam8registry.NewCachedDiscoveryAdapter(regConf, conf.A8Registry.Poll)
 	case config.KubernetesBackend:
 		kubConf := kubernetes.Config{
 			URL:       conf.Kubernetes.URL,
@@ -233,14 +230,11 @@ func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	switch strings.ToLower(conf.RulesBackend) {
 	case config.Amalgam8Backend:
-		controllerConf := controllerclient.CacheConfig{
-			Config: controllerclient.Config{
-				URL:       conf.A8Controller.URL,
-				AuthToken: conf.A8Controller.Token,
-			},
-			PollInterval: conf.A8Controller.Poll,
+		controllerConf := amalgam8controller.ControllerConfig{
+			URL:       conf.A8Controller.URL,
+			AuthToken: conf.A8Controller.Token,
 		}
-		return controllerclient.NewCache(controllerConf)
+		return amalgam8controller.NewCachedRulesAdapter(controllerConf, conf.A8Controller.Poll)
 	case config.KubernetesBackend:
 		// TODO: return kuberenets rules fetcher
 		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesBackend)

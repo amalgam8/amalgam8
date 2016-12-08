@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package client
+package cache
 
 import (
 	"time"
@@ -25,36 +25,26 @@ import (
 // Make sure we implement the ServiceRules  interface.
 var _ api.RulesService = (*Cache)(nil)
 
-// CacheConfig stores the configurable attributes of the caching client.
-type CacheConfig struct {
-	Config
-
-	// PollInterval is the time interval in which the caching client refreshes its local cache
-	PollInterval time.Duration
-}
+// An empty filter used to query for all rules
+var emptyFilter = api.RuleFilter{}
 
 // Cache implements the ServiceRules interface using a local cache.
 // The cache is refreshed periodically using the non-caching, REST API-based Amalagam8 Controller client.
 type Cache struct {
-	client api.RulesService
-	cache  api.RulesSet
-	mutex  sync.RWMutex
+	rules api.RulesService
+	cache api.RulesSet
+	mutex sync.RWMutex
 }
 
-// NewCache constructs a new Caching Client using the given configuration.
-func NewCache(config CacheConfig) (*Cache, error) {
-
-	cl, err := New(config.Config)
-	if err != nil {
-		return nil, err
-	}
-
+// New constructs a new Cache.
+// The cache is refreshed at the frequency specified by pollInterval using the provided RulesService object.
+func New(rules api.RulesService, pollInterval time.Duration) (*Cache, error) {
 	c := &Cache{
-		client: cl,
-		cache:  api.RulesSet{},
+		rules: rules,
+		cache: api.RulesSet{},
 	}
 
-	go c.maintain(config.PollInterval)
+	go c.maintain(pollInterval)
 	return c, nil
 }
 
@@ -63,10 +53,15 @@ func (c *Cache) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 	c.mutex.RLock()
 	defer c.mutex.RUnlock()
 
+	if filter == nil {
+		filter = &emptyFilter
+	}
 	filteredRules := api.FilterRules(*filter, c.cache.Rules)
 
-	filteredRuleSet := api.RulesSet{Rules: filteredRules,
-		Revision: c.cache.Revision}
+	filteredRuleSet := api.RulesSet{
+		Rules:    filteredRules,
+		Revision: c.cache.Revision,
+	}
 
 	return &filteredRuleSet, nil
 }
@@ -79,8 +74,7 @@ func (c *Cache) maintain(pollInterval time.Duration) {
 }
 
 func (c *Cache) refresh() {
-	noFilter := api.RuleFilter{}
-	ruleList, err := c.client.ListRules(&noFilter)
+	ruleList, err := c.rules.ListRules(&emptyFilter)
 	if err != nil {
 		return
 	}

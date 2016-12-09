@@ -69,32 +69,16 @@ func (a *NGINXAdapter) Start() error {
 		return err
 	}
 
-	a.discoveryMonitor.SetListeners([]monitor.DiscoveryListener{a})
-	go func() {
-		if err := a.discoveryMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Discovery monitor failed")
-		}
-	}()
-
-	a.rulesMonitor.SetListeners([]monitor.RulesListener{a})
-	go func() {
-		if err := a.rulesMonitor.Start(); err != nil {
-			logrus.WithError(err).Error("Rules monitor failed")
-		}
-	}()
+	a.discoveryMonitor.AddListener(a)
+	a.rulesMonitor.AddListener(a)
 
 	return nil
 }
 
 // Stop NGINX proxy.
 func (a *NGINXAdapter) Stop() error {
-	if err := a.discoveryMonitor.Stop(); err != nil {
-		return err
-	}
-
-	if err := a.rulesMonitor.Stop(); err != nil {
-		return err
-	}
+	a.discoveryMonitor.RemoveListener(a)
+	a.rulesMonitor.RemoveListener(a)
 
 	return a.service.Stop()
 }
@@ -115,12 +99,4 @@ func (a *NGINXAdapter) RuleChange(rules []api.Rule) error {
 
 	a.rules = rules
 	return a.manager.Update(a.instances, a.rules)
-}
-
-// GetState returns the cached state of the NGINX adapter.
-func (a *NGINXAdapter) GetState() ([]api.ServiceInstance, []api.Rule) {
-	a.mutex.Lock()
-	defer a.mutex.Unlock()
-
-	return a.instances, a.rules
 }

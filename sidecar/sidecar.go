@@ -284,6 +284,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 	discoveryMonitor := monitor.NewDiscoveryMonitor(monitor.DiscoveryConfig{
 		Discovery: discovery,
 	})
+
 	proxyAdapter, err := buildProxyAdapter(conf, discoveryMonitor, rulesMonitor)
 	if err != nil {
 		logrus.WithError(err).Error("Could not build proxy adapter")
@@ -295,7 +296,9 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 		return err
 	}
 
-	debugger := debug.NewAPI(proxyAdapter)
+	debugger := debug.NewAPI()
+	rulesMonitor.AddListener(debugger)
+	discoveryMonitor.AddListener(debugger)
 
 	a := rest.NewApi()
 	a.Use(
@@ -317,6 +320,18 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 
 	go func() {
 		http.ListenAndServe(fmt.Sprintf(":%v", 6116), a.MakeHandler())
+	}()
+
+	go func() {
+		if err := discoveryMonitor.Start(); err != nil {
+			logrus.WithError(err).Error("Discovery monitor failed")
+		}
+	}()
+
+	go func() {
+		if err := rulesMonitor.Start(); err != nil {
+			logrus.WithError(err).Error("Rules monitor failed")
+		}
 	}()
 
 	return nil

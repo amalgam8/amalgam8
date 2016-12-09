@@ -38,8 +38,8 @@ type DiscoveryConfig struct {
 // DiscoveryMonitor interface.
 type DiscoveryMonitor interface {
 	Monitor
-	Listeners() []DiscoveryListener
-	SetListeners(listeners []DiscoveryListener)
+	AddListener(DiscoveryListener)
+	RemoveListener(DiscoveryListener)
 }
 
 type discoveryMonitor struct {
@@ -72,13 +72,18 @@ func NewDiscoveryMonitor(conf DiscoveryConfig) DiscoveryMonitor {
 }
 
 // Not safe if monitor has started
-func (m *discoveryMonitor) Listeners() []DiscoveryListener {
-	return m.listeners
+func (m *discoveryMonitor) AddListener(listener DiscoveryListener) {
+	m.listeners = append(m.listeners, listener)
 }
 
 // Not safe if monitor has started
-func (m *discoveryMonitor) SetListeners(listeners []DiscoveryListener) {
-	m.listeners = listeners
+func (m *discoveryMonitor) RemoveListener(listener DiscoveryListener) {
+	for i := range m.listeners {
+		if m.listeners[i] == listener {
+			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
+			break
+		}
+	}
 }
 
 // Start monitoring discovery

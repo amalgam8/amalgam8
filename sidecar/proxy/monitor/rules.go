@@ -36,8 +36,8 @@ type RulesConfig struct {
 // RulesMonitor interface.
 type RulesMonitor interface {
 	Monitor
-	Listeners() []RulesListener
-	SetListeners(listeners []RulesListener)
+	AddListener(RulesListener)
+	RemoveListener(RulesListener)
 }
 
 type rulesMonitor struct {
@@ -61,13 +61,18 @@ func NewRulesMonitor(conf RulesConfig) RulesMonitor {
 }
 
 // Not safe if monitor has started
-func (m *rulesMonitor) Listeners() []RulesListener {
-	return m.listeners
+func (m *rulesMonitor) AddListener(listener RulesListener) {
+	m.listeners = append(m.listeners, listener)
 }
 
 // Not safe if monitor has started
-func (m *rulesMonitor) SetListeners(listeners []RulesListener) {
-	m.listeners = listeners
+func (m *rulesMonitor) RemoveListener(listener RulesListener) {
+	for i := range m.listeners {
+		if m.listeners[i] == listener {
+			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
+			break
+		}
+	}
 }
 
 // Start monitoring the rules service. This is a blocking operation.

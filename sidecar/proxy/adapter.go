@@ -14,12 +14,8 @@
 
 package proxy
 
-import "github.com/amalgam8/amalgam8/pkg/api"
-
 // Adapter interface for proxy implementations.
 type Adapter interface {
 	Start() error
 	Stop() error
-
-	GetState() ([]api.ServiceInstance, []api.Rule)
 }

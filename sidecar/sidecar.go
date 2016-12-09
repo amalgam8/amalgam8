@@ -254,11 +254,16 @@ func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 	var err error
 
+	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
+	if err := service.Start(); err != nil {
+		logrus.WithError(err).Error("NGINX service failed to start")
+		return err
+	}
+
 	nginxClient := nginx.NewClient("http://localhost:5813")
 	nginxManager := nginx.NewManager(
 		nginx.Config{
-			Service: nginx.NewService(fmt.Sprintf("%v:%v", conf.Service.Name, strings.Join(conf.Service.Tags, ","))),
-			Client:  nginxClient,
+			Client: nginxClient,
 		},
 	)
 	nginxProxy := proxy.NewNGINXProxy(nginxManager)

@@ -23,6 +23,7 @@ BINDIR		:= bin
 BUILDDIR    := build
 DOCKERDIR	:= docker
 RELEASEDIR  := release
+STATICBIN   ?= false
 
 ifndef GOOS
     GOOS := $(shell go env GOHOSTOS)
@@ -62,11 +63,13 @@ BUILDFLAGS	:=
 # linker flags 
 LDFLAGS     :=
 
-# linker flags to strip symbol tables and debug information
-LDFLAGS     += -s -w
+ifeq ($(STATICBIN),true)
+	# linker flags to strip symbol tables and debug information
+	LDFLAGS     += -s -w
 
-# linker flags to enable static linking
-LDFLAGS     += -linkmode external -extldflags -static
+	# linker flags to enable static linking
+	LDFLAGS     += -linkmode external -extldflags -static
+endif
 
 # linker flags to set build info variables
 BUILD_SYM	:= github.com/amalgam8/amalgam8/pkg/version

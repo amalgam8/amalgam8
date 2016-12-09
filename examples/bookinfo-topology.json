@@ -1,15 +1,15 @@
 {
     "services" : [
         { "name": "gateway:none"},
-        { "name": "productpage:v1"},
-        { "name": "reviews:v2"},
-        { "name": "details:v1"},
-        { "name": "ratings:v1"}
+        { "name": "productpage:version=v1"},
+        { "name": "reviews:version=v2"},
+        { "name": "details:version=v1"},
+        { "name": "ratings:version=v1"}
     ],
 
     "dependencies" : {
-        "gateway:none" : ["productpage:v1"],
-        "productpage:v1" : ["reviews:v2", "details:v1"],
-        "reviews:v2" : ["ratings:v1"]
+        "gateway:none" : ["productpage:version=v1"],
+        "productpage:version=v1" : ["reviews:version=v2", "details:version=v1"],
+        "reviews:version=v2" : ["ratings:version=v1"]
     }
 }

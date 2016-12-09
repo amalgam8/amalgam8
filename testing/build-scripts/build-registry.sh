@@ -20,7 +20,7 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 MAKEDIR=$SCRIPTDIR/../../
 
-make -C $MAKEDIR build.registry GOOS=linux GOARCH=amd64
+make -C $MAKEDIR build.registry GOOS=linux GOARCH=amd64 STATICBIN=true
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: make failed for registry.\n***********\n"

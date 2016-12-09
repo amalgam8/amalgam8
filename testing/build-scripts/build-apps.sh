@@ -21,7 +21,7 @@ set -o errexit
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 APPSDIR=$SCRIPTDIR/../apps
 
-make -C $APPSDIR/productpage build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/details build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/ratings build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/reviews build dockerize clean GOOS=linux GOARCH=amd64
+make -C $APPSDIR/productpage build dockerize clean GOOS=linux GOARCH=amd64 STATICBIN=true
+make -C $APPSDIR/details build dockerize clean GOOS=linux GOARCH=amd64 STATICBIN=true
+make -C $APPSDIR/ratings build dockerize clean GOOS=linux GOARCH=amd64 STATICBIN=true
+make -C $APPSDIR/reviews build dockerize clean GOOS=linux GOARCH=amd64 STATICBIN=true

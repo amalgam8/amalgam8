@@ -80,7 +80,7 @@ var Flags = []cli.Flag{
 		EnvVar: envVar(dnsFlag),
 		Usage:  "Enable DNS server",
 	},
-	cli.StringFlag{
+	cli.BoolFlag{
 		Name:   proxyTLSFlag,
 		EnvVar: envVar(proxyTLSFlag),
 		Usage:  "Enable proxy TLS communication",

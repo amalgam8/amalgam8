@@ -77,12 +77,6 @@ func sidecarCommand(context *cli.Context) error {
 	if err != nil {
 		return err
 	}
-	if conf.Proxy {
-		err = conf.GenProxyConfig()
-		if err != nil {
-			return err
-		}
-	}
 	return Run(*conf)
 
 }
@@ -132,7 +126,10 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		err := startProxy(&conf, discovery)
+		if err := conf.GenProxyConfig(); err != nil {
+			return err
+		}
+		err = startProxy(&conf, discovery)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 			return err

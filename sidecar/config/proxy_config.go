@@ -22,7 +22,7 @@ import (
 	"github.com/Sirupsen/logrus"
 )
 
-type a8ServicesNginxConfData struct {
+type servicesNginxConfData struct {
 	SSLFlag     string
 	CertPath    string
 	CertKeyPath string
@@ -31,8 +31,8 @@ type a8ServicesNginxConfData struct {
 
 // Proxy nginx configuration values.
 const (
-	A8ServicesConfTemplatePath        = "/etc/nginx/amalgam8-services.conf.tmpl"
-	A8ServicesConfPath                = "/etc/nginx/amalgam8-services.conf"
+	servicesConfTemplatePath          = "/etc/nginx/amalgam8-services.conf.tmpl"
+	servicesConfPath                  = "/etc/nginx/amalgam8-services.conf"
 	NginxSSLFlag                      = " ssl"
 	NginxSSLCertDirective             = "ssl_certificate "
 	NginxSSLCertKeyDirective          = "ssl_certificate_key "
@@ -42,26 +42,26 @@ const (
 // GenProxyConfig generates proxy config
 func (c *Config) GenProxyConfig() error {
 	// Generate amalgam8-services.conf
-	err := c.genNginxA8ServicesConf()
+	err := c.genNginxServicesConf()
 	return err
 }
 
-func (c *Config) genNginxA8ServicesConf() error {
-	var a8ServicesData *a8ServicesNginxConfData
-	logrus.Debug("genNginxA8ServicesConf " + strconv.FormatBool(c.Proxy) + " " + strconv.FormatBool(c.ProxyConfig.TLS))
+func (c *Config) genNginxServicesConf() error {
+	var servicesData *servicesNginxConfData
+	logrus.Debug("Generating services configuration, TLS=" + strconv.FormatBool(c.ProxyConfig.TLS))
 	if !c.Proxy || !c.ProxyConfig.TLS {
-		a8ServicesData = &a8ServicesNginxConfData{"", "", "", ""}
+		servicesData = &servicesNginxConfData{"", "", "", ""}
 	} else {
-		a8ServicesData = &a8ServicesNginxConfData{
+		servicesData = &servicesNginxConfData{
 			NginxSSLFlag,
 			NginxSSLCertDirective + c.ProxyConfig.CertPath + ";",
 			NginxSSLCertKeyDirective + c.ProxyConfig.CertKeyPath + ";",
 			NginxProxySSLTrustedCertDirective + c.ProxyConfig.CACertPath + ";",
 		}
 	}
-	return ExecuteTemplate(A8ServicesConfTemplatePath,
-		A8ServicesConfPath,
-		a8ServicesData)
+	return ExecuteTemplate(servicesConfTemplatePath,
+		servicesConfPath,
+		servicesData)
 }
 
 // ExecuteTemplate applies the data to the template file to produce target file
@@ -80,8 +80,7 @@ func ExecuteTemplate(templateFile string, targetFile string, data interface{}) e
 	if err != nil {
 		return err
 	}
-	err = goTemplate.Execute(file, data)
-	if err != nil {
+	if err = goTemplate.Execute(file, data); err != nil {
 		return err
 	}
 	return file.Close()

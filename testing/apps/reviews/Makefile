@@ -1,8 +1,12 @@
 APP_NAME 	:= $(shell basename `pwd`)
 IMAGE_NAME 	:= amalgam8/a8-testing-bookinfo-$(APP_NAME)
-STATICBIN   ?= false
 LDFLAGS 	:=
-ifeq ($(STATICBIN),true)
+
+ifndef GOOS
+    GOOS := $(shell go env GOHOSTOS)
+endif
+
+ifeq ($(GOOS),linux)
 	# linker flags to strip symbol tables and debug information
 	LDFLAGS     += -s -w
 endif

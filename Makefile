@@ -23,7 +23,6 @@ BINDIR		:= bin
 BUILDDIR    := build
 DOCKERDIR	:= docker
 RELEASEDIR  := release
-STATICBIN   ?= false
 
 ifndef GOOS
     GOOS := $(shell go env GOHOSTOS)
@@ -63,7 +62,7 @@ BUILDFLAGS	:=
 # linker flags 
 LDFLAGS     :=
 
-ifeq ($(STATICBIN),true)
+ifeq ($(GOOS),linux)
 	# linker flags to strip symbol tables and debug information
 	LDFLAGS     += -s -w
 

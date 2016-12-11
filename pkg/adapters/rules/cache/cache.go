@@ -56,7 +56,7 @@ func (c *Cache) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 	if filter == nil {
 		filter = &emptyFilter
 	}
-	filteredRules := api.FilterRules(*filter, c.cache.Rules)
+	filteredRules := filter.Apply(c.cache.Rules)
 
 	filteredRuleSet := api.RulesSet{
 		Rules:    filteredRules,

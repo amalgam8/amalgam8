@@ -49,17 +49,25 @@ type RuleFilter struct {
 
 // Empty returns whether the filter has any attributes that would cause rules to be filtered out. A filter is considered
 // empty if no rules would be filtered out from any set of rules.
-func (f RuleFilter) Empty() bool {
+func (f *RuleFilter) Empty() bool {
 	return len(f.IDs) == 0 && len(f.Tags) == 0 && len(f.Destinations) == 0 && f.RuleType == RuleAny
 }
 
 // String representation of the filter
-func (f RuleFilter) String() string {
+func (f *RuleFilter) String() string {
 	return fmt.Sprintf("%#v", f)
 }
 
-// FilterRules returns a list of filtered rules.
-func FilterRules(f RuleFilter, rules []Rule) []Rule {
+// Apply the filter to the given rules, and produce a new list of rules that satisfy the filter.
+func (f *RuleFilter) Apply(rules []Rule) []Rule {
+
+	// Fast path for no-op filters
+	if f == nil || f.Empty() {
+		rulesCopy := make([]Rule, len(rules))
+		copy(rulesCopy, rules)
+		return rulesCopy
+	}
+
 	// Before we begin filtering we build sets of each filter field to avoid N^2 lookups.
 
 	// Build set of acceptable IDs

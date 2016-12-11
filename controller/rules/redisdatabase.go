@@ -302,7 +302,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, ru
 		existingRules[i] = rule
 	}
 
-	rulesToDelete := api.FilterRules(filter, existingRules)
+	rulesToDelete := filter.Apply(existingRules)
 	logrus.WithFields(logrus.Fields{
 		"pre_filtered": existingRules,
 		"filtered":     rulesToDelete,

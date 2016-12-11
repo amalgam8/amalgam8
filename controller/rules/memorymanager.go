@@ -120,7 +120,7 @@ func (m *memory) GetRules(namespace string, filter api.RuleFilter) (RetrievedRul
 
 	m.mutex.Unlock()
 
-	results = api.FilterRules(filter, results)
+	results = filter.Apply(results)
 
 	return RetrievedRules{
 		Rules:    results,
@@ -215,7 +215,7 @@ func (m *memory) deleteRulesByFilter(namespace string, filter api.RuleFilter) er
 		i++
 	}
 
-	rules = api.FilterRules(filter, rules)
+	rules = filter.Apply(rules)
 
 	for _, rule := range rules {
 		delete(m.rules[namespace], rule.ID)

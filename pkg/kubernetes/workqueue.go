@@ -24,13 +24,17 @@ const (
 	workqueueSize = 1024
 )
 
-// functions corresponding to the cache event handlers.
-type addFunc func(obj interface{})
-type updateFunc func(oldObj, newObj interface{})
-type deleteFunc func(obj interface{})
+// AddFunc is the ResourceEventHandler function called when a watched Kubernetes API object is added.
+type AddFunc func(obj interface{})
 
-// workqueue enqueues and processes event callbacks from cache controllers.
-type workqueue struct {
+// UpdateFunc is the ResourceEventHandler function called when a watched Kubernetes API object is updated.
+type UpdateFunc func(oldObj, newObj interface{})
+
+// DeleteFunc is the ResourceEventHandler function called when a watched Kubernetes API object is deleted.
+type DeleteFunc func(obj interface{})
+
+// Workqueue enqueues and processes ResourceEventHandler callbacks from cache controllers.
+type Workqueue struct {
 	workChan chan func()
 	stopChan chan struct{}
 
@@ -38,16 +42,16 @@ type workqueue struct {
 	mutex  sync.Mutex
 }
 
-// newWorkqueue creates a new workqueue.
-func newWorkqueue() *workqueue {
-	return &workqueue{
+// NewWorkqueue creates a new workqueue.
+func NewWorkqueue() *Workqueue {
+	return &Workqueue{
 		workChan: make(chan func(), workqueueSize),
 		stopChan: make(chan struct{}),
 	}
 }
 
 // Start launches a worker goroutine to process events from the queue.
-func (wq *workqueue) Start() {
+func (wq *Workqueue) Start() {
 	wq.mutex.Lock()
 	defer wq.mutex.Unlock()
 
@@ -60,7 +64,7 @@ func (wq *workqueue) Start() {
 }
 
 // Stop the worker goroutine from processing events from the queue.
-func (wq *workqueue) Stop() {
+func (wq *Workqueue) Stop() {
 	wq.mutex.Lock()
 	defer wq.mutex.Unlock()
 
@@ -72,8 +76,8 @@ func (wq *workqueue) Stop() {
 	wq.stopChan <- struct{}{}
 }
 
-// EnqueueingAddFunc returns an addFunc that enqueues the given addFunc invocation.
-func (wq *workqueue) EnqueueingAddFunc(f addFunc) addFunc {
+// EnqueueingAddFunc returns an AddFunc that enqueues the given AddFunc invocation.
+func (wq *Workqueue) EnqueueingAddFunc(f AddFunc) AddFunc {
 	return func(obj interface{}) {
 		wq.enqueueFunc(func() {
 			f(obj)
@@ -81,10 +85,10 @@ func (wq *workqueue) EnqueueingAddFunc(f addFunc) addFunc {
 	}
 }
 
-// EnqueueingUpdateFunc returns an updateFunc that enqueues the given updateFunc invocation.
-// The wrapping updateFunc drops events in which the resource version of the old object is
+// EnqueueingUpdateFunc returns an UpdateFunc that enqueues the given UpdateFunc invocation.
+// The wrapping UpdateFunc drops events in which the resource version of the old object is
 // the same as the resource version of the new object (e.g., in case of a full cache resync).
-func (wq *workqueue) EnqueueingUpdateFunc(f updateFunc) updateFunc {
+func (wq *Workqueue) EnqueueingUpdateFunc(f UpdateFunc) UpdateFunc {
 	return func(oldObj, newObj interface{}) {
 		oldMeta, err := meta.Accessor(oldObj)
 		if err != nil {
@@ -107,8 +111,8 @@ func (wq *workqueue) EnqueueingUpdateFunc(f updateFunc) updateFunc {
 	}
 }
 
-// EnqueueingDeleteFunc returns an deleteFunc that enqueues the given deleteFunc invocation.
-func (wq *workqueue) EnqueueingDeleteFunc(f deleteFunc) deleteFunc {
+// EnqueueingDeleteFunc returns an DeleteFunc that enqueues the given DeleteFunc invocation.
+func (wq *Workqueue) EnqueueingDeleteFunc(f DeleteFunc) DeleteFunc {
 	return func(obj interface{}) {
 		wq.enqueueFunc(func() {
 			f(obj)
@@ -117,13 +121,13 @@ func (wq *workqueue) EnqueueingDeleteFunc(f deleteFunc) deleteFunc {
 }
 
 // enqueueFunc enqueues the given function for later execution by the worker goroutine
-func (wq *workqueue) enqueueFunc(f func()) {
+func (wq *Workqueue) enqueueFunc(f func()) {
 	wq.workChan <- f
 }
 
 // work loops and invokes any functions queued for execution.
 // It is run by the worker goroutine.
-func (wq *workqueue) work() {
+func (wq *Workqueue) work() {
 	for {
 		select {
 		case f := <-wq.workChan:

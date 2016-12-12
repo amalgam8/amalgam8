@@ -47,6 +47,6 @@ func GetLogFormatter(format string) (logrus.Formatter, error) {
 	case "logstash":
 		return &logstash.LogstashFormatter{}, nil
 	default:
-		return nil, fmt.Errorf("unknown log format: %v\n", format)
+		return nil, fmt.Errorf("unknown log format: %v", format)
 	}
 }

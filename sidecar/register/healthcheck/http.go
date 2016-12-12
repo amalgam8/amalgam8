@@ -49,7 +49,6 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 		return nil, err
 	}
 	var client *http.Client
-	//if conf.UpstreamTrustPath != "" {
 	if conf.Type == config.HTTPSHealthCheck &&
 		conf.CACertPath != "" {
 

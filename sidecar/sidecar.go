@@ -142,9 +142,6 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		if err := conf.GenProxyConfig(); err != nil {
-			return err
-		}
 		err := startProxy(&conf, discovery, kubeClient)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
@@ -266,6 +263,13 @@ func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (ap
 func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
 	var err error
 
+	if conf.ProxyConfig.TLS {
+		if err := nginx.GenerateConfig(conf.ProxyConfig); err != nil {
+			logrus.WithError(err).Error("Could not generate NGINX SSL config")
+			return err
+		}
+	}
+
 	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
 	if err := service.Start(); err != nil {
 		logrus.WithError(err).Error("NGINX service failed to start")
@@ -274,7 +278,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 
 	nginxClient := nginx.NewClient("http://localhost:5813")
 	nginxManager := nginx.NewManager(
-		nginx.Config{
+		nginx.ManagerConfig{
 			Client: nginxClient,
 		},
 	)

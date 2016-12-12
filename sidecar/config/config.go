@@ -149,7 +149,7 @@ type Config struct {
 
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
-	ProxyConfig ProxyConfig `yaml:"proxyconfig"`
+	ProxyConfig ProxyConfig `yaml:"proxy_config"`
 
 	LogLevel string `yaml:"log_level"`
 
@@ -378,6 +378,14 @@ func (c *Config) Validate() error {
 			validators = append(validators,
 				IsValidURL("Amalgam8 Controller URL", c.A8Controller.URL),
 				IsInRangeDuration("Amalgam8 Controller polling interval", c.A8Controller.Poll, 5*time.Second, 1*time.Hour))
+		}
+
+		if c.ProxyConfig.TLS {
+			validators = append(validators,
+				IsNotEmpty("Certificate path", c.ProxyConfig.CertPath),
+				IsNotEmpty("Certificate key path", c.ProxyConfig.CertKeyPath),
+				IsNotEmpty("CA certificate path", c.ProxyConfig.CACertPath),
+			)
 		}
 	}
 

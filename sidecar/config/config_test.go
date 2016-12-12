@@ -293,7 +293,7 @@ register: true
 proxy: true
 dns: true
 
-proxyconfig:
+proxy_config:
   tls:           true
   cert_path:     /etc/certs/server.pem
   cert_key_path: /etc/certs/server_key.pem

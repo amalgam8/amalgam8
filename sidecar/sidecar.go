@@ -26,10 +26,11 @@ import (
 	"github.com/Sirupsen/logrus"
 	amalgam8registry "github.com/amalgam8/amalgam8/pkg/adapters/discovery/amalgam8"
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/eureka"
-	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
+	kubediscovery "github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
 	amalgam8controller "github.com/amalgam8/amalgam8/pkg/adapters/rules/amalgam8"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
+	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/debug"
@@ -42,6 +43,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/urfave/cli"
+	"k8s.io/client-go/kubernetes"
 )
 
 // Main is the entrypoint for the sidecar when running as an executable
@@ -102,9 +104,23 @@ func Run(conf config.Config) error {
 	}
 	logrus.SetLevel(logrusLevel)
 
+	var kubeClient kubernetes.Interface
+	if conf.DiscoveryBackend == config.KubernetesBackend ||
+		conf.RulesBackend == config.KubernetesBackend {
+		kubeClient, err = kubepkg.NewClient(kubepkg.Config{
+			URL:   conf.Kubernetes.URL,
+			Token: conf.Kubernetes.Token,
+		})
+
+		if err != nil {
+			logrus.WithError(err).Error("Could not create Kubernetes client")
+			return err
+		}
+	}
+
 	var discovery api.ServiceDiscovery
 	if conf.DNS || conf.Proxy {
-		discovery, err = buildServiceDiscovery(&conf)
+		discovery, err = buildServiceDiscovery(&conf, kubeClient)
 		if err != nil {
 			logrus.WithError(err).Error("Could not create service discovery backend adapter")
 			return err
@@ -126,7 +142,7 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		err := startProxy(&conf, discovery)
+		err := startProxy(&conf, discovery, kubeClient)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 			return err
@@ -200,7 +216,7 @@ func buildServiceRegistry(conf *config.Config) (api.ServiceRegistry, error) {
 	}
 }
 
-func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
+func buildServiceDiscovery(conf *config.Config, kubeClient kubernetes.Interface) (api.ServiceDiscovery, error) {
 	switch strings.ToLower(conf.DiscoveryBackend) {
 	case config.Amalgam8Backend:
 		regConf := amalgam8registry.RegistryConfig{
@@ -209,12 +225,11 @@ func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 		}
 		return amalgam8registry.NewCachedDiscoveryAdapter(regConf, conf.A8Registry.Poll)
 	case config.KubernetesBackend:
-		kubConf := kubernetes.Config{
-			URL:       conf.Kubernetes.URL,
-			Token:     conf.Kubernetes.Token,
+		kubConf := kubediscovery.Config{
 			Namespace: auth.NamespaceFrom(conf.Kubernetes.Namespace),
+			Client:    kubeClient,
 		}
-		return kubernetes.New(kubConf)
+		return kubediscovery.New(kubConf)
 	case config.EurekaBackend:
 		eurConf := eureka.Config{
 			URLs: conf.Eureka.URLs,
@@ -227,7 +242,7 @@ func buildServiceDiscovery(conf *config.Config) (api.ServiceDiscovery, error) {
 	}
 }
 
-func buildServiceRules(conf *config.Config) (api.RulesService, error) {
+func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (api.RulesService, error) {
 	switch strings.ToLower(conf.RulesBackend) {
 	case config.Amalgam8Backend:
 		controllerConf := amalgam8controller.ControllerConfig{
@@ -245,7 +260,7 @@ func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	}
 }
 
-func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
+func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
 	var err error
 
 	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
@@ -262,7 +277,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 	)
 	nginxProxy := proxy.NewNGINXProxy(nginxManager)
 
-	rules, err := buildServiceRules(conf)
+	rules, err := buildServiceRules(conf, kubeClient)
 	if err != nil {
 		logrus.WithError(err).Error("Could not create service rules client")
 		return err

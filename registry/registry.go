@@ -22,9 +22,10 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/filesystem"
-	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
+	kubediscovery "github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
+	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
@@ -150,11 +151,18 @@ func Run(conf *config.Values) error {
 	catalogsExt := []store.CatalogFactory{}
 	// See whether kubernetes adapter is enabled
 	if conf.K8sURL != "" {
+		k8sClient, err := kubepkg.NewClient(kubepkg.Config{
+			URL:   conf.K8sURL,
+			Token: conf.K8sToken,
+		})
+		if err != nil {
+			return err
+		}
+
 		k8sFactory := store.NewDiscoveryAdapter(func(namespace auth.Namespace) (api.ServiceDiscovery, error) {
-			return kubernetes.New(kubernetes.Config{
-				URL:       conf.K8sURL,
-				Token:     conf.K8sToken,
+			return kubediscovery.New(kubediscovery.Config{
 				Namespace: namespace,
+				Client:    k8sClient,
 			})
 		})
 		catalogsExt = append(catalogsExt, k8sFactory)

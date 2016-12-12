@@ -17,6 +17,8 @@ package monitor
 import (
 	"time"
 
+	"sync"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
@@ -46,8 +48,10 @@ type rulesMonitor struct {
 	ticker       *time.Ticker
 	pollInterval time.Duration
 
-	revision  int64
+	revision int64
+
 	listeners []RulesListener
+	mutex     sync.Mutex
 }
 
 // NewRulesMonitor instantiates a new rules monitor
@@ -60,13 +64,17 @@ func NewRulesMonitor(conf RulesConfig) RulesMonitor {
 	}
 }
 
-// Not safe if monitor has started
+// AddListener adds a listener
 func (m *rulesMonitor) AddListener(listener RulesListener) {
+	m.mutex.Lock()
 	m.listeners = append(m.listeners, listener)
+	m.mutex.Unlock()
 }
 
-// Not safe if monitor has started
+// RemoveListener removes the listener
 func (m *rulesMonitor) RemoveListener(listener RulesListener) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	for i := range m.listeners {
 		if m.listeners[i] == listener {
 			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
@@ -122,6 +130,8 @@ func (m *rulesMonitor) poll() error {
 	m.revision = rulesset.Revision
 
 	// Notify listeners
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	for _, listener := range m.listeners {
 		if err := listener.RuleChange(rulesset.Rules); err != nil {
 			logrus.WithError(err).Warn("Rules listener failed")

@@ -19,6 +19,8 @@ import (
 	"sort"
 	"time"
 
+	"sync"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
@@ -48,8 +50,10 @@ type discoveryMonitor struct {
 	ticker       *time.Ticker
 	pollInterval time.Duration
 
-	cache     map[string][]*api.ServiceInstance
+	cache map[string][]*api.ServiceInstance
+
 	listeners []DiscoveryListener
+	mutex     sync.Mutex
 }
 
 // DefaultDiscoveryPollInterval is the default used for the discovery monitor's poll interval,
@@ -71,13 +75,17 @@ func NewDiscoveryMonitor(conf DiscoveryConfig) DiscoveryMonitor {
 	}
 }
 
-// Not safe if monitor has started
+// AddListener adds a listener
 func (m *discoveryMonitor) AddListener(listener DiscoveryListener) {
+	m.mutex.Lock()
 	m.listeners = append(m.listeners, listener)
+	m.mutex.Unlock()
 }
 
-// Not safe if monitor has started
+// RemoveListener removes the listener
 func (m *discoveryMonitor) RemoveListener(listener DiscoveryListener) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	for i := range m.listeners {
 		if m.listeners[i] == listener {
 			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
@@ -135,6 +143,8 @@ func (m *discoveryMonitor) poll() error {
 
 	// Notify the listeners
 	instancesByValue := instanceListAsValues(instances)
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 	for _, listener := range m.listeners {
 		if err = listener.CatalogChange(instancesByValue); err != nil {
 			logrus.WithError(err).Warn("Registry listener failed")

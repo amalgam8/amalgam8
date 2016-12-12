@@ -15,12 +15,15 @@
 package healthcheck
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
-	"net/url"
-
+	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 )
 
@@ -45,12 +48,32 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 	if err := validateHTTPConfig(&conf); err != nil {
 		return nil, err
 	}
+	var client *http.Client
+	//if conf.UpstreamTrustPath != "" {
+	if conf.Type == config.HTTPSHealthCheck &&
+		conf.CACertPath != "" {
 
+		logrus.Debug("HTTPS HealthCheck, CA cert path = " + conf.CACertPath)
+		// Load trusted CA certs
+		caCerts, err := ioutil.ReadFile(conf.CACertPath)
+		if err != nil {
+			logrus.WithError(err).Debug("Error reading CA trust .pem file: " + conf.CACertPath)
+			return nil, err
+		}
+		certPool := x509.NewCertPool()
+		certPool.AppendCertsFromPEM(caCerts)
+		tlsConfig := &tls.Config{RootCAs: certPool}
+		tlsConfig.BuildNameToCertificate()
+		transport := &http.Transport{TLSClientConfig: tlsConfig}
+		client = &http.Client{Transport: transport,
+			Timeout: conf.Timeout}
+	} else {
+		logrus.Debug("HTTP HealthCheck: " + conf.Type + " " + conf.CACertPath)
+		client = &http.Client{Timeout: conf.Timeout}
+	}
 	return &HTTP{
-		url: conf.Value,
-		client: &http.Client{
-			Timeout: conf.Timeout,
-		},
+		url:    conf.Value,
+		client: client,
 		method: conf.Method,
 		code:   conf.Code,
 	}, nil

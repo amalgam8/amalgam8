@@ -142,6 +142,9 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
+		if err := conf.GenProxyConfig(); err != nil {
+			return err
+		}
 		err := startProxy(&conf, discovery, kubeClient)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")

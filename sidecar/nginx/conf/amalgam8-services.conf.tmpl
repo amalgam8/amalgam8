@@ -1,0 +1,35 @@
+include /etc/nginx/amalgam8-access-logging.conf;
+include /etc/nginx/amalgam8-dynupstreams.conf;
+include /etc/nginx/nginx-customizations.conf;
+
+### A8 Sidecar proxy configuration
+server {
+       ####DO NOT CHANGE#####
+       listen 6379{{.SSLFlag}};
+       ######################
+
+       ####DO NOT CHANGE#####
+       {{.CertPath}}
+       ######################
+	   
+       ####DO NOT CHANGE#####
+       {{.CertKeyPath}}
+       ######################
+
+       location ~ ^/(?<service_name>.*?)(?<reqpath>/(.*))?$ {
+         include /etc/nginx/amalgam8-rules.conf;
+         # Add proxy SSL verification directives here:
+         ####DO NOT CHANGE#####
+         {{.CACertPath}}
+         ######################
+         # proxy_ssl_verify        on;
+         # proxy_ssl_verify_depth  2;
+         # proxy_ssl_session_reuse on;
+       }
+
+       # Other location blocks
+       # location / {
+       # }
+
+       access_log /var/log/nginx/a8_access.log a8log;
+}

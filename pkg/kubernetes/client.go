@@ -31,7 +31,7 @@ type Config struct {
 // service account (if running within a Kubernetes pod).
 func NewClient(config Config) (kubernetes.Interface, error) {
 	var kubeConfig *rest.Config
-	if config.URL != "" || config.Token != "" {
+	if config.URL != "" {
 		kubeConfig = &rest.Config{
 			Host:        config.URL,
 			BearerToken: config.Token,

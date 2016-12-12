@@ -29,8 +29,6 @@ jsondiff() {
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-a8ctl service-list
-sleep 2
 a8ctl rule-clear
 sleep 2
 

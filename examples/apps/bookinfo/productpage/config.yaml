@@ -4,7 +4,7 @@ proxy: true
 service:
   name: productpage
   tags:
-    - v1
+    - version=v1
 
 endpoint:
   port: 9080

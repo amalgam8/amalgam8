@@ -12,7 +12,7 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package client
+package cache
 
 import (
 	"time"
@@ -22,40 +22,26 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
 
-// Make sure we implement the ServiceDiscovery and ServiceRegistry interface.
+// Make sure we implement the ServiceDiscovery interface.
 var _ api.ServiceDiscovery = (*Cache)(nil)
-var _ api.ServiceRegistry = (*Cache)(nil)
 
-// CacheConfig stores the configurable attributes of the caching client.
-type CacheConfig struct {
-	Config
-
-	// PollInterval is the time interval in which the caching client refreshes its local cache
-	PollInterval time.Duration
-}
-
-// Cache implements the ServiceDiscovery and ServiceRegistry interfaces using a local cache.
-// The cache is refreshed periodically using the non-caching, REST API-based Amalagma8 Registry client.
-// The ServiceRegistry calls are pass
+// Cache implements the ServiceDiscovery interface using a local cache.
+// The cache is refreshed periodically using the provided ServiceDiscovery object.
 type Cache struct {
-	Client
-	cache map[string][]*api.ServiceInstance
-	mutex sync.RWMutex
+	discovery api.ServiceDiscovery
+	cache     map[string][]*api.ServiceInstance
+	mutex     sync.RWMutex
 }
 
-// NewCache constructs a new Caching Client using the given configuration.
-func NewCache(config CacheConfig) (*Cache, error) {
-	cl, err := New(config.Config)
-	if err != nil {
-		return nil, err
-	}
-
+// New constructs a new Cache.
+// The cache is refreshed at the frequency specified by pollInterval using the provided ServiceDiscovery object.
+func New(discovery api.ServiceDiscovery, pollInterval time.Duration) (*Cache, error) {
 	c := &Cache{
-		Client: *cl,
-		cache:  make(map[string][]*api.ServiceInstance),
+		discovery: discovery,
+		cache:     make(map[string][]*api.ServiceInstance),
 	}
 
-	go c.maintain(config.PollInterval)
+	go c.maintain(pollInterval)
 	return c, nil
 }
 
@@ -105,7 +91,7 @@ func (c *Cache) maintain(pollInterval time.Duration) {
 }
 
 func (c *Cache) refresh() {
-	instanceList, err := c.Client.ListInstances()
+	instanceList, err := c.discovery.ListInstances()
 	if err != nil {
 		return
 	}

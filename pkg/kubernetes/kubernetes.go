@@ -12,20 +12,13 @@
 //   See the License for the specific language governing permissions and
 //   limitations under the License.
 
-package nginx
+// Package kubernetes provides utility functions and types
+// to be used with code interacting with Kubernetes API.
+package kubernetes
 
 import (
-	"github.com/amalgam8/amalgam8/pkg/api"
+	"github.com/amalgam8/amalgam8/registry/utils/logging"
 )
 
-// MockManager mocks interface
-type MockManager struct {
-	UpdateError error
-	UpdateCount int
-}
-
-// Update mocks interface
-func (m *MockManager) Update([]api.ServiceInstance, []api.Rule) error {
-	m.UpdateCount++
-	return m.UpdateError
-}
+// Package global logger
+var logger = logging.GetLogger("KUBERNETES")

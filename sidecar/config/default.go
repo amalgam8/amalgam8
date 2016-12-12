@@ -22,10 +22,18 @@ var DefaultConfig = Config{
 	Proxy:    false,
 	DNS:      false,
 
+	ProxyConfig: ProxyConfig{
+		Tls:         false,
+		CertPath:    "",
+		CertKeyPath: "",
+		CACertPath:  "",
+	},
+
 	Service: Service{
 		Name: "",
 		Tags: nil,
 	},
+
 	Endpoint: Endpoint{
 		Host: "",
 		Port: 0,

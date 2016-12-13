@@ -24,13 +24,15 @@ import (
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	a8api "github.com/amalgam8/amalgam8/pkg/api"
+	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
 
 // TrafficStartCommand is used for the route-list command.
 type TrafficStartCommand struct {
 	ctx        *cli.Context
-	registry   api.RegistryClient
+	registry   *reg.Client
 	controller api.ControllerClient
 	term       terminal.UI
 }
@@ -90,7 +92,7 @@ func (cmd *TrafficStartCommand) OnUsageError(ctx *cli.Context, err error, isSubc
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
-	registry, err := api.NewRegistryClient(ctx)
+	registry, err := Registry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -153,7 +155,7 @@ func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string,
 
 	defaultVersion := strings.Join(rule.Route.Backends[0].Tags, ", ")
 
-	instances, err := cmd.registry.ServiceInstances(serviceName)
+	instances, err := cmd.registry.ListServiceInstances(serviceName)
 	if err != nil {
 		return err
 	}
@@ -209,8 +211,8 @@ func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string,
 }
 
 // IsServiceActive .
-func (cmd *TrafficStartCommand) IsServiceActive(serviceName, version string, instances *api.InstanceList) bool {
-	for _, instance := range instances.Instance {
+func (cmd *TrafficStartCommand) IsServiceActive(serviceName, version string, instances []*a8api.ServiceInstance) bool {
+	for _, instance := range instances {
 		if version == strings.Join(instance.Tags, ", ") {
 			return true
 		}

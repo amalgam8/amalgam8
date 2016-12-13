@@ -18,17 +18,17 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
 
 // ServiceListCommand is used for the service-list commmand.
 type ServiceListCommand struct {
 	ctx      *cli.Context
-	registry api.RegistryClient
+	registry *reg.Client
 	term     terminal.UI
 }
 
@@ -78,7 +78,7 @@ func (cmd *ServiceListCommand) OnUsageError(ctx *cli.Context, err error, isSubco
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *ServiceListCommand) Action(ctx *cli.Context) error {
-	registry, err := api.NewRegistryClient(ctx)
+	registry, err := Registry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -117,7 +117,7 @@ func (cmd *ServiceListCommand) DefaultAction(ctx *cli.Context) error {
 // | reviews     | v1(1), v2(1), v3(1) |
 // +-------------+---------------------+
 func (cmd *ServiceListCommand) ServiceTable() error {
-	services, err := cmd.registry.Services()
+	services, err := cmd.registry.ListServices()
 	if err != nil {
 		return err
 	}
@@ -129,13 +129,13 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 		"Instances",
 	}
 
-	for _, service := range services.Services {
-		instances, errI := cmd.registry.ServiceInstances(service)
+	for _, service := range services {
+		instances, errI := cmd.registry.ListServiceInstances(service)
 		if errI != nil {
 			return errI
 		}
 		var tagsBuffer bytes.Buffer
-		for _, instance := range instances.Instance {
+		for _, instance := range instances {
 			for _, tag := range instance.Tags {
 				fmt.Fprintf(&tagsBuffer, "%s(%d), ", tag, len(instance.Tags))
 			}
@@ -143,7 +143,7 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 		table.body = append(
 			table.body,
 			[]string{
-				instances.Name,
+				service,
 				tagsBuffer.String()[:tagsBuffer.Len()-2],
 			},
 		)
@@ -155,19 +155,19 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 
 // PrettyPrint prints the list of services in the given format (json or yaml).
 func (cmd *ServiceListCommand) PrettyPrint(format string) error {
-	services, err := cmd.registry.Services()
+	services, err := cmd.registry.ListServices()
 	if err != nil {
 		return err
 	}
 
-	serviceList := make([]api.ServiceInstancesList, len(services.Services))
-	for i, service := range services.Services {
-		instances, errI := cmd.registry.ServiceInstances(service)
+	serviceList := make([]ServiceInstancesList, len(services))
+	for i, service := range services {
+		instances, errI := cmd.registry.ListServiceInstances(service)
 		if errI != nil {
 			return errI
 		}
 		serviceList[i].Service = service
-		for _, instance := range instances.Instance {
+		for _, instance := range instances {
 			for _, tag := range instance.Tags {
 				serviceList[i].Instances = append(serviceList[i].Instances, fmt.Sprintf("%s(%d)", tag, len(instance.Tags)))
 			}

@@ -24,6 +24,7 @@ import (
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
 
@@ -37,7 +38,7 @@ type prettyRouteList struct {
 // RouteListCommand is used for the route-list command.
 type RouteListCommand struct {
 	ctx        *cli.Context
-	registry   api.RegistryClient
+	registry   *reg.Client
 	controller api.ControllerClient
 	term       terminal.UI
 }
@@ -93,7 +94,7 @@ func (cmd *RouteListCommand) OnUsageError(ctx *cli.Context, err error, isSubcomm
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
-	registry, err := api.NewRegistryClient(ctx)
+	registry, err := Registry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -154,13 +155,13 @@ func (cmd *RouteListCommand) PrettyPrint(serviceName string, format string) erro
 			)
 		}
 
-		services, err := cmd.registry.Services()
+		services, err := cmd.registry.ListServices()
 		if err != nil {
 			return err
 		}
 
 		// add services that don't have routing rules
-		for _, service := range services.Services {
+		for _, service := range services {
 			if _, ok := routes.ServiceRoutes[service]; !ok {
 				routeList = append(
 					routeList,
@@ -226,13 +227,13 @@ func (cmd *RouteListCommand) RouteTable(serviceName string) error {
 			)
 		}
 
-		services, err := cmd.registry.Services()
+		services, err := cmd.registry.ListServices()
 		if err != nil {
 			return err
 		}
 
 		// add services that don't have routing rules
-		for _, service := range services.Services {
+		for _, service := range services {
 			if _, ok := routes.ServiceRoutes[service]; !ok {
 				table.body = append(table.body, []string{service, "", ""})
 			}

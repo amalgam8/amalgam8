@@ -67,17 +67,31 @@ func NewRulesMonitor(conf RulesConfig) RulesMonitor {
 // AddListener adds a listener
 func (m *rulesMonitor) AddListener(listener RulesListener) {
 	m.mutex.Lock()
-	m.listeners = append(m.listeners, listener)
-	m.mutex.Unlock()
+	defer m.mutex.Unlock()
+
+	// Copy-On-Write
+	newListeners := make([]RulesListener, len(m.listeners), len(m.listeners)+1)
+	copy(newListeners, m.listeners)
+	m.listeners = append(newListeners, listener)
 }
 
 // RemoveListener removes the listener
 func (m *rulesMonitor) RemoveListener(listener RulesListener) {
+	// Guard against panics from non-comparable listeners.
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithField("recovered", r).Error("Encountered panic while removing listener")
+		}
+	}()
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	for i := range m.listeners {
 		if m.listeners[i] == listener {
-			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
+			newListeners := make([]RulesListener, len(m.listeners)-1)
+			copy(newListeners, m.listeners[:i])
+			copy(newListeners[i:], m.listeners[i+1:])
+			m.listeners = newListeners
 			break
 		}
 	}
@@ -129,9 +143,15 @@ func (m *rulesMonitor) poll() error {
 	// Update our revision
 	m.revision = rulesset.Revision
 
-	// Notify listeners
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
+	// Notify the listeners
+	var listeners []RulesListener
+	func() {
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
+		listeners = make([]RulesListener, len(m.listeners))
+		copy(listeners, m.listeners)
+	}()
+
 	for _, listener := range m.listeners {
 		if err := listener.RuleChange(rulesset.Rules); err != nil {
 			logrus.WithError(err).Warn("Rules listener failed")

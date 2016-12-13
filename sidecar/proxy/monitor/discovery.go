@@ -78,17 +78,32 @@ func NewDiscoveryMonitor(conf DiscoveryConfig) DiscoveryMonitor {
 // AddListener adds a listener
 func (m *discoveryMonitor) AddListener(listener DiscoveryListener) {
 	m.mutex.Lock()
-	m.listeners = append(m.listeners, listener)
-	m.mutex.Unlock()
+	defer m.mutex.Unlock()
+
+	// Copy-On-Write
+	newListeners := make([]DiscoveryListener, len(m.listeners), len(m.listeners)+1)
+	copy(newListeners, m.listeners)
+	m.listeners = append(newListeners, listener)
 }
 
 // RemoveListener removes the listener
 func (m *discoveryMonitor) RemoveListener(listener DiscoveryListener) {
+	// Guard against panics from non-comparable listeners.
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithField("recovered", r).Error("Encountered panic while removing listener")
+		}
+	}()
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
+
 	for i := range m.listeners {
 		if m.listeners[i] == listener {
-			m.listeners = append(m.listeners[:i], m.listeners[i+1:]...)
+			newListeners := make([]DiscoveryListener, len(m.listeners)-1)
+			copy(newListeners, m.listeners[:i])
+			copy(newListeners[i:], m.listeners[i+1:])
+			m.listeners = newListeners
 			break
 		}
 	}
@@ -142,10 +157,16 @@ func (m *discoveryMonitor) poll() error {
 	m.cache = catalog
 
 	// Notify the listeners
+	var listeners []DiscoveryListener
+	func() {
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
+		listeners = make([]DiscoveryListener, len(m.listeners))
+		copy(listeners, m.listeners)
+	}()
+
 	instancesByValue := instanceListAsValues(instances)
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-	for _, listener := range m.listeners {
+	for _, listener := range listeners {
 		if err = listener.CatalogChange(instancesByValue); err != nil {
 			logrus.WithError(err).Warn("Registry listener failed")
 		}

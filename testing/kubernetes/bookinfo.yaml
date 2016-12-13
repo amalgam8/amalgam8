@@ -11,21 +11,35 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
+    
+##################################################################################################
+# Details service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: details
+spec:
+  clusterIP: None
+  ports:
+  - port: 9080
+    protocol: TCP
+    name: http
+  selector:
+    name: details
+---
+    
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: details-v1
-  labels:
-    name: details-v1
 spec:
   replicas: 1
-  selector:
-    name: details-v1
   template:
     metadata:
       labels:
-        name: details-v1
+        name: details
+        version: v1
     spec:
       containers:
       - name: details
@@ -33,37 +47,36 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
-      - name: servicereg
-        image: amalgam8/a8-sidecar:alpine
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: A8_REGISTER
-          value: "true"
-        - name: A8_SERVICE
-          value: details:v1
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
 ---
+    
+##################################################################################################
+# Ratings service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: ratings
+spec:
+  clusterIP: None
+  ports:
+  - port: 9080
+    protocol: TCP
+    name: http
+  selector:
+    name: ratings
+---
+
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: ratings-v1
-  labels:
-    name: ratings-v1
 spec:
   replicas: 1
-  selector:
-    name: ratings-v1
   template:
     metadata:
       labels:
-        name: ratings-v1
+        name: ratings
+        version: v1
     spec:
       containers:
       - name: ratings
@@ -71,37 +84,36 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
-      - name: servicereg
-        image: amalgam8/a8-sidecar:alpine
-        imagePullPolicy: IfNotPresent
-        env:
-        - name: A8_REGISTER
-          value: "true"
-        - name: A8_SERVICE
-          value: ratings:v1
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
 ---
+##################################################################################################
+# Reviews service
+##################################################################################################
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews
+spec:
+  clusterIP: None
+  ports:
+  - port: 9080
+    protocol: TCP
+    name: http
+  selector:
+    name: reviews
+---
+
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: reviews-v1
-  labels:
-    name: reviews-v1
 spec:
   replicas: 1
-  selector:
-    name: reviews-v1
   template:
     metadata:
       labels:
-        name: reviews-v1
+        name: reviews
+        version: v1
     spec:
       containers:
       - name: reviews
@@ -109,47 +121,19 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
-      - name: serviceproxy
-        image: amalgam8/a8-sidecar:alpine
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 6379
-        env:
-        - name: A8_REGISTER
-          value: "true"
-        - name: A8_PROXY
-          value: "true"
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_POLL
-          value: 5s
-        - name: A8_REGISTRY_POLL
-          value: 5s
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
-        - name: A8_SERVICE
-          value: reviews:v1
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
 ---
+    
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: reviews-v2
-  labels:
-    name: reviews-v2
 spec:
   replicas: 1
-  selector:
-    name: reviews-v2
   template:
     metadata:
       labels:
-        name: reviews-v2
+        name: reviews
+        version: v2
     spec:
       containers:
       - name: reviews
@@ -163,41 +147,31 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: A8_REGISTER
-          value: "true"
         - name: A8_PROXY
           value: "true"
+        - name: A8_DISCOVERY_BACKEND
+          value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_REGISTRY_POLL
-          value: 5s
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: A8_LOGSTASH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_SERVICE
-          value: reviews:v2
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
+          value: reviews:version=v2
 ---
+    
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: reviews-v3
-  labels:
-    name: reviews-v3
 spec:
   replicas: 1
-  selector:
-    name: reviews-v3
   template:
     metadata:
       labels:
-        name: reviews-v3
+        name: reviews
+        version: v3
     spec:
       containers:
       - name: reviews
@@ -211,41 +185,48 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: A8_REGISTER
-          value: "true"
         - name: A8_PROXY
           value: "true"
+        - name: A8_DISCOVERY_BACKEND
+          value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_REGISTRY_POLL
-          value: 5s
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: A8_LOGSTASH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_SERVICE
-          value: reviews:v3
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
+          value: reviews:version=v3
 ---
+    
+##################################################################################################
+# Productpage service
+##################################################################################################
+apiVersion: v1
+kind: Service
+metadata:
+  name: productpage
+spec:
+  clusterIP: None
+  ports:
+  - port: 9080
+    protocol: TCP
+    name: http
+  selector:
+    name: productpage
+---
+
 apiVersion: v1
 kind: ReplicationController
 metadata:
   name: productpage-v1
-  labels:
-    name: productpage-v1
 spec:
   replicas: 1
-  selector:
-    name: productpage-v1
   template:
     metadata:
       labels:
-        name: productpage-v1
+        name: productpage
+        version: v1
     spec:
       containers:
       - name: productpage
@@ -259,23 +240,15 @@ spec:
         ports:
         - containerPort: 6379
         env:
-        - name: A8_REGISTER
-          value: "true"
         - name: A8_PROXY
           value: "true"
+        - name: A8_DISCOVERY_BACKEND
+          value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_REGISTRY_POLL
-          value: 5s
-        - name: A8_REGISTRY_URL
-          value: http://$(REGISTRY_SERVICE_HOST):$(REGISTRY_SERVICE_PORT)
+        - name: A8_LOGSTASH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_SERVICE
-          value: productpage:v1
-        - name: A8_ENDPOINT_HOST
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: A8_ENDPOINT_PORT
-          value: "9080"
+          value: productpage:version=v1

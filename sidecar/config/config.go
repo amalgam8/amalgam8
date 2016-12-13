@@ -51,6 +51,9 @@ const (
 	EnvoyAdapter = "envoy"
 )
 
+// SupportedAdapters is the set of supported proxy adapters
+var SupportedAdapters = []string{NGINXAdapter, EnvoyAdapter}
+
 // Command to be managed by sidecar app supervisor
 type Command struct {
 	Cmd       []string `yaml:"cmd"`
@@ -384,7 +387,7 @@ func (c *Config) Validate() error {
 		validators = append(
 			validators,
 			IsInSet("Rules service backend", c.RulesBackend, []string{Amalgam8Backend, KubernetesBackend}),
-			IsInSet("Proxy adapter", c.ProxyAdapter, []string{NGINXAdapter, EnvoyAdapter}))
+			IsInSet("Proxy adapter", c.ProxyAdapter, SupportedAdapters))
 		if c.RulesBackend == Amalgam8Backend {
 			validators = append(validators,
 				IsValidURL("Amalgam8 Controller URL", c.A8Controller.URL),

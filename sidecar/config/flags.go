@@ -79,7 +79,7 @@ var Flags = []cli.Flag{
 	cli.StringFlag{
 		Name:   proxyAdapterFlag,
 		EnvVar: envVar(proxyAdapterFlag),
-		Usage:  "Proxy adapter (nginx, envoy)",
+		Usage:  fmt.Sprintf("Proxy adapter (%v)", strings.Join(SupportedAdapters, ", ")),
 	},
 	cli.BoolFlag{
 		Name:   dnsFlag,

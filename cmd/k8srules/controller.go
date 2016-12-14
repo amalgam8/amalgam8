@@ -140,7 +140,7 @@ func initThirdPartyResource() error {
 			if err != nil {
 				return err
 			}
-			log.Printf("The ThridPartYresource %#v created. %#v\n", tpr, result)
+			log.Printf("The ThridPartYresource %#v created\n", result)
 		} else {
 			return err
 		}
@@ -201,7 +201,7 @@ func (c *controller) validateRule(rule *kuberules.Rule) error {
 
 	err := c.validator.Validate(rule.Spec)
 	if err != nil {
-		log.Printf("Failed to validate rule %#v. %s\n", rule, err)
+		log.Printf("Rule %#v is not valid. %s\n", rule, err)
 		updRule.Status.State = kuberules.RuleStateInvalid
 		updRule.Status.Message = err.Error()
 	} else {

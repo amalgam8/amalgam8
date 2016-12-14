@@ -140,7 +140,7 @@ func initThirdPartyResource() error {
 			if err != nil {
 				return err
 			}
-			log.Printf("The ThridPartYresource %#v created. %#v\n", result, tpr)
+			log.Printf("The ThridPartYresource %#v created. %#v\n", tpr, result)
 		} else {
 			return err
 		}
@@ -238,7 +238,11 @@ func (c *controller) addRule(obj interface{}) {
 		return
 	}
 
-	log.Printf("Rule object added: %s\n", rule.Metadata.Name)
+	log.Printf("Rule object added: %s (state: %s, version: %s)\n",
+		rule.Metadata.Name,
+		rule.Status.State,
+		rule.Metadata.ResourceVersion)
+
 	if rule.Status.State == "" {
 		c.validateRule(rule)
 	}
@@ -257,12 +261,11 @@ func (c *controller) updateRule(oldObj, newObj interface{}) {
 		return
 	}
 
-	log.Printf("Rule object updated: %s (%s -> %s)\n", newRule.Metadata.Name, oldRule.Metadata.ResourceVersion, newRule.Metadata.ResourceVersion)
-
-	// If resource version hasn't changed (i.e., on full resync), ignore
-	if oldRule.Metadata.ResourceVersion >= newRule.Metadata.ResourceVersion {
-		return
-	}
+	log.Printf("Rule object updated: %s (state: %s, version: %s -> %s)\n",
+		newRule.Metadata.Name,
+		newRule.Status.State,
+		oldRule.Metadata.ResourceVersion,
+		newRule.Metadata.ResourceVersion)
 
 	if newRule.Status.State == "" {
 		c.validateRule(newRule)

@@ -1,0 +1,21 @@
+#### DO NOT MODIFY -- AUTOMATICALLY GENERATED FILE, CONTENTS MAY BE OVERWRITTEN #####
+
+include /etc/nginx/amalgam8-access-logging.conf;
+include /etc/nginx/amalgam8-dynupstreams.conf;
+include /etc/nginx/nginx-customizations.conf;
+
+### A8 Sidecar proxy configuration
+server {
+       listen 6379 ssl;
+
+       ssl_certificate {{.CertPath}};
+       ssl_certificate_key {{.CertKeyPath}};
+
+       location ~ ^/(?<service_name>.*?)(?<reqpath>/(.*))?$ {
+         include /etc/nginx/amalgam8-rules.conf;
+
+         proxy_ssl_trusted_certificate {{.CACertPath}};
+       }
+
+       access_log /var/log/nginx/a8_access.log a8log;
+}

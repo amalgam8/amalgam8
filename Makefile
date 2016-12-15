@@ -41,14 +41,17 @@ APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
 REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
+K8SRULES_APP_NAME		:= a8k8srulescontroller
 
 REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
 SIDECAR_IMAGE_NAME		:= amalgam8/a8-sidecar:latest
+K8SRULES_IMAGE_NAME		:= amalgam8/a8-k8s-rules-controller:latest
 
 REGISTRY_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.controller
 SIDECAR_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
+K8SRULES_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.k8srules
 
 REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
@@ -93,9 +96,9 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar compile clean
+.PHONY: build build.registry build.controller build.sidecar build.k8srules compile clean
 
-build: build.registry build.controller build.sidecar
+build: build.registry build.controller build.sidecar build.k8srules
 
 build.registry:
 	@echo "--> building registry"
@@ -108,6 +111,10 @@ build.controller:
 build.sidecar:
 	@echo "--> building sidecar"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
+
+build.k8srules:
+	@echo "--> building kubernetes routingrules controller"
+	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(K8SRULES_APP_NAME) ./cmd/k8srules/
 
 compile:
 	@echo "--> compiling packages"
@@ -176,7 +183,7 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar dockerize.k8srules
 
 dockerize: dockerize.registry dockerize.controller dockerize.sidecar
 
@@ -191,6 +198,10 @@ dockerize.controller:
 dockerize.sidecar:
 	@echo "--> building sidecar docker image"
 	@docker build -t $(SIDECAR_IMAGE_NAME) -f $(SIDECAR_DOCKERFILE) .
+
+dockerize.k8srules:
+	@echo "--> building k8srules docker image"
+	@docker build -t $(K8SRULES_IMAGE_NAME) -f $(K8SRULES_DOCKERFILE) .
 
 #---------------
 #-- release

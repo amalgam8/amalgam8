@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/amalgam8/amalgam8/pkg/auth"
+	"github.com/amalgam8/amalgam8/pkg/network"
 	"github.com/amalgam8/amalgam8/registry/cluster"
-	"github.com/amalgam8/amalgam8/registry/utils/network"
 	"github.com/stretchr/testify/assert"
 )
 

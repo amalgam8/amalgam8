@@ -119,7 +119,7 @@ func Run(conf config.Config) error {
 		}
 	}
 
-	identity, err := identity.New(&conf)
+	identity, err := identity.New(&conf, kubeClient)
 	if err != nil {
 		logrus.WithError(err).Error("Could not create identity provider")
 		return err

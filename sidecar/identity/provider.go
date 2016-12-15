@@ -18,21 +18,37 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/amalgam8/amalgam8/sidecar/config"
+	"k8s.io/client-go/kubernetes"
 )
 
 var logger = logging.GetLogger("IDENTITY")
 
-// Provider provides access to the identity of the locally running service instance
+// Provider provides access to the identity of the locally running service instance.
 type Provider interface {
 	GetIdentity() (*api.ServiceInstance, error)
 }
 
-func New(conf *config.Config) (Provider, error) {
+// New creates an identity provider which exposes the identity specified by
+// the given configuration parameters (service name, tags, endpoint, etc).
+// If a pod name is specified, then missing parameters may be automatically fetched from Kubernetes API
+// using the given client.
+func New(conf *config.Config, kubeClient kubernetes.Interface) (Provider, error) {
 	var provider Provider
 
 	provider, err := newStaticProvider(conf)
 	if err != nil {
 		return nil, err
+	}
+
+	if conf.Kubernetes.PodName != "" {
+		kubeProvider, err := newKubernetesProvider(conf.Kubernetes.PodName, conf.Kubernetes.Namespace, kubeClient)
+		if err != nil {
+			return nil, err
+		}
+		provider, err = newCompositeProvider(provider, kubeProvider)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return provider, nil

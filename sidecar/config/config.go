@@ -90,6 +90,7 @@ type Kubernetes struct {
 	URL       string `yaml:"url"`
 	Token     string `yaml:"token"`
 	Namespace string `yaml:"namespace"`
+	PodName   string `yaml:"pod_name"`
 }
 
 // Eureka configuration
@@ -245,6 +246,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Kubernetes.URL, kubernetesURLFlag)
 	loadFromContextIfSet(&c.Kubernetes.Token, kubernetesTokenFlag)
 	loadFromContextIfSet(&c.Kubernetes.Namespace, kubernetesNamespaceFlag)
+	loadFromContextIfSet(&c.Kubernetes.PodName, kubernetesPodNameFlag)
 	loadFromContextIfSet(&c.Eureka.URLs, eurekaURLFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)

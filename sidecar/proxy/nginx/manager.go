@@ -34,13 +34,13 @@ type manager struct {
 	client      Client
 }
 
-// Config options
-type Config struct {
+// ManagerConfig options
+type ManagerConfig struct {
 	Client Client
 }
 
 // NewManager creates new a instance
-func NewManager(conf Config) Manager {
+func NewManager(conf ManagerConfig) Manager {
 	return &manager{
 		client: conf.Client,
 	}

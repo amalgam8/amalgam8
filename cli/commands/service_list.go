@@ -43,7 +43,7 @@ func NewServiceListCommand(term terminal.UI) (cmd *ServiceListCommand) {
 func (cmd *ServiceListCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("service_list_name"),
+		Name:        "service-list",
 		Description: T("service_list_description"),
 		Usage:       T("service_list_usage"),
 		// TODO: Complete UsageText

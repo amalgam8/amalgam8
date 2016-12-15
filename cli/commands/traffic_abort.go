@@ -45,11 +45,11 @@ func NewTrafficAbortCommand(term terminal.UI) (cmd *TrafficAbortCommand) {
 func (cmd *TrafficAbortCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("traffic_abort_name"),
+		Name:        "traffic-abort",
 		Description: T("traffic_abort_description"),
 		Usage:       T("traffic_abort_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("traffic_abort_name"),
+		UsageText: T("traffic_abort_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "service, s",

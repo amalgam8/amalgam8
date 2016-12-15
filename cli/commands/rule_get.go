@@ -40,11 +40,11 @@ func NewRuleGetCommand(term terminal.UI) (cmd *RuleGetCommand) {
 func (cmd *RuleGetCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("rule_get_name"),
+		Name:        "rule-get",
 		Description: T("rule_get_description"),
 		Usage:       T("rule_get_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("rule_get_name"),
+		UsageText: T("rule_get_usage"),
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "id, i",

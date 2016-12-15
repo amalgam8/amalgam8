@@ -48,11 +48,11 @@ func NewTrafficStartCommand(term terminal.UI) (cmd *TrafficStartCommand) {
 func (cmd *TrafficStartCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("traffic_start_name"),
+		Name:        "traffic-start",
 		Description: T("traffic_start_description"),
 		Usage:       T("traffic_start_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("traffic_start_name"),
+		UsageText: T("traffic_start_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "service, s",

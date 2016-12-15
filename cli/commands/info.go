@@ -39,7 +39,7 @@ func NewInfoCommand(term terminal.UI) (cmd *InfoCommand) {
 func (cmd *InfoCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("info_name"),
+		Name:        "info",
 		Description: T("info_description"),
 		Usage:       T("info_usage"),
 		Aliases:     []string{"i"},

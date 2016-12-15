@@ -42,11 +42,11 @@ func NewRuleUpdateCommand(term terminal.UI) (cmd *RuleUpdateCommand) {
 func (cmd *RuleUpdateCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("rule_update_name"),
+		Name:        "rule-update",
 		Description: T("rule_update_description"),
 		Usage:       T("rule_update_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("rule_update_name"),
+		UsageText: T("rule_update_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "file, f",

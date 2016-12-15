@@ -42,11 +42,11 @@ func NewRuleDeleteCommand(term terminal.UI) (cmd *RuleDeleteCommand) {
 func (cmd *RuleDeleteCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("rule_delete_name"),
+		Name:        "rule-delete",
 		Description: T("rule_delete_description"),
 		Usage:       T("rule_delete_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("rule_delete_name"),
+		UsageText: T("rule_delete_usage"),
 		Flags: []cli.Flag{
 			cli.StringSliceFlag{
 				Name:  "id, i",

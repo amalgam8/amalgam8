@@ -44,10 +44,6 @@
     "translation": "Request Completed"
   },
   {
-    "id": "info_name",
-    "translation": "info"
-  },
-  {
     "id": "info_description",
     "translation": "Shows information about the configuration of the CLI."
   },
@@ -60,10 +56,6 @@
     "translation": "Rule Deleted"
   },
   {
-    "id": "service_list_name",
-    "translation": "service-list"
-  },
-  {
     "id": "service_list_description",
     "translation": "List managed microservices."
   },
@@ -74,10 +66,6 @@
   {
     "id": "service_list_output_usage",
     "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
-  },
-  {
-    "id": "route_list_name",
-    "translation": "route-list"
   },
   {
     "id": "route_list_description",
@@ -96,10 +84,6 @@
     "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
   },
   {
-    "id": "action_list_name",
-    "translation": "action-list"
-  },
-  {
     "id": "action_list_description",
     "translation": "List action rules."
   },
@@ -114,10 +98,6 @@
   {
     "id": "action_list_output_usage",
     "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
-  },
-  {
-    "id": "rule_create_name",
-    "translation": "rule-create"
   },
   {
     "id": "rule_create_description",
@@ -136,10 +116,6 @@
     "translation": "Read rules from an input redirection."
   },
   {
-    "id": "rule_update_name",
-    "translation": "rule-update"
-  },
-  {
     "id": "rule_update_description",
     "translation": "Update rules for a microservice."
   },
@@ -154,10 +130,6 @@
   {
     "id": "rule_update_input_redirection_usage",
     "translation": "Read rules from an input redirection."
-  },
-  {
-    "id": "rule_get_name",
-    "translation": "rule-get"
   },
   {
     "id": "rule_get_description",
@@ -186,10 +158,6 @@
   {
     "id": "rule_get_all_usage",
     "translation": "Output all rules."
-  },
-  {
-    "id": "rule_delete_name",
-    "translation": "rule-delete"
   },
   {
     "id": "rule_delete_usage",
@@ -224,10 +192,6 @@
     "translation": "Do you really want to delete all rules?"
   },
   {
-    "id": "traffic_start_name",
-    "translation": "traffic-start"
-  },
-  {
     "id": "traffic_start_description",
     "translation": "Start transferring traffic to a new version of a microservice."
   },
@@ -248,10 +212,6 @@
     "translation": "A percentage of traffic 0-100 to send to the new version."
   },
   {
-    "id": "traffic_step_name",
-    "translation": "traffic-step"
-  },
-  {
     "id": "traffic_step_description",
     "translation": "Step up the amount of traffic to a new version of a microservice."
   },
@@ -268,10 +228,6 @@
     "translation": "A percentage of traffic 0-100 to send to the new version."
   },
   {
-    "id": "traffic_abort_name",
-    "translation": "traffic-abort"
-  },
-  {
     "id": "traffic_abort_description",
     "translation": "Abort transferring traffic to a new version of a microservice."
   },
@@ -282,10 +238,6 @@
   {
     "id": "traffic_abort_service_usage",
     "translation": "The service name."
-  },
-  {
-    "id": "recipe_run_name",
-    "translation": "recipe-run"
   },
   {
     "id": "recipe_run_usage",

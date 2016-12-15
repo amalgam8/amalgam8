@@ -42,11 +42,11 @@ func NewRuleCreateCommand(term terminal.UI) (cmd *RuleCreateCommand) {
 func (cmd *RuleCreateCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("rule_create_name"),
+		Name:        "rule-create",
 		Description: T("rule_create_description"),
 		Usage:       T("rule_create_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("rule_create_name"),
+		UsageText: T("rule_create_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "file, f",

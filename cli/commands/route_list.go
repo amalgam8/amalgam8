@@ -54,11 +54,11 @@ func NewRouteListCommand(term terminal.UI) (cmd *RouteListCommand) {
 func (cmd *RouteListCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("route_list_name"),
+		Name:        "route-list",
 		Description: T("route_list_description"),
 		Usage:       T("route_list_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("route_list_name"),
+		UsageText: T("route_list_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "output, o",

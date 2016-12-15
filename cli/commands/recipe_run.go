@@ -46,7 +46,7 @@ func NewRecipeRunCommand(term terminal.UI) (cmd *RecipeRunCommand) {
 func (cmd *RecipeRunCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("recipe_run_name"),
+		Name:        "recipe-run",
 		Description: T("recipe_run_description"),
 		Usage:       T("recipe_run_usage"),
 		// TODO: Complete UsageText

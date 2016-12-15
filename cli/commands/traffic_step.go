@@ -45,11 +45,11 @@ func NewTrafficStepCommand(term terminal.UI) (cmd *TrafficStepCommand) {
 func (cmd *TrafficStepCommand) GetMetadata() cli.Command {
 	T := utils.Language(common.DefaultLanguage)
 	return cli.Command{
-		Name:        T("traffic_step_name"),
+		Name:        "traffic-step",
 		Description: T("traffic_step_description"),
 		Usage:       T("traffic_step_usage"),
 		// TODO: Complete UsageText
-		UsageText: T("traffic_step_name"),
+		UsageText: T("traffic_step_usage"),
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "service, s",

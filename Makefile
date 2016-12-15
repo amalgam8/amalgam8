@@ -113,7 +113,7 @@ build.sidecar:
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
 
 build.k8srules:
-	@echo "--> building k8srules"
+	@echo "--> building kubernetes routingrules controller"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(K8SRULES_APP_NAME) ./cmd/k8srules/
 
 compile:

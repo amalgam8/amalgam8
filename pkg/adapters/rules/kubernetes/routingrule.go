@@ -26,7 +26,7 @@ import (
 
 const (
 	// ResourceName defines the name of the third party resource in kubernetes
-	ResourceName = "rule"
+	ResourceName = "routing-rule"
 	// ResourceGroupName defines the group name of the third party resource in kubernetes
 	ResourceGroupName = "amalgam8.io"
 	// ResourceVersion defines the version of the third party resource in kubernetes
@@ -45,8 +45,8 @@ type StatusSpec struct {
 	Message string `json:"message,omitempty"`
 }
 
-// Rule defines the third party resource spec
-type Rule struct {
+// RoutingRule defines the third party resource spec
+type RoutingRule struct {
 	unversioned.TypeMeta `json:",inline"`
 	Metadata             api.ObjectMeta `json:"metadata"`
 
@@ -54,31 +54,31 @@ type Rule struct {
 	Status StatusSpec `json:"status,omitempty"`
 }
 
-// RuleList defines list of rules
-type RuleList struct {
+// RoutingRuleList defines list of rules
+type RoutingRuleList struct {
 	unversioned.TypeMeta `json:",inline"`
 	Metadata             unversioned.ListMeta `json:"metadata"`
 
-	Items []Rule `json:"items"`
+	Items []RoutingRule `json:"items"`
 }
 
 // GetObjectKind - Required to satisfy Object interface
-func (r *Rule) GetObjectKind() unversioned.ObjectKind {
+func (r *RoutingRule) GetObjectKind() unversioned.ObjectKind {
 	return &r.TypeMeta
 }
 
 // GetObjectMeta - Required to satisfy ObjectMetaAccessor interface
-func (r *Rule) GetObjectMeta() meta.Object {
+func (r *RoutingRule) GetObjectMeta() meta.Object {
 	return &r.Metadata
 }
 
 // GetObjectKind - Required to satisfy Object interface
-func (rl *RuleList) GetObjectKind() unversioned.ObjectKind {
+func (rl *RoutingRuleList) GetObjectKind() unversioned.ObjectKind {
 	return &rl.TypeMeta
 }
 
 // GetListMeta - Required to satisfy ListMetaAccessor interface
-func (rl *RuleList) GetListMeta() unversioned.List {
+func (rl *RoutingRuleList) GetListMeta() unversioned.List {
 	return &rl.Metadata
 }
 
@@ -87,31 +87,31 @@ func (rl *RuleList) GetListMeta() unversioned.List {
 // should no longer be required.
 
 // RuleListCopy defines list of rules
-type RuleListCopy RuleList
+type RuleListCopy RoutingRuleList
 
 // RuleCopy defines a rule resource
-type RuleCopy Rule
+type RuleCopy RoutingRule
 
 // UnmarshalJSON parses the JSON-encoded data and stores the result in the value pointed to by r
-func (r *Rule) UnmarshalJSON(data []byte) error {
+func (r *RoutingRule) UnmarshalJSON(data []byte) error {
 	tmp := RuleCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := Rule(tmp)
+	tmp2 := RoutingRule(tmp)
 	*r = tmp2
 	return nil
 }
 
 // UnmarshalJSON parses the JSON-encoded data and stores the result in the value pointed to by rl
-func (rl *RuleList) UnmarshalJSON(data []byte) error {
+func (rl *RoutingRuleList) UnmarshalJSON(data []byte) error {
 	tmp := RuleListCopy{}
 	err := json.Unmarshal(data, &tmp)
 	if err != nil {
 		return err
 	}
-	tmp2 := RuleList(tmp)
+	tmp2 := RoutingRuleList(tmp)
 	*rl = tmp2
 	return nil
 }

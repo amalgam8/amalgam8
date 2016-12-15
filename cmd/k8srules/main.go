@@ -16,17 +16,25 @@ package main
 
 import (
 	"context"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/Sirupsen/logrus"
 )
+
+func init() {
+	logrus.SetLevel(logrus.InfoLevel)
+}
+
+// Package global logger
+var logger = logrus.WithField("module", "ROUTINGRULES")
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	_, err := new(ctx, os.Getenv("K8S_NAMESPACE"))
 	if err != nil {
-		log.Fatalln("Failed to create Rules controller. ", err)
+		logger.WithError(err).Error("Failed creating Routing-Rules Controller")
 	}
 
 	sigs := make(chan os.Signal, 1)

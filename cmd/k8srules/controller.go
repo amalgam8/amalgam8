@@ -17,22 +17,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
+	"strings"
 	"time"
 
 	"k8s.io/client-go/pkg/api"
-	"k8s.io/client-go/pkg/api/errors"
-	"k8s.io/client-go/pkg/api/unversioned"
-	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
-	"k8s.io/client-go/pkg/runtime"
-	"k8s.io/client-go/pkg/runtime/serializer"
 	"k8s.io/client-go/pkg/util/json"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
 	kuberules "github.com/amalgam8/amalgam8/pkg/adapters/rules/kubernetes"
-	a8api "github.com/amalgam8/amalgam8/pkg/api"
+	rulesapi "github.com/amalgam8/amalgam8/pkg/api"
 	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
 )
 
@@ -53,13 +47,10 @@ type controller struct {
 	workqueue *kubepkg.Workqueue
 
 	// validator validates rules against the rule schema
-	validator a8api.Validator
+	validator rulesapi.Validator
 
 	// namespace from which to sync endpoints/pods
 	namespace string
-
-	// stopChan for stop signals
-	stopChan chan struct{}
 }
 
 // New creates and starts the controller.
@@ -69,17 +60,24 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 		namespace = "default"
 	}
 
-	if err := initThirdPartyResource(); err != nil {
+	tprConfig := &kubepkg.TPRConfig{Name: kuberules.ResourceName,
+		GroupName:   kuberules.ResourceGroupName,
+		Version:     kuberules.ResourceVersion,
+		Description: kuberules.ResourceDescription,
+		Type:        &kuberules.RoutingRule{},
+		ListType:    &kuberules.RoutingRuleList{}}
+
+	if err := kubepkg.InitThirdPartyResource(tprConfig); err != nil {
 		return nil, err
 	}
 
 	// Create the kubernetes client for the third party resource
-	client, err := createTPRClient()
+	client, err := kubepkg.NewTPRClient(kubepkg.Config{}, tprConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	validator, err := a8api.NewValidator()
+	validator, err := rulesapi.NewValidator()
 	if err != nil {
 		return nil, err
 	}
@@ -93,8 +91,8 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 	}
 
 	controller.rulesCache, controller.rulesController = cache.NewInformer(
-		cache.NewListWatchFromClient(client, "rules", namespace, nil),
-		&kuberules.Rule{},
+		cache.NewListWatchFromClient(client, fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)), namespace, nil),
+		&kuberules.RoutingRule{},
 		cacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    workqueue.EnqueueingAddFunc(controller.addRule),
@@ -115,85 +113,9 @@ func (c *controller) Stop() error {
 	return nil
 }
 
-// initialize third party resource if it does not exist
-func initThirdPartyResource() error {
-	client, err := kubepkg.NewClient(kubepkg.Config{})
-	if err != nil {
-		return err
-	}
-
-	resName := fmt.Sprintf("%s.%s", kuberules.ResourceName, kuberules.ResourceGroupName)
-	_, err = client.Extensions().ThirdPartyResources().Get(resName)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			tpr := &v1beta1.ThirdPartyResource{
-				ObjectMeta: v1.ObjectMeta{
-					Name: resName,
-				},
-				Versions: []v1beta1.APIVersion{
-					{Name: kuberules.ResourceVersion},
-				},
-				Description: kuberules.ResourceDescription,
-			}
-
-			result, err := client.Extensions().ThirdPartyResources().Create(tpr)
-			if err != nil {
-				return err
-			}
-			log.Printf("The ThridPartYresource %#v created\n", result)
-		} else {
-			return err
-		}
-	} else {
-		log.Printf("The ThirdPartyResource %s already exists\n", resName)
-	}
-	return nil
-}
-
-func createTPRClient() (*rest.RESTClient, error) {
-	config, err := rest.InClusterConfig()
-	if err != nil {
-		log.Printf("Failed to create the in-cluster config. %s\n", err)
-		return nil, err
-	}
-
-	groupversion := unversioned.GroupVersion{
-		Group:   kuberules.ResourceGroupName,
-		Version: kuberules.ResourceVersion,
-	}
-
-	config.GroupVersion = &groupversion
-	config.APIPath = "/apis"
-	config.ContentType = runtime.ContentTypeJSON
-	config.NegotiatedSerializer = serializer.DirectCodecFactory{CodecFactory: api.Codecs}
-
-	schemeBuilder := runtime.NewSchemeBuilder(
-		func(scheme *runtime.Scheme) error {
-			scheme.AddKnownTypes(
-				groupversion,
-				&kuberules.Rule{},
-				&kuberules.RuleList{},
-				&api.ListOptions{},
-				&api.DeleteOptions{},
-			)
-			return nil
-		})
-	schemeBuilder.AddToScheme(api.Scheme)
-
-	client, err := rest.RESTClientFor(config)
-	if err != nil {
-		log.Printf("Failed to create the in-cluster client. %s\n", err)
-		return nil, err
-	}
-
-	return client, nil
-}
-
-func (c *controller) validateRule(rule *kuberules.Rule) error {
-	var updRule kuberules.Rule
-	var result kuberules.Rule
-
-	log.Printf("Rule %s is being validated\n", rule.Metadata.Name)
+func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
+	var updRule kuberules.RoutingRule
+	var result kuberules.RoutingRule
 
 	if rule.Spec.ID == "" {
 		updRule.Spec.ID = rule.Metadata.Name
@@ -201,22 +123,22 @@ func (c *controller) validateRule(rule *kuberules.Rule) error {
 
 	err := c.validator.Validate(rule.Spec)
 	if err != nil {
-		log.Printf("Rule %#v is not valid. %s\n", rule, err)
+		logger.WithError(err).Warnf("Rule %#v is not valid", rule)
 		updRule.Status.State = kuberules.RuleStateInvalid
 		updRule.Status.Message = err.Error()
 	} else {
-		log.Printf("Rule %s is valid\n", rule.Metadata.Name)
+		logger.Infof("Rule %s is valid", rule.Metadata.Name)
 		updRule.Status.State = kuberules.RuleStateValid
 	}
 
 	data, err := json.Marshal(&updRule)
 	if err != nil {
-		log.Printf("Failed to encode status for rule %s. %s\n", rule.Metadata.Name, err)
+		logger.WithError(err).Errorf("Failed encoding status for rule %s", rule.Metadata.Name)
 		return err
 	}
 
 	err = c.client.Patch(api.MergePatchType).
-		Resource(fmt.Sprintf("%ss", kuberules.ResourceName)).
+		Resource(fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1))).
 		Namespace(rule.Metadata.Namespace).
 		Name(rule.Metadata.Name).
 		Body(data).
@@ -224,7 +146,7 @@ func (c *controller) validateRule(rule *kuberules.Rule) error {
 		Into(&result)
 
 	if err != nil {
-		log.Printf("Failed to update status for rule %s. %s\n", rule.Metadata.Name, err)
+		logger.WithError(err).Errorf("Failed updating status for rule %s", rule.Metadata.Name)
 	}
 
 	return err
@@ -232,13 +154,13 @@ func (c *controller) validateRule(rule *kuberules.Rule) error {
 
 // addRule is the callback invoked by the Kubernetes cache when a rule API resource is added.
 func (c *controller) addRule(obj interface{}) {
-	rule, ok := obj.(*kuberules.Rule)
+	rule, ok := obj.(*kuberules.RoutingRule)
 	if !ok {
-		log.Printf("Invalid rule added: object is of type %T\n", obj)
+		logger.Errorf("Invalid rule added: object is of type %T", obj)
 		return
 	}
 
-	log.Printf("Rule object added: %s (state: %s, version: %s)\n",
+	logger.Infof("Rule object added: %s (state: %s, version: %s)",
 		rule.Metadata.Name,
 		rule.Status.State,
 		rule.Metadata.ResourceVersion)
@@ -250,18 +172,18 @@ func (c *controller) addRule(obj interface{}) {
 
 // updateRule is the callback invoked by the Kubernetes cache when a rule API resource is updated.
 func (c *controller) updateRule(oldObj, newObj interface{}) {
-	oldRule, ok := oldObj.(*kuberules.Rule)
+	oldRule, ok := oldObj.(*kuberules.RoutingRule)
 	if !ok {
-		log.Printf("Invalid rule update: old object is of type %T\n", oldObj)
+		logger.Errorf("Invalid rule update: old object is of type %T", oldObj)
 		return
 	}
-	newRule, ok := newObj.(*kuberules.Rule)
+	newRule, ok := newObj.(*kuberules.RoutingRule)
 	if !ok {
-		log.Printf("Invalid rule update: new object is of type %T\n", newObj)
+		logger.Errorf("Invalid rule update: new object is of type %T", newObj)
 		return
 	}
 
-	log.Printf("Rule object updated: %s (state: %s, version: %s -> %s)\n",
+	logger.Infof("Rule object updated: %s (state: %s, version: %s -> %s)",
 		newRule.Metadata.Name,
 		newRule.Status.State,
 		oldRule.Metadata.ResourceVersion,

@@ -17,6 +17,7 @@ package commands
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/amalgam8/amalgam8/cli/common"
@@ -36,9 +37,9 @@ var (
 
 // Registry .
 func Registry(ctx *cli.Context) (*reg.Client, error) {
-	url, err := ValidateRegistryURL(ctx)
+	u, err := ValidateRegistryURL(ctx)
 	if err != nil {
-		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), url))
+		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), u))
 		return nil, err
 	}
 
@@ -47,7 +48,7 @@ func Registry(ctx *cli.Context) (*reg.Client, error) {
 
 	// Create config
 	config := reg.Config{
-		URL:       url,
+		URL:       u,
 		AuthToken: token,
 	}
 
@@ -71,12 +72,13 @@ func Registry(ctx *cli.Context) (*reg.Client, error) {
 
 // ValidateRegistryURL .
 func ValidateRegistryURL(ctx *cli.Context) (string, error) {
-	url := ctx.GlobalString(common.RegistryURL.Flag())
-	if len(url) == 0 {
+	u := ctx.GlobalString(common.RegistryURL.Flag())
+	if len(u) == 0 {
 		return "empty", common.ErrRegistryURLNotFound
 	}
-	if !utils.IsURL(url) {
-		return url, common.ErrRegistryURLInvalid
+	_, err := url.ParseRequestURI(u)
+	if err != nil {
+		return u, common.ErrRegistryURLInvalid
 	}
-	return url, nil
+	return u, nil
 }

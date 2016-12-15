@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	api "github.com/amalgam8/amalgam8/cli/client"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -28,9 +28,9 @@ type GremlinClient interface {
 
 // NewGremlinClient .
 func NewGremlinClient(ctx *cli.Context) (GremlinClient, error) {
-	url, err := ValidateGremlinURL(ctx)
+	u, err := ValidateGremlinURL(ctx)
 	if err != nil {
-		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), url))
+		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), u))
 		return nil, err
 	}
 
@@ -45,7 +45,7 @@ func NewGremlinClient(ctx *cli.Context) (GremlinClient, error) {
 
 	return &gremlin{
 		debug:  ctx.GlobalBool(common.Debug.Flag()),
-		client: api.NewClient(url, token, client),
+		client: api.NewClient(u, token, client),
 	}, nil
 }
 
@@ -176,12 +176,13 @@ func (g *gremlin) DeleteRecipe(id string) (interface{}, error) {
 
 // ValidateGremlinURL .
 func ValidateGremlinURL(ctx *cli.Context) (string, error) {
-	url := ctx.GlobalString(common.GremlinURL.Flag())
-	if len(url) == 0 {
+	u := ctx.GlobalString(common.GremlinURL.Flag())
+	if len(u) == 0 {
 		return common.Empty, common.ErrGremlinURLNotFound
 	}
-	if !utils.IsURL(url) {
-		return url, common.ErrGremlinURLInvalid
+	_, err := url.ParseRequestURI(u)
+	if err != nil {
+		return u, common.ErrGremlinURLInvalid
 	}
-	return url, nil
+	return u, nil
 }

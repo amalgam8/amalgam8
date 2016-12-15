@@ -8,7 +8,6 @@ import (
 
 	api "github.com/amalgam8/amalgam8/cli/client"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -32,9 +31,9 @@ type ControllerClient interface {
 
 // NewControllerClient .
 func NewControllerClient(ctx *cli.Context) (ControllerClient, error) {
-	url, err := ValidateControllerURL(ctx)
+	u, err := ValidateControllerURL(ctx)
 	if err != nil {
-		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), url))
+		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), u))
 		return nil, err
 	}
 
@@ -49,7 +48,7 @@ func NewControllerClient(ctx *cli.Context) (ControllerClient, error) {
 
 	return &controller{
 		debug:  ctx.GlobalBool(common.Debug.Flag()),
-		client: api.NewClient(url, token, client),
+		client: api.NewClient(u, token, client),
 	}, nil
 }
 
@@ -155,12 +154,13 @@ func (c *controller) GetActions() (*ActionList, error) {
 
 // ValidateControllerURL .
 func ValidateControllerURL(ctx *cli.Context) (string, error) {
-	url := ctx.GlobalString(common.ControllerURL.Flag())
-	if len(url) == 0 {
+	u := ctx.GlobalString(common.ControllerURL.Flag())
+	if len(u) == 0 {
 		return "empty", common.ErrControllerURLNotFound
 	}
-	if !utils.IsURL(url) {
-		return url, common.ErrControllerURLInvalid
+	_, err := url.ParseRequestURI(u)
+	if err != nil {
+		return u, common.ErrControllerURLInvalid
 	}
-	return url, nil
+	return u, nil
 }

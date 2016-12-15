@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
-	"github.com/amalgam8/amalgam8/cli/utils"
 	"github.com/urfave/cli"
 )
 
@@ -78,12 +78,13 @@ func DefaultAction(ctx *cli.Context) error {
 
 // ValidateRegistryURL .
 func ValidateRegistryURL(ctx *cli.Context) (string, error) {
-	url := ctx.GlobalString(common.RegistryURL.Flag())
-	if len(url) == 0 {
+	u := ctx.GlobalString(common.RegistryURL.Flag())
+	if len(u) == 0 {
 		return "empty", common.ErrRegistryURLNotFound
 	}
-	if !utils.IsURL(url) {
-		return url, common.ErrRegistryURLInvalid
+	_, err := url.ParseRequestURI(u)
+	if err != nil {
+		return u, common.ErrRegistryURLInvalid
 	}
-	return url, nil
+	return u, nil
 }

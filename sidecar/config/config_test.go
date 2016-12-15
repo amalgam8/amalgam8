@@ -17,7 +17,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"time"
 
@@ -66,11 +65,6 @@ var _ = Describe("Config", func() {
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
 			Expect(c.Commands).To(HaveLen(0))
-		})
-
-		It("falls back to local IP when no hostname is specified", func() {
-			Expect(c.Endpoint.Host).To(Not(BeNil()))
-			Expect(net.ParseIP(c.Endpoint.Host)).To(Not(BeNil()))
 		})
 
 	})

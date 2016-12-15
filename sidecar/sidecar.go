@@ -35,6 +35,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
@@ -118,6 +119,12 @@ func Run(conf config.Config) error {
 		}
 	}
 
+	identity, err := identity.New(&conf)
+	if err != nil {
+		logrus.WithError(err).Error("Could not create identity provider")
+		return err
+	}
+
 	var discovery api.ServiceDiscovery
 	if conf.DNS || conf.Proxy {
 		discovery, err = buildServiceDiscovery(&conf, kubeClient)
@@ -142,7 +149,7 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		err := startProxy(&conf, discovery, kubeClient)
+		err := startProxy(&conf, identity, discovery, kubeClient)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 			return err
@@ -156,20 +163,9 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
-		serviceInstance := &api.ServiceInstance{
-			ServiceName: conf.Service.Name,
-			Tags:        conf.Service.Tags,
-			Endpoint: api.ServiceEndpoint{
-				Type:  conf.Endpoint.Type,
-				Value: address,
-			},
-			TTL: 60,
-		}
-
 		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Registry:        registry,
-			ServiceInstance: serviceInstance,
+			Registry: registry,
+			Identity: identity,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Could not create registry agent")
@@ -260,7 +256,7 @@ func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (ap
 	}
 }
 
-func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
+func startProxy(conf *config.Config, identity identity.Provider, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
 	var err error
 
 	if conf.ProxyConfig.TLS {
@@ -270,7 +266,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery, kubeClient 
 		}
 	}
 
-	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
+	service := nginx.NewService(identity)
 	if err := service.Start(); err != nil {
 		logrus.WithError(err).Error("NGINX service failed to start")
 		return err

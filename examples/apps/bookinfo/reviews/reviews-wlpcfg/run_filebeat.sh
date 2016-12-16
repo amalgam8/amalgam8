@@ -1,11 +1,11 @@
 #!/bin/sh
-LOGSTASH=`echo $A8_LOGSTASH_SERVER`
+ELASTICSEARCH=`echo $A8_ELASTICSEARCH_SERVER`
 
-if [ -z "$LOGSTASH" ]; then
-  echo "Env var A8_LOGSTASH_SERVER is not set."
+if [ -z "$ELASTICSEARCH" ]; then
+  echo "Env var A8_ELASTICSEARCH_SERVER is not set."
   exit 1
 fi
 
-sed -e s/LOGSTASH_REPLACEME/\"$LOGSTASH\"/ /etc/filebeat/filebeat.yml >/tmp/filebeat.yml
+sed -e s/ELASTICSEARCH_REPLACEME/\"$ELASTICSEARCH\"/ /etc/filebeat/filebeat.yml >/tmp/filebeat.yml
 cp /tmp/filebeat.yml /etc/
 exec filebeat -c /etc/filebeat.yml

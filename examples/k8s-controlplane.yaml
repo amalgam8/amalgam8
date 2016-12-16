@@ -115,11 +115,6 @@ spec:
       port: 9300
       protocol: TCP
       targetPort: 9300
-    - 
-      name: logstashport
-      port: 8092
-      protocol: TCP
-      targetPort: 8092
   selector: 
     name: logserver
   type: NodePort
@@ -142,11 +137,6 @@ spec:
         ports:
         - containerPort: 9200
         - containerPort: 9300
-      - name: logstash
-        image: logstash
-        command: [ "logstash", "--verbose", "-e", "input { beats {codec=>'json' port=>8092}} output {elasticsearch {hosts =>'localhost:9200' codec=>'json'} } "]
-        ports:
-        - containerPort: 8092
       - name: kibana
         image: kibana
         ports:

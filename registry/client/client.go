@@ -55,6 +55,7 @@ type Config struct {
 type Client struct {
 	config     Config
 	httpClient *http.Client
+	debug      bool
 }
 
 // New constructs a new Client using the given configuration.
@@ -76,7 +77,6 @@ func New(config Config) (*Client, error) {
 			Timeout: defaultTimeout,
 		}
 	}
-
 	return client, nil
 }
 
@@ -197,6 +197,10 @@ func (client *Client) doRequest(method string, path string, body interface{}, st
 		req.Header.Set("Content-Length", "0")
 	}
 
+	if client.debug {
+		client.printCurl(method, path, body, req.Header)
+	}
+
 	resp, err := client.httpClient.Do(req)
 	if err != nil {
 		return nil, newError(ErrorCodeConnectionFailure, "error performing HTTP request", err, "")
@@ -260,4 +264,27 @@ func normalizeConfig(config *Config) error {
 	}
 
 	return nil
+}
+
+// Debug is used to set the debugging flag.
+func (client *Client) Debug(debug bool) {
+	client.debug = debug
+}
+
+// printCurl prints the curl of a given request
+func (client *Client) printCurl(method, url string, data interface{}, headers http.Header) {
+	var curl bytes.Buffer
+	fmt.Fprint(&curl, "curl ")
+	for k := range headers {
+		fmt.Fprintf(&curl, "-H '%s: %s' ", k, headers.Get(k))
+	}
+
+	fmt.Fprintf(&curl, "-X %s '%s' ", method, client.config.URL+url)
+
+	dataString := fmt.Sprint(data)
+	if len(dataString) > 0 && dataString != "<nil>" {
+		fmt.Fprintf(&curl, "--data '%s'", dataString)
+	}
+
+	fmt.Println(curl.String())
 }

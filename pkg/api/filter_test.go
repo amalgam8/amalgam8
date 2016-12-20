@@ -100,7 +100,7 @@ func TestFilterRules(t *testing.T) {
 		},
 	}
 	for _, c := range cases {
-		actual := FilterRules(c.Filter, c.In)
+		actual := c.Filter.Apply(c.In)
 		if !reflect.DeepEqual(actual, c.Out) {
 			t.Errorf("FilterRules(%v, %v): expected %v, got %v", c.Filter, c.In, c.Out, actual)
 		}

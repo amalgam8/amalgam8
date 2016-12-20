@@ -108,13 +108,22 @@ const (
 
 // HealthCheck configuration.
 type HealthCheck struct {
-	Type     string        `yaml:"type"`
-	Value    string        `yaml:"value"`
-	Interval time.Duration `yaml:"interval"`
-	Timeout  time.Duration `yaml:"timeout"`
-	Method   string        `yaml:"method"`
-	Code     int           `yaml:"code"`
-	Args     []string      `yaml:"args"`
+	Type       string        `yaml:"type"`
+	Value      string        `yaml:"value"`
+	Interval   time.Duration `yaml:"interval"`
+	Timeout    time.Duration `yaml:"timeout"`
+	Method     string        `yaml:"method"`
+	Code       int           `yaml:"code"`
+	Args       []string      `yaml:"args"`
+	CACertPath string        `yaml:"ca_cert_path"`
+}
+
+// ProxyConfig stores proxy configuration.
+type ProxyConfig struct {
+	TLS         bool   `yaml:"tls"`
+	CertPath    string `yaml:"cert_path"`
+	CertKeyPath string `yaml:"cert_key_path"`
+	CACertPath  string `yaml:"ca_cert_path"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -139,6 +148,8 @@ type Config struct {
 	Supervise bool `yaml:"supervise"`
 
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
+
+	ProxyConfig ProxyConfig `yaml:"proxy_config"`
 
 	LogLevel string `yaml:"log_level"`
 
@@ -222,6 +233,10 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
+	loadFromContextIfSet(&c.ProxyConfig.TLS, proxyTLSFlag)
+	loadFromContextIfSet(&c.ProxyConfig.CertPath, proxyCertPathFlag)
+	loadFromContextIfSet(&c.ProxyConfig.CertKeyPath, proxyCertKeyPathFlag)
+	loadFromContextIfSet(&c.ProxyConfig.CACertPath, proxyCACertPathFlag)
 	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
@@ -363,6 +378,14 @@ func (c *Config) Validate() error {
 			validators = append(validators,
 				IsValidURL("Amalgam8 Controller URL", c.A8Controller.URL),
 				IsInRangeDuration("Amalgam8 Controller polling interval", c.A8Controller.Poll, 5*time.Second, 1*time.Hour))
+		}
+
+		if c.ProxyConfig.TLS {
+			validators = append(validators,
+				IsNotEmpty("Certificate path", c.ProxyConfig.CertPath),
+				IsNotEmpty("Certificate key path", c.ProxyConfig.CertKeyPath),
+				IsNotEmpty("CA certificate path", c.ProxyConfig.CACertPath),
+			)
 		}
 	}
 

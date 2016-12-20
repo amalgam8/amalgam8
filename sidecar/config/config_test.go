@@ -92,6 +92,10 @@ var _ = Describe("Config", func() {
 				"--register=true",
 				"--proxy=true",
 				"--dns=true",
+				"--proxy_tls=false",
+				"--proxy_cert_path=/etc/certs/server.pem",
+				"--proxy_cert_key_path=/etc/certs/server_key.pem",
+				"--proxy_ca_cert_path=/etc/certs/ca.pem",
 				"--service=helloworld:v1,somethingelse",
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
@@ -124,6 +128,10 @@ var _ = Describe("Config", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
+			Expect(c.ProxyConfig.TLS).To(Equal(false))
+			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
+			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
+			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -144,7 +152,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
+			Expect(c.HealthChecks[0].CACertPath).To(Equal(""))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
+			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
 			Expect(c.Commands).To(HaveLen(1))
 			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
@@ -168,6 +178,10 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_REGISTER", "true")
 			os.Setenv("A8_PROXY", "true")
 			os.Setenv("A8_DNS", "true")
+			os.Setenv("A8_PROXY_TLS", "false")
+			os.Setenv("A8_PROXY_CERT_PATH", "/etc/certs/server.pem")
+			os.Setenv("A8_PROXY_CERT_KEY_PATH", "/etc/certs/server_key.pem")
+			os.Setenv("A8_PROXY_CA_CERT_PATH", "/etc/certs/ca.pem")
 			os.Setenv("A8_SERVICE", "helloworld:v1,somethingelse")
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
@@ -198,6 +212,10 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_REGISTER")
 			os.Unsetenv("A8_PROXY")
 			os.Unsetenv("A8_DNS")
+			os.Unsetenv("A8_PROXY_TLS")
+			os.Unsetenv("A8_PROXY_CERT_PATH")
+			os.Unsetenv("A8_PROXY_CERT_KEY_PATH")
+			os.Unsetenv("A8_PROXY_CA_CERT_PATH")
 			os.Unsetenv("A8_SERVICE")
 			os.Unsetenv("A8_ENDPOINT_HOST")
 			os.Unsetenv("A8_ENDPOINT_PORT")
@@ -224,6 +242,10 @@ var _ = Describe("Config", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
+			Expect(c.ProxyConfig.TLS).To(Equal(false))
+			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
+			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
+			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -244,7 +266,9 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig.Port).To(Equal(4056))
 			Expect(c.Dnsconfig.Domain).To(Equal("someServer"))
 			Expect(c.HealthChecks[0].Value).To(Equal("http://localhost:8082/health1"))
+			Expect(c.HealthChecks[0].CACertPath).To(Equal(""))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
+			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
 		})
 	})
@@ -268,6 +292,13 @@ var _ = Describe("Config", func() {
 register: true
 proxy: true
 dns: true
+
+proxy_config:
+  tls:           true
+  cert_path:     /etc/certs/server.pem
+  cert_key_path: /etc/certs/server_key.pem
+  ca_cert_path:  /etc/certs/ca.pem
+
 service:
   name: helloworld
   tags:
@@ -312,12 +343,14 @@ healthchecks:
     timeout: 5s
     method: GET
     code: 200
+    ca_cert_path: /etc/certs/ca1.pem
   - type: http
     value: http://localhost:8082/health2
     interval: 30s
     timeout: 3s
     method: POST
     code: 201
+    ca_cert_path: /etc/certs/ca2.pem
 
 commands:
   - cmd: [ "sleep", "720" ]
@@ -347,6 +380,10 @@ log_level: debug
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
 			Expect(c.DNS).To(Equal(true))
+			Expect(c.ProxyConfig.TLS).To(Equal(true))
+			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
+			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
+			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
@@ -372,12 +409,14 @@ log_level: debug
 			Expect(c.HealthChecks[0].Timeout).To(Equal(time.Duration(5) * time.Second))
 			Expect(c.HealthChecks[0].Method).To(Equal("GET"))
 			Expect(c.HealthChecks[0].Code).To(Equal(200))
+			Expect(c.HealthChecks[0].CACertPath).To(Equal("/etc/certs/ca1.pem"))
 			Expect(c.HealthChecks[1].Type).To(Equal("http"))
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
 			Expect(c.HealthChecks[1].Interval).To(Equal(time.Duration(30) * time.Second))
 			Expect(c.HealthChecks[1].Timeout).To(Equal(time.Duration(3) * time.Second))
 			Expect(c.HealthChecks[1].Method).To(Equal("POST"))
 			Expect(c.HealthChecks[1].Code).To(Equal(201))
+			Expect(c.HealthChecks[1].CACertPath).To(Equal("/etc/certs/ca2.pem"))
 			Expect(c.LogLevel).To(Equal("debug"))
 			Expect(c.Commands).To(HaveLen(2))
 			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))

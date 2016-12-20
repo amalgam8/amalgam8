@@ -19,22 +19,18 @@ set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-rfile="registry.yaml"
 cfile="controller.yaml"
 rdsfile="redis.yaml"
 
 if [ "$1" == "start" ]; then
     echo "Starting redis storage"
     kubectl create -f $SCRIPTDIR/$rdsfile
-    echo "Starting multi-tenant service registry"
-    kubectl create -f $SCRIPTDIR/$rfile
-    echo "Starting multi-tenant controller"
+    echo "Starting controller"
     kubectl create -f $SCRIPTDIR/$cfile
 
     echo "Waiting for control plane to initialize..."
 
     sleep 10
-    REGISTRY_URL=http://localhost:31300
     CONTROLLER_URL=http://localhost:31200
 
     # Wait for controller route to set up
@@ -56,30 +52,9 @@ if [ "$1" == "start" ]; then
         sleep 10s
     done
 
-    # Wait for registry route to set up
-    echo "Waiting for registry route to set up"
-    attempt=0
-    while true; do
-        code=$(curl -w "%{http_code}" --max-time 10 "${REGISTRY_URL}/uptime" -o /dev/null)
-        if [ "$code" = "200" ]; then
-            echo "Registry route is set to '$REGISTRY_URL'"
-            break
-        fi
-
-        attempt=$((attempt + 1))
-        if [ "$attempt" -gt 10 ]; then
-            echo "Timeout waiting for registry route: /uptime returned HTTP ${code}"
-            echo "Deploying the controlplane has failed"
-            exit 1
-        fi
-        sleep 10s
-    done
-
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
     kubectl delete -f $SCRIPTDIR/$cfile
-    sleep 3
-    kubectl delete -f $SCRIPTDIR/$rfile
     sleep 3
     kubectl delete -f $SCRIPTDIR/$rdsfile
 else

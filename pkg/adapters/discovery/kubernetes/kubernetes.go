@@ -25,12 +25,11 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	"github.com/amalgam8/amalgam8/pkg/datastructures"
-	"github.com/amalgam8/amalgam8/pkg/errors"
+	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 )
 
@@ -50,8 +49,10 @@ var logger = logging.GetLogger("KUBERNETES")
 
 // Config stores configurable attributes of the Kubernetes adapter.
 type Config struct {
-	URL       string
-	Token     string
+	kubepkg.Config
+
+	// Namespace to target for Kubernetes API calls.
+	// If left empty, defaults to "default" namespace.
 	Namespace auth.Namespace
 
 	// Client to be used by the Kubernetes adapter.
@@ -72,7 +73,7 @@ type Adapter struct {
 	podController cache.ControllerInterface
 
 	// workqueue is used to queue and process events send from the cache controllers
-	workqueue *workqueue
+	workqueue *kubepkg.Workqueue
 
 	// services maps a service name to a list of service instances.
 	// This is stored precomputed so we won't have to recompute it
@@ -105,7 +106,7 @@ func New(config Config) (*Adapter, error) {
 		client = config.Client
 	} else {
 		var err error
-		client, err = buildClientFromConfig(config)
+		client, err = kubepkg.NewClient(config.Config)
 		if err != nil {
 			return nil, err
 		}
@@ -117,7 +118,7 @@ func New(config Config) (*Adapter, error) {
 		namespace = "default"
 	}
 
-	workqueue := newWorkqueue()
+	workqueue := kubepkg.NewWorkqueue()
 	adapter := &Adapter{
 		workqueue:   workqueue,
 		services:    make(map[string][]*api.ServiceInstance),
@@ -545,29 +546,4 @@ func buildMetadataFromAnnotations(annotations map[string]string) json.RawMessage
 		return nil
 	}
 	return json.RawMessage(bytes)
-}
-
-// buildClientFromConfig creates a new Kubernetes client based on the given configuration.
-// If no URL and Token are specified, then these values are attempted to be read from the
-// service account (if running within a Kubernetes pod).
-func buildClientFromConfig(config Config) (kubernetes.Interface, error) {
-	var kubeConfig *rest.Config
-	if config.URL != "" || config.Token != "" {
-		kubeConfig = &rest.Config{
-			Host:        config.URL,
-			BearerToken: config.Token,
-		}
-	} else {
-		logger.Debugf("No Kubernetes credentials provided. Attempting to load from service account")
-		var err error
-		kubeConfig, err = rest.InClusterConfig()
-		if err != nil {
-			return nil, errors.Wrap(err, "Failed loading Kubernetes credentials from service account")
-		}
-	}
-	client, err := kubernetes.NewForConfig(kubeConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "Failed creating Kubernetes REST client")
-	}
-	return client, nil
 }

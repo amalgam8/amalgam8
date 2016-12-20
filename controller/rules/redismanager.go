@@ -118,7 +118,7 @@ func (r *redisManager) GetRules(namespace string, filter api.RuleFilter) (Retrie
 		results[index] = rule
 	}
 
-	results = api.FilterRules(filter, results)
+	results = filter.Apply(results)
 
 	return RetrievedRules{
 		Rules:    results,

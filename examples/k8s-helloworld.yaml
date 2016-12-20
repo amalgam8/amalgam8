@@ -52,10 +52,12 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_SERVICE
-          value: gateway:none
         - name: A8_DISCOVERY_BACKEND
           value: kubernetes
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
 ---
@@ -90,9 +92,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
-        env:
-        - name: A8_SERVICE
-          value: helloworld:version=v1
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -112,6 +111,3 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
-        env:
-        - name: A8_SERVICE
-          value: helloworld:version=v2

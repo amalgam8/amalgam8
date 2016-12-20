@@ -56,8 +56,10 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_DISCOVERY_BACKEND
           value: kubernetes
-        - name: A8_SERVICE
-          value: gateway:none
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_CONTROLLER_POLL
@@ -211,8 +213,10 @@ spec:
           value: 5s
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
-        - name: A8_SERVICE
-          value: reviews:version=v2
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
 ---
     
 apiVersion: v1
@@ -251,8 +255,10 @@ spec:
           value: 5s
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
-        - name: A8_SERVICE
-          value: reviews:version=v3
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
 ---
     
 ##################################################################################################
@@ -308,5 +314,7 @@ spec:
           value: 5s
         - name: A8_LOGSTASH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):8092
-        - name: A8_SERVICE
-          value: productpage:version=v1
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name

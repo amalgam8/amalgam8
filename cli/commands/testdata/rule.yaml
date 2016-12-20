@@ -1,0 +1,9 @@
+rules:
+- id: yaml_id
+  destination: yaml_destination
+  route:
+    backends:
+      - name: service1
+        tags: [ v11, v12 ]
+      - name: service2
+        tags: [ v21, v22, yaml ]

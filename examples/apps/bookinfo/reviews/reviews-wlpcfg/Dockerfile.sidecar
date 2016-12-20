@@ -15,10 +15,20 @@
 FROM websphere-liberty:latest
 
 # Install Filebeat
+ARG FILEBEAT_VERSION="5.1.1"
 RUN set -ex \
-    && wget -qO /tmp/filebeat_1.2.2_amd64.deb https://download.elastic.co/beats/filebeat/filebeat_1.2.2_amd64.deb \
-    && dpkg -i /tmp/filebeat_1.2.2_amd64.deb \
-    && rm /tmp/filebeat_1.2.2_amd64.deb
+    \
+    && apt-get update -y \
+    && apt-get install curl -y \
+    \
+    && curl -fsSL https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -o /tmp/filebeat.tar.gz \
+    && cd /tmp \
+    && tar -xzf filebeat.tar.gz \
+    \
+    && cd filebeat-* \
+    && cp filebeat /bin \
+    \
+    && rm -rf /tmp/filebeat*
 
 COPY filebeat.yml /etc/filebeat/filebeat.yml
 COPY config.yaml /opt/microservices/config.yaml

@@ -60,8 +60,9 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_CONTROLLER_POLL
           value: 5s
 ---
@@ -211,12 +212,12 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
 ---
     
 apiVersion: v1
@@ -253,12 +254,12 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
 ---
     
 ##################################################################################################
@@ -312,9 +313,9 @@ spec:
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_CONTROLLER_POLL
           value: 5s
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200

@@ -24,6 +24,8 @@ BUILDDIR    := build
 DOCKERDIR	:= docker
 RELEASEDIR  := release
 
+TARGET_OS := linux windows darwin
+
 ifndef GOOS
     GOOS := $(shell go env GOHOSTOS)
 endif
@@ -42,6 +44,7 @@ REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
 K8SRULES_APP_NAME		:= a8k8srulescontroller
+CLI_APP_NAME			:=  a8ctl-beta
 
 REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
@@ -60,9 +63,9 @@ SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
 # build flags
-BUILDFLAGS	:= 
+BUILDFLAGS	:=
 
-# linker flags 
+# linker flags
 LDFLAGS     :=
 
 ifeq ($(GOOS),linux)
@@ -96,7 +99,7 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar build.k8srules compile clean
+.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli compile clean
 
 build: build.registry build.controller build.sidecar build.k8srules
 
@@ -115,6 +118,14 @@ build.sidecar:
 build.k8srules:
 	@echo "--> building kubernetes routingrules controller"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(K8SRULES_APP_NAME) ./cmd/k8srules/
+
+build.cli: tools.go-bindata
+	@echo "--> building cli"
+	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
+	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
+	@go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME) ./cmd/cli/ # build an additional binary for the current OS
+	@mv $(BINDIR)/$(CLI_APP_NAME)-windows $(BINDIR)/$(CLI_APP_NAME)-windows.exe # add extension to windows binary
+	@goimports -w ./cli/utils/i18n_resources.go
 
 compile:
 	@echo "--> compiling packages"
@@ -212,7 +223,7 @@ dockerize.k8srules:
 release: release.registry release.controller release.sidecar release.examples
 
 
-compress: COMPRESSED_FILE := 
+compress: COMPRESSED_FILE :=
 compress:
 	@upx -qqt $(COMPRESSED_FILE); RESULT=$$?; if [ $$RESULT -eq 2 ]; then \
 		echo "--> compressing $(COMPRESSED_FILE)"; \
@@ -220,24 +231,24 @@ compress:
 	elif [ $$RESULT -eq 1 ]; then \
 		false; \
 	fi
-	
+
 compress.registry: tools.upx
 	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(REGISTRY_APP_NAME)
-	
+
 compress.controller: tools.upx
 	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(CONTROLLER_APP_NAME)
 
 compress.sidecar: tools.upx
 	@make --no-print-directory compress COMPRESSED_FILE=$(BINDIR)/$(SIDECAR_APP_NAME)
-	
+
 release.registry:
 	@echo "--> packaging registry for release"
-	@mkdir -p $(RELEASEDIR) 
+	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(REGISTRY_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(REGISTRY_APP_NAME) README.md LICENSE
 
 release.controller:
 	@echo "--> packaging controller for release"
-	@mkdir -p $(RELEASEDIR) 
+	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
 release.sidecar:
@@ -308,4 +319,11 @@ tools.upx:
 		mkdir -p /tmp/$$UPX_RELEASE; \
 		wget -qO- https://github.com/upx/upx/releases/download/v$$UPX_VERSION/$$UPX_RELEASE.tar.bz2 | tar xj -C /tmp/$$UPX_RELEASE; \
 		cp /tmp/$$UPX_RELEASE/$$UPX_RELEASE/upx ~/bin; \
+	fi
+
+# This package converts any file into managable Go source code
+tools.go-bindata:
+	@command -v go-bindata >/dev/null ; if [ $$? -ne 0 ]; then \
+		echo "--> installing go-bindata"; \
+		go get -u github.com/jteeuwen/go-bindata/...; \
 	fi

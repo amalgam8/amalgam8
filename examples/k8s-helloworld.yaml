@@ -58,8 +58,8 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: A8_LOGSTASH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):8092
+        - name: A8_ELASTICSEARCH_SERVER
+          value: $(LOGSERVER_SERVICE_HOST):9200
 ---
 apiVersion: v1
 kind: Service

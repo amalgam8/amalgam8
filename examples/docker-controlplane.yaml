@@ -70,8 +70,6 @@ gremlin:
     - "31500:5000"
   links:
     - es
-    - kibana
-    - logstash
     - controller
     - registry
   container_name: gremlin

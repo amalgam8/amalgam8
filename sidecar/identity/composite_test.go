@@ -54,7 +54,7 @@ func (s *CompositeProviderSuite) TestNilIdentity() {
 }
 
 func (s *CompositeProviderSuite) TestErrorIdentity() {
-	provider, err := newCompositeProvider(&mockProvider{err: errors.New("error!")})
+	provider, err := newCompositeProvider(&mockProvider{err: errors.New("error")})
 
 	s.Require().NoError(err, "Error creating Composite Identity Provider")
 	s.Require().NotNil(provider, "Composite Identity Provider should not be nil")

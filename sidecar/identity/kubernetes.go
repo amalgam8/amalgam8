@@ -156,7 +156,7 @@ func findContainerPort(pod *v1.Pod, servicePort *v1.ServicePort) int32 {
 			}
 		}
 	default:
-		logger.Errorf("Unrecognized port type '%v' for service port '%s'", servicePort.TargetPort.Type, servicePort.TargetPort)
+		logger.Errorf("Unrecognized port type '%v' for service port '%v'", servicePort.TargetPort.Type, servicePort.TargetPort)
 	}
 
 	logger.Warnf("Could not find matching port for service port '%s' on pod %s", servicePort.Name, pod.Name)

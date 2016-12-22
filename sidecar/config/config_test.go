@@ -52,6 +52,7 @@ var _ = Describe("Config", func() {
 		It("uses default config values", func() {
 			Expect(c.Register).To(Equal(DefaultConfig.Register))
 			Expect(c.Proxy).To(Equal(DefaultConfig.Proxy))
+			Expect(c.ProxyAdapter).To(Equal(DefaultConfig.ProxyAdapter))
 			Expect(c.DNS).To(Equal(DefaultConfig.DNS))
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
@@ -91,6 +92,7 @@ var _ = Describe("Config", func() {
 			args := append(os.Args[:1], []string{
 				"--register=true",
 				"--proxy=true",
+				"--proxy_adapter=envoy",
 				"--dns=true",
 				"--proxy_tls=false",
 				"--proxy_cert_path=/etc/certs/server.pem",
@@ -127,6 +129,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from command line flags", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.ProxyAdapter).To(Equal(EnvoyAdapter))
 			Expect(c.DNS).To(Equal(true))
 			Expect(c.ProxyConfig.TLS).To(Equal(false))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
@@ -162,7 +165,7 @@ var _ = Describe("Config", func() {
 		})
 	})
 
-	Context("config overiden with environment variables", func() {
+	Context("config overidden with environment variables", func() {
 
 		BeforeEach(func() {
 			app := cli.NewApp()
@@ -177,6 +180,7 @@ var _ = Describe("Config", func() {
 
 			os.Setenv("A8_REGISTER", "true")
 			os.Setenv("A8_PROXY", "true")
+			os.Setenv("A8_PROXY_ADAPTER", "envoy")
 			os.Setenv("A8_DNS", "true")
 			os.Setenv("A8_PROXY_TLS", "false")
 			os.Setenv("A8_PROXY_CERT_PATH", "/etc/certs/server.pem")
@@ -211,6 +215,7 @@ var _ = Describe("Config", func() {
 		AfterEach(func() {
 			os.Unsetenv("A8_REGISTER")
 			os.Unsetenv("A8_PROXY")
+			os.Unsetenv("A8_PROXY_ADAPTER")
 			os.Unsetenv("A8_DNS")
 			os.Unsetenv("A8_PROXY_TLS")
 			os.Unsetenv("A8_PROXY_CERT_PATH")
@@ -241,6 +246,7 @@ var _ = Describe("Config", func() {
 		It("uses config values from environment variables", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.ProxyAdapter).To(Equal(EnvoyAdapter))
 			Expect(c.DNS).To(Equal(true))
 			Expect(c.ProxyConfig.TLS).To(Equal(false))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
@@ -291,6 +297,7 @@ var _ = Describe("Config", func() {
 			configYaml := `
 register: true
 proxy: true
+proxy_adapter: envoy
 dns: true
 
 proxy_config:
@@ -379,6 +386,7 @@ log_level: debug
 		It("uses config values from configuration file", func() {
 			Expect(c.Register).To(Equal(true))
 			Expect(c.Proxy).To(Equal(true))
+			Expect(c.ProxyAdapter).To(Equal(EnvoyAdapter))
 			Expect(c.DNS).To(Equal(true))
 			Expect(c.ProxyConfig.TLS).To(Equal(true))
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
@@ -445,9 +453,10 @@ log_level: debug
 					Port:   8053,
 					Domain: "amalgam8",
 				},
-				Proxy:    true,
-				Register: true,
-				DNS:      true,
+				Proxy:        true,
+				ProxyAdapter: NGINXAdapter,
+				Register:     true,
+				DNS:          true,
 				Service: Service{
 					Name: "mock",
 				},

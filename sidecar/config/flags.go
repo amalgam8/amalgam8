@@ -29,6 +29,7 @@ const (
 	proxyCertPathFlag       = "proxy_cert_path"
 	proxyCertKeyPathFlag    = "proxy_cert_key_path"
 	proxyCACertPathFlag     = "proxy_ca_cert_path"
+	proxyAdapterFlag        = "proxy_adapter"
 	serviceFlag             = "service"
 	endpointHostFlag        = "endpoint_host"
 	endpointPortFlag        = "endpoint_port"
@@ -74,7 +75,12 @@ var Flags = []cli.Flag{
 	cli.BoolFlag{
 		Name:   proxyFlag,
 		EnvVar: envVar(proxyFlag),
-		Usage:  "Enable automatic service discovery and load balancing across services using NGINX",
+		Usage:  "Start proxy",
+	},
+	cli.StringFlag{
+		Name:   proxyAdapterFlag,
+		EnvVar: envVar(proxyAdapterFlag),
+		Usage:  fmt.Sprintf("Proxy adapter (%v)", strings.Join(SupportedAdapters, ", ")),
 	},
 	cli.BoolFlag{
 		Name:   dnsFlag,

@@ -66,9 +66,6 @@ func (c *client) Update(newInstances []api.ServiceInstance, newRules []api.Rule)
 		return err
 	}
 
-	// TODO: remove this overly verbose logging?
-	logrus.WithField("data", string(data)).Debug("Updating NGINX server")
-
 	reader := bytes.NewReader(data)
 	req, err := http.NewRequest("POST", c.url+"/a8-admin", reader)
 	if err != nil {

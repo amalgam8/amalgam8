@@ -14,14 +14,8 @@
 
 package proxy
 
-import (
-	"testing"
-
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
-)
-
-func TestPackage(t *testing.T) {
-	RegisterFailHandler(Fail)
-	RunSpecs(t, "Poll Suite")
+// Adapter interface for proxy implementations.
+type Adapter interface {
+	Start() error
+	Stop() error
 }

@@ -17,20 +17,24 @@ package debug
 import (
 	"net/http"
 
+	"sync"
+
 	"github.com/amalgam8/amalgam8/pkg/api"
-	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/ant0ine/go-json-rest/rest"
 )
 
 // API handles debugging API calls to sidecar for checking state
 type API struct {
-	nginxProxy proxy.NGINXProxy
+	instances []api.ServiceInstance
+	rules     []api.Rule
+	mutex     sync.Mutex
 }
 
 // NewAPI creates struct
-func NewAPI(nginxProxy proxy.NGINXProxy) *API {
+func NewAPI() *API {
 	return &API{
-		nginxProxy: nginxProxy,
+		instances: []api.ServiceInstance{},
+		rules:     []api.Rule{},
 	}
 }
 
@@ -49,18 +53,35 @@ func (d *API) Routes(middlewares ...rest.Middleware) []*rest.Route {
 // checkState returns the cached rules from controller and cached instances
 // from registry stored in sidecar memory
 func (d *API) checkState(w rest.ResponseWriter, req *rest.Request) {
-
-	cachedInstances, cachedRules := d.nginxProxy.GetState()
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
 
 	state := struct {
 		Instances []api.ServiceInstance `json:"instances"`
 		Rules     []api.Rule            `json:"rules"`
 	}{
-		Instances: cachedInstances,
-		Rules:     cachedRules,
+		Instances: d.instances,
+		Rules:     d.rules,
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&state)
+}
 
+// CatalogChange updates on a change in the catalog.
+func (d *API) CatalogChange(instances []api.ServiceInstance) error {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	d.instances = instances
+	return nil
+}
+
+// RuleChange updates NGINX on a change in the proxy configuration.
+func (d *API) RuleChange(rules []api.Rule) error {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	d.rules = rules
+	return nil
 }

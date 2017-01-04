@@ -17,6 +17,8 @@ package monitor
 import (
 	"time"
 
+	"sync"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 )
@@ -33,18 +35,27 @@ type RulesConfig struct {
 	PollInterval time.Duration
 }
 
+// RulesMonitor interface.
+type RulesMonitor interface {
+	Monitor
+	AddListener(RulesListener)
+	RemoveListener(RulesListener)
+}
+
 type rulesMonitor struct {
 	rules api.RulesService
 
 	ticker       *time.Ticker
 	pollInterval time.Duration
 
-	revision  int64
+	revision int64
+
 	listeners []RulesListener
+	mutex     sync.Mutex
 }
 
 // NewRulesMonitor instantiates a new rules monitor
-func NewRulesMonitor(conf RulesConfig) Monitor {
+func NewRulesMonitor(conf RulesConfig) RulesMonitor {
 	return &rulesMonitor{
 		rules:        conf.Rules,
 		listeners:    conf.Listeners,
@@ -53,27 +64,60 @@ func NewRulesMonitor(conf RulesConfig) Monitor {
 	}
 }
 
+// AddListener adds a listener
+func (m *rulesMonitor) AddListener(listener RulesListener) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	// Copy-On-Write
+	newListeners := make([]RulesListener, len(m.listeners), len(m.listeners)+1)
+	copy(newListeners, m.listeners)
+	m.listeners = append(newListeners, listener)
+}
+
+// RemoveListener removes the listener
+func (m *rulesMonitor) RemoveListener(listener RulesListener) {
+	// Guard against panics from non-comparable listeners.
+	defer func() {
+		if r := recover(); r != nil {
+			logrus.WithField("recovered", r).Error("Encountered panic while removing listener")
+		}
+	}()
+
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for i := range m.listeners {
+		if m.listeners[i] == listener {
+			newListeners := make([]RulesListener, len(m.listeners)-1)
+			copy(newListeners, m.listeners[:i])
+			copy(newListeners[i:], m.listeners[i+1:])
+			m.listeners = newListeners
+			break
+		}
+	}
+}
+
 // Start monitoring the rules service. This is a blocking operation.
-func (c *rulesMonitor) Start() error {
+func (m *rulesMonitor) Start() error {
 	// Stop existing ticker if necessary
-	if c.ticker != nil {
-		if err := c.Stop(); err != nil {
+	if m.ticker != nil {
+		if err := m.Stop(); err != nil {
 			logrus.WithError(err).Error("Could not stop existing periodic poll")
 			return err
 		}
 	}
 
 	// Create new ticker
-	c.ticker = time.NewTicker(c.pollInterval)
+	m.ticker = time.NewTicker(m.pollInterval)
 
 	// Do initial poll
-	if err := c.poll(); err != nil {
+	if err := m.poll(); err != nil {
 		logrus.WithError(err).Error("Poll failed")
 	}
 
 	// Start periodic poll
-	for range c.ticker.C {
-		if err := c.poll(); err != nil {
+	for range m.ticker.C {
+		if err := m.poll(); err != nil {
 			logrus.WithError(err).Error("Poll failed")
 		}
 	}
@@ -82,25 +126,33 @@ func (c *rulesMonitor) Start() error {
 }
 
 // poll the rules service for changes and notify listeners
-func (c *rulesMonitor) poll() error {
+func (m *rulesMonitor) poll() error {
 
 	// Get the latest rules from the A8 controller.
-	rulesset, err := c.rules.ListRules(&api.RuleFilter{})
+	rulesset, err := m.rules.ListRules(&api.RuleFilter{})
 	if err != nil {
 		logrus.WithError(err).Error("Call to rules service failed")
 		return err
 	}
 
 	// Short-circuit if the controller's revision is not newer than our revision
-	if c.revision >= rulesset.Revision {
+	if m.revision >= rulesset.Revision {
 		return nil
 	}
 
 	// Update our revision
-	c.revision = rulesset.Revision
+	m.revision = rulesset.Revision
 
-	// Notify listeners
-	for _, listener := range c.listeners {
+	// Notify the listeners
+	var listeners []RulesListener
+	func() {
+		m.mutex.Lock()
+		defer m.mutex.Unlock()
+		listeners = make([]RulesListener, len(m.listeners))
+		copy(listeners, m.listeners)
+	}()
+
+	for _, listener := range m.listeners {
 		if err := listener.RuleChange(rulesset.Rules); err != nil {
 			logrus.WithError(err).Warn("Rules listener failed")
 		}
@@ -110,11 +162,11 @@ func (c *rulesMonitor) poll() error {
 }
 
 // Stop monitoring the rules service
-func (c *rulesMonitor) Stop() error {
+func (m *rulesMonitor) Stop() error {
 	// Stop ticker if necessary
-	if c.ticker != nil {
-		c.ticker.Stop()
-		c.ticker = nil
+	if m.ticker != nil {
+		m.ticker.Stop()
+		m.ticker = nil
 	}
 
 	return nil

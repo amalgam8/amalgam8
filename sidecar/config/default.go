@@ -18,9 +18,10 @@ import "time"
 
 // DefaultConfig defines default values for the various configuration options
 var DefaultConfig = Config{
-	Register: false,
-	Proxy:    false,
-	DNS:      false,
+	Register:     false,
+	Proxy:        false,
+	ProxyAdapter: NGINXAdapter,
+	DNS:          false,
 
 	ProxyConfig: ProxyConfig{
 		TLS:         false,

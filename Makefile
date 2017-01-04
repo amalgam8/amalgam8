@@ -63,7 +63,7 @@ SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
 # build flags
-BUILDFLAGS	:=
+BUILDFLAGS	:= -i
 
 # linker flags
 LDFLAGS     :=

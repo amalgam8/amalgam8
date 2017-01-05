@@ -50,7 +50,7 @@ type Backend struct {
 	Tags    []string `json:"tags"`
 	Weight  float64  `json:"weight,omitempty"`
 	Timeout float64  `json:"timeout,omitempty"`
-	Retries int      `json:"retries,omitempty"` // FIXME: this BREAKS disabling retries by setting them to 0!
+	Retries int      `json:"retries,omitempty"`
 }
 
 // Action to take.

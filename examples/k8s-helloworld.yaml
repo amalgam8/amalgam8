@@ -54,7 +54,7 @@ spec:
           value: 5s
         - name: A8_SERVICE
           value: gateway:none
-        - name: A8_DISCOVERY_BACKEND
+        - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
         - name: A8_ELASTICSEARCH_SERVER
           value: $(LOGSERVER_SERVICE_HOST):9200

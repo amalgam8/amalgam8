@@ -41,7 +41,7 @@ var DefaultConfig = Config{
 		Type: "http",
 	},
 
-	DiscoveryBackend: Amalgam8Backend,
+	DiscoveryAdapter: Amalgam8Adapter,
 
 	A8Registry: Amalgam8Registry{
 		URL:   "",
@@ -55,7 +55,7 @@ var DefaultConfig = Config{
 		Poll:  time.Duration(15 * time.Second),
 	},
 
-	RulesBackend: Amalgam8Backend,
+	RulesAdapter: Amalgam8Adapter,
 
 	Kubernetes: Kubernetes{
 		URL:       "",

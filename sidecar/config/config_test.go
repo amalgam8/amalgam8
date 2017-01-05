@@ -56,8 +56,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Service).To(Equal(DefaultConfig.Service))
 			Expect(c.Endpoint.Port).To(Equal(DefaultConfig.Endpoint.Port))
 			Expect(c.Endpoint.Type).To(Equal(DefaultConfig.Endpoint.Type))
-			Expect(c.DiscoveryBackend).To(Equal(DefaultConfig.DiscoveryBackend))
-			Expect(c.RulesBackend).To(Equal(DefaultConfig.RulesBackend))
+			Expect(c.DiscoveryAdapter).To(Equal(DefaultConfig.DiscoveryAdapter))
+			Expect(c.RulesAdapter).To(Equal(DefaultConfig.RulesAdapter))
 			Expect(c.A8Registry).To(Equal(DefaultConfig.A8Registry))
 			Expect(c.A8Controller).To(Equal(DefaultConfig.A8Controller))
 			Expect(c.Kubernetes).To(Equal(DefaultConfig.Kubernetes))
@@ -96,8 +96,8 @@ var _ = Describe("Config", func() {
 				"--endpoint_host=localhost",
 				"--endpoint_port=9080",
 				"--endpoint_type=https",
-				"--discovery_backend=kubernetes",
-				"--rules_backend=kubernetes",
+				"--discovery_adapter=kubernetes",
+				"--rules_adapter=kubernetes",
 				"--registry_url=http://registry:8080",
 				"--registry_token=local",
 				"--registry_poll=5s",
@@ -135,8 +135,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
-			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.DiscoveryAdapter).To(Equal("kubernetes"))
+			Expect(c.RulesAdapter).To(Equal("kubernetes"))
 			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.A8Registry.Token).To(Equal("local"))
 			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -186,8 +186,8 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_ENDPOINT_HOST", "localhost")
 			os.Setenv("A8_ENDPOINT_PORT", "9080")
 			os.Setenv("A8_ENDPOINT_TYPE", "https")
-			os.Setenv("A8_DISCOVERY_BACKEND", "kubernetes")
-			os.Setenv("A8_RULES_BACKEND", "kubernetes")
+			os.Setenv("A8_DISCOVERY_ADAPTER", "kubernetes")
+			os.Setenv("A8_RULES_ADAPTER", "kubernetes")
 			os.Setenv("A8_REGISTRY_URL", "http://registry:8080")
 			os.Setenv("A8_REGISTRY_TOKEN", "local")
 			os.Setenv("A8_REGISTRY_POLL", "5s")
@@ -223,8 +223,8 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_ENDPOINT_PORT")
 			os.Unsetenv("A8_ENDPOINT_TYPE")
 			os.Unsetenv("A8_REGISTRY_URL")
-			os.Unsetenv("A8_DISCOVERY_BACKEND")
-			os.Unsetenv("A8_RULES_BACKEND")
+			os.Unsetenv("A8_DISCOVERY_ADAPTER")
+			os.Unsetenv("A8_RULES_ADAPTER")
 			os.Unsetenv("A8_REGISTRY_TOKEN")
 			os.Unsetenv("A8_REGISTRY_POLL")
 			os.Unsetenv("A8_KUBERNETES_URL")
@@ -255,8 +255,8 @@ var _ = Describe("Config", func() {
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
-			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.DiscoveryAdapter).To(Equal("kubernetes"))
+			Expect(c.RulesAdapter).To(Equal("kubernetes"))
 			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.A8Registry.Token).To(Equal("local"))
 			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -316,8 +316,8 @@ endpoint:
   port: 9080
   type: https
 
-discovery_backend: kubernetes
-rules_backend: kubernetes
+discovery_adapter: kubernetes
+rules_adapter: kubernetes
 
 registry:
   url:   http://registry:8080
@@ -398,8 +398,8 @@ log_level: debug
 			Expect(c.Endpoint.Host).To(Equal("localhost"))
 			Expect(c.Endpoint.Port).To(Equal(9080))
 			Expect(c.Endpoint.Type).To(Equal("https"))
-			Expect(c.DiscoveryBackend).To(Equal("kubernetes"))
-			Expect(c.RulesBackend).To(Equal("kubernetes"))
+			Expect(c.DiscoveryAdapter).To(Equal("kubernetes"))
+			Expect(c.RulesAdapter).To(Equal("kubernetes"))
 			Expect(c.A8Registry.URL).To(Equal("http://registry:8080"))
 			Expect(c.A8Registry.Token).To(Equal("local"))
 			Expect(c.A8Registry.Poll).To(Equal(time.Duration(5) * time.Second))
@@ -439,8 +439,8 @@ log_level: debug
 
 		BeforeEach(func() {
 			c = &Config{
-				DiscoveryBackend: Amalgam8Backend,
-				RulesBackend:     Amalgam8Backend,
+				DiscoveryAdapter: Amalgam8Adapter,
+				RulesAdapter:     Amalgam8Adapter,
 				A8Registry: Amalgam8Registry{
 					URL:   "http://registry",
 					Token: "sd_token",

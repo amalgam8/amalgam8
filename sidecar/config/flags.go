@@ -34,7 +34,7 @@ const (
 	endpointHostFlag        = "endpoint_host"
 	endpointPortFlag        = "endpoint_port"
 	endpointTypeFlag        = "endpoint_type"
-	discoveryBackendFlag    = "discovery_backend"
+	discoveryAdapterFlag    = "discovery_adapter"
 	registryURLFlag         = "registry_url"
 	registryTokenFlag       = "registry_token"
 	registryPollFlag        = "registry_poll"
@@ -43,7 +43,7 @@ const (
 	kubernetesNamespaceFlag = "kubernetes_namespace"
 	kubernetesPodNameFlag   = "kubernetes_pod_name"
 	eurekaURLFlag           = "eureka_url"
-	rulesBackendFlag        = "rules_backend"
+	rulesAdapterFlag        = "rules_adapter"
 	controllerURLFlag       = "controller_url"
 	controllerTokenFlag     = "controller_token"
 	controllerPollFlag      = "controller_poll"
@@ -128,9 +128,9 @@ var Flags = []cli.Flag{
 		Usage:  "Service endpoint type (http, https, tcp, udp, user)",
 	},
 	cli.StringFlag{
-		Name:   discoveryBackendFlag,
-		EnvVar: envVar(discoveryBackendFlag),
-		Usage:  fmt.Sprintf("Discovery backend (%s, %s, %s)", Amalgam8Backend, KubernetesBackend, EurekaBackend),
+		Name:   discoveryAdapterFlag,
+		EnvVar: envVar(discoveryAdapterFlag),
+		Usage:  fmt.Sprintf("Discovery adapter (%s, %s, %s)", Amalgam8Adapter, KubernetesAdapter, EurekaAdapter),
 	},
 	cli.StringFlag{
 		Name:   registryURLFlag,
@@ -173,9 +173,9 @@ var Flags = []cli.Flag{
 		Usage:  "List of Eureka server URLs",
 	},
 	cli.StringFlag{
-		Name:   rulesBackendFlag,
-		EnvVar: envVar(rulesBackendFlag),
-		Usage:  fmt.Sprintf("Rules service backend (%s, %s)", Amalgam8Backend, KubernetesBackend),
+		Name:   rulesAdapterFlag,
+		EnvVar: envVar(rulesAdapterFlag),
+		Usage:  fmt.Sprintf("Rules service adapter (%s, %s)", Amalgam8Adapter, KubernetesAdapter),
 	},
 	cli.StringFlag{
 		Name:   controllerURLFlag,

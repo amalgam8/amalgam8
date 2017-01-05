@@ -37,11 +37,11 @@ const (
 	IgnoreProcess = "ignore"
 )
 
-// Supported Service Registry/Discovery/Rules backends
+// Supported Service Registry/Discovery/Rules adapter
 const (
-	Amalgam8Backend   = "amalgam8"
-	KubernetesBackend = "kubernetes"
-	EurekaBackend     = "eureka"
+	Amalgam8Adapter   = "amalgam8"
+	KubernetesAdapter = "kubernetes"
+	EurekaAdapter     = "eureka"
 )
 
 // Supported proxy adapters
@@ -145,8 +145,8 @@ type Config struct {
 	Service  Service  `yaml:"service"`
 	Endpoint Endpoint `yaml:"endpoint"`
 
-	DiscoveryBackend string `yaml:"discovery_backend"`
-	RulesBackend     string `yaml:"rules_backend"`
+	DiscoveryAdapter string `yaml:"discovery_adapter"`
+	RulesAdapter     string `yaml:"rules_adapter"`
 
 	A8Registry   Amalgam8Registry   `yaml:"registry"`
 	A8Controller Amalgam8Controller `yaml:"controller"`
@@ -246,8 +246,8 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
 	loadFromContextIfSet(&c.Endpoint.Port, endpointPortFlag)
 	loadFromContextIfSet(&c.Endpoint.Type, endpointTypeFlag)
-	loadFromContextIfSet(&c.DiscoveryBackend, discoveryBackendFlag)
-	loadFromContextIfSet(&c.RulesBackend, rulesBackendFlag)
+	loadFromContextIfSet(&c.DiscoveryAdapter, discoveryAdapterFlag)
+	loadFromContextIfSet(&c.RulesAdapter, rulesAdapterFlag)
 	loadFromContextIfSet(&c.A8Registry.URL, registryURLFlag)
 	loadFromContextIfSet(&c.A8Registry.Token, registryTokenFlag)
 	loadFromContextIfSet(&c.A8Registry.Poll, registryPollFlag)
@@ -355,14 +355,14 @@ func (c *Config) Validate() error {
 	)
 
 	validators = append(validators,
-		IsInSet("Discovery backend", c.DiscoveryBackend, []string{Amalgam8Backend, KubernetesBackend, EurekaBackend}),
+		IsInSet("Discovery adapter", c.DiscoveryAdapter, []string{Amalgam8Adapter, KubernetesAdapter, EurekaAdapter}),
 		IsEmptyOrValidURL("Amalgam8 Registry URL", c.A8Registry.URL),
 		IsEmptyOrValidURL("Kubernetes URL", c.Kubernetes.URL))
 	for _, url := range c.Eureka.URLs {
 		validators = append(validators, IsEmptyOrValidURL("Eureka URL", url))
 	}
 
-	if c.DiscoveryBackend == Amalgam8Backend {
+	if c.DiscoveryAdapter == Amalgam8Adapter {
 		validators = append(validators,
 			IsValidURL("Amalgam8 Registry URL", c.A8Registry.URL),
 			IsInRangeDuration("Amalgam8 Registry polling interval", c.A8Registry.Poll, 5*time.Second, 1*time.Hour))
@@ -381,9 +381,9 @@ func (c *Config) Validate() error {
 	if c.Proxy {
 		validators = append(
 			validators,
-			IsInSet("Rules service backend", c.RulesBackend, []string{Amalgam8Backend, KubernetesBackend}),
+			IsInSet("Rules service adapter", c.RulesAdapter, []string{Amalgam8Adapter, KubernetesAdapter}),
 			IsInSet("Proxy adapter", c.ProxyAdapter, SupportedAdapters))
-		if c.RulesBackend == Amalgam8Backend {
+		if c.RulesAdapter == Amalgam8Adapter {
 			validators = append(validators,
 				IsValidURL("Amalgam8 Controller URL", c.A8Controller.URL),
 				IsInRangeDuration("Amalgam8 Controller polling interval", c.A8Controller.Poll, 5*time.Second, 1*time.Hour))

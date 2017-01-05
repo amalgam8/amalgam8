@@ -187,7 +187,7 @@
           "exclusiveMinimum": true
         },
         "retries": {
-          "description": "Number of times to retry a failed request to a different instances. If not set, all instances are tried with max 10 retries. Set to 0 to disable retries",
+          "description": "Number of times to retry a failed request to a different instances. Set to 0 to disable retries",
           "type": "number",
           "minimum": 0,
           "exclusiveMinimum": false

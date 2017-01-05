@@ -20,6 +20,9 @@ set -x
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$1" == "start" ]; then
+    # Increase memory limit for elasticsearch 5.1
+    sudo sysctl -w vm.max_map_count=262144
+
     echo "starting Control plane components (registry, and controller)"
     docker-compose -f $SCRIPTDIR/controlplane.yaml up -d
     echo "waiting for the cluster to initialize.."

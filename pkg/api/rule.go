@@ -18,11 +18,103 @@ import "encoding/json"
 
 // Rule represents an individual rule.
 type Rule struct {
-	ID          string          `json:"id"`
-	Priority    int             `json:"priority"`
-	Tags        []string        `json:"tags,omitempty"`
-	Destination string          `json:"destination"`
-	Match       json.RawMessage `json:"match,omitempty"`
-	Route       json.RawMessage `json:"route,omitempty"`
-	Actions     json.RawMessage `json:"actions,omitempty"`
+	ID          string   `json:"id"`
+	Priority    int      `json:"priority"`
+	Tags        []string `json:"tags,omitempty"`
+	Destination string   `json:"destination"`
+	Match       *Match   `json:"match,omitempty"`
+	Route       *Route   `json:"route,omitempty"`
+	Actions     []Action `json:"actions,omitempty"`
+}
+
+// Source definition.
+type Source struct {
+	Name string   `json:"name"`
+	Tags []string `json:"tags,omitempty"`
+}
+
+// Match definition
+type Match struct {
+	Source  *Source           `json:"source,omitempty"`
+	Headers map[string]string `json:"headers,omitempty"`
+}
+
+// Route definition
+type Route struct {
+	Backends []Backend `json:"backends"`
+}
+
+// Backend represents a backend to route to.
+type Backend struct {
+	Name    string   `json:"name,omitempty"`
+	Tags    []string `json:"tags"`
+	Weight  float64  `json:"weight,omitempty"`
+	Timeout float64  `json:"timeout,omitempty"`
+	Retries int      `json:"retries,omitempty"` // FIXME: this BREAKS disabling retries by setting them to 0!
+}
+
+// Action to take.
+type Action struct {
+	internal   interface{}
+	actionType string
+}
+
+// MarshalJSON implement the json marshal function
+func (a *Action) MarshalJSON() ([]byte, error) {
+	return json.Marshal(a.internal)
+}
+
+// UnmarshalJSON implement the json unmarshal function
+func (a *Action) UnmarshalJSON(data []byte) error {
+	action := struct {
+		Type string `json:"action"`
+	}{}
+	err := json.Unmarshal(data, &action)
+	if err != nil {
+		return err
+	}
+
+	a.actionType = action.Type
+
+	switch action.Type {
+	case "delay":
+		delay := DelayAction{}
+		if err = json.Unmarshal(data, &delay); err != nil {
+			return err
+		}
+		a.internal = delay
+	case "abort":
+		abort := AbortAction{}
+		if err = json.Unmarshal(data, &abort); err != nil {
+			return err
+		}
+		a.internal = abort
+	}
+	return nil
+}
+
+// GetType returns action type
+func (a *Action) GetType() string {
+	return a.actionType
+}
+
+// Internal returns action type interface
+func (a *Action) Internal() interface{} {
+	return a.internal
+}
+
+// DelayAction definition
+type DelayAction struct {
+	Action      string   `json:"action"`
+	Probability float64  `json:"probability"`
+	Tags        []string `json:"tags"`
+	Duration    float64  `json:"duration"`
+}
+
+// AbortAction definition
+type AbortAction struct {
+	Action      string   `json:"action"`
+	Probability float64  `json:"probability"`
+	Tags        []string `json:"tags"`
+	ReturnCode  int      `json:"return_code"`
 }

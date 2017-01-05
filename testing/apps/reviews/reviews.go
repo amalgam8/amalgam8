@@ -75,6 +75,16 @@ func main() {
 
 	http.HandleFunc("/reviews", reviewsHandler)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		conf := struct {
+			EnableRatings bool
+			StarColor     string
+		}{
+			EnableRatings: enableRatings,
+			StarColor:     starColor,
+		}
+
+		data, _ := json.Marshal(&conf)
+		w.Write(data)
 		w.WriteHeader(http.StatusOK)
 	})
 	log.Fatal(http.ListenAndServe(":"+port, nil))

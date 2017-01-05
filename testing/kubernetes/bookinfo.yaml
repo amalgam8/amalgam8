@@ -149,7 +149,7 @@ spec:
         env:
         - name: A8_PROXY
           value: "true"
-        - name: A8_DISCOVERY_BACKEND
+        - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -187,7 +187,7 @@ spec:
         env:
         - name: A8_PROXY
           value: "true"
-        - name: A8_DISCOVERY_BACKEND
+        - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
@@ -242,7 +242,7 @@ spec:
         env:
         - name: A8_PROXY
           value: "true"
-        - name: A8_DISCOVERY_BACKEND
+        - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
         - name: A8_CONTROLLER_URL
           value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)

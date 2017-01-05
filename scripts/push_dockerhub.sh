@@ -45,6 +45,25 @@ patch_tag="$major.$minor.$patch"
 minor_tag="$major.$minor"
 major_tag="$major"
 
+echo "Tag: $tag"
+
+EXAMPLE_HELLOWORLD_IMAGE_V1="amalgam8/a8-examples-helloworld-v1"
+EXAMPLE_HELLOWORLD_IMAGE_V2="amalgam8/a8-examples-helloworld-v2"
+EXAMPLE_HELLOWORLD_SIDECAR_V1="amalgam8/a8-examples-helloworld-sidecar-v1"
+EXAMPLE_HELLOWORLD_SIDECAR_V2="amalgam8/a8-examples-helloworld-sidecar-v2"
+EXAMPLE_BOOKINFO_PRODUCTPAGE_V1="amalgam8/a8-examples-bookinfo-productpage-v1"
+EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1="amalgam8/a8-examples-bookinfo-productpage-sidecar-v1"
+EXAMPLE_BOOKINFO_DETAILS_V1="amalgam8/a8-examples-bookinfo-details-v1"
+EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1="amalgam8/a8-examples-bookinfo-details-sidecar-v1"
+EXAMPLE_BOOKINFO_REVIEWS_V1="amalgam8/a8-examples-bookinfo-reviews-v1"
+EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1="amalgam8/a8-examples-bookinfo-reviews-sidecar-v1"
+EXAMPLE_BOOKINFO_REVIEWS_V2="amalgam8/a8-examples-bookinfo-reviews-v2"
+EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2="amalgam8/a8-examples-bookinfo-reviews-sidecar-v2"
+EXAMPLE_BOOKINFO_REVIEWS_V3="amalgam8/a8-examples-bookinfo-reviews-v3"
+EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3="amalgam8/a8-examples-bookinfo-reviews-sidecar-v3"
+EXAMPLE_BOOKINFO_RATINGS_V1="amalgam8/a8-examples-bookinfo-ratings-v1"
+EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1="amalgam8/a8-examples-bookinfo-ratings-sidecar-v1"
+
 echo "Building docker images..."
 docker build -t "$REGISTRY_IMAGE:latest" -f docker/Dockerfile.registry .
 docker build -t "$CONTROLLER_IMAGE:latest" -f docker/Dockerfile.controller .
@@ -94,6 +113,54 @@ if [ "$push_patch" = true ]; then
     echo "Pushing '$SIDECAR_IMAGE:$patch_tag-alpine' to Docker Hub..."
     docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$patch_tag-alpine"
     docker push "$SIDECAR_IMAGE:$patch_tag-alpine"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_IMAGE_V1' to Docker Hub..."
+    docker push "$EXAMPLE_HELLOWORLD_IMAGE_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_SIDECAR_V1' to Docker Hub..."
+    docker push "$EXAMPLE_HELLOWORLD_SIDECAR_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_IMAGE_V2' to Docker Hub..."
+    docker push "$EXAMPLE_HELLOWORLD_IMAGE_V2:$tag"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_SIDECAR_V2' to Docker Hub..."
+    docker push "$EXAMPLE_HELLOWORLD_SIDECAR_V2:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_DETAILS_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_DETAILS_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V2' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V2:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V3' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V3:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_RATINGS_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_RATINGS_V1:$tag"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1' to Docker Hub..."
+    docker push "$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1:$tag"
 fi
 if [ "$push_minor" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:$minor_tag' to Docker Hub..."
@@ -141,6 +208,70 @@ if [ "$push_latest" = true ]; then
     
     echo "Pushing '$SIDECAR_IMAGE:alpine' to Docker Hub..."
     docker push "$SIDECAR_IMAGE:alpine"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_IMAGE_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_HELLOWORLD_IMAGE_V1:$tag" "$EXAMPLE_HELLOWORLD_IMAGE_V1:latest"
+    docker push "$EXAMPLE_HELLOWORLD_IMAGE_V1"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_SIDECAR_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_HELLOWORLD_SIDECAR_V1:$tag" "$EXAMPLE_HELLOWORLD_SIDECAR_V1:latest"
+    docker push "$EXAMPLE_HELLOWORLD_SIDECAR_V1"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_IMAGE_V2' to Docker Hub..."
+    docker tag "$EXAMPLE_HELLOWORLD_IMAGE_V2:$tag" "$EXAMPLE_HELLOWORLD_IMAGE_V2:latest"
+    docker push "$EXAMPLE_HELLOWORLD_IMAGE_V2"
+
+    echo "Pushing '$EXAMPLE_HELLOWORLD_SIDECAR_V2' to Docker Hub..."
+    docker tag "$EXAMPLE_HELLOWORLD_SIDECAR_V2:$tag" "$EXAMPLE_HELLOWORLD_SIDECAR_V2:latest"
+    docker push "$EXAMPLE_HELLOWORLD_SIDECAR_V2"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1:$tag" "$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_PRODUCTPAGE_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1:$tag" "$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_PRODUCTPAGE_SIDECAR_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_DETAILS_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_DETAILS_V1:$tag" "$EXAMPLE_BOOKINFO_DETAILS_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_DETAILS_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1:$tag" "$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_DETAILS_SIDECAR_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_V1:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V2' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_V2:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_V2:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V2"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V2"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_V3' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_V3:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_V3:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_V3"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3:$tag" "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3:latest"
+    docker push "$EXAMPLE_BOOKINFO_REVIEWS_SIDECAR_V3"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_RATINGS_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_RATINGS_V1:$tag" "$EXAMPLE_BOOKINFO_RATINGS_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_RATINGS_V1"
+
+    echo "Pushing '$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1' to Docker Hub..."
+    docker tag "$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1:$tag" "$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1:latest"
+    docker push "$EXAMPLE_BOOKINFO_RATINGS_SIDECAR_V1"
 fi
 
 echo "Signing out of Docker Hub"

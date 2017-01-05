@@ -14,30 +14,74 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
 set -x
 set -o errexit
+
+# Set env vars
+export A8_CONTROLLER_URL=http://localhost:31200
+export A8_REGISTRY_URL=http://localhost:31300
+export A8_GATEWAY_URL=http://localhost:32000
+export A8_LOG_SERVER=http://localhost:30200
+export A8_GREMLIN_URL=http://localhost:31500
+
+if [ -z "$A8_TEST_GREMLIN" ]; then
+    A8_TEST_GREMLIN="true"
+fi
 
 jsondiff() {
     # Sort JSON fields, or fallback to original text
     file1=$(jq -S . $1 2> /dev/null) || file1=$(cat $1)
     file2=$(jq -S . $2 2> /dev/null) || file2=$(cat $2)
-    
+
     # Diff, but ignore all whitespace since
-    diff -Ewb <(echo $file1) <(echo $file2)        
+    diff -Ewb <(echo $file1) <(echo $file2)
 }
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+make -C $SCRIPTDIR/../../ build.cli
+CLIBIN=$SCRIPTDIR/../../bin/a8ctl-beta
 
-a8ctl rule-clear
+$CLIBIN rule-delete -a -f
 sleep 2
 
 ######Version Routing##############
 echo "testing version routing.."
-a8ctl route-set --default v1 productpage
-a8ctl route-set --default v1 details
-a8ctl route-set --default v1 ratings
-a8ctl route-set --default v1 --selector 'v2(user="jason")' reviews
+cat << EOF | $CLIBIN rule-create -r
+rules:
+- priority: 1
+  destination: productpage
+  route:
+    backends:
+    - tags:
+      - version=v1
+- priority: 1
+  destination: details
+  route:
+    backends:
+    - tags:
+      - version=v1
+- priority: 1
+  destination: ratings
+  route:
+    backends:
+    - tags:
+      - version=v1
+- priority: 2
+  destination: reviews
+  match:
+    headers:
+      Cookie: .*?user=jason
+  route:
+    backends:
+    - tags:
+      - version=v2
+- priority: 1
+  destination: reviews
+  route:
+    backends:
+    - tags:
+      - version=v1
+EOF
 sleep 10
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
@@ -64,7 +108,27 @@ echo "works!"
 
 ########Fault injection
 echo "testing fault injection.."
-a8ctl rule-set --source reviews:v2 --destination ratings:v1 --header Cookie --pattern 'user=jason' --delay-probability 1.0 --delay 7
+output=$( cat << EOF | $CLIBIN rule-create -r
+rules:
+- priority: 10
+  destination: ratings
+  match:
+    source:
+      name: reviews
+      tags:
+      - version=v2
+    headers:
+      Cookie: .*?user=jason
+  actions:
+  - action: delay
+    duration: 7
+    probability: 1
+    tags:
+    - version=v1
+EOF
+)
+
+fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
 sleep 10
 
 ###For shriram
@@ -111,8 +175,8 @@ echo "works!"
 
 #####Clear rules and check
 echo "clearing all rules.."
-a8ctl rule-clear
-sleep 10
+$CLIBIN rule-delete -i $fault_rule_id
+sleep 15
 
 echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
 before=$(date +"%s")
@@ -133,3 +197,29 @@ if [ $? -gt 0 ]; then
     exit 1
 fi
 echo "works!"
+
+#######Gremlin
+if [ "$A8_TEST_GREMLIN" = true ]; then
+  GREMLIN_FILES=$SCRIPTDIR/../../examples
+  echo "Testing gremlin recipe.."
+  echo "please wait.."
+  MAX_LOOP=5
+  retry_count=1
+  while [  $retry_count -le $((MAX_LOOP)) ]; do
+  	$CLIBIN recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='user=jason' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
+
+  	jsondiff $SCRIPTDIR/recipe-run-results.json /tmp/recipe-run-results.json
+  	if [ $? -gt 0 ]; then
+  		(( retry_count=retry_count+1 ))
+  		echo "failed"
+  		echo "Recipe-run-results.json does not match the expected output."
+  		echo "Retrying.."
+  	else
+  		break
+  	fi
+  done
+  echo "works!"
+else
+  echo "Skip Gremlin recipe test.."
+fi
+echo "done!"

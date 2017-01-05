@@ -1,18 +1,15 @@
 APP_NAME 	:= $(shell basename `pwd`)
 IMAGE_NAME 	:= amalgam8/a8-testing-bookinfo-$(APP_NAME)
-LDFLAGS 	:=
 
-ifndef GOOS
-    GOOS := $(shell go env GOHOSTOS)
-endif
+BUILDFLAGS  := -i
+LDFLAGS 	:= -linkmode external -extldflags -static
 
-ifeq ($(GOOS),linux)
-	# linker flags to strip symbol tables and debug information
-	LDFLAGS     += -s -w
-endif
+# Integration test runs within docker containers only
+GOOS        := linux
+GOARCH      := amd64
 
 build:
-	@go build -o $(APP_NAME) -a -installsuffix nocgo -tags netgo -ldflags '$(LDFLAGS)'
+	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(APP_NAME)
 	
 dockerize:
 	@docker build -t $(IMAGE_NAME):v1 .

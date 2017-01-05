@@ -24,9 +24,6 @@ echo "Testing docker-based deployment.."
 $SCRIPTDIR/run-controlplane-docker.sh start
 sleep 5
 
-docker-compose -f $SCRIPTDIR/gateway.yaml up -d
-sleep 5
-
 docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
 sleep 10
 

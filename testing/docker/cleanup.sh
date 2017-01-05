@@ -20,7 +20,4 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 docker-compose -f $SCRIPTDIR/bookinfo.yaml kill
 docker-compose -f $SCRIPTDIR/bookinfo.yaml rm -f
 
-docker-compose -f $SCRIPTDIR/gateway.yaml kill
-docker-compose -f $SCRIPTDIR/gateway.yaml rm -f
-
 $SCRIPTDIR/run-controlplane-docker.sh stop

@@ -24,10 +24,11 @@ BUILDDIR    := build
 DOCKERDIR	:= docker
 RELEASEDIR  := release
 
-TARGET_OS := linux windows darwin
+TARGET_OS 	:= linux windows darwin
+GOHOSTOS 	:= $(shell go env GOHOSTOS)
 
 ifndef GOOS
-    GOOS := $(shell go env GOHOSTOS)
+    GOOS := $GOHOSTOS
 endif
 
 ifndef GOARCH
@@ -44,7 +45,7 @@ REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
 K8SRULES_APP_NAME		:= a8k8srulescontroller
-CLI_APP_NAME			:=  a8ctl-beta
+CLI_APP_NAME			:= a8ctl-beta
 
 REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
@@ -63,18 +64,23 @@ SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
 # build flags
-BUILDFLAGS	:= -i
+BUILDFLAGS	:=
 
 # linker flags
 LDFLAGS     :=
 
-ifeq ($(GOOS),linux)
+# These do not work on Mac.
+ifeq ($(GOHOSTOS),linux)
+	# install pkgs to speed up compilation
+	BUILDFLAGS	+= -i
+
 	# linker flags to strip symbol tables and debug information
 	LDFLAGS     += -s -w
-
-	# linker flags to enable static linking
-	LDFLAGS     += -linkmode external -extldflags -static
+	LDFLAGS     += -linkmode external
 endif
+
+# linker flags to enable static linking
+LDFLAGS 	+= -extldflags -static
 
 # linker flags to set build info variables
 BUILD_SYM	:= github.com/amalgam8/amalgam8/pkg/version

@@ -122,7 +122,7 @@ build.k8srules:
 build.cli: tools.go-bindata
 	@echo "--> building cli"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
+	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
 	@go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME) ./cmd/cli/ # build an additional binary for the current OS
 	@mv $(BINDIR)/$(CLI_APP_NAME)-windows $(BINDIR)/$(CLI_APP_NAME)-windows.exe # add extension to windows binary
 	@goimports -w ./cli/utils/i18n_resources.go

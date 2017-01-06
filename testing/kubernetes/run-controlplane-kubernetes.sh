@@ -19,14 +19,12 @@ set -x
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-cfile="controller.yaml"
-rdsfile="redis.yaml"
+ctrlplanefile="controlplane.yaml"
 
 if [ "$1" == "start" ]; then
-    echo "Starting redis storage"
-    kubectl create -f $SCRIPTDIR/$rdsfile
-    echo "Starting controller"
-    kubectl create -f $SCRIPTDIR/$cfile
+
+    echo "Starting control plane"
+    kubectl create -f $SCRIPTDIR/$ctrlplanefile
 
     echo "Waiting for control plane to initialize..."
 
@@ -54,9 +52,11 @@ if [ "$1" == "start" ]; then
 
 elif [ "$1" == "stop" ]; then
     echo "Stopping control plane services..."
-    kubectl delete -f $SCRIPTDIR/$cfile
+    kubectl delete -f $SCRIPTDIR/$ctrlplanefile
     sleep 3
-    kubectl delete -f $SCRIPTDIR/$rdsfile
+    # kubectl delete -f $SCRIPTDIR/$cfile
+    # sleep 3
+    # kubectl delete -f $SCRIPTDIR/$rdsfile
 else
     echo "usage: $0 start|stop"
     exit 1

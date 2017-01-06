@@ -27,9 +27,6 @@ sleep 10
 $SCRIPTDIR/run-controlplane-kubernetes.sh start
 sleep 10
 
-kubectl create -f $SCRIPTDIR/gateway.yaml
-sleep 5
-
 kubectl create -f $SCRIPTDIR/bookinfo.yaml
 echo "Waiting for the services to come online.."
 sleep 10

@@ -108,8 +108,8 @@ func (f *RuleFilter) Apply(rules []Rule) []Rule {
 		}
 
 		// Filter by rule type
-		if (f.RuleType == RuleAction && len(rule.Actions) == 0) ||
-			(f.RuleType == RuleRoute && len(rule.Route) == 0) {
+		if (f.RuleType == RuleAction && rule.Actions == nil) ||
+			(f.RuleType == RuleRoute && rule.Route == nil) {
 			continue
 		}
 

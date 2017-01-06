@@ -1,0 +1,28 @@
+[
+  {
+    "service": "details",
+    "instances": [
+      "version=v1(1)"
+    ]
+  },
+  {
+    "service": "productpage",
+    "instances": [
+      "version=v1(1)"
+    ]
+  },
+  {
+    "service": "reviews",
+    "instances": [
+      "version=v3(1)",
+      "version=v2(1)",
+      "version=v1(1)"
+    ]
+  },
+  {
+    "service": "ratings",
+    "instances": [
+      "version=v1(1)"
+    ]
+  }
+]

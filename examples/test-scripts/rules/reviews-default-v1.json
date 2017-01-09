@@ -1,0 +1,10 @@
+{
+	"rules": [{
+		"destination": "reviews",
+		"route": {
+			"backends": [{
+				"tags": [ "v1" ]
+			}]
+		}
+	}]
+}

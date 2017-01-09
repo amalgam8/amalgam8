@@ -40,6 +40,7 @@ GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vFf <(go list -f '{{.Dir}}
 GOPKGS		= $(shell go list ./... | grep -vFf <(go list ./vendor/...))
 
 APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
+APP_VER_ABBR	:= $(shell git describe --abbrev=0 2> /dev/null || echo "unknown")
 
 REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
@@ -279,6 +280,77 @@ release.examples:
 	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).tar.gz --exclude examples/apps --exclude examples/.vagrant examples
 	@zip -9 -r --exclude=*apps* --exclude=*.vagrant*  $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).zip examples
+
+#---------------
+#-- examples
+#---------------
+.PHONY: examples examples.clean examples.build examples.buildhello examples.buildbookinfo examples.run examples.runhello examples.runbookinfo
+
+examples: examples.clean examples.build examples.run
+
+examples.clean:
+	@examples/test-scripts/docker/cleanup-helloworld.sh $(APP_VER_ABBR)
+	@examples/test-scripts/docker/cleanup-bookinfo.sh $(APP_VER_ABBR)
+	@examples/test-scripts/kubernetes/cleanup-helloworld.sh $(APP_VER_ABBR)
+	@examples/test-scripts/kubernetes/cleanup-bookinfo.sh $(APP_VER_ABBR)
+
+examples.build: examples.buildhello examples.buildbookinfo
+
+examples.buildhello:
+	@echo "--> building examples hello world"
+	@examples/apps/helloworld/build-services.sh $(APP_VER_ABBR)
+
+examples.buildbookinfo:
+	@echo "--> building examples bookinfo"
+	@examples/apps/bookinfo/build-services.sh $(APP_VER_ABBR)
+
+examples.run: examples.runhello examples.runbookinfo
+
+examples.runhello: build.cli
+	@echo "--> running examples hello world"
+	@examples/test-scripts/docker/test-docker-helloworld.sh $(APP_VER_ABBR) || exit 1
+	@examples/test-scripts/kubernetes/test-kubernetes-helloworld.sh $(APP_VER_ABBR) || exit 1
+
+examples.runbookinfo: build.cli
+	@echo "--> running examples bookinfo"
+	@examples/test-scripts/docker/test-docker-bookinfo.sh $(APP_VER_ABBR) || exit 1
+	@examples/test-scripts/kubernetes/test-kubernetes-bookinfo.sh $(APP_VER_ABBR) || exit 1
+
+.PHONY: start.dockerhello start.k8shello start.dockerbookinfo start.k8sbookinfo stop.dockerhello stop.dockerbookinfo stop.k8shello
+
+start.dockerhello:
+	@echo "--> starting helloworld docker app"
+	@examples/docker-start-helloworld.sh $(APP_VER_ABBR)
+
+stop.dockerhello:
+	@echo "--> stopping helloworld docker app"
+	@docker-compose -f examples/test-scripts/docker/docker-helloworld.yaml kill
+	@docker-compose -f examples/test-scripts/docker/docker-helloworld.yaml rm -f
+
+start.k8shello:
+	@echo "--> starting helloworld k8s app"
+	@examples/k8s-start-helloworld.sh $(APP_VER_ABBR)
+
+stop.k8shello:
+	@echo "--> stopping helloworld k8s app"
+	@kubectl delete -f examples/test-scripts/kubernetes/k8s-helloworld.yaml
+
+start.dockerbookinfo:
+	@echo "--> starting bookinfo docker app"
+	@examples/docker-start-bookinfo.sh $(APP_VER_ABBR)
+
+stop.dockerbookinfo:
+	@echo "--> stopping bookinfo docker app"
+	@docker-compose -f examples/test-scripts/docker/docker-bookinfo.yaml kill
+	@docker-compose -f examples/test-scripts/docker/docker-bookinfo.yaml rm -f
+
+start.k8sbookinfo:
+	@echo "--> starting bookinfo k8s app"
+	@examples/k8s-start-bookinfo.sh $(APP_VER_ABBR)
+
+stop.k8sbookinfo:
+	@echo "--> stopping bookinfo k8s app"
+	@kubectl delete -f examples/test-scripts/kubernetes/k8s-bookinfo.yaml
 
 #---------------
 #-- tools

@@ -1,0 +1,14 @@
+[
+  {
+    "destination": "ratings",
+    "priority": 10,
+    "id": "blah",
+    "match": "reviews:version=v2",
+    "actions": [
+      "version=v1(1->delay=7)"
+    ],
+    "headers": [
+      "Cookie:.*?user=jason"
+    ]
+  }
+]

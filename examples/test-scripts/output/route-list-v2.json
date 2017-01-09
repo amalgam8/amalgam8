@@ -1,0 +1,21 @@
+[
+  {
+    "service": "details",
+    "default": "version=v1"
+  },
+  {
+    "service": "productpage",
+    "default": "version=v1"
+  },
+  {
+    "service": "ratings",
+    "default": "version=v1"
+  },
+  {
+    "service": "reviews",
+    "default": "version=v1",
+    "selectors": [
+      "version=v2(user=\"jason\")"
+    ]
+  }
+]

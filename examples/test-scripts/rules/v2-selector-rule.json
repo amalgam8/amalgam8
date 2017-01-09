@@ -1,0 +1,16 @@
+{
+	"rules": [{
+      		"priority": 2,
+      		"destination": "reviews",
+      		"match": {
+        		"headers": {
+          			"Cookie": ".*?user=jason"
+        		}
+      		},
+      		"route": {
+        		"backends": [{
+            			"tags": [ "version=v2" ]
+       			}]
+      		}
+    	}]
+}

@@ -1,0 +1,21 @@
+{
+	"rules": [{
+		"priority": 10,
+      		"destination": "ratings",
+      		"match": {
+			"source": {
+				"name": "reviews",
+				"tags": [ "version=v2" ]
+			},
+        		"headers": {
+          			"Cookie": ".*?user=jason"
+        		}
+      		},
+		"actions": [{
+			"action": "delay",
+			"probability": 1,
+			"tags": [ "version=v1" ],
+			"duration": 7
+		}]
+    	}]
+}

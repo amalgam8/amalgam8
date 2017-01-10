@@ -19,12 +19,16 @@ set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# Increase memory limit for elasticsearch 5.1
+sudo sysctl -w vm.max_map_count=262144
+
 echo "Testing kubernetes-based deployment.."
 
 sudo $SCRIPTDIR/install-kubernetes.sh
 sleep 10
 
-$SCRIPTDIR/run-controlplane-kubernetes.sh start
+echo "Starting control plane"
+kubectl create -f $SCRIPTDIR/controlplane.yaml
 sleep 10
 
 kubectl create -f $SCRIPTDIR/bookinfo.yaml
@@ -34,7 +38,13 @@ sleep 10
 # Run the actual test workload
 $SCRIPTDIR/../test-scripts/demo_script.sh
 
-echo "Kubernetes tests successful. Cleaning up.."
-$SCRIPTDIR/cleanup.sh
+echo "Kubernetes tests successful."
+echo "Cleaning up Bookinfo apps.."
+kubectl delete -f $SCRIPTDIR/bookinfo.yaml
+sleep 5
+
+echo "Stopping control plane services..."
+kubectl delete -f $SCRIPTDIR/controlplane.yaml
+
 sleep 5
 sudo $SCRIPTDIR/uninstall-kubernetes.sh

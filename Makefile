@@ -24,10 +24,11 @@ BUILDDIR    := build
 DOCKERDIR	:= docker
 RELEASEDIR  := release
 
-TARGET_OS := linux windows darwin
+TARGET_OS 	:= linux windows darwin
+GOHOSTOS 	:= $(shell go env GOHOSTOS)
 
 ifndef GOOS
-    GOOS := $(shell go env GOHOSTOS)
+    GOOS := $GOHOSTOS
 endif
 
 ifndef GOARCH
@@ -44,7 +45,7 @@ REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
 K8SRULES_APP_NAME		:= a8k8srulescontroller
-CLI_APP_NAME			:=  a8ctl-beta
+CLI_APP_NAME			:= a8ctl-beta
 
 REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
@@ -63,18 +64,23 @@ SIDECAR_RELEASE_NAME	:= $(SIDECAR_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 EXAMPLES_RELEASE_NAME	:= a8examples-$(APP_VER)
 
 # build flags
-BUILDFLAGS	:= -i
+BUILDFLAGS	:=
 
 # linker flags
 LDFLAGS     :=
 
-ifeq ($(GOOS),linux)
+# These do not work on Mac.
+ifeq ($(GOHOSTOS),linux)
+	# install pkgs to speed up compilation
+	BUILDFLAGS	+= -i
+
 	# linker flags to strip symbol tables and debug information
 	LDFLAGS     += -s -w
-
-	# linker flags to enable static linking
-	LDFLAGS     += -linkmode external -extldflags -static
+	LDFLAGS     += -linkmode external
 endif
+
+# linker flags to enable static linking
+LDFLAGS 	+= -extldflags -static
 
 # linker flags to set build info variables
 BUILD_SYM	:= github.com/amalgam8/amalgam8/pkg/version
@@ -122,7 +128,7 @@ build.k8srules:
 build.cli: tools.go-bindata
 	@echo "--> building cli"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
+	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
 	@go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME) ./cmd/cli/ # build an additional binary for the current OS
 	@mv $(BINDIR)/$(CLI_APP_NAME)-windows $(BINDIR)/$(CLI_APP_NAME)-windows.exe # add extension to windows binary
 	@goimports -w ./cli/utils/i18n_resources.go

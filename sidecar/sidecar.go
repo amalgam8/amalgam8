@@ -29,6 +29,7 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/eureka"
 	kubediscovery "github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
 	amalgam8controller "github.com/amalgam8/amalgam8/pkg/adapters/rules/amalgam8"
+	kuberules "github.com/amalgam8/amalgam8/pkg/adapters/rules/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
@@ -149,7 +150,7 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		err := startProxy(&conf, identity, discovery, kubeClient)
+		err := startProxy(&conf, identity, discovery)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 			return err
@@ -238,7 +239,7 @@ func buildServiceDiscovery(conf *config.Config, kubeClient kubernetes.Interface)
 	}
 }
 
-func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (api.RulesService, error) {
+func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	switch strings.ToLower(conf.RulesAdapter) {
 	case config.Amalgam8Adapter:
 		controllerConf := amalgam8controller.ControllerConfig{
@@ -247,8 +248,12 @@ func buildServiceRules(conf *config.Config, kubeClient kubernetes.Interface) (ap
 		}
 		return amalgam8controller.NewCachedRulesAdapter(controllerConf, conf.A8Controller.Poll)
 	case config.KubernetesAdapter:
-		// TODO: return kubernetes rules fetcher
-		return nil, fmt.Errorf("rules using '%s' is not supported", conf.RulesAdapter)
+		kubConf := kuberules.Config{
+			URL:       conf.Kubernetes.URL,
+			Token:     conf.Kubernetes.Token,
+			Namespace: auth.NamespaceFrom(conf.Kubernetes.Namespace),
+		}
+		return kuberules.New(kubConf)
 	case "":
 		return nil, fmt.Errorf("no service rules type specified")
 	default:
@@ -262,11 +267,12 @@ func buildProxyAdapter(conf *config.Config, identity identity.Provider, discover
 		return proxy.NewNGINXAdapter(conf, identity, discovery, rules)
 	default:
 		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
+
 	}
 }
 
-func startProxy(conf *config.Config, identity identity.Provider, discovery api.ServiceDiscovery, kubeClient kubernetes.Interface) error {
-	rules, err := buildServiceRules(conf, kubeClient)
+func startProxy(conf *config.Config, identity identity.Provider, discovery api.ServiceDiscovery) error {
+	rules, err := buildServiceRules(conf)
 	if err != nil {
 		logrus.WithError(err).Error("Could not create service rules client")
 		return err

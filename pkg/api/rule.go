@@ -89,6 +89,12 @@ func (a *Action) UnmarshalJSON(data []byte) error {
 			return err
 		}
 		a.internal = abort
+	case "trace":
+		trace := TraceAction{}
+		if err = json.Unmarshal(data, &trace); err != nil {
+			return err
+		}
+		a.internal = trace
 	}
 	return nil
 }
@@ -117,4 +123,12 @@ type AbortAction struct {
 	Probability float64  `json:"probability"`
 	Tags        []string `json:"tags"`
 	ReturnCode  int      `json:"return_code"`
+}
+
+// TraceAction definition
+type TraceAction struct {
+	Action   string   `json:"action"`
+	Tags     []string `json:"tags"`
+	LogKey   string   `json:"log_key"`
+	LogValue string   `json:"log_value"`
 }

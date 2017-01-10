@@ -35,7 +35,7 @@ script:
 
     # Run the integration test (master and PRs-to-master only)
     - if [ "$TRAVIS_BRANCH" == "master" ]; then
-        make dockerize #dockerize registry, controller, sidecar:alpine
+        make dockerize; #dockerize registry, controller, sidecar:alpine
         export A8_CONTROLLER_URL=http://localhost:31200;
         export A8_REGISTRY_URL=http://localhost:31300;
         make test.integration;

@@ -38,8 +38,7 @@ jsondiff() {
 }
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-make -C $SCRIPTDIR/../../ build.cli
-CLIBIN=$SCRIPTDIR/../../bin/a8ctl-beta
+CLIBIN=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 
 $CLIBIN rule-delete -a -f
 sleep 2

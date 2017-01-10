@@ -42,7 +42,11 @@ func NewManager(serviceName string, tags []string) Manager {
 	return &manager{
 		serviceName: serviceName,
 		tags:        tags,
-		service:     NewService(EnvoyConfigPath),
+		service: NewService(ServiceConfig{
+			DrainTimeSeconds:          3,
+			ParentShutdownTimeSeconds: 5,
+			EnvoyConfig:               EnvoyConfigPath,
+		}),
 	}
 }
 

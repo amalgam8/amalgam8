@@ -29,16 +29,26 @@ type Service interface {
 }
 
 type service struct {
-	config string            // Envoy config filename.
-	cmdMap map[*exec.Cmd]int // Map of known running Envoy processes and their restart epochs.
-	mutex  sync.Mutex
+	config             string            // Envoy config filename.
+	cmdMap             map[*exec.Cmd]int // Map of known running Envoy processes and their restart epochs.
+	drainTime          int
+	parentShutdownTime int
+	mutex              sync.Mutex
+}
+
+type ServiceConfig struct {
+	EnvoyConfig               string
+	DrainTimeSeconds          int
+	ParentShutdownTimeSeconds int
 }
 
 // NewService creates new instance.
-func NewService(config string) Service {
+func NewService(config ServiceConfig) Service {
 	return &service{
-		config: config,
-		cmdMap: make(map[*exec.Cmd]int),
+		config:             config.EnvoyConfig,
+		drainTime:          config.DrainTimeSeconds,
+		parentShutdownTime: config.ParentShutdownTimeSeconds,
+		cmdMap:             make(map[*exec.Cmd]int),
 	}
 }
 
@@ -63,7 +73,11 @@ func (s *service) Reload() error {
 	restartEpoch++
 
 	// Spin up a new Envoy process.
-	cmd := exec.Command("envoy", "-c", s.config, "--restart-epoch", fmt.Sprint(restartEpoch))
+	cmd := exec.Command("envoy",
+		"-c", s.config,
+		"--drain-time-s", fmt.Sprint(s.drainTime),
+		"--parent-shutdown-time-s", fmt.Sprint(s.parentShutdownTime),
+		"--restart-epoch", fmt.Sprint(restartEpoch))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {

@@ -14,22 +14,23 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-
 set -x
+set -o errexit
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-MAKEDIR=$SCRIPTDIR/../../
-
-make -C $MAKEDIR build.sidecar GOOS=linux GOARCH=amd64
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: make failed for sidecar.\n***********\n"
-    exit $STATUS
+if [ -z "$A8_TEST_DOCKER" ]; then
+    A8_TEST_DOCKER="true"
 fi
 
-make -C $MAKEDIR dockerize.sidecar.alpine
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"
-    exit $STATUS
+if [ -z "$A8_TEST_K8S" ]; then
+    A8_TEST_K8S="true"
+fi
+
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+if [ "$A8_TEST_DOCKER" == "true" ]; then
+    $SCRIPTDIR/docker/test-docker.sh
+fi
+
+if [ "$A8_TEST_K8S" == "true" ]; then
+    $SCRIPTDIR/kubernetes/test-kubernetes.sh
 fi

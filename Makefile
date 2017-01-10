@@ -47,15 +47,17 @@ SIDECAR_APP_NAME		:= a8sidecar
 K8SRULES_APP_NAME		:= a8k8srulescontroller
 CLI_APP_NAME			:= a8ctl-beta
 
-REGISTRY_IMAGE_NAME		:= amalgam8/a8-registry:latest
-CONTROLLER_IMAGE_NAME	:= amalgam8/a8-controller:latest
-SIDECAR_IMAGE_NAME		:= amalgam8/a8-sidecar:latest
-K8SRULES_IMAGE_NAME		:= amalgam8/a8-k8s-rules-controller:latest
+REGISTRY_IMAGE_NAME			:= amalgam8/a8-registry:latest
+CONTROLLER_IMAGE_NAME		:= amalgam8/a8-controller:latest
+SIDECAR_UBUNTU_IMAGE_NAME	:= amalgam8/a8-sidecar:latest
+SIDECAR_ALPINE_IMAGE_NAME	:= amalgam8/a8-sidecar:alpine
+K8SRULES_IMAGE_NAME			:= amalgam8/a8-k8s-rules-controller:latest
 
-REGISTRY_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.registry
-CONTROLLER_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.controller
-SIDECAR_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
-K8SRULES_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.k8srules
+REGISTRY_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.registry
+CONTROLLER_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.controller
+SIDECAR_UBUNTU_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
+SIDECAR_ALPINE_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.alpine
+K8SRULES_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.k8srules
 
 REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
@@ -105,9 +107,9 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli compile clean
+.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps compile clean
 
-build: build.registry build.controller build.sidecar build.k8srules
+build: build.registry build.controller build.sidecar build.k8srules build.cli.linux
 
 build.registry:
 	@echo "--> building registry"
@@ -125,13 +127,35 @@ build.k8srules:
 	@echo "--> building kubernetes routingrules controller"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(K8SRULES_APP_NAME) ./cmd/k8srules/
 
-build.cli: tools.go-bindata
-	@echo "--> building cli"
+build.cli.linux: tools.go-bindata
+	@echo "--> building cli for Linux"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
-	@go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME) ./cmd/cli/ # build an additional binary for the current OS
-	@mv $(BINDIR)/$(CLI_APP_NAME)-windows $(BINDIR)/$(CLI_APP_NAME)-windows.exe # add extension to windows binary
+    @$(env GOOS=linux GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-linux ./cmd/cli/;)
 	@goimports -w ./cli/utils/i18n_resources.go
+
+build.cli.darwin: tools.go-bindata
+	@echo "--> building cli for OS X"
+	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
+    @$(env GOOS=darwin GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-darwin ./cmd/cli/;)
+	@goimports -w ./cli/utils/i18n_resources.go
+
+build.cli.windows: tools.go-bindata
+	@echo "--> building cli for Windows"
+	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
+    @$(env GOOS=windows GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-windows.exe ./cmd/cli/;)
+	@goimports -w ./cli/utils/i18n_resources.go
+
+# build.cli: tools.go-bindata
+# 	@echo "--> building cli"
+# 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
+# 	@$(foreach GOOS, $(TARGET_OS), env GOOS=$(GOOS) GOARCH=amd64 go build -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME)-$(GOOS) ./cmd/cli/;) # Remove "-linkmode external" flag during build
+# 	@go build $(BUILDFLAGS) -ldflags '$(subst -linkmode external,,$(LDFLAGS))' -o $(BINDIR)/$(CLI_APP_NAME) ./cmd/cli/ # build an additional binary for the current OS
+# 	@mv $(BINDIR)/$(CLI_APP_NAME)-windows $(BINDIR)/$(CLI_APP_NAME)-windows.exe # add extension to windows binary
+# 	@goimports -w ./cli/utils/i18n_resources.go
+
+build.testapps:
+	@echo "--> building test apps for integration testing"
+	@testing/build-scripts/build-apps.sh
 
 compile:
 	@echo "--> compiling packages"
@@ -157,9 +181,9 @@ test.long:
 	@echo "--> running unit tests, including long tests"
 	@go test -v $(GOPKGS)
 
-test.integration:
+test.integration: build.testapps
 	@echo "--> running integration tests"
-	@testing/build_and_run.sh
+	@testing/run_tests.sh
 
 #---------------
 #-- checks
@@ -200,9 +224,9 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar dockerize.k8srules
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.alpine dockerize.sidecar.ubuntu dockerize.k8srules
 
-dockerize: dockerize.registry dockerize.controller dockerize.sidecar
+dockerize: dockerize.registry dockerize.controller dockerize.sidecar.alpine
 
 dockerize.registry:
 	@echo "--> building registry docker image"
@@ -212,9 +236,13 @@ dockerize.controller:
 	@echo "--> building controller docker image"
 	@docker build -t $(CONTROLLER_IMAGE_NAME) -f $(CONTROLLER_DOCKERFILE) .
 
-dockerize.sidecar:
-	@echo "--> building sidecar docker image"
-	@docker build -t $(SIDECAR_IMAGE_NAME) -f $(SIDECAR_DOCKERFILE) .
+dockerize.sidecar.alpine:
+	@echo "--> building alpine sidecar docker image"
+	@docker build -t $(SIDECAR_ALPINE_IMAGE_NAME) -f $(SIDECAR_ALPINE_DOCKERFILE) .
+
+dockerize.sidecar.ubuntu:
+	@echo "--> building ubuntu sidecar docker image"
+	@docker build -t $(SIDECAR_UBUNTU_IMAGE_NAME) -f $(SIDECAR_UBUNTU_DOCKERFILE) .
 
 dockerize.k8srules:
 	@echo "--> building k8srules docker image"

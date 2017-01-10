@@ -33,3 +33,10 @@ if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"
     exit $STATUS
 fi
+
+make -C $MAKEDIR dockerize.sidecar SIDECAR_IMAGE_NAME=amalgam8/a8-sidecar:envoy SIDECAR_DOCKERFILE=$MAKEDIR/docker/Dockerfile.sidecar.envoy
+STATUS=$?
+if [ $STATUS -ne 0 ]; then
+    echo -e "\n***********\nFAILED: docker build failed for sidecar (envoy version)\n***********\n"
+    exit $STATUS
+fi

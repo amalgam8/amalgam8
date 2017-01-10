@@ -18,13 +18,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"strings"
 	"time"
 
-	"net/http"
-
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
+	"github.com/amalgam8/amalgam8/sidecar/register"
+	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
+	"github.com/amalgam8/amalgam8/sidecar/supervisor"
+
 	amalgam8registry "github.com/amalgam8/amalgam8/pkg/adapters/discovery/amalgam8"
 	"github.com/amalgam8/amalgam8/pkg/adapters/discovery/eureka"
 	kubediscovery "github.com/amalgam8/amalgam8/pkg/adapters/discovery/kubernetes"
@@ -38,10 +42,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
-	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
-	"github.com/amalgam8/amalgam8/sidecar/register"
-	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
-	"github.com/amalgam8/amalgam8/sidecar/supervisor"
 	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/urfave/cli"
 	"k8s.io/client-go/kubernetes"
@@ -265,10 +265,14 @@ func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	}
 }
 
-func buildProxyAdapter(conf *config.Config, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor) (proxy.Adapter, error) {
+func buildProxyAdapter(conf *config.Config, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor,
+	discoveryClient api.ServiceDiscovery) (proxy.Adapter, error) {
+
 	switch conf.ProxyAdapter {
 	case config.NGINXAdapter:
 		return proxy.NewNGINXAdapter(conf, discovery, rules)
+	case config.EnvoyAdapter:
+		return proxy.NewEnvoyAdapter(conf, discovery, rules, discoveryClient)
 	default:
 		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
 
@@ -292,7 +296,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 		Discovery: discovery,
 	})
 
-	proxyAdapter, err := buildProxyAdapter(conf, discoveryMonitor, rulesMonitor)
+	proxyAdapter, err := buildProxyAdapter(conf, discoveryMonitor, rulesMonitor, discovery)
 	if err != nil {
 		logrus.WithError(err).Error("Could not build proxy adapter")
 		return err

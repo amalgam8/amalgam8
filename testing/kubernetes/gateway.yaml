@@ -58,3 +58,5 @@ spec:
           value: gateway
         - name: A8_CONTROLLER_POLL
           value: 5s
+        - name: A8_PROXY_ADAPTER
+          value: nginx

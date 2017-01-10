@@ -166,6 +166,8 @@ type Config struct {
 	Commands []Command `yaml:"commands"`
 
 	Debug string
+
+	DiscoveryPort int `yaml:"discovery_port"`
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -269,6 +271,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
+	loadFromContextIfSet(&c.DiscoveryPort, discoveryPortFlag)
 
 	if context.IsSet(serviceFlag) {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))
@@ -363,6 +366,7 @@ func (c *Config) Validate() error {
 		IsInSet("Discovery adapter", c.DiscoveryAdapter, []string{Amalgam8Adapter, KubernetesAdapter, EurekaAdapter}),
 		IsEmptyOrValidURL("Amalgam8 Registry URL", c.A8Registry.URL),
 		IsEmptyOrValidURL("Kubernetes URL", c.Kubernetes.URL))
+
 	for _, url := range c.Eureka.URLs {
 		validators = append(validators, IsEmptyOrValidURL("Eureka URL", url))
 	}
@@ -371,6 +375,7 @@ func (c *Config) Validate() error {
 		validators = append(validators,
 			IsValidURL("Amalgam8 Registry URL", c.A8Registry.URL),
 			IsInRangeDuration("Amalgam8 Registry polling interval", c.A8Registry.Poll, 5*time.Second, 1*time.Hour))
+
 	}
 
 	if c.Register {

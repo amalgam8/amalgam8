@@ -159,6 +159,8 @@ spec:
           value: $(LOGSERVER_SERVICE_HOST):9200
         - name: A8_SERVICE
           value: reviews:version=v2
+        - name: A8_PROXY_ADAPTER
+          value: nginx
 ---
     
 apiVersion: v1
@@ -197,6 +199,8 @@ spec:
           value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_SERVICE
           value: reviews:version=v3
+        - name: A8_PROXY_ADAPTER
+          value: nginx
 ---
     
 ##################################################################################################
@@ -252,3 +256,5 @@ spec:
           value: $(LOGSERVER_SERVICE_HOST):8092
         - name: A8_SERVICE
           value: productpage:version=v1
+        - name: A8_PROXY_ADAPTER
+          value: nginx

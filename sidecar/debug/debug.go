@@ -15,9 +15,9 @@
 package debug
 
 import (
-	"net/http"
-
 	"sync"
+
+	"net/http"
 
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -77,7 +77,7 @@ func (d *API) CatalogChange(instances []api.ServiceInstance) error {
 	return nil
 }
 
-// RuleChange updates NGINX on a change in the proxy configuration.
+// RuleChange updates on a change in the proxy configuration.
 func (d *API) RuleChange(rules []api.Rule) error {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()

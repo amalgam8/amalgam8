@@ -23,6 +23,7 @@ gateway:
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
     - A8_LOG_LEVEL=debug
+    - A8_PROXY_ADAPTER=nginx
   ports:
     - "32000:6379"
   external_links:

@@ -30,12 +30,12 @@ script:
     - export GOOS=${PLATFORM%/*}
     - export GOARCH=${PLATFORM#*/}
     
-    # Analyze, test and build the code (registry, controller, cli[linux], sidecar, k8srulescontroller)
+    # Analyze, test and build the code
     - make verify
 
     # Run the integration test (master and PRs-to-master only)
     - if [ "$TRAVIS_BRANCH" == "master" ]; then
-        make dockerize; #dockerize registry, controller, sidecar:alpine
+        make dockerize;
         export A8_CONTROLLER_URL=http://localhost:31200;
         export A8_REGISTRY_URL=http://localhost:31300;
         make test.integration;

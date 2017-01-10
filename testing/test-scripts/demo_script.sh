@@ -46,42 +46,7 @@ sleep 2
 
 ######Version Routing##############
 echo "testing version routing.."
-cat << EOF | $CLIBIN rule-create -r
-rules:
-- priority: 1
-  destination: productpage
-  route:
-    backends:
-    - tags:
-      - version=v1
-- priority: 1
-  destination: details
-  route:
-    backends:
-    - tags:
-      - version=v1
-- priority: 1
-  destination: ratings
-  route:
-    backends:
-    - tags:
-      - version=v1
-- priority: 2
-  destination: reviews
-  match:
-    headers:
-      Cookie: .*?user=jason
-  route:
-    backends:
-    - tags:
-      - version=v2
-- priority: 1
-  destination: reviews
-  route:
-    backends:
-    - tags:
-      - version=v1
-EOF
+$CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
 sleep 10
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
@@ -108,25 +73,7 @@ echo "works!"
 
 ########Fault injection
 echo "testing fault injection.."
-output=$( cat << EOF | $CLIBIN rule-create -r
-rules:
-- priority: 10
-  destination: ratings
-  match:
-    source:
-      name: reviews
-      tags:
-      - version=v2
-    headers:
-      Cookie: .*?user=jason
-  actions:
-  - action: delay
-    duration: 7
-    probability: 1
-    tags:
-    - version=v1
-EOF
-)
+output=$( $CLIBIN rule-create -f $SCRIPTDIR/fault_inyection.yaml )
 
 fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
 sleep 10

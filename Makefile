@@ -130,19 +130,19 @@ build.k8srules:
 build.cli.linux: tools.go-bindata
 	@echo "--> building cli for Linux"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-    @$(env GOOS=linux GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-linux ./cmd/cli/;)
+	@GOOS=linux GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-linux ./cmd/cli/
 	@goimports -w ./cli/utils/i18n_resources.go
 
 build.cli.darwin: tools.go-bindata
 	@echo "--> building cli for OS X"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-    @$(env GOOS=darwin GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-darwin ./cmd/cli/;)
+	@GOOS=darwin GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-darwin ./cmd/cli/
 	@goimports -w ./cli/utils/i18n_resources.go
 
 build.cli.windows: tools.go-bindata
 	@echo "--> building cli for Windows"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-    @$(env GOOS=windows GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-windows.exe ./cmd/cli/;)
+	@GOOS=windows GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-windows.exe ./cmd/cli/
 	@goimports -w ./cli/utils/i18n_resources.go
 
 # build.cli: tools.go-bindata

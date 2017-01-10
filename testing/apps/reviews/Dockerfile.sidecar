@@ -16,6 +16,7 @@ FROM amalgam8/a8-sidecar:alpine
 
 WORKDIR /opt/microservices
 COPY reviews /opt/microservices/
+COPY config.yaml /opt/microservices/config.yaml
 
 ARG enable_ratings
 ARG star_color
@@ -24,4 +25,4 @@ ENV STAR_COLOR ${star_color:-black}
 
 EXPOSE 9080
 
-CMD ["/opt/microservices/reviews", "9080", "http://localhost:6379"]
+ENTRYPOINT ["a8sidecar", "--config", "/opt/microservices/config.yaml"]

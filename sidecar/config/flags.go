@@ -53,6 +53,7 @@ const (
 	dnsConfigPortFlag       = "dns_port"
 	dnsConfigDomainFlag     = "dns_domain"
 	debugFlag               = "debug"
+	discoveryPortFlag       = "discovery_port"
 )
 
 // Flags is the set of supported flags
@@ -210,6 +211,11 @@ var Flags = []cli.Flag{
 		Name:   logLevelFlag,
 		EnvVar: envVar(logLevelFlag),
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
+	},
+	cli.IntFlag{
+		Name:   discoveryPortFlag,
+		EnvVar: envVar(discoveryPortFlag),
+		Usage:  "Port to expose Envoy SDS API (default 6500)",
 	},
 }
 

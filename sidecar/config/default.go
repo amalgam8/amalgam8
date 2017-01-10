@@ -20,7 +20,7 @@ import "time"
 var DefaultConfig = Config{
 	Register:     false,
 	Proxy:        false,
-	ProxyAdapter: NGINXAdapter,
+	ProxyAdapter: EnvoyAdapter,
 	DNS:          false,
 
 	ProxyConfig: ProxyConfig{
@@ -75,6 +75,8 @@ var DefaultConfig = Config{
 	HealthChecks: nil,
 
 	LogLevel: "info",
+
+	DiscoveryPort: 0,
 
 	Commands: nil,
 }

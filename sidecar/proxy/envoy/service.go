@@ -36,6 +36,7 @@ type service struct {
 	mutex              sync.Mutex
 }
 
+// ServiceConfig config for Service
 type ServiceConfig struct {
 	EnvoyConfig               string
 	DrainTimeSeconds          int

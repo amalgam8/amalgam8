@@ -17,7 +17,15 @@
 set -x
 set -o errexit
 
+A8_TEST_SUITE=$1
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+    export A8_TEST_ENV="examples"
+else
+    export A8_TEST_ENV="testing"
+fi
 
 # Increase memory limit for elasticsearch 5.1
 sudo sysctl -w vm.max_map_count=262144
@@ -34,7 +42,7 @@ docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
 sleep 10
 
 # Run the actual test workload
-$SCRIPTDIR/../test-scripts/demo_script.sh
+$SCRIPTDIR/../test-scripts/bookinfo.sh $A8_TEST_SUITE
 
 echo "Docker tests successful."
 echo "Cleaning up Bookinfo apps.."

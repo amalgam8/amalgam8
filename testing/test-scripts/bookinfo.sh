@@ -24,6 +24,16 @@ export A8_GATEWAY_URL=http://localhost:32000
 export A8_LOG_SERVER=http://localhost:30200
 export A8_GREMLIN_URL=http://localhost:31500
 
+# Set local vars
+A8_TEST_SUITE=$1
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+    PRODUCTPAGE_V1_OUTPUT="productpage_v1.html"
+    PRODUCTPAGE_V2_OUTPUT="productpage_v2.html"
+else
+    PRODUCTPAGE_V1_OUTPUT="productpage_v1.json"
+    PRODUCTPAGE_V2_OUTPUT="productpage_v2.json"
+fi
+
 if [ -z "$A8_TEST_GREMLIN" ]; then
     A8_TEST_GREMLIN="true"
 fi
@@ -49,9 +59,9 @@ $CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
 sleep 10
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v1.json
+curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
 
-jsondiff $SCRIPTDIR/productpage_v1.json /tmp/productpage_v1.json
+jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
@@ -60,9 +70,9 @@ fi
 echo "works!"
 
 echo -n "injecting traffic for user=jason, expecting productpage_v2.."
-curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.json
+curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
 
-jsondiff $SCRIPTDIR/productpage_v2.json /tmp/productpage_v2.json
+jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
@@ -80,7 +90,7 @@ sleep 10
 ###For shriram
 echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/productpage_no_rulematch.json
+curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -90,7 +100,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-jsondiff $SCRIPTDIR/productpage_v1.json /tmp/productpage_no_rulematch.json
+jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
@@ -126,7 +136,7 @@ sleep 15
 
 echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_v2.json
+curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -136,7 +146,7 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-jsondiff $SCRIPTDIR/productpage_v2.json /tmp/productpage_v2.json
+jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2.json after clearing fault rules for user=jason in fault injection test phase"

@@ -152,7 +152,7 @@ if [ "$A8_TEST_GREMLIN" = true ]; then
   MAX_LOOP=5
   retry_count=1
   while [  $retry_count -le $((MAX_LOOP)) ]; do
-  	$CLIBIN recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='user=jason' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
+  	$CLIBIN recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='^(.*?;)?(user=jason)(;.*)?$' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
 
   	jsondiff $SCRIPTDIR/recipe-run-results.json /tmp/recipe-run-results.json
   	if [ $? -gt 0 ]; then

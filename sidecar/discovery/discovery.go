@@ -16,17 +16,13 @@ package discovery
 
 import (
 	"net/http"
-	"strings"
-
-	"github.com/Sirupsen/logrus"
-	"github.com/ant0ine/go-json-rest/rest"
-
 	"sort"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
-
 	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
 	"github.com/amalgam8/amalgam8/sidecar/util"
+	"github.com/ant0ine/go-json-rest/rest"
 )
 
 const (
@@ -150,14 +146,7 @@ func filterInstances(instances []*api.ServiceInstance, tags []string) []*api.Ser
 	for _, instance := range instances {
 		count := 0
 		for i := range instance.Tags {
-			var tag string
-			vals := strings.Split(instance.Tags[i], "=")
-			if len(vals) >= 2 {
-				tag = vals[1]
-			} else {
-				tag = vals[0]
-			}
-			_, exists := tagMap[tag]
+			_, exists := tagMap[instance.Tags[i]]
 			if exists {
 				count++
 			}

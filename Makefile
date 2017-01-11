@@ -226,9 +226,9 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.alpine dockerize.sidecar.ubuntu dockerize.k8srules
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.alpine dockerize.sidecar.envoy dockerize.sidecar.ubuntu dockerize.k8srules
 
-dockerize: dockerize.registry dockerize.controller dockerize.sidecar.alpine
+dockerize: dockerize.registry dockerize.controller dockerize.sidecar.alpine dockerize.sidecar.envoy
 
 dockerize.registry:
 	@echo "--> building registry docker image"

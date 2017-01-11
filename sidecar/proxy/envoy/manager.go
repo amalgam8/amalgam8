@@ -52,7 +52,7 @@ func NewManager(identity identity.Provider) Manager {
 
 type manager struct {
 	identity identity.Provider
-	service     Service
+	service  Service
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {

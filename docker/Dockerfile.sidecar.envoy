@@ -14,7 +14,20 @@
 
 FROM amalgam8/envoy:latest
 
+ARG FILEBEAT_VERSION="5.1.1"
+RUN set -ex \
+    && curl -fsSL https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -o /tmp/filebeat.tar.gz \
+    && cd /tmp \
+    && tar -xzf filebeat.tar.gz \
+    \
+    && cd filebeat-* \
+    && cp filebeat /bin \
+    \
+    && rm -rf /tmp/filebeat*
+
 ADD bin/a8sidecar /usr/bin/a8sidecar
+ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
+ADD docker/run_filebeat.sh /usr/bin/run_filebeat.sh
 
 ENTRYPOINT ["/usr/bin/a8sidecar"]
 

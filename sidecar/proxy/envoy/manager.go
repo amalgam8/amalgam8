@@ -292,6 +292,7 @@ func buildRoutes(ruleList []api.Rule) []Route {
 						Header{
 							Name:  k,
 							Value: v,
+							Regex: true,
 						},
 					)
 				}

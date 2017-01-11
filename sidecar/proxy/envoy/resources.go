@@ -32,6 +32,7 @@ type DelayFilter struct {
 type Header struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
+	Regex bool   `json:"regex"`
 }
 
 // FilterFaultConfig definition.

@@ -107,7 +107,7 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps compile clean
+.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps build.exampleapps compile clean
 
 build: build.registry build.controller build.sidecar build.k8srules build.cli.linux
 
@@ -156,6 +156,11 @@ build.cli.windows: tools.go-bindata
 build.testapps:
 	@echo "--> building test apps for integration testing"
 	@testing/build-scripts/build-apps.sh
+
+build.exampleapps:
+	@echo "--> building example apps"
+	@examples/apps/helloworld/build-services.sh
+	@examples/apps/bookinfo/build-services.sh
 
 compile:
 	@echo "--> compiling packages"

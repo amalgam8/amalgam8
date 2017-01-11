@@ -19,7 +19,7 @@ gateway:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_PROXY=true
     - A8_LOG=true
-    - A8_SERVICE=gateway:none
+    - A8_SERVICE=gateway:version=none
     - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s

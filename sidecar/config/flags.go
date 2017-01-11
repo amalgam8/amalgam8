@@ -41,6 +41,7 @@ const (
 	kubernetesURLFlag       = "kubernetes_url"
 	kubernetesTokenFlag     = "kubernetes_token"
 	kubernetesNamespaceFlag = "kubernetes_namespace"
+	kubernetesPodNameFlag   = "kubernetes_pod_name"
 	eurekaURLFlag           = "eureka_url"
 	rulesAdapterFlag        = "rules_adapter"
 	controllerURLFlag       = "controller_url"
@@ -160,6 +161,11 @@ var Flags = []cli.Flag{
 		Name:   kubernetesNamespaceFlag,
 		EnvVar: envVar(kubernetesNamespaceFlag),
 		Usage:  "Kubernetes API namespace",
+	},
+	cli.StringFlag{
+		Name:   kubernetesPodNameFlag,
+		EnvVar: envVar(kubernetesPodNameFlag),
+		Usage:  "Kubernetes Pod name, to be used for automatic detection of service name and labels",
 	},
 	cli.StringSliceFlag{
 		Name:   eurekaURLFlag,

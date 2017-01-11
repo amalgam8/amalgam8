@@ -26,6 +26,7 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/pkg/auth"
 	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
+	"github.com/amalgam8/amalgam8/pkg/network"
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/registry/cluster"
 	"github.com/amalgam8/amalgam8/registry/config"
@@ -36,7 +37,6 @@ import (
 	"github.com/amalgam8/amalgam8/registry/utils/i18n"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/amalgam8/amalgam8/registry/utils/metrics"
-	"github.com/amalgam8/amalgam8/registry/utils/network"
 )
 
 // Main is the entrypoint for the registry when running as an executable

@@ -20,6 +20,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/nginx"
 )
@@ -38,9 +39,11 @@ type NGINXAdapter struct {
 }
 
 // NewNGINXAdapter creates a new adapter instance.
-func NewNGINXAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMonitor, rulesMonitor monitor.RulesMonitor) (*NGINXAdapter, error) {
+func NewNGINXAdapter(conf *config.Config, identity identity.Provider,
+	discoveryMonitor monitor.DiscoveryMonitor, rulesMonitor monitor.RulesMonitor) (*NGINXAdapter, error) {
+
 	client := nginx.NewClient("http://localhost:5813") // FIXME: hardcoded
-	service := nginx.NewService(conf.Service.Name, conf.Service.Tags)
+	service := nginx.NewService(identity)
 	manager := nginx.NewManager(nginx.ManagerConfig{
 		Client: client,
 	})

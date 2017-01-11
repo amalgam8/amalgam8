@@ -61,6 +61,7 @@ var DefaultConfig = Config{
 		URL:       "",
 		Token:     "",
 		Namespace: "default",
+		PodName:   "",
 	},
 
 	Eureka: Eureka{

@@ -37,6 +37,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 	"github.com/amalgam8/amalgam8/sidecar/register"
@@ -119,6 +120,12 @@ func Run(conf config.Config) error {
 		}
 	}
 
+	identity, err := identity.New(&conf, kubeClient)
+	if err != nil {
+		logrus.WithError(err).Error("Could not create identity provider")
+		return err
+	}
+
 	var discovery api.ServiceDiscovery
 	if conf.DNS || conf.Proxy {
 		discovery, err = buildServiceDiscovery(&conf, kubeClient)
@@ -143,7 +150,7 @@ func Run(conf config.Config) error {
 	}
 
 	if conf.Proxy {
-		err := startProxy(&conf, discovery)
+		err := startProxy(&conf, identity, discovery)
 		if err != nil {
 			logrus.WithError(err).Error("Could not start proxy")
 			return err
@@ -157,20 +164,9 @@ func Run(conf config.Config) error {
 			return err
 		}
 
-		address := fmt.Sprintf("%v:%v", conf.Endpoint.Host, conf.Endpoint.Port)
-		serviceInstance := &api.ServiceInstance{
-			ServiceName: conf.Service.Name,
-			Tags:        conf.Service.Tags,
-			Endpoint: api.ServiceEndpoint{
-				Type:  conf.Endpoint.Type,
-				Value: address,
-			},
-			TTL: 60,
-		}
-
 		registrationAgent, err := register.NewRegistrationAgent(register.RegistrationConfig{
-			Registry:        registry,
-			ServiceInstance: serviceInstance,
+			Registry: registry,
+			Identity: identity,
 		})
 		if err != nil {
 			logrus.WithError(err).Error("Could not create registry agent")
@@ -265,18 +261,17 @@ func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	}
 }
 
-func buildProxyAdapter(conf *config.Config, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor) (proxy.Adapter, error) {
+func buildProxyAdapter(conf *config.Config, identity identity.Provider, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor) (proxy.Adapter, error) {
 	switch conf.ProxyAdapter {
 	case config.NGINXAdapter:
-		return proxy.NewNGINXAdapter(conf, discovery, rules)
+		return proxy.NewNGINXAdapter(conf, identity, discovery, rules)
 	default:
 		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
 
 	}
 }
 
-func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
-
+func startProxy(conf *config.Config, identity identity.Provider, discovery api.ServiceDiscovery) error {
 	rules, err := buildServiceRules(conf)
 	if err != nil {
 		logrus.WithError(err).Error("Could not create service rules client")
@@ -292,7 +287,7 @@ func startProxy(conf *config.Config, discovery api.ServiceDiscovery) error {
 		Discovery: discovery,
 	})
 
-	proxyAdapter, err := buildProxyAdapter(conf, discoveryMonitor, rulesMonitor)
+	proxyAdapter, err := buildProxyAdapter(conf, identity, discoveryMonitor, rulesMonitor)
 	if err != nil {
 		logrus.WithError(err).Error("Could not build proxy adapter")
 		return err

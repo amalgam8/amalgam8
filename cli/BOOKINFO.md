@@ -77,7 +77,7 @@ rules:
   destination: reviews
   match:
     headers:
-      Cookie: .*?user=jason
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   route:
     backends:
     - tags:
@@ -103,7 +103,7 @@ rules:
       tags:
       - v2
     headers:
-      Cookie: .*?user=jason
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   actions:
   - action: delay
     duration: 7
@@ -138,7 +138,7 @@ a8ctl recipe-run --topology examples/bookinfo-topology.json --scenarios examples
 
 * New
 ```
-a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p user=jason
+a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p "^(.*?;)?(user=jason)(;.*)?$"
 ```
 
 #### Gradually migrate traffic to reviews:v3 for all users

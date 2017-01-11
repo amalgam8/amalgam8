@@ -21,7 +21,7 @@ rules:
   destination: reviews
   match:
     headers:
-      Cookie: .*?user=jason
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   route:
     backends:
     - tags:

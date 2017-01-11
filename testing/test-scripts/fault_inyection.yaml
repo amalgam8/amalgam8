@@ -7,7 +7,7 @@ rules:
       tags:
       - version=v2
     headers:
-      Cookie: .*?user=jason
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   actions:
   - action: delay
     duration: 7

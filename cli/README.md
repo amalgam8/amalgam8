@@ -176,7 +176,7 @@ Rule DSL is output in JSON by default but can be changed using the -o option.
       tags:
       - v2
     headers:
-      Cookie: .*?user=jason
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   actions:
   - action: trace
     tags:
@@ -299,11 +299,11 @@ Output a table listing all of the currently defined action-type rules.
 +-------------+--------------------------------------+----------+---------------------------------------------------------+-----------------------------------+
 | Destination | Rule Id                              | Priority | Match                                                   | Actions                           |
 +-------------+--------------------------------------+----------+---------------------------------------------------------+-----------------------------------+
-| details     | 9c7198d7-d037-4cb6-8d48-b573608c7de9 | 10       | source="productpage:v1", header="Cookie:.*?user=jason"  | action=trace, tags=v1, prob=0.75  |
-| productpage | 0f12b977-9ab9-4d69-8dfe-3eae07c8f115 | 10       | source="gateway, header="Cookie:.*?user=jason"          | action=trace, tags=v1, prob=1.0   |
-| ratings     | c2d98e32-8fd0-4e0d-a363-8adff99b0692 | 10       | source="reviews:v2", header="Cookie:.*?user=jason"      | action=delay, tags=v1, prob=1.0   |
-| ratings     | 454a8fb0-d260-4832-8007-5b5344c03c1f | 10       | source="reviews:v2", header="Cookie:.*?user=jason"      | action=trace, tags=v1, prob=0.5   |
-| reviews     | 2d381a94-1796-45c3-a1d8-3965051b61b1 | 10       | source="productpage:v1", header="Cookie:.*?user=jason"  | action=trace, tags=v2, prob=0.5   |
+| details     | 9c7198d7-d037-4cb6-8d48-b573608c7de9 | 10       | source="productpage:v1", header="Cookie:^(.*?;)?(user=jason)(;.*)?$"  | action=trace, tags=v1, prob=0.75  |
+| productpage | 0f12b977-9ab9-4d69-8dfe-3eae07c8f115 | 10       | source="gateway, header="Cookie:^(.*?;)?(user=jason)(;.*)?$"          | action=trace, tags=v1, prob=1.0   |
+| ratings     | c2d98e32-8fd0-4e0d-a363-8adff99b0692 | 10       | source="reviews:v2", header="Cookie:^(.*?;)?(user=jason)(;.*)?$"      | action=delay, tags=v1, prob=1.0   |
+| ratings     | 454a8fb0-d260-4832-8007-5b5344c03c1f | 10       | source="reviews:v2", header="Cookie:^(.*?;)?(user=jason)(;.*)?$"      | action=trace, tags=v1, prob=0.5   |
+| reviews     | 2d381a94-1796-45c3-a1d8-3965051b61b1 | 10       | source="productpage:v1", header="Cookie:^(.*?;)?(user=jason)(;.*)?$"  | action=trace, tags=v2, prob=0.5   |
 +-------------+--------------------------------------+----------+---------------------------------------------------------+-----------------------------------+
 ```
 
@@ -355,7 +355,7 @@ a8ctl-beta recipe-run [-t topology] [-s scenarios] [-c checks] [-r run-load-scri
 ```
 Run a gremlin recipe that describes the application topology, scenario and a set of assertions for fault injection and automated verification.
 
-* a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p user=jason
+* a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p "^(.*?;)?(user=jason)(;.*)?$"
 
 
 #### info

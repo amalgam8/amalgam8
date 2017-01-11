@@ -2,13 +2,13 @@
     "checks" : [
 	    {
 	        "name" : "bounded_response_time",
-	        "source" : "gateway",
+	        "source" : "gateway:version=none",
 	        "dest" : "productpage:version=v1",
 	        "max_latency" : "7s"
 	    },
 	    {
 	        "name" : "http_status",
-            "source" : "gateway",
+            "source" : "gateway:version=none",
             "dest" : "productpage:version=v1",
             "status" : [200, 302]
 	    },

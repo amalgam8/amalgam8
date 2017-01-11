@@ -1,3 +1,5 @@
+#!/bin/bash
+#
 # Copyright 2016 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,20 +14,23 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-##API Gateway##
-gateway:
-  image: amalgam8/a8-sidecar:alpine
-  environment:
-    - A8_CONTROLLER_URL=http://controller:8080
-    - A8_REGISTRY_URL=http://registry:8080
-    - A8_PROXY=true
-    - A8_SERVICE=gateway
-    - A8_CONTROLLER_POLL=5s
-    - A8_REGISTRY_POLL=5s
-    - A8_LOG_LEVEL=debug
-  ports:
-    - "32000:6379"
-  external_links:
-    - controller
-    - registry
-  container_name: gateway
+set -x
+set -o errexit
+
+if [ -z "$A8_TEST_DOCKER" ]; then
+    A8_TEST_DOCKER="true"
+fi
+
+if [ -z "$A8_TEST_K8S" ]; then
+    A8_TEST_K8S="true"
+fi
+
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+if [ "$A8_TEST_DOCKER" == "true" ]; then
+    $SCRIPTDIR/docker/test-docker.sh
+fi
+
+if [ "$A8_TEST_K8S" == "true" ]; then
+    $SCRIPTDIR/kubernetes/test-kubernetes.sh
+fi

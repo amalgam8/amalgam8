@@ -17,7 +17,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"time"
 
@@ -70,11 +69,6 @@ var _ = Describe("Config", func() {
 			Expect(c.Commands).To(HaveLen(0))
 		})
 
-		It("falls back to local IP when no hostname is specified", func() {
-			Expect(c.Endpoint.Host).To(Not(BeNil()))
-			Expect(net.ParseIP(c.Endpoint.Host)).To(Not(BeNil()))
-		})
-
 	})
 
 	Context("config overidden with command line flags", func() {
@@ -111,6 +105,7 @@ var _ = Describe("Config", func() {
 				"--kubernetes_url=http://kubernetes:8080",
 				"--kubernetes_token=12345",
 				"--kubernetes_namespace=default",
+				"--kubernetes_pod_name=mypod-a74n3",
 				"--eureka_url=http://eureka1:9001",
 				"--eureka_url=http://eureka2:9002",
 				"--controller_url=http://controller:8080",
@@ -150,6 +145,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Kubernetes.PodName).To(Equal("mypod-a74n3"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.A8Controller.Token).To(Equal("local"))
@@ -201,6 +197,7 @@ var _ = Describe("Config", func() {
 			os.Setenv("A8_KUBERNETES_URL", "http://kubernetes:8080")
 			os.Setenv("A8_KUBERNETES_TOKEN", "12345")
 			os.Setenv("A8_KUBERNETES_NAMESPACE", "default")
+			os.Setenv("A8_KUBERNETES_POD_NAME", "mypod-a74n3")
 			os.Setenv("A8_EUREKA_URL", "http://eureka1:9001,http://eureka2:9002")
 			os.Setenv("A8_CONTROLLER_URL", "http://controller:8080")
 			os.Setenv("A8_CONTROLLER_TOKEN", "local")
@@ -236,6 +233,7 @@ var _ = Describe("Config", func() {
 			os.Unsetenv("A8_KUBERNETES_URL")
 			os.Unsetenv("A8_KUBERNETES_TOKEN")
 			os.Unsetenv("A8_KUBERNETES_NAMESPACE")
+			os.Unsetenv("A8_KUBERNETES_POD_NAME")
 			os.Unsetenv("A8_EUREKA_URL")
 			os.Unsetenv("A8_CONTROLLER_URL")
 			os.Unsetenv("A8_CONTROLLER_TOKEN")
@@ -268,6 +266,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Kubernetes.PodName).To(Equal("mypod-a74n3"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.A8Controller.Token).To(Equal("local"))
@@ -337,6 +336,8 @@ kubernetes:
   url:   http://kubernetes:8080
   token: 12345
   namespace: default
+  pod_name: mypod-a74n3
+
 eureka:
   urls:
     - http://eureka1:9001
@@ -408,6 +409,7 @@ log_level: debug
 			Expect(c.Kubernetes.URL).To(Equal("http://kubernetes:8080"))
 			Expect(c.Kubernetes.Token).To(Equal("12345"))
 			Expect(c.Kubernetes.Namespace).To(Equal("default"))
+			Expect(c.Kubernetes.PodName).To(Equal("mypod-a74n3"))
 			Expect(c.Eureka.URLs).To(And(ContainElement("http://eureka1:9001"), ContainElement("http://eureka2:9002")))
 			Expect(c.A8Controller.URL).To(Equal("http://controller:8080"))
 			Expect(c.A8Controller.Token).To(Equal("local"))

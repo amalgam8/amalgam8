@@ -12,11 +12,32 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+##API Gateway##
+gateway:
+  image: amalgam8/a8-sidecar:alpine
+  environment:
+    - A8_CONTROLLER_URL=http://controller:8080
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_PROXY=true
+    - A8_LOG=true
+    - A8_SERVICE=gateway:version=none
+    - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
+    - A8_CONTROLLER_POLL=5s
+    - A8_REGISTRY_POLL=5s
+  ports:
+    - "32000:6379"
+  external_links:
+    - elasticsearch
+    - controller
+    - registry
+  container_name: gateway
+  command: /usr/bin/run_filebeat.sh
+
 details-v1:
   image: amalgam8/a8-testing-bookinfo-details-sidecar:v1
   environment:
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=details:v1
+    - A8_SERVICE=details:version=v1
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
     - A8_HEALTHCHECKS=http://localhost:9080/health
@@ -27,7 +48,7 @@ ratings-v1:
   image: amalgam8/a8-testing-bookinfo-ratings-sidecar:v1
   environment:
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=ratings:v1
+    - A8_SERVICE=ratings:version=v1
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
     - A8_HEALTHCHECKS=http://localhost:9080/health
@@ -38,7 +59,7 @@ reviews-v1:
   image: amalgam8/a8-testing-bookinfo-reviews-sidecar:v1
   environment:
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=reviews:v1
+    - A8_SERVICE=reviews:version=v1
     - A8_REGISTER=true
     - A8_ENDPOINT_PORT=9080
     - A8_HEALTHCHECKS=http://localhost:9080/health
@@ -51,13 +72,15 @@ reviews-v2:
     - A8_REGISTER=true
     - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=reviews:v2
+    - A8_SERVICE=reviews:version=v2
     - A8_ENDPOINT_PORT=9080
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health
+    - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
   external_links:
+    - elasticsearch
     - controller
     - registry
 
@@ -67,13 +90,15 @@ reviews-v3:
     - A8_REGISTER=true
     - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=reviews:v3
+    - A8_SERVICE=reviews:version=v3
     - A8_ENDPOINT_PORT=9080
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health
+    - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
   external_links:
+    - elasticsearch
     - controller
     - registry
 
@@ -83,12 +108,14 @@ productpage-v1:
     - A8_REGISTER=true
     - A8_PROXY=true
     - A8_REGISTRY_URL=http://registry:8080
-    - A8_SERVICE=productpage:v1
+    - A8_SERVICE=productpage:version=v1
     - A8_ENDPOINT_PORT=9080
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_CONTROLLER_POLL=5s
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health,file:///bin/ls
+    - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
   external_links:
+    - elasticsearch
     - controller
     - registry

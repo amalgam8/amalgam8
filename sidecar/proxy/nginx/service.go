@@ -15,18 +15,24 @@
 package nginx
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
+	"fmt"
+	"strings"
+
 	"github.com/Sirupsen/logrus"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
-// MinimumRestartWait the minimum amount of time to allow between restarts of the NGINX service.
+// MinimumRestartWait is the minimum amount of time to allow between restarts of the NGINX service.
 const MinimumRestartWait = 15 * time.Second
+
+// ServiceEnvironmentVariable is the NGINX environment variable
+// specifying the service and tags used for source identification.
+const ServiceEnvironmentVariable = "A8_SERVICE"
 
 // Service maintains a NGINX service.
 type Service interface {
@@ -35,20 +41,18 @@ type Service interface {
 }
 
 // NewService creates new instance.
-func NewService(serviceName string, tags []string) Service {
-	serviceEnvVar := fmt.Sprintf("%v:%v", serviceName, strings.Join(tags, ","))
-
+func NewService(identity identity.Provider) Service {
 	return &service{
-		serviceEnvVar: serviceEnvVar,
-		stop:          make(chan struct{}),
+		identity: identity,
+		stop:     make(chan struct{}),
 	}
 }
 
 type service struct {
-	serviceEnvVar string
-	running       bool
-	stop          chan struct{}
-	mutex         sync.Mutex
+	identity identity.Provider
+	running  bool
+	stop     chan struct{}
+	mutex    sync.Mutex
 }
 
 // Start maintaining the NGINX service.
@@ -60,8 +64,13 @@ func (s *service) Start() error {
 		return nil
 	}
 
-	cmd := s.build()
-	if err := cmd.Start(); err != nil {
+	cmd, err := s.build()
+	if err != nil {
+		return err
+	}
+
+	err = cmd.Start()
+	if err != nil {
 		return err
 	}
 
@@ -72,12 +81,19 @@ func (s *service) Start() error {
 }
 
 // build the NGINX service command.
-func (s *service) build() *exec.Cmd {
+func (s *service) build() (*exec.Cmd, error) {
+	identity, err := s.identity.GetIdentity()
+	if err != nil {
+		return nil, err
+	}
+
+	serviceEnvVar := fmt.Sprintf("%s=%s:%s", ServiceEnvironmentVariable,
+		identity.ServiceName, strings.Join(identity.Tags, ","))
+
 	cmd := exec.Command("nginx", "-g", "daemon off;")
-	cmdEnv := os.Environ()
-	cmdEnv = append(cmdEnv, "A8_SERVICE="+s.serviceEnvVar)
-	cmd.Env = cmdEnv
-	return cmd
+	cmd.Env = append(os.Environ(), serviceEnvVar)
+
+	return cmd, nil
 }
 
 // maintain the NGINX service. Automatically restart the service if it exits.
@@ -116,11 +132,14 @@ func (s *service) maintain(cmd *exec.Cmd) {
 // restart the NGINX service. Retry indefinitely on restart failure. On restart success maintain the service.
 func (s *service) restart() {
 	var cmd *exec.Cmd
+	var err error
 	for {
-		cmd = s.build()
-		err := cmd.Start()
+		cmd, err = s.build()
 		if err == nil {
-			break
+			err = cmd.Start()
+			if err == nil {
+				break
+			}
 		}
 
 		logrus.WithError(err).Error("NGINX failed to start")

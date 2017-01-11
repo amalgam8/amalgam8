@@ -1,0 +1,16 @@
+rules:
+- priority: 10
+  destination: ratings
+  match:
+    source:
+      name: reviews
+      tags:
+      - version=v2
+    headers:
+      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
+  actions:
+  - action: delay
+    duration: 7
+    probability: 1
+    tags:
+    - version=v1

@@ -23,9 +23,9 @@ RUN ln -s /usr/local/openresty/nginx/sbin/nginx /usr/local/bin/nginx && \
     touch /var/log/nginx/error.log && \
     ln -sf /usr/local/openresty/nginx/conf /etc/nginx
 
-ARG FILEBEAT_VERSION="1.2.2"
+ARG FILEBEAT_VERSION="5.1.1"
 RUN set -ex \
-    && curl -fsSL http://download.elastic.co/beats/filebeat/filebeat-${FILEBEAT_VERSION}-x86_64.tar.gz -o /tmp/filebeat.tar.gz \
+    && curl -fsSL https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -o /tmp/filebeat.tar.gz \
     && cd /tmp \
     && tar -xzf filebeat.tar.gz \
     \

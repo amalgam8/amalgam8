@@ -1,0 +1,39 @@
+{
+  "results": [
+    {
+      "dest": "productpage:version=v1",
+      "errormsg": "",
+      "max_latency": "7s",
+      "name": "bounded_response_time",
+      "result": true,
+      "source": "gateway:version=none"
+    },
+    {
+      "dest": "productpage:version=v1",
+      "errormsg": "",
+      "name": "http_status",
+      "result": true,
+      "source": "gateway:version=none",
+      "status": [
+        200,
+        302
+      ]
+    },
+    {
+      "dest": "reviews:version=v2",
+      "errormsg": "unexpected connection termination",
+      "name": "http_status",
+      "result": false,
+      "source": "productpage:version=v1",
+      "status": 200
+    },
+    {
+      "dest": "ratings:version=v1",
+      "errormsg": "",
+      "name": "http_status",
+      "result": true,
+      "source": "reviews:version=v2",
+      "status": 200
+    }
+  ]
+}

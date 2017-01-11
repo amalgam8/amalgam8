@@ -15,10 +15,8 @@
 package kubernetes
 
 import (
-	"encoding/json"
 	"fmt"
 	"reflect"
-	"strings"
 	"sync"
 	"time"
 
@@ -352,7 +350,7 @@ func (a *Adapter) reloadServiceFromEndpoints(endpoints *v1.Endpoints) {
 	for _, subset := range endpoints.Subsets {
 		for _, address := range subset.Addresses {
 			for _, port := range subset.Ports {
-				instance, err := a.createServiceInstance(serviceName, address, port)
+				instance, err := a.createServiceInstance(serviceName, &address, &port)
 				if err != nil {
 					logger.WithError(err).Warnf("Failed creating service '%s' instance for pod %s with address %s and port %s",
 						serviceName, address.TargetRef.Name, address.String(), port.String())
@@ -401,12 +399,7 @@ func (a *Adapter) deleteService(serviceName string) {
 
 // createServiceInstance creates a service instance based on the given service name, address and port.
 // Cached pod information is used to build the tags and metadata fields.
-func (a *Adapter) createServiceInstance(serviceName string, address v1.EndpointAddress, port v1.EndpointPort) (*api.ServiceInstance, error) {
-	// Parse the service endpoint
-	endpoint, err := buildEndpointFromAddress(address, port)
-	if err != nil {
-		return nil, err
-	}
+func (a *Adapter) createServiceInstance(serviceName string, address *v1.EndpointAddress, port *v1.EndpointPort) (*api.ServiceInstance, error) {
 
 	// Extract the pod implementing the service
 	var pod *v1.Pod
@@ -414,36 +407,7 @@ func (a *Adapter) createServiceInstance(serviceName string, address v1.EndpointA
 		pod = a.getCachedPod(address.TargetRef.Name)
 	}
 
-	// Determine the ID of the service instance.
-	// For a pod, that would be the pod UID, followed by the port number.
-	// For an externalName, that would be the IP address, followed by the port number.
-	var id string
-	if pod != nil {
-		id = fmt.Sprintf("%s-%d", pod.UID, port.Port)
-	} else {
-		id = fmt.Sprintf("%s-%d", address.IP, port.Port)
-	}
-
-	// Extract the pod labels as instance tags
-	var tags []string
-	if pod != nil {
-		tags = buildTagsFromLabels(pod.Labels)
-	}
-
-	// Extract the pod annotations as instance metadata
-	var metadata json.RawMessage
-	if pod != nil {
-		metadata = buildMetadataFromAnnotations(pod.Annotations)
-	}
-
-	return &api.ServiceInstance{
-		ID:          id,
-		ServiceName: serviceName,
-		Endpoint:    *endpoint,
-		Tags:        tags,
-		Metadata:    metadata,
-		Status:      "UP", // Otherwise would be removed from the service endpoints
-	}, nil
+	return kubepkg.BuildServiceInstance(serviceName, pod, address, port)
 }
 
 // getCachedServiceEndpoints returns the cached endpoints resource for the given service, or nil if doesn't exist.
@@ -498,52 +462,4 @@ func extractDeletedObject(obj interface{}) interface{} {
 		return deleted.Obj
 	}
 	return obj
-}
-
-// buildEndpointFromAddress builds an api.ServiceEndpoint from the given address and port Kubernetes objects.
-func buildEndpointFromAddress(address v1.EndpointAddress, port v1.EndpointPort) (*api.ServiceEndpoint, error) {
-	var endpointType string
-	endpointValue := fmt.Sprintf("%s:%d", address.IP, port.Port)
-
-	switch port.Protocol {
-	case v1.ProtocolUDP:
-		endpointType = "udp"
-	case v1.ProtocolTCP:
-		portName := strings.ToLower(port.Name)
-		switch portName {
-		case "http":
-			fallthrough
-		case "https":
-			endpointType = portName
-		default:
-			endpointType = "tcp"
-		}
-	default:
-		return nil, fmt.Errorf("unsupported kubernetes endpoint port protocol: %s", port.Protocol)
-	}
-
-	return &api.ServiceEndpoint{
-		Type:  endpointType,
-		Value: endpointValue,
-	}, nil
-}
-
-// buildTagsFromLabels builds a slice of string tags from the given resource labels.
-// Each label is converted into a "key=value" string.
-func buildTagsFromLabels(labels map[string]string) []string {
-	tags := make([]string, 0, len(labels))
-	for key, value := range labels {
-		tags = append(tags, fmt.Sprintf("%s=%s", key, value))
-	}
-	return tags
-}
-
-// buildMetadataFromAnnotations builds a serialized JSON object from the given resource annotations.
-func buildMetadataFromAnnotations(annotations map[string]string) json.RawMessage {
-	bytes, err := json.Marshal(annotations)
-	if err != nil {
-		logger.WithError(err).Errorf("Error marshaling annotations to JSON")
-		return nil
-	}
-	return json.RawMessage(bytes)
 }

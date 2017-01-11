@@ -148,11 +148,7 @@ func (cmd *RecipeRunCommand) Action(ctx *cli.Context) error {
 		}
 	}
 
-	pattern := "*"
-	if ctx.IsSet("pattern") {
-		pattern = ".*?" + ctx.String("pattern")
-	}
-
+	pattern := ctx.String("pattern")
 	header := ctx.String("header")
 
 	// Add errors in client

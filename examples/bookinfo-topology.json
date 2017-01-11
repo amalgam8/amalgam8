@@ -1,6 +1,6 @@
 {
     "services" : [
-        { "name": "gateway:none"},
+        { "name": "gateway:version=none"},
         { "name": "productpage:version=v1"},
         { "name": "reviews:version=v2"},
         { "name": "details:version=v1"},
@@ -8,7 +8,7 @@
     ],
 
     "dependencies" : {
-        "gateway:none" : ["productpage:version=v1"],
+        "gateway:version=none" : ["productpage:version=v1"],
         "productpage:version=v1" : ["reviews:version=v2", "details:version=v1"],
         "reviews:version=v2" : ["ratings:version=v1"]
     }

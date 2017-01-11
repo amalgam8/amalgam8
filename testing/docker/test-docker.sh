@@ -19,12 +19,15 @@ set -o errexit
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# Increase memory limit for elasticsearch 5.1
+sudo sysctl -w vm.max_map_count=262144
+
 echo "Testing docker-based deployment.."
 
-$SCRIPTDIR/run-controlplane-docker.sh start
-sleep 5
+echo "starting Control plane components (registry, and controller)"
+docker-compose -f $SCRIPTDIR/controlplane.yaml up -d
+echo "waiting for the cluster to initialize.."
 
-docker-compose -f $SCRIPTDIR/gateway.yaml up -d
 sleep 5
 
 docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
@@ -33,7 +36,13 @@ sleep 10
 # Run the actual test workload
 $SCRIPTDIR/../test-scripts/demo_script.sh
 
-echo "Docker tests successful. Cleaning up.."
-$SCRIPTDIR/cleanup.sh
+echo "Docker tests successful."
+echo "Cleaning up Bookinfo apps.."
+docker-compose -f $SCRIPTDIR/bookinfo.yaml kill
+docker-compose -f $SCRIPTDIR/bookinfo.yaml rm -f
+
+echo "Stopping control plane services..."
+docker-compose -f $SCRIPTDIR/controlplane.yaml kill
+docker-compose -f $SCRIPTDIR/controlplane.yaml rm -f
 
 sleep 10

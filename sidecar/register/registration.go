@@ -21,6 +21,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/registry/client"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
 // DefaultHeartbeatsPerTTL default number of heartbeats per TTL
@@ -28,6 +29,9 @@ const DefaultHeartbeatsPerTTL = 3
 
 // DefaultReregistrationDelay default delay before registering
 const DefaultReregistrationDelay = time.Duration(5) * time.Second
+
+// DefaultTTL default TTL requested for registration
+const DefaultTTL = time.Duration(60) * time.Second
 
 // Lifecycle is the interface implemented by objects that can be started and stopped.
 type Lifecycle interface {
@@ -37,8 +41,8 @@ type Lifecycle interface {
 
 // RegistrationConfig options
 type RegistrationConfig struct {
-	Registry        api.ServiceRegistry
-	ServiceInstance *api.ServiceInstance
+	Registry api.ServiceRegistry
+	Identity identity.Provider
 }
 
 // RegistrationAgent maintains a registration with registry.
@@ -64,8 +68,7 @@ func NewRegistrationAgent(config RegistrationConfig) (*RegistrationAgent, error)
 // Start maintaining registration with registry.
 // Non-blocking.
 func (agent *RegistrationAgent) Start() {
-	logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
-		Info("Starting Amalgam8 service registration agent")
+	logrus.Info("Starting Amalgam8 service registration agent")
 
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
@@ -81,8 +84,7 @@ func (agent *RegistrationAgent) Start() {
 // Stop maintaining registration with registry.
 // Blocks until deregistration attempt is complete.
 func (agent *RegistrationAgent) Stop() {
-	logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
-		Info("Stopping Amalgam8 service registration agent")
+	logrus.Info("Stopping Amalgam8 service registration agent")
 
 	agent.mutex.Lock()
 	defer agent.mutex.Unlock()
@@ -98,22 +100,27 @@ func (agent *RegistrationAgent) Stop() {
 
 func (agent *RegistrationAgent) register() {
 	for {
-		logrus.WithField("service_name", agent.config.ServiceInstance.ServiceName).
-			Debug("Attempting to register service with Amalgam8")
+		logrus.Debug("Attempting to register service with Amalgam8")
 
-		registeredInstance, err := agent.config.Registry.Register(agent.config.ServiceInstance)
+		instance, err := agent.config.Identity.GetIdentity()
 		if err == nil {
-			logrus.WithFields(logrus.Fields{
-				"service_name": registeredInstance.ServiceName,
-				"instance_id":  registeredInstance.ID,
-			}).Info("Service successfully registered with Amalgam8")
+			if instance.TTL == 0 {
+				instance.TTL = int(DefaultTTL.Seconds())
+			}
 
-			go agent.renew(registeredInstance)
-			return
+			registeredInstance, err := agent.config.Registry.Register(instance)
+			if err == nil {
+				logrus.WithFields(logrus.Fields{
+					"service_name": registeredInstance.ServiceName,
+					"instance_id":  registeredInstance.ID,
+				}).Info("Service successfully registered with Amalgam8")
+
+				go agent.renew(registeredInstance)
+				return
+			}
 		}
 
-		logrus.WithError(err).WithField("service_name", agent.config.ServiceInstance.ServiceName).
-			Warnf("Service registration had failed. Re-attempting in %s", DefaultReregistrationDelay)
+		logrus.WithError(err).Warnf("Service registration had failed. Re-attempting in %s", DefaultReregistrationDelay)
 
 		select {
 		case <-time.After(DefaultReregistrationDelay):

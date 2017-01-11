@@ -25,16 +25,11 @@ import (
 
 var _ = Describe("Registration agent", func() {
 	mockClient := &mockRegistryClient{}
+	mockProvider := &mockIdentityProvider{}
+
 	config := RegistrationConfig{
-		ServiceInstance: &api.ServiceInstance{
-			ServiceName: "test_service",
-			Endpoint: api.ServiceEndpoint{
-				Type:  "http",
-				Value: "http://172.17.0.10:8080",
-			},
-			TTL: 1,
-		},
 		Registry: mockClient,
+		Identity: mockProvider,
 	}
 
 	var agent *RegistrationAgent
@@ -62,7 +57,7 @@ var _ = Describe("Registration agent", func() {
 			// Avoid race condition on registration
 			time.Sleep(100 * time.Millisecond)
 
-			ttl := time.Duration(config.ServiceInstance.TTL) * time.Second
+			ttl := time.Duration(mockProvider.MustGetIdentity().TTL) * time.Second
 			for i := 0; i < 3; i++ {
 				// Assert that last heartbeat took place at most <TTL> ago
 				Expect(mockClient.lastHeartbeat).To(BeTemporally("~", time.Now(), ttl))
@@ -123,4 +118,21 @@ func (c *mockRegistryClient) Renew(id string) error {
 
 func (c *mockRegistryClient) Reset() {
 	c.registered = false
+}
+
+type mockIdentityProvider struct{}
+
+func (mip mockIdentityProvider) GetIdentity() (*api.ServiceInstance, error) {
+	return mip.MustGetIdentity(), nil
+}
+
+func (mip mockIdentityProvider) MustGetIdentity() *api.ServiceInstance {
+	return &api.ServiceInstance{
+		ServiceName: "test_service",
+		Endpoint: api.ServiceEndpoint{
+			Type:  "http",
+			Value: "http://172.17.0.10:8080",
+		},
+		TTL: 1,
+	}
 }

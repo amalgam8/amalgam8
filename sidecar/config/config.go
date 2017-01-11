@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"reflect"
 	"strings"
 	"time"
@@ -100,6 +99,7 @@ type Kubernetes struct {
 	URL       string `yaml:"url"`
 	Token     string `yaml:"token"`
 	Namespace string `yaml:"namespace"`
+	PodName   string `yaml:"pod_name"`
 }
 
 // Eureka configuration
@@ -190,12 +190,6 @@ func New(context *cli.Context) (*Config, error) {
 		return nil, err
 	}
 
-	if config.Endpoint.Host == "" {
-		logrus.Infof("No hostname is configured. Using local IP instead...")
-		config.Endpoint.Host = waitForLocalIP()
-		logrus.Infof("Obtained local IP %s", config.Endpoint.Host)
-	}
-
 	return &config, nil
 }
 
@@ -265,6 +259,7 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Kubernetes.URL, kubernetesURLFlag)
 	loadFromContextIfSet(&c.Kubernetes.Token, kubernetesTokenFlag)
 	loadFromContextIfSet(&c.Kubernetes.Namespace, kubernetesNamespaceFlag)
+	loadFromContextIfSet(&c.Kubernetes.PodName, kubernetesPodNameFlag)
 	loadFromContextIfSet(&c.Eureka.URLs, eurekaURLFlag)
 	loadFromContextIfSet(&c.Supervise, superviseFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
@@ -414,39 +409,6 @@ func (c *Config) Validate() error {
 	}
 
 	return Validate(validators)
-}
-
-// waitForLocalIP waits until a local IP is available
-func waitForLocalIP() string {
-	ip := ""
-	for {
-		ip = localIP()
-		if ip != "" {
-			break
-		}
-		logrus.Warn("Could not obtain local IP")
-		time.Sleep(time.Second * 10)
-	}
-	return ip
-}
-
-// localIP retrieves the IP address of the system
-func localIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-
-	for _, address := range addrs {
-		// check the address type and if it is not a loopback return it
-		if ipNet, ok := address.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String()
-			}
-		}
-	}
-
-	return ""
 }
 
 func parseServiceNameAndTags(service string) (name string, tags []string) {

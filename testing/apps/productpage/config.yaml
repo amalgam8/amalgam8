@@ -1,0 +1,6 @@
+commands:
+  - cmd: [ "/usr/bin/run_filebeat.sh" ]
+    env: [ "GODEBUG=netdns=go" ]
+    on_exit: ignore
+  - cmd: [ "/opt/microservices/productpage", "9080", "http://localhost:6379" ]
+    on_exit: terminate

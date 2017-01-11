@@ -27,6 +27,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
 // EnvoyConfigPath path to envoy config file
@@ -38,10 +39,9 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(serviceName string, tags []string) Manager {
+func NewManager(identity identity.Provider) Manager {
 	return &manager{
-		serviceName: serviceName,
-		tags:        tags,
+		identity: identity,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
@@ -51,13 +51,16 @@ func NewManager(serviceName string, tags []string) Manager {
 }
 
 type manager struct {
-	serviceName string
-	tags        []string
+	identity identity.Provider
 	service     Service
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
-	conf, err := generateConfig(rules, instances, m.serviceName, m.tags)
+	inst, err := m.identity.GetIdentity()
+	if err != nil {
+		return err
+	}
+	conf, err := generateConfig(rules, instances, inst.ServiceName, inst.Tags)
 	if err != nil {
 		return err
 	}
@@ -532,6 +535,7 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 				headers = append(headers, Header{
 					Name:  key,
 					Value: val,
+					Regex: true,
 				})
 			}
 

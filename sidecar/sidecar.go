@@ -268,7 +268,7 @@ func buildProxyAdapter(conf *config.Config, identity identity.Provider, discover
 	case config.NGINXAdapter:
 		return proxy.NewNGINXAdapter(conf, identity, discovery, rules)
 	case config.EnvoyAdapter:
-		return proxy.NewEnvoyAdapter(conf, discovery, rules, discoveryClient)
+		return proxy.NewEnvoyAdapter(conf, discovery, identity, rules, discoveryClient)
 	default:
 		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
 

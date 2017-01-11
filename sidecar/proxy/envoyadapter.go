@@ -25,6 +25,7 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/discovery"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
+	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
 // EnvoyAdapter manages an Envoy based proxy.
@@ -41,9 +42,10 @@ type EnvoyAdapter struct {
 
 // NewEnvoyAdapter creates a new adapter instance.
 func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMonitor,
-	rulesMonitor monitor.RulesMonitor, discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
+	identity identity.Provider, rulesMonitor monitor.RulesMonitor,
+	discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
 
-	manager := envoy.NewManager(conf.Service.Name, conf.Service.Tags)
+	manager := envoy.NewManager(identity)
 
 	if conf.DiscoveryPort == 0 {
 		conf.DiscoveryPort = 6500

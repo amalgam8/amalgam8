@@ -51,12 +51,14 @@ REGISTRY_IMAGE_NAME			:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME		:= amalgam8/a8-controller:latest
 SIDECAR_UBUNTU_IMAGE_NAME	:= amalgam8/a8-sidecar:latest
 SIDECAR_ALPINE_IMAGE_NAME	:= amalgam8/a8-sidecar:alpine
+SIDECAR_ENVOY_IMAGE_NAME	:= amalgam8/a8-sidecar:envoy
 K8SRULES_IMAGE_NAME			:= amalgam8/a8-k8s-rules-controller:latest
 
 REGISTRY_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.controller
 SIDECAR_UBUNTU_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
 SIDECAR_ALPINE_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.alpine
+SIDECAR_ENVOY_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.envoy
 K8SRULES_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.k8srules
 
 REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
@@ -239,6 +241,10 @@ dockerize.controller:
 dockerize.sidecar.alpine:
 	@echo "--> building alpine sidecar docker image"
 	@docker build -t $(SIDECAR_ALPINE_IMAGE_NAME) -f $(SIDECAR_ALPINE_DOCKERFILE) .
+
+dockerize.sidecar.envoy:
+	@echo "--> building envoy sidecar docker image"
+	@docker build -t $(SIDECAR_ENVOY_IMAGE_NAME) -f $(SIDECAR_ENVOY_DOCKERFILE) .
 
 dockerize.sidecar.ubuntu:
 	@echo "--> building ubuntu sidecar docker image"

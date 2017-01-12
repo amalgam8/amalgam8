@@ -33,6 +33,31 @@ import (
 // EnvoyConfigPath path to envoy config file
 const EnvoyConfigPath = "/etc/envoy/envoy.json"
 
+const EnvoyLogFormat = "" +
+	"{" +
+	"\"status\":\"%RESPONSE_CODE%\", " +
+	"\"timestamp_in_ms\":\"%START_TIME%\", " +
+	"\"request_time\":\"%DURATION%\", " +
+	"\"upstream_response_time\":\"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\", " +
+	"\"$a8_trace_key\":\"NEED\", " +
+	"\"src\": \"NEED\", " +
+	"\"dst\": \"NEED\", " +
+	"\"module\":\"ENVOY\", " +
+	"\"method\":\"%REQ(:METHOD)%\", " +
+	"\"path\":\"%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%\", " +
+	"\"protocol\":\"%PROTOCOL%\", " +
+	"\"response_code\":\"%RESPONSE_CODE%\", " +
+	"\"response_flags\":\"%RESPONSE_FLAGS%\", " +
+	"\"bytes_rx\":\"%BYTES_RECEIVED%\", " +
+	"\"bytes_tx\":\"%BYTES_SENT%\", " +
+	"\"upstream_time\":\"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\", " +
+	"\"x_forwarded\":\"%REQ(X-FORWARDED-FOR)%\", " +
+	"\"user_agent\":\"%REQ(USER-AGENT)%\", " +
+	"\"request_id\":\"%REQ(X-REQUEST-ID)%\", " +
+	"\"auth\":\"%REQ(:AUTHORITY)%\", " +
+	"\"upstream_host\":\"%UPSTREAM_HOST%\"" +
+	"}\n"
+
 // Manager for updating envoy proxy configuration.
 type Manager interface {
 	Update(instances []api.ServiceInstance, rules []api.Rule) error
@@ -144,7 +169,8 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 							Filters: filters,
 							AccessLog: []AccessLog{
 								{
-									Path: "/var/log/envoy_access.log",
+									Path:   "/var/log/a8_access.log",
+									Format: EnvoyLogFormat,
 								},
 							},
 						},

@@ -20,6 +20,8 @@ import (
 	"os/exec"
 	"sync"
 
+	"time"
+
 	"github.com/Sirupsen/logrus"
 )
 
@@ -90,6 +92,8 @@ func (s *service) Reload() error {
 
 	// Start tracking the process.
 	go s.waitForExit(cmd)
+
+	time.Sleep(256 * time.Millisecond)
 
 	return nil
 }

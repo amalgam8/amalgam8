@@ -1,0 +1,2 @@
+{"rules": [{"priority": 1, "route": {"backends": [{"tags": ["version=v1"]}]}, "destination": "helloworld"}]}
+

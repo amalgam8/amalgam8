@@ -17,21 +17,16 @@
 set -x
 set -o errexit
 
-# Set env vars
-export A8_CONTROLLER_URL=http://localhost:31200
-export A8_REGISTRY_URL=http://localhost:31300
-export A8_GATEWAY_URL=http://localhost:32000
-export A8_LOG_SERVER=http://localhost:30200
-export A8_GREMLIN_URL=http://localhost:31500
-
 # Set local vars
 A8_TEST_SUITE=$1
 if [ "$A8_TEST_SUITE" == "examples" ]; then
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.html"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.html"
+    PRODUCTPAGE_RULEMATCH="productpage_rulematch.html"
 else
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.json"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.json"
+    PRODUCTPAGE_RULEMATCH="productpage_rulematch.json"
 fi
 # docker or k8s
 if [ -z "$A8_CONTAINER_ENV" ]; then
@@ -110,12 +105,17 @@ sleep 2
 echo "testing version routing.."
 $CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
 $CLIBIN rule-create -f $SCRIPTDIR/route_jason_v2.yaml
-sleep 10
+sleep 30
 
 echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
 curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
 
-jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+else
+	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+fi
+
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
@@ -126,7 +126,12 @@ echo "works!"
 echo -n "injecting traffic for user=jason, expecting productpage_v2.."
 curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
 
-jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	diff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+else
+	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+fi
+
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
@@ -165,7 +170,7 @@ echo "works!"
 ####For jason
 echo -n "injecting traffic for user=jason, expecting 'reviews unavailable' message in approx 7s.."
 before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/productpage_rulematch.json
+curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_RULEMATCH
 after=$(date +"%s")
 
 delta=$(($after-$before))
@@ -175,7 +180,12 @@ if [ $delta -gt 8 -o $delta -lt 5 ]; then
     exit 1
 fi
 
-jsondiff $SCRIPTDIR/productpage_rulematch.json /tmp/productpage_rulematch.json
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	diff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
+else
+	jsondiff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
+fi
+
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_rulematch.json after injecting fault rule for user=jason in fault injection test phase"

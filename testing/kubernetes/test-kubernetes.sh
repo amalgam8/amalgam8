@@ -21,6 +21,13 @@ A8_TEST_SUITE=$1
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# Set env vars
+export A8_CONTROLLER_URL=http://localhost:31200
+export A8_REGISTRY_URL=http://localhost:31300
+export A8_GATEWAY_URL=http://localhost:32000
+export A8_LOG_SERVER=http://localhost:30200
+export A8_GREMLIN_URL=http://localhost:31500
+
 # The test script checks this var to determine if we're using docker or k8s
 export A8_CONTAINER_ENV="k8s"
 
@@ -53,6 +60,16 @@ echo "Kubernetes tests successful."
 echo "Cleaning up Bookinfo apps.."
 sed -e "s/{A8_TEST_ENV}/$A8_TEST_ENV/" $SCRIPTDIR/bookinfo.yaml | kubectl delete -f - || echo "Probably already down"
 sleep 5
+
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	kubectl create -f $SCRIPTDIR/helloworld.yaml
+	sleep 10
+
+	$SCRIPTDIR/../test-scripts/helloworld.sh $A8_TEST_SUITE
+
+	kubectl delete -f $SCRIPTDIR/helloworld.yaml
+	sleep 5
+fi
 
 echo "Stopping control plane services..."
 kubectl delete -f $SCRIPTDIR/controlplane.yaml

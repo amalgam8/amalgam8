@@ -19,6 +19,8 @@ import (
 	"net"
 	"net/http"
 
+	"sync"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/registry/utils/logging"
 	"github.com/ant0ine/go-json-rest/rest"
@@ -38,6 +40,7 @@ type server struct {
 	config   *Config
 	listener net.Listener
 	logger   *log.Entry
+	mutex    sync.Mutex
 }
 
 // NewDiscoveryServer creates a new server based on the provided configuration options.
@@ -77,7 +80,8 @@ func (s *server) Start() error {
 
 func (s *server) Stop() {
 	s.logger.Info("Stopping rest server")
-
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	if s.listener != nil {
 		if err := s.listener.Close(); err != nil {
 			s.logger.WithFields(log.Fields{
@@ -99,10 +103,7 @@ func (s *server) setup() (http.Handler, error) {
 
 	discoveryAPI := NewDiscovery(s.config.Discovery)
 
-	var routes []*rest.Route
-	routes = append(routes, discoveryAPI.Routes()...)
-
-	router, err := rest.MakeRouter(routes...)
+	router, err := rest.MakeRouter(discoveryAPI.Routes()...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +123,8 @@ func (s *server) serve(h http.Handler) error {
 		return err
 	}
 
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
 	s.listener = listener
 	if err := http.Serve(listener, h); err != nil {
 		s.logger.WithFields(log.Fields{

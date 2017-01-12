@@ -21,6 +21,9 @@ A8_TEST_SUITE=$1
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# The test script checks this var to determine if we're using docker or k8s
+export A8_CONTAINER_ENV="docker"
+
 if [ "$A8_TEST_SUITE" == "examples" ]; then
     export A8_TEST_ENV="examples"
 else

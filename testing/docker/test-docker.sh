@@ -37,6 +37,15 @@ else
     export A8_TEST_ENV="testing"
 fi
 
+# Make sure there are no containers running
+docker-compose -f $SCRIPTDIR/helloworld.yaml kill
+docker-compose -f $SCRIPTDIR/helloworld.yaml rm -f
+docker-compose -f $SCRIPTDIR/bookinfo.yaml kill
+docker-compose -f $SCRIPTDIR/bookinfo.yaml rm -f
+docker-compose -f $SCRIPTDIR/controlplane.yaml kill
+docker-compose -f $SCRIPTDIR/controlplane.yaml rm -f
+sleep 5
+
 # Increase memory limit for elasticsearch 5.1
 sudo sysctl -w vm.max_map_count=262144
 

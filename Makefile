@@ -178,7 +178,7 @@ clean:
 #--------
 #-- test
 #--------
-.PHONY: test test.long test.integration
+.PHONY: test test.long test.integration test.examples
 
 test:
 	@echo "--> running unit tests, excluding long tests"
@@ -191,6 +191,10 @@ test.long:
 test.integration: build.testapps
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
+
+test.examples: build.exampleapps
+	@echo "--> running automated examples"
+	@testing/run_tests.sh "examples"
 
 #---------------
 #-- checks

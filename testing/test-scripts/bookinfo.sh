@@ -284,6 +284,8 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
 			exit 1
 		fi
+		# Make sure to call traffic-abort since we call traffic-start again
+		$CLIBIN traffic-abort -s reviews
 	else
 		break
 	fi
@@ -311,6 +313,8 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
 			exit 1
 		fi
+		# Reset the step back to 10% since the traffic-step will be called again
+		$CLIBIN traffic-step -s reviews --amount 10
 	else
 		break
 	fi
@@ -377,7 +381,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 	# The default route is now v3.  Start 50% traffic to v1.
 	TRAFFIC_START_RESP=$($CLIBIN traffic-start -s reviews -v version=v1 -a 50)
 	if [ "$TRAFFIC_START_RESP" != "Transfer starting for \"reviews\": diverting 50% of traffic from \"version=v3\" to \"version=v1\"" ]; then
-		echo "failed"
+		echo "failed: $TRAFFIC_START_RESP"
 		echo "Failed to divert 50% traffic to v1"
 		exit 1
 	fi
@@ -393,6 +397,8 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
 			exit 1
 		fi
+		# Make sure the traffic-abort is called before traffic-start gets called again
+		$CLIBIN traffic-abort -s reviews
 	else
 		break
 	fi

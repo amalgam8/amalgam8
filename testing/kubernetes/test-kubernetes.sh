@@ -37,6 +37,12 @@ else
     export A8_TEST_ENV="testing"
 fi
 
+# Make sure kubernetes is not active
+sed -e "s/{A8_TEST_ENV}/$A8_TEST_ENV/" $SCRIPTDIR/helloworld.yaml | kubectl delete -f - || echo "Probably already down"
+sed -e "s/{A8_TEST_ENV}/$A8_TEST_ENV/" $SCRIPTDIR/bookinfo.yaml | kubectl delete -f - || echo "Probably already down"
+kubectl delete -f $SCRIPTDIR/controlplane.yaml || echo "Probably already down"
+sleep 5
+
 # Increase memory limit for elasticsearch 5.1
 sudo sysctl -w vm.max_map_count=262144
 

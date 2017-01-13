@@ -65,6 +65,7 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
+			Expect(c.DiscoveryPort).To(Equal(DefaultConfig.DiscoveryPort))
 			Expect(c.Commands).To(HaveLen(0))
 		})
 
@@ -115,6 +116,7 @@ var _ = Describe("Config", func() {
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
 				"--log_level=debug",
+				"--discovery_port=9080",
 				"python", "productpage.py",
 			}...)
 
@@ -155,6 +157,7 @@ var _ = Describe("Config", func() {
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
 			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
+			Expect(c.DiscoveryPort).To(Equal(9080))
 			Expect(c.Commands).To(HaveLen(1))
 			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
 			Expect(c.Commands[0].Cmd).To(Equal([]string{"python", "productpage.py"}))

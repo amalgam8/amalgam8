@@ -261,10 +261,14 @@ func buildServiceRules(conf *config.Config) (api.RulesService, error) {
 	}
 }
 
-func buildProxyAdapter(conf *config.Config, identity identity.Provider, discovery monitor.DiscoveryMonitor, rules monitor.RulesMonitor) (proxy.Adapter, error) {
+func buildProxyAdapter(conf *config.Config, identity identity.Provider, discovery monitor.DiscoveryMonitor,
+	rules monitor.RulesMonitor, discoveryClient api.ServiceDiscovery) (proxy.Adapter, error) {
+
 	switch conf.ProxyAdapter {
 	case config.NGINXAdapter:
 		return proxy.NewNGINXAdapter(conf, identity, discovery, rules)
+	case config.EnvoyAdapter:
+		return proxy.NewEnvoyAdapter(conf, discovery, identity, rules, discoveryClient)
 	default:
 		return nil, fmt.Errorf("Unsupported proxy adapter: %v", conf.ProxyAdapter)
 
@@ -287,7 +291,7 @@ func startProxy(conf *config.Config, identity identity.Provider, discovery api.S
 		Discovery: discovery,
 	})
 
-	proxyAdapter, err := buildProxyAdapter(conf, identity, discoveryMonitor, rulesMonitor)
+	proxyAdapter, err := buildProxyAdapter(conf, identity, discoveryMonitor, rulesMonitor, discovery)
 	if err != nil {
 		logrus.WithError(err).Error("Could not build proxy adapter")
 		return err

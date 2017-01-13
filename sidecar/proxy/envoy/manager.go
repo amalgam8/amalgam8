@@ -33,7 +33,7 @@ import (
 // EnvoyConfigPath path to envoy config file
 const EnvoyConfigPath = "/etc/envoy/envoy.json"
 
-const EnvoyLogFormat = "" +
+const envoyLogFormat = "" +
 	"{" +
 	"\"status\":\"%RESPONSE_CODE%\", " +
 	"\"timestamp_in_ms\":\"%START_TIME%\", " +
@@ -170,7 +170,7 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 							AccessLog: []AccessLog{
 								{
 									Path:   "/var/log/a8_access.log",
-									Format: EnvoyLogFormat,
+									Format: envoyLogFormat,
 								},
 							},
 						},

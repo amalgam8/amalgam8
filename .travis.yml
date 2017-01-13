@@ -38,7 +38,7 @@ script:
         make dockerize;
         export A8_CONTROLLER_URL=http://localhost:31200;
         export A8_REGISTRY_URL=http://localhost:31300;
-        travis_wait make test.integration;
+        make test.integration;
       fi
 
 before_deploy: 

@@ -124,8 +124,8 @@ func (s *server) serve(h http.Handler) error {
 	}
 
 	s.mutex.Lock()
-	defer s.mutex.Unlock()
 	s.listener = listener
+	s.mutex.Unlock()
 	if err := http.Serve(listener, h); err != nil {
 		s.logger.WithFields(log.Fields{
 			"error": err,

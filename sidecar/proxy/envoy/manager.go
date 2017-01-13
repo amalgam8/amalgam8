@@ -64,9 +64,10 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(identity identity.Provider) Manager {
+func NewManager(identity identity.Provider, sdsPort int) Manager {
 	return &manager{
 		identity: identity,
+		sdsPort:  sdsPort,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
@@ -78,6 +79,7 @@ func NewManager(identity identity.Provider) Manager {
 type manager struct {
 	identity identity.Provider
 	service  Service
+	sdsPort  int
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -85,7 +87,7 @@ func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) erro
 	if err != nil {
 		return err
 	}
-	conf, err := generateConfig(rules, instances, inst.ServiceName, inst.Tags)
+	conf, err := generateConfig(rules, instances, inst.ServiceName, inst.Tags, m.sdsPort)
 	if err != nil {
 		return err
 	}
@@ -129,7 +131,7 @@ func writeConfig(w io.Writer, conf Config) error {
 	return err
 }
 
-func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceName string, tags []string) (Config, error) {
+func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceName string, tags []string, sdsPort int) (Config, error) {
 	sanitizeRules(rules)
 	rules = addDefaultRouteRules(rules, instances)
 
@@ -194,7 +196,7 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 					LbType:           "round_robin",
 					Hosts: []Host{
 						{
-							URL: "tcp://127.0.0.1:6500",
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", sdsPort),
 						},
 					},
 					MaxRequestsPerConnection: 1,

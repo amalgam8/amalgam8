@@ -45,8 +45,6 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 	identity identity.Provider, rulesMonitor monitor.RulesMonitor,
 	discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
 
-	manager := envoy.NewManager(identity)
-
 	if conf.DiscoveryPort == 0 {
 		conf.DiscoveryPort = 6500
 	}
@@ -65,6 +63,8 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		logrus.WithError(err).Error("Discovery server failed to start")
 		return nil, err
 	}
+
+	manager := envoy.NewManager(identity, conf.DiscoveryPort)
 
 	return &EnvoyAdapter{
 		manager:          manager,

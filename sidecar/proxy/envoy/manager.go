@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"sort"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
@@ -33,29 +35,27 @@ import (
 // EnvoyConfigPath path to envoy config file
 const EnvoyConfigPath = "/etc/envoy/envoy.json"
 
-const envoyLogFormat = "" +
-	"{" +
-	"\"status\":\"%RESPONSE_CODE%\", " +
-	"\"timestamp_in_ms\":\"%START_TIME%\", " +
-	"\"request_time\":\"%DURATION%\", " +
-	"\"upstream_response_time\":\"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\", " +
-	"\"$a8_trace_key\":\"NEED\", " +
-	"\"src\": \"NEED\", " +
-	"\"dst\": \"NEED\", " +
-	"\"module\":\"ENVOY\", " +
-	"\"method\":\"%REQ(:METHOD)%\", " +
-	"\"path\":\"%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%\", " +
-	"\"protocol\":\"%PROTOCOL%\", " +
-	"\"response_code\":\"%RESPONSE_CODE%\", " +
-	"\"response_flags\":\"%RESPONSE_FLAGS%\", " +
-	"\"bytes_rx\":\"%BYTES_RECEIVED%\", " +
-	"\"bytes_tx\":\"%BYTES_SENT%\", " +
-	"\"upstream_time\":\"%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%\", " +
-	"\"x_forwarded\":\"%REQ(X-FORWARDED-FOR)%\", " +
-	"\"user_agent\":\"%REQ(USER-AGENT)%\", " +
-	"\"request_id\":\"%REQ(X-REQUEST-ID)%\", " +
-	"\"auth\":\"%REQ(:AUTHORITY)%\", " +
-	"\"upstream_host\":\"%UPSTREAM_HOST%\"" +
+const envoyLogFormat = `` +
+	`{` +
+	`"status":"%%RESPONSE_CODE%%", ` +
+	`"start_time":"%%START_TIME%%", ` +
+	`"request_time":"%%DURATION%%", ` +
+	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%", ` +
+	`"src":"%v", ` +
+	`"dst":"NEED", ` +
+	`"module":"ENVOY", ` +
+	`"method":"%%REQ(:METHOD)%%", ` +
+	`"path":"%%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%%", ` +
+	`"protocol":"%%PROTOCOL%%", ` +
+	`"response_code":"%%RESPONSE_CODE%%", ` +
+	`"response_flags":"%%RESPONSE_FLAGS%%", ` +
+	`"bytes_rx":"%%BYTES_RECEIVED%%", ` +
+	`"bytes_tx":"%%BYTES_SENT%%", ` +
+	`"x_forwarded":"%%REQ(X-FORWARDED-FOR)%%", ` +
+	`"user_agent":"%%REQ(USER-AGENT)%%", ` +
+	`"request_id":"%%REQ(X-REQUEST-ID)%%", ` +
+	`"auth":"%%REQ(:AUTHORITY)%%", ` +
+	`"upstream_host":"%%UPSTREAM_HOST%%"` +
 	"}\n"
 
 // Manager for updating envoy proxy configuration.
@@ -142,6 +142,8 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 		return Config{}, err
 	}
 
+	format := fmt.Sprintf(envoyLogFormat, buildSourceName(serviceName, tags))
+
 	return Config{
 		RootRuntime: RootRuntime{
 			SymlinkRoot:  runtimePath,
@@ -170,7 +172,7 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 							AccessLog: []AccessLog{
 								{
 									Path:   "/var/log/a8_access.log",
-									Format: envoyLogFormat,
+									Format: format,
 								},
 							},
 						},
@@ -620,4 +622,9 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 	})
 
 	return filters
+}
+
+func buildSourceName(service string, tags []string) string {
+	return fmt.Sprintf("%v:%v", service, strings.Join(tags, ","))
+
 }

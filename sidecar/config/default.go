@@ -77,5 +77,7 @@ var DefaultConfig = Config{
 
 	LogLevel: "info",
 
+	DiscoveryPort: 0,
+
 	Commands: nil,
 }

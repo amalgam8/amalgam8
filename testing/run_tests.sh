@@ -17,6 +17,9 @@
 set -x
 set -o errexit
 
+# integration(default) or examples
+A8_TEST_SUITE=$1
+
 if [ -z "$A8_TEST_DOCKER" ]; then
     A8_TEST_DOCKER="true"
 fi
@@ -28,9 +31,9 @@ fi
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$A8_TEST_DOCKER" == "true" ]; then
-    $SCRIPTDIR/docker/test-docker.sh
+    $SCRIPTDIR/docker/test-docker.sh $A8_TEST_SUITE
 fi
 
 if [ "$A8_TEST_K8S" == "true" ]; then
-    $SCRIPTDIR/kubernetes/test-kubernetes.sh
+    $SCRIPTDIR/kubernetes/test-kubernetes.sh $A8_TEST_SUITE
 fi

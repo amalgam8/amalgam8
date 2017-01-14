@@ -17,15 +17,6 @@ rules:
     backends:
     - tags:
       - version=v1
-- priority: 2
-  destination: reviews
-  match:
-    headers:
-      Cookie: "^(.*?;)?(user=jason)(;.*)?$"
-  route:
-    backends:
-    - tags:
-      - version=v2
 - priority: 1
   destination: reviews
   route:

@@ -17,7 +17,25 @@
 set -x
 set -o errexit
 
+A8_TEST_SUITE=$1
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+# Set env vars
+export A8_CONTROLLER_URL=http://localhost:31200
+export A8_REGISTRY_URL=http://localhost:31300
+export A8_GATEWAY_URL=http://localhost:32000
+export A8_LOG_SERVER=http://localhost:30200
+export A8_GREMLIN_URL=http://localhost:31500
+
+# The test script checks this var to determine if we're using docker or k8s
+export A8_CONTAINER_ENV="docker"
+
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+    export A8_TEST_ENV="examples"
+else
+    export A8_TEST_ENV="testing"
+fi
 
 # Increase memory limit for elasticsearch 5.1
 sudo sysctl -w vm.max_map_count=262144
@@ -30,11 +48,23 @@ echo "waiting for the cluster to initialize.."
 
 sleep 5
 
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	docker-compose -f $SCRIPTDIR/helloworld.yaml up -d
+	sleep 10
+
+	# Run the actual test workload
+	$SCRIPTDIR/../test-scripts/helloworld.sh $A8_TEST_SUITE
+
+	docker-compose -f $SCRIPTDIR/helloworld.yaml kill
+	docker-compose -f $SCRIPTDIR/helloworld.yaml rm -f
+	sleep 10
+fi
+
 docker-compose -f $SCRIPTDIR/bookinfo.yaml up -d
 sleep 10
 
 # Run the actual test workload
-$SCRIPTDIR/../test-scripts/demo_script.sh
+$SCRIPTDIR/../test-scripts/bookinfo.sh $A8_TEST_SUITE
 
 echo "Docker tests successful."
 echo "Cleaning up Bookinfo apps.."

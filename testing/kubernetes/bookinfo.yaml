@@ -98,7 +98,7 @@ spec:
     spec:
       containers:
       - name: details
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-details:v1
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-details-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -135,7 +135,7 @@ spec:
     spec:
       containers:
       - name: ratings
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-ratings:v1
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-ratings-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -172,7 +172,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-reviews:v1
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -192,7 +192,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-reviews:v2
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-v2:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -234,7 +234,7 @@ spec:
     spec:
       containers:
       - name: reviews
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-reviews:v3
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-v3:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080
@@ -293,7 +293,7 @@ spec:
     spec:
       containers:
       - name: productpage
-        image: amalgam8/a8-{A8_TEST_ENV}-bookinfo-productpage:v1
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-productpage-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9080

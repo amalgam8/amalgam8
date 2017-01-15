@@ -40,6 +40,7 @@ GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vFf <(go list -f '{{.Dir}}
 GOPKGS		= $(shell go list ./... | grep -vFf <(go list ./vendor/...))
 
 APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
+APP_VER_ABBR    := $(shell git describe --abbrev=0 2> /dev/null || echo "unknown")
 
 REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
@@ -161,8 +162,8 @@ build.testapps:
 
 build.exampleapps:
 	@echo "--> building example apps"
-	@examples/apps/helloworld/build-services.sh
-	@examples/apps/bookinfo/build-services.sh
+	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)"
+	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)"
 
 compile:
 	@echo "--> compiling packages"
@@ -192,9 +193,9 @@ test.integration: build.testapps
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
 
-test.examples: build.exampleapps
+test.examples: build.exampleapps dockerize.sidecar.ubuntu
 	@echo "--> running automated examples"
-	@testing/run_tests.sh "examples"
+	@testing/run_tests.sh "examples" $(APP_VER_ABBR)
 
 #---------------
 #-- checks

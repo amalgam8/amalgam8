@@ -86,7 +86,7 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: amalgam8/a8-examples-helloworld:v1 
+        image: amalgam8/a8-${A8_TEST_ENV}-helloworld-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
@@ -108,7 +108,7 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: amalgam8/a8-examples-helloworld:v2
+        image: amalgam8/a8-${A8_TEST_ENV}-helloworld-v2:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000

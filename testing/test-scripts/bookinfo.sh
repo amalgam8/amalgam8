@@ -15,7 +15,6 @@
 #   limitations under the License.
 
 set -x
-set -o errexit
 
 # Set local vars
 A8_TEST_SUITE=$1
@@ -103,24 +102,34 @@ sleep 2
 
 ######Version Routing##############
 echo "testing version routing.."
-$CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
-$CLIBIN rule-create -f $SCRIPTDIR/route_jason_v2.yaml
-sleep 30
+MAX_LOOP=5
+retry_count=1
 
-echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    $CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
+    $CLIBIN rule-create -f $SCRIPTDIR/route_jason_v2.yaml
+    sleep 45
 
-if [ "$A8_TEST_SUITE" == "examples" ]; then
+    echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
+    curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
+
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
 	diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
-else
+    else
 	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
-fi
+    fi
 
-if [ $? -gt 0 ]; then
-    echo "failed"
-    echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
-    exit 1
-fi
+    if [ $? -gt 0 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
+    else
+        break
+    fi
+done
 echo "works!"
 
 echo -n "injecting traffic for user=jason, expecting productpage_v2.."

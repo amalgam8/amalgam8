@@ -33,7 +33,7 @@ gateway:
   command: /usr/bin/run_filebeat.sh
 
 helloworld-v1:
-  image: amalgam8/a8-examples-helloworld-sidecar:v1
+  image: amalgam8/a8-${A8_TEST_ENV}-helloworld-sidecar-v1:${A8_RELEASE}
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=helloworld:version=v1
@@ -43,7 +43,7 @@ helloworld-v1:
     - registry
 
 helloworld-v2:
-  image: amalgam8/a8-examples-helloworld-sidecar:v2
+  image: amalgam8/a8-${A8_TEST_ENV}-helloworld-sidecar-v2:${A8_RELEASE}
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=helloworld:version=v2

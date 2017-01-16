@@ -50,6 +50,14 @@ const (
 	EnvoyAdapter = "envoy"
 )
 
+// Envoy specific config params
+const (
+	EnvoyDiscoveryPort    = 6500
+	EnvoyAdminPort        = 8001
+	EnvoyHTTPListenerPort = 6379
+	EnvoyWorkingDir       = "/etc/envoy"
+)
+
 // SupportedAdapters is the set of supported proxy adapters
 var SupportedAdapters = []string{NGINXAdapter, EnvoyAdapter}
 
@@ -127,12 +135,21 @@ type HealthCheck struct {
 	CACertPath string        `yaml:"ca_cert_path"`
 }
 
+// EnvoyConfig stores Envoy proxy specific config
+type EnvoyConfig struct {
+	HTTPListenerPort int    `yaml:"http_listener_port"`
+	DiscoveryPort    int    `yaml:"sds_port"`
+	AdminPort        int    `yaml:"admin_port"`
+	WorkingDir       string `yaml:"working_dir"`
+}
+
 // ProxyConfig stores proxy configuration.
 type ProxyConfig struct {
-	TLS         bool   `yaml:"tls"`
-	CertPath    string `yaml:"cert_path"`
-	CertKeyPath string `yaml:"cert_key_path"`
-	CACertPath  string `yaml:"ca_cert_path"`
+	TLS         bool        `yaml:"tls"`
+	CertPath    string      `yaml:"cert_path"`
+	CertKeyPath string      `yaml:"cert_key_path"`
+	CACertPath  string      `yaml:"ca_cert_path"`
+	EnvoyCfg    EnvoyConfig `yaml:"envoy"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -166,8 +183,6 @@ type Config struct {
 	Commands []Command `yaml:"commands"`
 
 	Debug string
-
-	DiscoveryPort int `yaml:"discovery_port"`
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -243,6 +258,10 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.ProxyConfig.CertPath, proxyCertPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CertKeyPath, proxyCertKeyPathFlag)
 	loadFromContextIfSet(&c.ProxyConfig.CACertPath, proxyCACertPathFlag)
+	loadFromContextIfSet(&c.ProxyConfig.EnvoyCfg.HTTPListenerPort, envoyHTTPListenerPortFlag)
+	loadFromContextIfSet(&c.ProxyConfig.EnvoyCfg.DiscoveryPort, envoyDiscoveryPortFlag)
+	loadFromContextIfSet(&c.ProxyConfig.EnvoyCfg.AdminPort, envoyAdminPortFlag)
+	loadFromContextIfSet(&c.ProxyConfig.EnvoyCfg.WorkingDir, envoyWorkingDirFlag)
 	loadFromContextIfSet(&c.ProxyAdapter, proxyAdapterFlag)
 	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
@@ -266,7 +285,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
-	loadFromContextIfSet(&c.DiscoveryPort, discoveryPortFlag)
 
 	if context.IsSet(serviceFlag) {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))

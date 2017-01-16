@@ -45,8 +45,20 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 	identity identity.Provider, rulesMonitor monitor.RulesMonitor,
 	discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
 
+	if conf.ListenerPort == 0 {
+		conf.ListenerPort = 6379
+	}
+
 	if conf.DiscoveryPort == 0 {
 		conf.DiscoveryPort = 6500
+	}
+
+	if conf.AdminPort == 0 {
+		conf.AdminPort = 8001
+	}
+
+	if conf.WorkingDir == "" {
+		conf.WorkingDir = "/etc/envoy"
 	}
 
 	serverConfig := &discovery.Config{
@@ -64,7 +76,7 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		return nil, err
 	}
 
-	manager := envoy.NewManager(identity, conf.DiscoveryPort)
+	manager := envoy.NewManager(identity, conf.ListenerPort, conf.DiscoveryPort, conf.AdminPort, conf.WorkingDir)
 
 	return &EnvoyAdapter{
 		manager:          manager,

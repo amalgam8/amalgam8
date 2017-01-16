@@ -54,7 +54,10 @@ const (
 	dnsConfigPortFlag       = "dns_port"
 	dnsConfigDomainFlag     = "dns_domain"
 	debugFlag               = "debug"
-	discoveryPortFlag       = "discovery_port"
+	envoyDiscoveryPortFlag  = "envoy_discovery_port"
+	envoyHTTPListenerPortFlag = "envoy_http_listener_port"
+	envoyAdminPortFlag       = "envoy_admin_port"
+	envoyWorkingDirFlag     = "envoy_working_dir"
 )
 
 // Flags is the set of supported flags
@@ -219,9 +222,24 @@ var Flags = []cli.Flag{
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
 	},
 	cli.IntFlag{
-		Name:   discoveryPortFlag,
-		EnvVar: envVar(discoveryPortFlag),
+		Name:   envoyHTTPListenerPortFlag,
+		EnvVar: envVar(envoyHTTPListenerPortFlag),
+		Usage:  "Port to listen for HTTP proxying (default 6379)",
+	},
+	cli.IntFlag{
+		Name:   envoyDiscoveryPortFlag,
+		EnvVar: envVar(envoyDiscoveryPortFlag),
 		Usage:  "Port to expose Envoy SDS API (default 6500)",
+	},
+	cli.IntFlag{
+		Name:   envoyAdminPortFlag,
+		EnvVar: envVar(envoyAdminPortFlag),
+		Usage:  "Port to expose Envoy Admin API (default 8001)",
+	},
+	cli.StringFlag{
+		Name:   envoyWorkingDirFlag,
+		EnvVar: envVar(envoyWorkingDirFlag),
+		Usage:  "Directory where envoy's temporary config files and log files will be stored (default /etc/envoy)",
 	},
 }
 

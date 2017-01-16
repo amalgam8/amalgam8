@@ -32,8 +32,17 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
-// EnvoyConfigPath path to envoy config file
-const EnvoyConfigPath = "/etc/envoy/envoy.json"
+// Envoy config related files
+const (
+	envoyConfigPath     = "/etc/envoy/envoy.json"
+	runtimePath         = "/etc/envoy/runtime/routing"
+	runtimeVersionsPath = "/etc/envoy/routing_versions"
+	adminLog            = "/var/log/envoy_admin.log"
+	accessLog           = "/var/log/a8_access.log"
+
+	configDirPerm  = 0775
+	configFilePerm = 0664
+)
 
 const envoyLogFormat = `` +
 	`{` +
@@ -64,35 +73,37 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(identity identity.Provider, sdsPort int) Manager {
+func NewManager(identity identity.Provider, listenerPort int, sdsPort int, adminPort int, workingDir string) Manager {
 	return &manager{
-		identity: identity,
-		sdsPort:  sdsPort,
+		identity:     identity,
+		sdsPort:      sdsPort,
+		adminPort:    adminPort,
+		listenerPort: listenerPort,
+		workingDir:   workingDir,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
-			EnvoyConfig:               EnvoyConfigPath,
+			EnvoyConfig:               workingDir + envoyConfigPath,
 		}),
 	}
 }
 
 type manager struct {
-	identity identity.Provider
-	service  Service
-	sdsPort  int
+	identity     identity.Provider
+	service      Service
+	sdsPort      int
+	adminPort    int
+	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
+	workingDir   string
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
-	inst, err := m.identity.GetIdentity()
-	if err != nil {
-		return err
-	}
-	conf, err := generateConfig(rules, instances, inst.ServiceName, inst.Tags, m.sdsPort)
+	conf, err := m.generateConfig(rules, instances)
 	if err != nil {
 		return err
 	}
 
-	if err := writeConfigFile(conf); err != nil {
+	if err := writeConfigFile(conf, m.WorkingDir+envoyConfigPath); err != nil {
 		return err
 	}
 
@@ -103,8 +114,8 @@ func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) erro
 	return nil
 }
 
-func writeConfigFile(conf Config) error {
-	file, err := os.Create(EnvoyConfigPath)
+func writeConfigFile(conf Config, confPath string) error {
+	file, err := os.Create(confPath)
 	if err != nil {
 		return err
 	}
@@ -131,29 +142,34 @@ func writeConfig(w io.Writer, conf Config) error {
 	return err
 }
 
-func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceName string, tags []string, sdsPort int) (Config, error) {
+func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstance) (Config, error) {
+	inst, err := m.identity.GetIdentity()
+	if err != nil {
+		return err
+	}
+
 	sanitizeRules(rules)
 	rules = addDefaultRouteRules(rules, instances)
 
 	clusters := buildClusters(rules)
 	routes := buildRoutes(rules)
+	//, inst.ServiceName, inst.Tags, m.listenerPort, m.sdsPort, m.adminPort, m.workingDir
+	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
-	filters := buildFaults(rules, serviceName, tags)
-
-	if err := buildFS(rules); err != nil {
+	if err := buildFS(rules, m.WorkingDir); err != nil {
 		return Config{}, err
 	}
 
-	format := fmt.Sprintf(envoyLogFormat, buildSourceName(serviceName, tags))
+	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags))
 
 	return Config{
 		RootRuntime: RootRuntime{
-			SymlinkRoot:  runtimePath,
+			SymlinkRoot:  m.workingDir + m.runtimePath,
 			Subdirectory: "traffic_shift",
 		},
 		Listeners: []Listener{
 			{
-				Port: 6379,
+				Port: m.listenerPort, //TODO: needs to be generated based on m.listenerPort
 				Filters: []NetworkFilter{
 					{
 						Type: "read",
@@ -173,7 +189,7 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 							Filters: filters,
 							AccessLog: []AccessLog{
 								{
-									Path:   "/var/log/a8_access.log",
+									Path:   m.workingDir + accessLog,
 									Format: format,
 								},
 							},
@@ -183,8 +199,8 @@ func generateConfig(rules []api.Rule, instances []api.ServiceInstance, serviceNa
 			},
 		},
 		Admin: Admin{
-			AccessLogPath: "/var/log/envoy_admin.log",
-			Port:          8001,
+			AccessLogPath: m.workingDir + adminLog,
+			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
 			Clusters: clusters,
@@ -442,14 +458,6 @@ func addDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) 
 	return append(ruleList, defaults...)
 }
 
-const (
-	runtimePath         = "/etc/envoy/runtime/routing"
-	runtimeVersionsPath = "/etc/envoy/routing_versions"
-
-	configDirPerm  = 0775
-	configFilePerm = 0664
-)
-
 // FIXME: doesn't check for name conflicts
 // TODO: could be improved by using the full possible set of filenames.
 func randFilename(prefix string) string {
@@ -461,7 +469,7 @@ func randFilename(prefix string) string {
 	return fmt.Sprintf("%s%s", prefix, data)
 }
 
-func buildFS(ruleList []api.Rule) error {
+func buildFS(ruleList []api.Rule, workingDir string) error {
 	type weightSpec struct {
 		Service string
 		Cluster string
@@ -484,15 +492,15 @@ func buildFS(ruleList []api.Rule) error {
 		}
 	}
 
-	if err := os.MkdirAll(filepath.Dir(runtimePath), configDirPerm); err != nil { // FIXME: hack
+	if err := os.MkdirAll(filepath.Dir(workingDir+runtimePath), configDirPerm); err != nil { // FIXME: hack
 		return err
 	}
 
-	if err := os.MkdirAll(runtimeVersionsPath, configDirPerm); err != nil {
+	if err := os.MkdirAll(workingDir+runtimeVersionsPath, configDirPerm); err != nil {
 		return err
 	}
 
-	dirName, err := ioutil.TempDir(runtimeVersionsPath, "")
+	dirName, err := ioutil.TempDir(workingDir+runtimeVersionsPath, "")
 	if err != nil {
 		return err
 	}
@@ -516,19 +524,19 @@ func buildFS(ruleList []api.Rule) error {
 		}
 	}
 
-	oldRuntime, err := os.Readlink(runtimePath)
+	oldRuntime, err := os.Readlink(workingDir + runtimePath)
 	if err != nil && !os.IsNotExist(err) { // Ignore error from symlink not existing.
 		return err
 	}
 
-	tmpName := randFilename("./")
+	tmpName := randFilename(workingDir + "/")
 
 	if err := os.Symlink(dirName, tmpName); err != nil {
 		return err
 	}
 
 	// Atomically replace the runtime symlink
-	if err := os.Rename(tmpName, runtimePath); err != nil {
+	if err := os.Rename(tmpName, workingDir+runtimePath); err != nil {
 		return err
 	}
 
@@ -538,8 +546,8 @@ func buildFS(ruleList []api.Rule) error {
 	// TODO: make this safer
 	if oldRuntime != "" {
 		oldRuntimeDir := filepath.Dir(oldRuntime)
-		if filepath.Clean(oldRuntimeDir) == filepath.Clean(runtimeVersionsPath) {
-			toDelete := filepath.Join(runtimeVersionsPath, filepath.Base(oldRuntime))
+		if filepath.Clean(oldRuntimeDir) == filepath.Clean(workingDir+runtimeVersionsPath) {
+			toDelete := filepath.Join(workingDir+runtimeVersionsPath, filepath.Base(oldRuntime))
 			if err := os.RemoveAll(toDelete); err != nil {
 				return err
 			}

@@ -24,10 +24,15 @@ var DefaultConfig = Config{
 	DNS:          false,
 
 	ProxyConfig: ProxyConfig{
-		TLS:         false,
-		CertPath:    "",
-		CertKeyPath: "",
-		CACertPath:  "",
+		TLS:              false,
+		CertPath:         "",
+		CertKeyPath:      "",
+		CACertPath:       "",
+		HTTPListenerPort: 0,
+		DiscoveryPort:    0,
+		AdminPort:        0,
+		WorkingDir:       "",
+		LoggingDir:       "",
 	},
 
 	Service: Service{
@@ -76,8 +81,6 @@ var DefaultConfig = Config{
 	HealthChecks: nil,
 
 	LogLevel: "info",
-
-	DiscoveryPort: 0,
 
 	Commands: nil,
 }

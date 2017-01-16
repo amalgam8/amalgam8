@@ -65,7 +65,6 @@ var _ = Describe("Config", func() {
 			Expect(c.Dnsconfig).To(Equal(DefaultConfig.Dnsconfig))
 			Expect(c.HealthChecks).To(Equal(DefaultConfig.HealthChecks))
 			Expect(c.LogLevel).To(Equal(DefaultConfig.LogLevel))
-			Expect(c.DiscoveryPort).To(Equal(DefaultConfig.DiscoveryPort))
 			Expect(c.Commands).To(HaveLen(0))
 		})
 
@@ -116,7 +115,6 @@ var _ = Describe("Config", func() {
 				"--healthchecks=http://localhost:8082/health1",
 				"--healthchecks=http://localhost:8082/health2",
 				"--log_level=debug",
-				"--discovery_port=9080",
 				"python", "productpage.py",
 			}...)
 
@@ -157,7 +155,6 @@ var _ = Describe("Config", func() {
 			Expect(c.HealthChecks[1].Value).To(Equal("http://localhost:8082/health2"))
 			Expect(c.HealthChecks[1].CACertPath).To(Equal(""))
 			Expect(c.LogLevel).To(Equal("debug"))
-			Expect(c.DiscoveryPort).To(Equal(9080))
 			Expect(c.Commands).To(HaveLen(1))
 			Expect(c.Commands[0].OnExit).To(Equal(TerminateProcess))
 			Expect(c.Commands[0].Cmd).To(Equal([]string{"python", "productpage.py"}))
@@ -307,6 +304,11 @@ proxy_config:
   cert_path:     /etc/certs/server.pem
   cert_key_path: /etc/certs/server_key.pem
   ca_cert_path:  /etc/certs/ca.pem
+  http_listener_port: 8000
+  sds_port: 6000
+  admin_port: 5813
+  working_dir: "/etc/proxy/"
+  logging_dir: "/var/log/"
 
 service:
   name: helloworld
@@ -396,6 +398,11 @@ log_level: debug
 			Expect(c.ProxyConfig.CertPath).To(Equal("/etc/certs/server.pem"))
 			Expect(c.ProxyConfig.CertKeyPath).To(Equal("/etc/certs/server_key.pem"))
 			Expect(c.ProxyConfig.CACertPath).To(Equal("/etc/certs/ca.pem"))
+			Expect(c.ProxyConfig.DiscoveryPort).To(Equal(6000))
+			Expect(c.ProxyConfig.AdminPort).To(Equal(5813))
+			Expect(c.ProxyConfig.HTTPListenerPort).To(Equal(8000))
+			Expect(c.ProxyConfig.WorkingDir).To(Equal("/etc/proxy/"))
+			Expect(c.ProxyConfig.LoggingDir).To(Equal("/var/log/"))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))

@@ -45,24 +45,28 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 	identity identity.Provider, rulesMonitor monitor.RulesMonitor,
 	discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
 
-	if conf.ListenerPort == 0 {
-		conf.ListenerPort = 6379
+	if conf.ProxyConfig.HTTPListenerPort == 0 {
+		conf.ProxyConfig.HTTPListenerPort = envoy.DefaultHTTPListenerPort
 	}
 
-	if conf.DiscoveryPort == 0 {
-		conf.DiscoveryPort = 6500
+	if conf.ProxyConfig.DiscoveryPort == 0 {
+		conf.ProxyConfig.DiscoveryPort = envoy.DefaultDiscoveryPort
 	}
 
-	if conf.AdminPort == 0 {
-		conf.AdminPort = 8001
+	if conf.ProxyConfig.AdminPort == 0 {
+		conf.ProxyConfig.AdminPort = envoy.DefaultAdminPort
 	}
 
-	if conf.WorkingDir == "" {
-		conf.WorkingDir = "/etc/envoy"
+	if conf.ProxyConfig.WorkingDir == "" {
+		conf.ProxyConfig.WorkingDir = envoy.DefaultWorkingDir
+	}
+
+	if conf.ProxyConfig.LoggingDir == "" {
+		conf.ProxyConfig.LoggingDir = envoy.DefaultLoggingDir
 	}
 
 	serverConfig := &discovery.Config{
-		HTTPAddressSpec: fmt.Sprintf(":%d", conf.DiscoveryPort),
+		HTTPAddressSpec: fmt.Sprintf(":%d", conf.ProxyConfig.DiscoveryPort),
 		Discovery:       discoveryClient,
 	}
 	server, err := discovery.NewDiscoveryServer(serverConfig)
@@ -76,7 +80,7 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		return nil, err
 	}
 
-	manager := envoy.NewManager(identity, conf.ListenerPort, conf.DiscoveryPort, conf.AdminPort, conf.WorkingDir)
+	manager := envoy.NewManager(identity, conf)
 
 	return &EnvoyAdapter{
 		manager:          manager,

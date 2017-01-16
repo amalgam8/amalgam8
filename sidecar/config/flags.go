@@ -22,42 +22,42 @@ import (
 )
 
 const (
-	configFlag              = "config"
-	registerFlag            = "register"
-	proxyFlag               = "proxy"
-	proxyTLSFlag            = "proxy_tls"
-	proxyCertPathFlag       = "proxy_cert_path"
-	proxyCertKeyPathFlag    = "proxy_cert_key_path"
-	proxyCACertPathFlag     = "proxy_ca_cert_path"
-	proxyAdapterFlag        = "proxy_adapter"
-	serviceFlag             = "service"
-	endpointHostFlag        = "endpoint_host"
-	endpointPortFlag        = "endpoint_port"
-	endpointTypeFlag        = "endpoint_type"
-	discoveryAdapterFlag    = "discovery_adapter"
-	registryURLFlag         = "registry_url"
-	registryTokenFlag       = "registry_token"
-	registryPollFlag        = "registry_poll"
-	kubernetesURLFlag       = "kubernetes_url"
-	kubernetesTokenFlag     = "kubernetes_token"
-	kubernetesNamespaceFlag = "kubernetes_namespace"
-	kubernetesPodNameFlag   = "kubernetes_pod_name"
-	eurekaURLFlag           = "eureka_url"
-	rulesAdapterFlag        = "rules_adapter"
-	controllerURLFlag       = "controller_url"
-	controllerTokenFlag     = "controller_token"
-	controllerPollFlag      = "controller_poll"
-	superviseFlag           = "supervise"
-	healthchecksFlag        = "healthchecks"
-	logLevelFlag            = "log_level"
-	dnsFlag                 = "dns"
-	dnsConfigPortFlag       = "dns_port"
-	dnsConfigDomainFlag     = "dns_domain"
-	debugFlag               = "debug"
-	envoyDiscoveryPortFlag  = "envoy_discovery_port"
+	configFlag                = "config"
+	registerFlag              = "register"
+	proxyFlag                 = "proxy"
+	proxyTLSFlag              = "proxy_tls"
+	proxyCertPathFlag         = "proxy_cert_path"
+	proxyCertKeyPathFlag      = "proxy_cert_key_path"
+	proxyCACertPathFlag       = "proxy_ca_cert_path"
+	proxyAdapterFlag          = "proxy_adapter"
+	serviceFlag               = "service"
+	endpointHostFlag          = "endpoint_host"
+	endpointPortFlag          = "endpoint_port"
+	endpointTypeFlag          = "endpoint_type"
+	discoveryAdapterFlag      = "discovery_adapter"
+	registryURLFlag           = "registry_url"
+	registryTokenFlag         = "registry_token"
+	registryPollFlag          = "registry_poll"
+	kubernetesURLFlag         = "kubernetes_url"
+	kubernetesTokenFlag       = "kubernetes_token"
+	kubernetesNamespaceFlag   = "kubernetes_namespace"
+	kubernetesPodNameFlag     = "kubernetes_pod_name"
+	eurekaURLFlag             = "eureka_url"
+	rulesAdapterFlag          = "rules_adapter"
+	controllerURLFlag         = "controller_url"
+	controllerTokenFlag       = "controller_token"
+	controllerPollFlag        = "controller_poll"
+	superviseFlag             = "supervise"
+	healthchecksFlag          = "healthchecks"
+	logLevelFlag              = "log_level"
+	dnsFlag                   = "dns"
+	dnsConfigPortFlag         = "dns_port"
+	dnsConfigDomainFlag       = "dns_domain"
+	debugFlag                 = "debug"
+	envoyDiscoveryPortFlag    = "envoy_discovery_port"
 	envoyHTTPListenerPortFlag = "envoy_http_listener_port"
-	envoyAdminPortFlag       = "envoy_admin_port"
-	envoyWorkingDirFlag     = "envoy_working_dir"
+	envoyAdminPortFlag        = "envoy_admin_port"
+	envoyWorkingDirFlag       = "envoy_working_dir"
 )
 
 // Flags is the set of supported flags
@@ -220,26 +220,6 @@ var Flags = []cli.Flag{
 		Name:   logLevelFlag,
 		EnvVar: envVar(logLevelFlag),
 		Usage:  "Logging level (debug, info, warn, error, fatal, panic)",
-	},
-	cli.IntFlag{
-		Name:   envoyHTTPListenerPortFlag,
-		EnvVar: envVar(envoyHTTPListenerPortFlag),
-		Usage:  "Port to listen for HTTP proxying (default 6379)",
-	},
-	cli.IntFlag{
-		Name:   envoyDiscoveryPortFlag,
-		EnvVar: envVar(envoyDiscoveryPortFlag),
-		Usage:  "Port to expose Envoy SDS API (default 6500)",
-	},
-	cli.IntFlag{
-		Name:   envoyAdminPortFlag,
-		EnvVar: envVar(envoyAdminPortFlag),
-		Usage:  "Port to expose Envoy Admin API (default 8001)",
-	},
-	cli.StringFlag{
-		Name:   envoyWorkingDirFlag,
-		EnvVar: envVar(envoyWorkingDirFlag),
-		Usage:  "Directory where envoy's temporary config files and log files will be stored (default /etc/envoy)",
 	},
 }
 

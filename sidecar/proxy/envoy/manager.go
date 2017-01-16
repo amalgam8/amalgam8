@@ -29,19 +29,26 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
+	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
 )
 
 // Envoy config related files
 const (
-	envoyConfigPath     = "/etc/envoy/envoy.json"
-	runtimePath         = "/etc/envoy/runtime/routing"
-	runtimeVersionsPath = "/etc/envoy/routing_versions"
-	adminLog            = "/var/log/envoy_admin.log"
-	accessLog           = "/var/log/a8_access.log"
+	envoyConfigFile     = "envoy.json"
+	runtimePath         = "runtime/routing"
+	runtimeVersionsPath = "routing_versions"
+	adminLog            = "envoy_admin.log"
+	accessLog           = "a8_access.log"
 
 	configDirPerm  = 0775
 	configFilePerm = 0664
+
+	DefaultDiscoveryPort    = 6500
+	DefaultAdminPort        = 8001
+	DefaultHTTPListenerPort = 6379
+	DefaultWorkingDir       = "/etc/envoy/"
+	DefaultLoggingDir       = "/var/log/"
 )
 
 const envoyLogFormat = `` +
@@ -73,17 +80,18 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(identity identity.Provider, listenerPort int, sdsPort int, adminPort int, workingDir string) Manager {
+func NewManager(identity identity.Provider, conf *config.Config) Manager {
 	return &manager{
 		identity:     identity,
-		sdsPort:      sdsPort,
-		adminPort:    adminPort,
-		listenerPort: listenerPort,
-		workingDir:   workingDir,
+		sdsPort:      conf.ProxyConfig.DiscoveryPort,
+		adminPort:    conf.ProxyConfig.AdminPort,
+		listenerPort: conf.ProxyConfig.HTTPListenerPort,
+		workingDir:   conf.ProxyConfig.WorkingDir,
+		loggingDir:   conf.ProxyConfig.LoggingDir,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
-			EnvoyConfig:               workingDir + envoyConfigPath,
+			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 		}),
 	}
 }
@@ -95,6 +103,7 @@ type manager struct {
 	adminPort    int
 	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
 	workingDir   string
+	loggingDir   string
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -103,7 +112,7 @@ func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) erro
 		return err
 	}
 
-	if err := writeConfigFile(conf, m.WorkingDir+envoyConfigPath); err != nil {
+	if err := writeConfigFile(conf, m.workingDir+envoyConfigFile); err != nil {
 		return err
 	}
 
@@ -142,10 +151,10 @@ func writeConfig(w io.Writer, conf Config) error {
 	return err
 }
 
-func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstance) (Config, error) {
+func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstance) (Config, error) {
 	inst, err := m.identity.GetIdentity()
 	if err != nil {
-		return err
+		return Config{}, err
 	}
 
 	sanitizeRules(rules)
@@ -156,7 +165,7 @@ func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	//, inst.ServiceName, inst.Tags, m.listenerPort, m.sdsPort, m.adminPort, m.workingDir
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
-	if err := buildFS(rules, m.WorkingDir); err != nil {
+	if err := buildFS(rules, m.workingDir); err != nil {
 		return Config{}, err
 	}
 
@@ -164,7 +173,7 @@ func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	return Config{
 		RootRuntime: RootRuntime{
-			SymlinkRoot:  m.workingDir + m.runtimePath,
+			SymlinkRoot:  m.workingDir + runtimePath,
 			Subdirectory: "traffic_shift",
 		},
 		Listeners: []Listener{
@@ -189,7 +198,7 @@ func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 							Filters: filters,
 							AccessLog: []AccessLog{
 								{
-									Path:   m.workingDir + accessLog,
+									Path:   m.loggingDir + accessLog,
 									Format: format,
 								},
 							},
@@ -199,7 +208,7 @@ func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			},
 		},
 		Admin: Admin{
-			AccessLogPath: m.workingDir + adminLog,
+			AccessLogPath: m.loggingDir + adminLog,
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
@@ -212,7 +221,7 @@ func (m *Manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 					LbType:           "round_robin",
 					Hosts: []Host{
 						{
-							URL: fmt.Sprintf("tcp://127.0.0.1:%v", sdsPort),
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
 						},
 					},
 					MaxRequestsPerConnection: 1,

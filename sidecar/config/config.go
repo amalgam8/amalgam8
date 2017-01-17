@@ -129,10 +129,15 @@ type HealthCheck struct {
 
 // ProxyConfig stores proxy configuration.
 type ProxyConfig struct {
-	TLS         bool   `yaml:"tls"`
-	CertPath    string `yaml:"cert_path"`
-	CertKeyPath string `yaml:"cert_key_path"`
-	CACertPath  string `yaml:"ca_cert_path"`
+	TLS              bool   `yaml:"tls"`
+	CertPath         string `yaml:"cert_path"`
+	CertKeyPath      string `yaml:"cert_key_path"`
+	CACertPath       string `yaml:"ca_cert_path"`
+	HTTPListenerPort int    `yaml:"http_listener_port"`
+	DiscoveryPort    int    `yaml:"sds_port"`
+	AdminPort        int    `yaml:"admin_port"`
+	WorkingDir       string `yaml:"working_dir"`
+	LoggingDir       string `yaml:"logging_dir"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -166,8 +171,6 @@ type Config struct {
 	Commands []Command `yaml:"commands"`
 
 	Debug string
-
-	DiscoveryPort int `yaml:"discovery_port"`
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -266,7 +269,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
 	loadFromContextIfSet(&c.Debug, debugFlag)
-	loadFromContextIfSet(&c.DiscoveryPort, discoveryPortFlag)
 
 	if context.IsSet(serviceFlag) {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))

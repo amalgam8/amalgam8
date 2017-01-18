@@ -162,6 +162,7 @@ build.testapps:
 
 build.exampleapps:
 	@echo "--> building example apps"
+	@testing/generate_example_yaml.sh "$(shell echo $(APP_VER_ABBR) | sed 's/v//')"
 	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)"
 	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)"
 

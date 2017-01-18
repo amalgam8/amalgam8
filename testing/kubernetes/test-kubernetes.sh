@@ -55,6 +55,11 @@ shutdown_pods(){
 }
 
 if [ "$A8_TEST_SUITE" == "examples" ]; then
+    if [ -z "$A8_RELEASE" ]; then
+        echo "Release must be specified if running examples test suite."
+        exit 1
+    fi
+    echo "======= Running the examples test suite ======="
     # Generate the examples yaml file
     $SCRIPTDIR/../generate_example_yaml.sh $A8_RELEASE
     export A8_TEST_ENV="examples"
@@ -62,6 +67,7 @@ if [ "$A8_TEST_SUITE" == "examples" ]; then
     BOOKINFO_YAML=$SCRIPTDIR/../../examples/k8s-bookinfo.yaml
     CONTROLPLANE_YAML=$SCRIPTDIR/../../examples/k8s-controlplane.yaml
 else
+    echo "======= Running the integration test suite ======="
     export A8_TEST_ENV="testing"
     HELLOWORLD_YAML=$SCRIPTDIR/helloworld.yaml
     BOOKINFO_YAML=$SCRIPTDIR/bookinfo.yaml

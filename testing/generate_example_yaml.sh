@@ -19,6 +19,10 @@ set -o errexit
 
 # The release for which the yamls are being generated
 TAG=$1
+if [ -z "$TAG" ]; then
+    echo "Docker image tag cannot be blank."
+    exit 1
+fi
 
 #########################################################
 # Replace string.

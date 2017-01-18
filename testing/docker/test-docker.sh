@@ -18,7 +18,7 @@ set -x
 set -o errexit
 
 A8_TEST_SUITE=$1
-export A8_RELEASE=$2
+A8_RELEASE=$2
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
@@ -33,6 +33,11 @@ export A8_GREMLIN_URL=http://localhost:31500
 export A8_CONTAINER_ENV="docker"
 
 if [ "$A8_TEST_SUITE" == "examples" ]; then
+    if [ -z "$A8_RELEASE" ]; then
+        echo "Release must be specified if running examples test suite."
+	exit 1
+    fi
+    echo "======= Running the examples test suite ======="
     # Generate the examples yaml file
     $SCRIPTDIR/../generate_example_yaml.sh $A8_RELEASE
     export A8_TEST_ENV="examples"
@@ -40,6 +45,7 @@ if [ "$A8_TEST_SUITE" == "examples" ]; then
     BOOKINFO_YAML=$SCRIPTDIR/../../examples/docker-bookinfo.yaml
     CONTROLPLANE_YAML=$SCRIPTDIR/../../examples/docker-controlplane.yaml
 else
+    echo "======= Running the integration test suite ======="
     export A8_TEST_ENV="testing"
     export A8_RELEASE="latest"
     HELLOWORLD_YAML=$SCRIPTDIR/helloworld.yaml

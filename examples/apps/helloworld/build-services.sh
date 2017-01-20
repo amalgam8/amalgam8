@@ -17,13 +17,27 @@
 
 set -x
 
+APP_VER=$1
+if [ -z $APP_VER ]; then
+  echo "The version must be set."
+  exit 1
+fi
+
+if [ "$APP_VER" == "unknown" ]; then
+  echo "The version cannot be unknown."
+  exit 1
+fi
+
+# Remove the v from the version
+APP_VER=$(echo $APP_VER | sed "s/v//")
+
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 #################################################################################
 # Build the helloworld image
 #################################################################################
-docker build -t amalgam8/a8-examples-helloworld:v1 $SCRIPTDIR
-docker build -t amalgam8/a8-examples-helloworld:v2 $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-v1:$APP_VER $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-v2:$APP_VER $SCRIPTDIR
 
-docker build -t amalgam8/a8-examples-helloworld-sidecar:v1 -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
-docker build -t amalgam8/a8-examples-helloworld-sidecar:v2 -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v1:$APP_VER -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v2:$APP_VER -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR

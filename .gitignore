@@ -16,3 +16,13 @@ release/
 # Ignore Java build related files and folders
 *.gradle
 *.war
+
+# Ignore the generated example yamls
+examples/bluemix.cfg
+examples/docker-bookinfo.yaml
+examples/docker-controlplane.yaml
+examples/docker-helloworld.yaml
+examples/k8s-bookinfo.yaml
+examples/k8s-controlplane.yaml
+examples/k8s-helloworld.yaml
+

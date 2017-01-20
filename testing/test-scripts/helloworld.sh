@@ -51,15 +51,16 @@ MAX_LOOP=5
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 
-# Clean up the routing rules from the previous testcase
-$A8CLI rule-delete -a -f
-
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get a
 # passing test.
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Set/Verify setting of default route #############
+
+    # Clean up the routing rules from the previous testcase
+    $A8CLI rule-delete -a -f
+
     echo ""
     echo "Set/verify the Hello World default route to v1"
     echo "  Invoking a8ctl to set the default route"
@@ -120,15 +121,16 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
     fi     
 done
 
-# Clean up the routing rules from the previous testcase
-$A8CLI rule-delete -a -f
-
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get an
 # approximate test of 75%/25% routing.
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Split Traffic Between v1 and v2 #############
+
+    # Clean up the routing rules from the previous testcase
+    $A8CLI rule-delete -a -f
+
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
     echo "  Invoking a8ctl to set a rule to split the traffic."

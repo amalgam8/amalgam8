@@ -34,7 +34,7 @@ gateway:
   command: /usr/bin/run_filebeat.sh
 
 details-v1:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-details-sidecar:v1
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-details-sidecar-v1:${A8_RELEASE}
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=details:version=v1
@@ -45,7 +45,7 @@ details-v1:
     - registry
 
 ratings-v1:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-ratings-sidecar:v1
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-ratings-sidecar-v1:${A8_RELEASE}
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=ratings:version=v1
@@ -56,7 +56,7 @@ ratings-v1:
     - registry
 
 reviews-v1:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar:v1
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar-v1:${A8_RELEASE}
   environment:
     - A8_REGISTRY_URL=http://registry:8080
     - A8_SERVICE=reviews:version=v1
@@ -67,7 +67,7 @@ reviews-v1:
     - registry
 
 reviews-v2:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar:v2
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar-v2:${A8_RELEASE}
   environment:
     - A8_REGISTER=true
     - A8_PROXY=true
@@ -85,7 +85,7 @@ reviews-v2:
     - registry
 
 reviews-v3:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar:v3
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-reviews-sidecar-v3:${A8_RELEASE}
   environment:
     - A8_REGISTER=true
     - A8_PROXY=true
@@ -103,7 +103,7 @@ reviews-v3:
     - registry
 
 productpage-v1:
-  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-productpage-sidecar:v1
+  image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-productpage-sidecar-v1:${A8_RELEASE}
   environment:
     - A8_REGISTER=true
     - A8_PROXY=true

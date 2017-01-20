@@ -18,6 +18,7 @@ set -x
 set -o errexit
 
 A8_TEST_SUITE=$1
+A8_RELEASE=$2
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
@@ -31,11 +32,53 @@ export A8_GREMLIN_URL=http://localhost:31500
 # The test script checks this var to determine if we're using docker or k8s
 export A8_CONTAINER_ENV="k8s"
 
+startup_pods(){
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+        kubectl create -f $1
+    else
+        sed '
+        s/${A8_TEST_ENV}/testing/g
+        s/${A8_RELEASE}/latest/g
+	' $1 | kubectl create -f -
+    fi
+}
+
+shutdown_pods(){
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+        kubectl delete -f $1 || echo "Probably already down"
+    else
+        sed '
+        s/${A8_TEST_ENV}/testing/g
+        s/${A8_RELEASE}/latest/g
+	' $1 | kubectl delete  -f - || echo "Probably already down"
+    fi
+}
+
 if [ "$A8_TEST_SUITE" == "examples" ]; then
+    if [ -z "$A8_RELEASE" ]; then
+        echo "Release must be specified if running examples test suite."
+        exit 1
+    fi
+    echo "======= Running the examples test suite ======="
+    # Generate the examples yaml file
+    $SCRIPTDIR/../generate_example_yaml.sh $A8_RELEASE
     export A8_TEST_ENV="examples"
+    HELLOWORLD_YAML=$SCRIPTDIR/../../examples/k8s-helloworld.yaml
+    BOOKINFO_YAML=$SCRIPTDIR/../../examples/k8s-bookinfo.yaml
+    CONTROLPLANE_YAML=$SCRIPTDIR/../../examples/k8s-controlplane.yaml
 else
+    echo "======= Running the integration test suite ======="
     export A8_TEST_ENV="testing"
+    HELLOWORLD_YAML=$SCRIPTDIR/helloworld.yaml
+    BOOKINFO_YAML=$SCRIPTDIR/bookinfo.yaml
+    CONTROLPLANE_YAML=$SCRIPTDIR/controlplane.yaml
 fi
+
+# Make sure kubernetes is not active
+shutdown_pods $HELLOWORLD_YAML
+shutdown_pods $BOOKINFO_YAML
+shutdown_pods $CONTROLPLANE_YAML
+sleep 5
 
 # Increase memory limit for elasticsearch 5.1
 sudo sysctl -w vm.max_map_count=262144
@@ -46,10 +89,10 @@ sudo $SCRIPTDIR/install-kubernetes.sh
 sleep 10
 
 echo "Starting control plane"
-kubectl create -f $SCRIPTDIR/controlplane.yaml
+startup_pods $CONTROLPLANE_YAML
 sleep 10
 
-sed -e "s/{A8_TEST_ENV}/$A8_TEST_ENV/" $SCRIPTDIR/bookinfo.yaml | kubectl create -f -
+startup_pods $BOOKINFO_YAML
 echo "Waiting for the services to come online.."
 sleep 10
 
@@ -58,21 +101,21 @@ $SCRIPTDIR/../test-scripts/bookinfo.sh $A8_TEST_SUITE
 
 echo "Kubernetes tests successful."
 echo "Cleaning up Bookinfo apps.."
-sed -e "s/{A8_TEST_ENV}/$A8_TEST_ENV/" $SCRIPTDIR/bookinfo.yaml | kubectl delete -f - || echo "Probably already down"
+shutdown_pods $BOOKINFO_YAML || echo "Probably already down"
 sleep 5
 
 if [ "$A8_TEST_SUITE" == "examples" ]; then
-	kubectl create -f $SCRIPTDIR/helloworld.yaml
+	startup_pods $HELLOWORLD_YAML
 	sleep 10
 
 	$SCRIPTDIR/../test-scripts/helloworld.sh $A8_TEST_SUITE
 
-	kubectl delete -f $SCRIPTDIR/helloworld.yaml
+	shutdown_pods $HELLOWORLD_YAML
 	sleep 5
 fi
 
 echo "Stopping control plane services..."
-kubectl delete -f $SCRIPTDIR/controlplane.yaml
+shutdown_pods $CONTROLPLANE_YAML
 
 sleep 5
 sudo $SCRIPTDIR/uninstall-kubernetes.sh

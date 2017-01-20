@@ -12,8 +12,8 @@ build:
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(APP_NAME)
 	
 dockerize:
-	@docker build -t $(IMAGE_NAME):v1 .
-	@docker build -t $(IMAGE_NAME)-sidecar:v1 -f Dockerfile.sidecar .
+	@docker build -t $(IMAGE_NAME)-v1:latest .
+	@docker build -t $(IMAGE_NAME)-sidecar-v1:latest -f Dockerfile.sidecar .
 
 clean:
 	@rm $(APP_NAME)

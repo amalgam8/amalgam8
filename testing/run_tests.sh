@@ -20,6 +20,11 @@ set -o errexit
 # integration(default) or examples
 A8_TEST_SUITE=$1
 
+A8_RELEASE=$2
+# Remove v from version
+A8_RELEASE=$(echo $A8_RELEASE | sed "s/v//")
+
+
 if [ -z "$A8_TEST_DOCKER" ]; then
     A8_TEST_DOCKER="true"
 fi
@@ -31,9 +36,9 @@ fi
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 if [ "$A8_TEST_DOCKER" == "true" ]; then
-    $SCRIPTDIR/docker/test-docker.sh $A8_TEST_SUITE
+    $SCRIPTDIR/docker/test-docker.sh $A8_TEST_SUITE $A8_RELEASE
 fi
 
 if [ "$A8_TEST_K8S" == "true" ]; then
-    $SCRIPTDIR/kubernetes/test-kubernetes.sh $A8_TEST_SUITE
+    $SCRIPTDIR/kubernetes/test-kubernetes.sh $A8_TEST_SUITE $A8_RELEASE
 fi

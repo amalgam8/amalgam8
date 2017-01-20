@@ -28,7 +28,7 @@ TARGET_OS 	:= linux windows darwin
 GOHOSTOS 	:= $(shell go env GOHOSTOS)
 
 ifndef GOOS
-    GOOS := $GOHOSTOS
+    GOOS := $(GOHOSTOS)
 endif
 
 ifndef GOARCH
@@ -110,7 +110,7 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps build.exampleapps compile clean
+.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps build.exampleapps build.exampleappstesting compile clean
 
 build: build.registry build.controller build.sidecar build.k8srules build.cli.linux
 
@@ -166,6 +166,11 @@ build.exampleapps:
 	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)"
 	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)"
 
+build.exampleappstesting: release.sidecar
+	@echo "--> building example apps for testing"
+	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)" "examples"
+	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)" "examples"
+
 compile:
 	@echo "--> compiling packages"
 	@go build $(GOPKGS)
@@ -194,7 +199,7 @@ test.integration: build.testapps
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
 
-test.examples: build.exampleapps dockerize.sidecar.ubuntu
+test.examples: build.exampleappstesting dockerize.sidecar.ubuntu
 	@echo "--> running automated examples"
 	@testing/run_tests.sh "examples" $(APP_VER_ABBR)
 
@@ -312,6 +317,7 @@ release.sidecar.envoy:
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
 	@cp sidecar/proxy/envoy/bin/envoy $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
+	@cp $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz $(RELEASEDIR)/a8sidecar-current.tar.gz
 	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar-envoy.sh > $(RELEASEDIR)/a8sidecar.sh
 
 release.sidecar.nginx:
@@ -329,6 +335,7 @@ release.sidecar.nginx:
 	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
 	@cp sidecar/proxy/nginx/nginx/openresty/*.tar.gz $(BUILDDIR)/opt/openresty_dist/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME)-nginx.tar.gz --transform 's:^./::' .
+#	@cp $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz $(RELEASEDIR)/a8sidecar-current.tar.gz
 #	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar-nginx.sh > $(RELEASEDIR)/a8sidecar.sh
 
 release.examples:

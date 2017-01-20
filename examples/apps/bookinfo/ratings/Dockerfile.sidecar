@@ -14,7 +14,10 @@
 
 FROM node:4-onbuild
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.2/a8sidecar.sh | sh
+{COPY_SCRIPT}
+{COPY_SIDECAR_TAR}
+
+RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/{A8_RELEASE}/a8sidecar.sh | sh
 
 EXPOSE 9080
 

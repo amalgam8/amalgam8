@@ -14,10 +14,18 @@
 
 FROM node:4-onbuild
 
-{COPY_SCRIPT}
-{COPY_SIDECAR_TAR}
+ARG A8_SIDECAR_RELEASE
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/{A8_RELEASE}/a8sidecar.sh | sh
+COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
+
+# Install OpenResty and Sidecar
+ARG A8_TMP="/opt/a8temp"
+RUN mkdir -p ${A8_TMP} \
+    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C ${A8_TMP} \
+    && tar -xzf ${A8_TMP}/opt/openresty_dist/*.tar.gz -C / \
+    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
+    && rm -rf ${A8_TMP} \
+    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
 
 EXPOSE 9080
 

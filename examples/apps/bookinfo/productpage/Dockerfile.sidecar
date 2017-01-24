@@ -14,6 +14,8 @@
 
 FROM python:2-onbuild
 
+ARG A8_SIDECAR_RELEASE
+
 # Install Filebeat
 ARG FILEBEAT_VERSION="5.1.1"
 RUN set -ex \
@@ -29,12 +31,18 @@ RUN set -ex \
 COPY filebeat.yml /etc/filebeat/filebeat.yml
 COPY config.yaml /opt/microservices/config.yaml
 COPY run_filebeat.sh /usr/bin/run_filebeat.sh
-{COPY_SCRIPT}
-{COPY_SIDECAR_TAR}
-
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/{A8_RELEASE}/a8sidecar.sh | sh
-
 COPY . /opt/microservices/
+#COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
+
+# Install OpenResty and Sidecar
+ARG A8_TMP="/opt/a8temp"
+RUN mkdir -p ${A8_TMP} \
+    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C ${A8_TMP} \
+    && tar -xzf ${A8_TMP}/opt/openresty_dist/*.tar.gz -C / \
+    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
+    && rm -rf ${A8_TMP} \
+    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
+
 EXPOSE 9080
 WORKDIR /opt/microservices
 

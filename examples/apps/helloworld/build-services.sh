@@ -28,28 +28,15 @@ if [ "$APP_VER" == "unknown" ]; then
   exit 1
 fi
 
-A8_TEST_ENV=$2
+A8_SIDECAR_RELEASE=$2
 
 # Remove the v from the version
 APP_VER=$(echo $APP_VER | sed "s/v//")
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-GENERATED_DOCKERFILE_NAME=Dockerfile.generated.sidecar
-A8_SIDECAR_SCRIPT_NAME=a8sidecar-testing.sh
-A8_SIDECAR_SCRIPT=$SCRIPTDIR/../../../testing/$A8_SIDECAR_SCRIPT_NAME
-A8_SIDECAR_TAR_NAME=a8sidecar-current.tar.gz
+A8_SIDECAR_TAR_NAME=${A8_SIDECAR_RELEASE}.tar.gz
 A8_SIDECAR_TAR=$SCRIPTDIR/../../../release/$A8_SIDECAR_TAR_NAME
-
-generate_sidecar_dockerfile(){
-  if [ "$A8_TEST_ENV" == "examples" ]; then
-    cp $A8_SIDECAR_SCRIPT $SCRIPTDIR/
-    cp $A8_SIDECAR_TAR $SCRIPTDIR/
-    sed 's#{COPY_SCRIPT}#COPY '"$A8_SIDECAR_SCRIPT_NAME"' /opt/microservices#; s#{COPY_SIDECAR_TAR}#COPY '"$A8_SIDECAR_TAR_NAME"' /opt/microservices/#; s#RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/{A8_RELEASE}/a8sidecar.sh | sh#'"RUN /opt/microservices/$A8_SIDECAR_SCRIPT_NAME"'#' $SCRIPTDIR/Dockerfile.sidecar > $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME
-  else
-    sed 's/{COPY_SCRIPT}//; s/{COPY_SIDECAR_TAR}//; s/{A8_RELEASE}/'"v$APP_VER"'/' $SCRIPTDIR/Dockerfile.sidecar > $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME
-  fi
-}
 
 #################################################################################
 # Build the helloworld image
@@ -57,11 +44,7 @@ generate_sidecar_dockerfile(){
 docker build -t amalgam8/a8-examples-helloworld-v1:$APP_VER $SCRIPTDIR
 docker build -t amalgam8/a8-examples-helloworld-v2:$APP_VER $SCRIPTDIR
 
-generate_sidecar_dockerfile
-docker build -t amalgam8/a8-examples-helloworld-sidecar-v1:$APP_VER -f $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME $SCRIPTDIR
-docker build -t amalgam8/a8-examples-helloworld-sidecar-v2:$APP_VER -f $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME $SCRIPTDIR
-if [ "$A8_TEST_ENV" == "examples" ]; then
-  rm $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME $SCRIPTDIR/$A8_SIDECAR_SCRIPT_NAME $SCRIPTDIR/$A8_SIDECAR_TAR_NAME
-else
-  rm $SCRIPTDIR/$GENERATED_DOCKERFILE_NAME
-fi
+cp $A8_SIDECAR_TAR $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v1:$APP_VER --build-arg A8_SIDECAR_RELEASE=$A8_SIDECAR_RELEASE -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v2:$APP_VER --build-arg A8_SIDECAR_RELEASE=$A8_SIDECAR_RELEASE -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+rm $SCRIPTDIR/$A8_SIDECAR_TAR_NAME

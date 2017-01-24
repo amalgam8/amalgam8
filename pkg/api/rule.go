@@ -44,10 +44,18 @@ type Route struct {
 	Backends []Backend `json:"backends"`
 }
 
+// URI for backends.
+type URI struct {
+	Path          string `json:"path"`
+	Prefix        string `json:"prefix"`
+	PrefixRewrite string `json:"prefix_rewrite"`
+}
+
 // Backend represents a backend to route to.
 type Backend struct {
 	Name    string   `json:"name,omitempty"`
 	Tags    []string `json:"tags"`
+	URI     *URI     `json:"uri,omitempty"`
 	Weight  float64  `json:"weight,omitempty"`
 	Timeout float64  `json:"timeout,omitempty"`
 	Retries int      `json:"retries,omitempty"`

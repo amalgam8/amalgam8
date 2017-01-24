@@ -20,17 +20,7 @@
       "type": "string"
     },
     "match": {
-      "type": "object",
-      "properties": {
-        "source": {
-          "$ref": "#/definitions/source"
-        },
-        "headers": {
-          "$ref": "#/definitions/headers"
-        }
-      },
-      "additionalProperties": false,
-      "minProperties": 1
+      "$ref": "#/definitions/match"
     },
     "route": {
       "$ref": "#/definitions/route"
@@ -103,6 +93,19 @@
       },
       "minProperties": 1
     },
+    "uri": {
+      "title": "URI",
+      "description": "Backend URI definition",
+      "path": {
+        "type": "string"
+      },
+      "prefix": {
+        "type": "string"
+      },
+      "prefix_rewrite": {
+        "type": "string"
+      }
+    },
     "match": {
       "title": "Match",
       "description": "Conditions that must be true to apply the action or routing",
@@ -149,6 +152,9 @@
         },
         "tags": {
           "$ref": "#/definitions/tags"
+        },
+        "uri": {
+          "$ref": "#/definitions/uri"
         },
         "weight": {
           "title": "Traffic weight",

@@ -162,7 +162,6 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	clusters := buildClusters(rules)
 	routes := buildRoutes(rules)
-	//, inst.ServiceName, inst.Tags, m.listenerPort, m.sdsPort, m.adminPort, m.workingDir
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
 	if err := buildFS(rules, m.workingDir); err != nil {
@@ -345,6 +344,16 @@ func buildRoutes(ruleList []api.Rule) []Route {
 			}
 
 			for _, backend := range rule.Route.Backends {
+				var path, prefix, prefixRewrite string
+				if backend.URI != nil {
+					path = backend.URI.Path
+					prefix = backend.URI.Prefix
+					prefixRewrite = backend.URI.PrefixRewrite
+				} else {
+					prefix = fmt.Sprintf("/%v/", backend.Name)
+					prefixRewrite = "/"
+				}
+
 				clusterName := buildServiceKey(backend.Name, backend.Tags)
 
 				runtime := &Runtime{
@@ -354,8 +363,9 @@ func buildRoutes(ruleList []api.Rule) []Route {
 
 				route := Route{
 					Runtime:       runtime,
-					Prefix:        "/" + backend.Name + "/",
-					PrefixRewrite: "/",
+					Path:          path,
+					Prefix:        prefix,
+					PrefixRewrite: prefixRewrite,
 					Cluster:       clusterName,
 					Headers:       headers,
 				}

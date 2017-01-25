@@ -97,6 +97,7 @@ type NetworkFilterConfig struct {
 	CodecType         string      `json:"codec_type"`
 	StatPrefix        string      `json:"stat_prefix"`
 	GenerateRequestID bool        `json:"generate_request_id"`
+	UserAgent         bool        `json:"add_user_agent"`
 	RouteConfig       RouteConfig `json:"route_config"`
 	Filters           []Filter    `json:"filters"`
 	AccessLog         []AccessLog `json:"access_log"`

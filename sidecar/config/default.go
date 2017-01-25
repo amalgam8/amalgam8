@@ -20,7 +20,7 @@ import "time"
 var DefaultConfig = Config{
 	Register:     false,
 	Proxy:        false,
-	ProxyAdapter: NGINXAdapter,
+	ProxyAdapter: EnvoyAdapter,
 	DNS:          false,
 
 	ProxyConfig: ProxyConfig{

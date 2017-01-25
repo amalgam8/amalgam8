@@ -52,25 +52,13 @@ const (
 
 const envoyLogFormat = `` +
 	`{` +
-	`"status":"%%RESPONSE_CODE%%", ` +
-	`"start_time":"%%START_TIME%%", ` +
-	`"request_time":"%%DURATION%%", ` +
-	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%", ` +
-	`"src":"%v", ` +
-	`"dst":"NEED", ` +
-	`"module":"ENVOY", ` +
-	`"method":"%%REQ(:METHOD)%%", ` +
-	`"path":"%%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%%", ` +
-	`"protocol":"%%PROTOCOL%%", ` +
-	`"response_code":"%%RESPONSE_CODE%%", ` +
-	`"response_flags":"%%RESPONSE_FLAGS%%", ` +
-	`"bytes_rx":"%%BYTES_RECEIVED%%", ` +
-	`"bytes_tx":"%%BYTES_SENT%%", ` +
-	`"x_forwarded":"%%REQ(X-FORWARDED-FOR)%%", ` +
-	`"user_agent":"%%REQ(USER-AGENT)%%", ` +
-	`"request_id":"%%REQ(X-REQUEST-ID)%%", ` +
-	`"auth":"%%REQ(:AUTHORITY)%%", ` +
-	`"upstream_host":"%%UPSTREAM_HOST%%"` +
+	`"status":"%%RESPONSE_CODE%%",` +
+	`"start_time":"%%START_TIME%%",` +
+	`"request_time":"%%DURATION%%",` +
+	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%",` +
+	`"src":"%v",` +
+	`"dst":"%%UPSTREAM_CLUSTER%%",` +
+	`"%v":"%v"` +
 	"}\n"
 
 // Manager for updating envoy proxy configuration.
@@ -168,7 +156,21 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		return Config{}, err
 	}
 
-	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags))
+	traceKey := "gremlin_recipe_id"
+	traceVal := "-"
+	for _, rule := range rules {
+		for _, action := range rule.Actions {
+			if action.GetType() == "trace" {
+				if rule.Match != nil && rule.Match.Source != nil && rule.Match.Source.Name == inst.ServiceName {
+					trace := action.Internal().(api.TraceAction)
+					traceKey = trace.LogKey
+					traceVal = trace.LogValue
+				}
+			}
+		}
+	}
+
+	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
 	return Config{
 		RootRuntime: RootRuntime{
@@ -183,8 +185,10 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 						Type: "read",
 						Name: "http_connection_manager",
 						Config: NetworkFilterConfig{
-							CodecType:  "auto",
-							StatPrefix: "ingress_http",
+							CodecType:         "auto",
+							StatPrefix:        "ingress_http",
+							UserAgent:         true,
+							GenerateRequestID: true,
 							RouteConfig: RouteConfig{
 								VirtualHosts: []VirtualHost{
 									{

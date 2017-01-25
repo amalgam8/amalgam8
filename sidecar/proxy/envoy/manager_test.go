@@ -203,21 +203,95 @@ func TestBuildClusters(t *testing.T) {
 
 	assert.Len(t, clusters, 3)
 
+	clusterName := buildServiceKey("service1", []string{"tag1"})
 	assert.Equal(t, Cluster{
-		Name:             "service1_stag1",
-		ServiceName:      "service1_stag1",
+		Name:             clusterName,
+		ServiceName:      clusterName,
 		Type:             "sds",
 		LbType:           "round_robin",
 		ConnectTimeoutMs: 1000,
 	}, clusters[0])
 
-	assert.Equal(t, "service1_stag1_stag2", clusters[1].Name)
-	assert.Equal(t, "service2", clusters[2].Name)
+	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
+	assert.Equal(t, buildServiceKey("service2", []string{}), clusters[2].Name)
+}
 
-	//data, err := json.MarshalIndent(&clusters, "", " ")
-	//assert.NoError(t, err)
-	//
-	//fmt.Println(string(data))
+func TestBuildServiceKey(t *testing.T) {
+	type TestCase struct {
+		Service  string
+		Tags     []string
+		Expected string
+	}
+
+	testCases := []TestCase{
+		{
+			Service:  "serviceX",
+			Tags:     []string{},
+			Expected: "serviceX",
+		},
+		{
+			Service:  "serviceX",
+			Tags:     []string{"A=1"},
+			Expected: "serviceX:A=1",
+		},
+		{
+			Service:  "serviceX",
+			Tags:     []string{"A=1", "B=2"},
+			Expected: "serviceX:A=1,B=2",
+		},
+		{
+			Service:  "serviceX",
+			Tags:     []string{"A=1", "B=2", "C=3"},
+			Expected: "serviceX:A=1,B=2,C=3",
+		},
+		{
+			Service:  "serviceX",
+			Tags:     []string{"B=2", "C=3", "A=1"},
+			Expected: "serviceX:A=1,B=2,C=3",
+		},
+	}
+
+	for _, testCase := range testCases {
+		actual := buildServiceKey(testCase.Service, testCase.Tags)
+		assert.Equal(t, testCase.Expected, actual)
+	}
+}
+
+func TestParseServiceKey(t *testing.T) {
+	type TestCase struct {
+		Service    string
+		Tags       []string
+		ServiceKey string
+	}
+
+	testCases := []TestCase{
+		{
+			Service:    "serviceX",
+			Tags:       []string{},
+			ServiceKey: "serviceX",
+		},
+		{
+			Service:    "serviceX",
+			Tags:       []string{"A=1"},
+			ServiceKey: "serviceX:A=1",
+		},
+		{
+			Service:    "serviceX",
+			Tags:       []string{"A=1", "B=2"},
+			ServiceKey: "serviceX:A=1,B=2",
+		},
+		{
+			Service:    "serviceX",
+			Tags:       []string{"A=1", "B=2", "C=3"},
+			ServiceKey: "serviceX:A=1,B=2,C=3",
+		},
+	}
+
+	for _, testCase := range testCases {
+		serviceName, tags := ParseServiceKey(testCase.ServiceKey)
+		assert.Equal(t, testCase.Service, serviceName)
+		assert.Equal(t, testCase.Tags, tags)
+	}
 }
 
 // Ensure that parse(build(s)) == s

@@ -27,7 +27,6 @@ import (
 
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
@@ -233,75 +232,47 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 }
 
 const (
-	ctrl      = '_' // Control character
-	ctrlSplit = 's' // Split control character
+	serviceDelimiter = ':'
+	tagDelimiter     = ','
 )
 
-// buildServiceKey returns key containing service name and its tags
+// buildServiceKey builds a service key given a service name and tags in the
+// form "serviceName:tag1=value1,tag2=value2,tag3=value3" where ':' is the
+// service delimiter and ',' is the tag delimiter. We assume that the service
+// name and the tags do not contain either delimiter.
 func buildServiceKey(service string, tags []string) string {
-	sort.Strings(tags) // FIXME: by reference
+	sort.Strings(tags)
 
-	// Guesstimate the required buffer capacity by assuming the typical individual tag length is 10 or less and that
-	// the output will at most double in size.
-	c := 2 * (len(service) + 10*len(tags))
-	buf := bytes.NewBuffer(make([]byte, 0, c))
+	buf := bytes.NewBufferString(service)
 
-	// Writes an escaped version of the input string to the buffer.
-	escape := func(s string, buf *bytes.Buffer) {
-		data := []byte(s)
-		for i := range data {
-			if data[i] == ctrl {
-				buf.WriteByte(ctrl)
-			}
-			buf.WriteByte(data[i])
+	lt := len(tags)
+	if lt > 0 {
+		buf.WriteByte(serviceDelimiter)
+		for i := 0; i < lt-1; i++ {
+			buf.WriteString(tags[i])
+			buf.WriteByte(tagDelimiter)
 		}
-	}
-
-	// Write escaped service and tags to the buffer separated by split control characters.
-	escape(service, buf)
-	for i := range tags {
-		buf.Write([]byte{ctrl, ctrlSplit})
-		escape(tags[i], buf)
+		buf.WriteString(tags[lt-1])
 	}
 
 	return buf.String()
 }
 
-// ParseServiceKey returns service name and its tags
-func ParseServiceKey(key string) (string, []string) {
-	res := make([]string, 0, 6) // We guesstimate that most keys are composed of at most 1 service name + 5 tags.
-	buf := bytes.NewBuffer(make([]byte, 0, len(key)))
-	data := []byte(key)
-
-	i := 0
-	for i = 0; i < len(data)-1; i++ {
-		if data[i] == ctrl {
-			switch data[i+1] {
-			case ctrl:
-				buf.WriteByte(ctrl)
-			case ctrlSplit:
-				res = append(res, buf.String())
-				buf = bytes.NewBuffer(make([]byte, 0, len(key)))
-			default:
-				// FIXME: behavior?
-				logrus.WithField("character", data[i+1]).Warn("Unrecognized control character")
-			}
-			i++
-		} else {
-			buf.WriteByte(data[i])
+// ParseServiceKey parses service key into service name and tags. We do not
+// check for the correctness of the service key.
+func ParseServiceKey(s string) (string, []string) {
+	res := strings.FieldsFunc(s, func(r rune) bool {
+		if r == tagDelimiter || r == serviceDelimiter {
+			return true
 		}
+		return false
+	})
+
+	if len(res) <= 0 {
+		return "", []string{}
 	}
 
-	// If the 2nd to last byte was not a control character we need to write the last byte.
-	if i == len(data)-1 {
-		buf.WriteByte(data[i])
-	}
-	res = append(res, buf.String())
-
-	service := res[0]
-	tags := res[1:]
-
-	return service, tags
+	return res[0], res[1:]
 }
 
 func buildClusters(rules []api.Rule) []Cluster {

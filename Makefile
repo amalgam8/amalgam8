@@ -58,7 +58,7 @@ K8SRULES_IMAGE_NAME			:= amalgam8/a8-k8s-rules-controller:latest
 REGISTRY_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.controller
 SIDECAR_UBUNTU_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.ubuntu
-SIDECAR_ALPINE_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.envoy
+SIDECAR_ALPINE_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.alpine
 SIDECAR_ENVOY_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.envoy
 K8SRULES_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.k8srules
 

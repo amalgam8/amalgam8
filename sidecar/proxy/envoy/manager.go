@@ -52,13 +52,21 @@ const (
 
 const envoyLogFormat = `` +
 	`{` +
-	`"status":"%%RESPONSE_CODE%%",` +
-	`"start_time":"%%START_TIME%%",` +
-	`"request_time":"%%DURATION%%",` +
-	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%",` +
-	`"src":"%v",` +
-	`"dst":"%%UPSTREAM_CLUSTER%%",` +
-	`"%v":"%v"` +
+	`"status":"%%RESPONSE_CODE%%", ` +
+	`"start_time":"%%START_TIME%%", ` +
+	`"request_time":"%%DURATION%%", ` +
+	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%", ` +
+	`"src":"%v", ` +
+	`"dst":"%%UPSTREAM_CLUSTER%%", ` +
+	`"%v":"%v", ` +
+	`"message":"%%REQ(:METHOD)%% %%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%% %%RESPONSE_CODE%%", ` +
+	`"module":"ENVOY", ` +
+	`"method":"%%REQ(:METHOD)%%", ` +
+	`"path":"%%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%%", ` +
+	`"protocol":"%%PROTOCOL%%", ` +
+	`"response_flags":"%%RESPONSE_FLAGS%%", ` +
+	`"request_id":"%%REQ(X-REQUEST-ID)%%", ` +
+	`"upstream_host":"%%UPSTREAM_HOST%%"` +
 	"}\n"
 
 // Manager for updating envoy proxy configuration.

@@ -44,7 +44,7 @@ jsondiff() {
     file2=$(jq -S . $2 2> /dev/null) || file2=$(cat $2)
 
     # Diff, but ignore all whitespace since
-    diff -Ewb <(echo $file1) <(echo $file2)
+    diff -Ewb <(echo $file1) <(echo $file2) &>/dev/null
 }
 
 check_output_equality() {
@@ -305,7 +305,7 @@ sleep 10
 
 MAX_LOOP=5
 retry_count=1
-SLEEP_TIME=3
+SLEEP_TIME=15
 GATEWAY_URL=localhost:32000
 COMMAND_INPUT="curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage"
 EXPECTED_OUTPUT1="$SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT"

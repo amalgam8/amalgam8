@@ -632,7 +632,7 @@ func TestBookInfo(t *testing.T) {
 
 func TestFaults(t *testing.T) {
 	ruleBytes := []byte(`[{
-      "id": "c2a22912-9479-4e0b-839b-ffe76bb0c579",
+      "id": "c2a22912-9479-4e0b-839b-ffe76bb0c510",
       "priority": 10,
       "destination": "ratings",
       "match": {
@@ -663,12 +663,38 @@ func TestFaults(t *testing.T) {
       "destination": "ratings",
       "match": {
         "headers": {
+          "Cookie": ".*?user=jason"
+        },
+        "source": {
+          "name": "reviews",
+          "tags": [
+            "v1"
+          ]
+        }
+      },
+      "actions": [
+        {
+          "action": "delay",
+          "duration": 7,
+          "probability": 1,
+          "tags": [
+            "v1"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "c2a22912-9479-4e0b-839b-ffe76bb0c579",
+      "priority": 10,
+      "destination": "ratings",
+      "match": {
+        "headers": {
           "test": "myval"
         },
         "source": {
           "name": "reviews",
           "tags": [
-            "v2"
+            "v1"
           ]
         }
       },

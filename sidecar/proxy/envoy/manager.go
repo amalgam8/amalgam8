@@ -54,7 +54,7 @@ const envoyLogFormat = `` +
 	`{` +
 	`"status":"%%RESPONSE_CODE%%", ` +
 	`"start_time":"%%START_TIME%%", ` +
-	`"request_time":"%%DURATION%%", ` +
+	`"request_time":%%DURATION%%, ` +
 	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%", ` +
 	`"src":"%v", ` +
 	`"dst":"%%UPSTREAM_CLUSTER%%", ` +
@@ -571,7 +571,7 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 
 			if rule.Match.Source != nil && rule.Match.Source.Name == serviceName {
 				isSubset := true
-				for _, tag := range rule.Tags {
+				for _, tag := range rule.Match.Source.Tags {
 					if _, exists := tagMap[tag]; !exists {
 						isSubset = false
 						break

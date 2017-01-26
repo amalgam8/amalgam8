@@ -56,7 +56,7 @@ redis:
 #######Gremlin###########
 
 gremlin:
-  image: rshriram/gremlin:latest
+  image: amalgam8/gremlin:latest
   ports:
     - "31500:5000"
   links:

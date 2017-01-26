@@ -21,10 +21,12 @@ A8_TEST_SUITE=$1
 if [ "$A8_TEST_SUITE" == "examples" ]; then
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.html"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.html"
+    PRODUCTPAGE_V3_OUTPUT="productpage_v3.html"
     PRODUCTPAGE_RULEMATCH="productpage_rulematch.html"
 else
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.json"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.json"
+    PRODUCTPAGE_V3_OUTPUT="productpage_v3.json"
     PRODUCTPAGE_RULEMATCH="productpage_rulematch.json"
 fi
 # docker or k8s

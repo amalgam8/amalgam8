@@ -47,6 +47,21 @@ jsondiff() {
     diff -Ewb <(echo $file1) <(echo $file2)
 }
 
+check_output_equality() {
+    REF_OUTPUT_FILE="$1"
+    ACTUAL_OUTPUT_FILE="$2"
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+	    diff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE
+    else
+	    jsondiff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE
+    fi
+
+    if [ $? -gt 0 ]; then
+        return 1
+    fi
+    return 0
+}
+
 # Call the specified endpoint and compare against expected output
 # Ensure the % falls within the expected range
 check_routing_rules() {
@@ -56,18 +71,28 @@ check_routing_rules() {
 	EXPECTED_PERCENT="$4"
 	MAX_LOOP=5
 	retry_count=1
+    COMMAND_INPUT="${COMMAND_INPUT} >/tmp/routing.tmp"
+
 	while [  $retry_count -le $((MAX_LOOP)) ]; do
 		v1_count=0
 		v2_count=0
 		for count in {1..100}
 		do
 			temp_var1=$(eval $COMMAND_INPUT)
-
-			if [[ "${temp_var1}" = *"$EXPECTED_OUTPUT1"* ]]; then
-				(( v1_count=v1_count+1 ))
-			elif [[ "${temp_var1}" = *"$EXPECTED_OUTPUT2"* ]]; then
-				(( v2_count=v2_count+1 ))
-			fi
+            check_output_equality $EXPECTED_OUTPUT1 "/tmp/routing.tmp"
+            if [ $? -eq 0 ]; then
+                (( v1_count=v1_count+1 ))
+            else
+                check_output_equality $EXPECTED_OUTPUT2 "/tmp/routing.tmp"
+                if [ $? -eq 0 ]; then
+                    (( v2_count=v2_count+1 ))
+                fi
+            fi
+			# if [[ "${temp_var1}" = *"$EXPECTED_OUTPUT1"* ]]; then
+			# 	(( v1_count=v1_count+1 ))
+			# elif [[ "${temp_var1}" = *"$EXPECTED_OUTPUT2"* ]]; then
+			# 	(( v2_count=v2_count+1 ))
+			# fi
 		done
 		echo "    v1 was hit: "$v1_count" times"
 		echo "    v2 was hit: "$v2_count" times"
@@ -116,9 +141,9 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
     curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
 
     if [ "$A8_TEST_SUITE" == "examples" ]; then
-	diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+	    diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
     else
-	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+	    jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
     fi
 
     if [ $? -gt 0 ]; then
@@ -170,7 +195,12 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+else
+	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+fi
+
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
@@ -221,7 +251,12 @@ if [ $delta -gt 2 ]; then
     exit 1
 fi
 
-jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+if [ "$A8_TEST_SUITE" == "examples" ]; then
+	diff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+else
+	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+fi
+
 if [ $? -gt 0 ]; then
     echo "failed"
     echo "Productpage does not match productpage_v2.json after clearing fault rules for user=jason in fault injection test phase"
@@ -272,9 +307,9 @@ MAX_LOOP=5
 retry_count=1
 SLEEP_TIME=3
 GATEWAY_URL=localhost:32000
-COMMAND_INPUT="curl $GATEWAY_URL/reviews/health -s -I | grep \"Set-Cookie\" | sed 's/ /\n/g' | sed 's/\;//g' | grep version | cut -d '=' -f 2-"
-EXPECTED_OUTPUT1="reviews-version=v1"
-EXPECTED_OUTPUT2="reviews-version=v3"
+COMMAND_INPUT="curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage"
+EXPECTED_OUTPUT1="$SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT"
+EXPECTED_OUTPUT2="$SCRIPTDIR/$PRODUCTPAGE_V3_OUTPUT"
 echo "Setting traffic-start.  Expecting 10% of traffic to be diverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
 	TRAFFIC_START_RESP=$($CLIBIN traffic-start -s reviews -v version=v3)
@@ -288,6 +323,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 	sleep $SLEEP_TIME
 
 	# Validate that 10% of traffic is routing to v3
+    
 	# Curl the health check and check the version cookie
 	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT1" "$EXPECTED_OUTPUT2" 10
 	if [ $? -gt 0 ]; then

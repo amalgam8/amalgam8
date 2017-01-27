@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	. "github.com/amalgam8/amalgam8/cli/utils"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )

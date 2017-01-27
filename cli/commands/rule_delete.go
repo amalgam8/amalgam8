@@ -17,17 +17,18 @@ package commands
 import (
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/urfave/cli"
 )
 
 // RuleDeleteCommand is used for the rule-delete command.
 type RuleDeleteCommand struct {
 	ctx        *cli.Context
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -92,7 +93,7 @@ func (cmd *RuleDeleteCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
 	T := utils.Language(common.DefaultLanguage)
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := Controller(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -100,43 +101,42 @@ func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
 	// Update the controller
 	cmd.controller = controller
 
+	filter := &api.RuleFilter{}
+
 	if ctx.IsSet("all") {
 		switch ctx.Bool("force") {
 		case true:
-			return cmd.DeleteRules("")
+			return cmd.DeleteRules(filter)
 		case false:
 			confirmation, err := utils.Confirmation(ctx.App.Writer, T("rule_delete_all_confirmation"))
 			if err != nil {
 				return err
 			}
 			if confirmation {
-				return cmd.DeleteRules("")
+				return cmd.DeleteRules(filter)
 			}
 			return nil
 		}
 	}
 
-	query := cmd.controller.NewQuery()
 	if ctx.IsSet("id") || ctx.IsSet("i") || ctx.IsSet("destination") || ctx.IsSet("d") || ctx.IsSet("tag") || ctx.IsSet("t") {
-		for _, id := range ctx.StringSlice("id") {
-			query.Add("id", id)
+
+		filter = &api.RuleFilter{
+			IDs:          ctx.StringSlice("id"),
+			Destinations: ctx.StringSlice("destination"),
+			Tags:         ctx.StringSlice("tag"),
 		}
-		for _, dest := range ctx.StringSlice("destination") {
-			query.Add("destination", dest)
-		}
-		for _, dest := range ctx.StringSlice("tag") {
-			query.Add("tags", dest)
-		}
-		return cmd.DeleteRules(query.Encode())
+
+		return cmd.DeleteRules(filter)
 	}
 
 	return cmd.DefaultAction(ctx)
 }
 
 // DeleteRules deletes the rules based on the given query.
-func (cmd *RuleDeleteCommand) DeleteRules(query string) error {
+func (cmd *RuleDeleteCommand) DeleteRules(filter *api.RuleFilter) error {
 	T := utils.Language(common.DefaultLanguage)
-	_, err := cmd.controller.DeleteRules(query)
+	_, err := cmd.controller.DeleteRules(filter)
 	if err != nil {
 		return err
 	}

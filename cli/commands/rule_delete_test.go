@@ -177,7 +177,7 @@ var _ = Describe("Rule-Delete", func() {
 			BeforeEach(func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("DELETE", "/v1/rules", "tags="+tags),
+						ghttp.VerifyRequest("DELETE", "/v1/rules", "tag="+tags),
 						ghttp.RespondWith(http.StatusOK, ""),
 					),
 				)

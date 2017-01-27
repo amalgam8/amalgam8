@@ -65,8 +65,9 @@ type Runtime struct {
 // See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#config-http-conn-man-route-table-route
 type Route struct {
 	Runtime       *Runtime `json:"runtime,omitempty"`
-	Prefix        string   `json:"prefix"`
-	PrefixRewrite string   `json:"prefix_rewrite"`
+	Path          string   `json:"path,omitempty"`
+	Prefix        string   `json:"prefix,omitempty"`
+	PrefixRewrite string   `json:"prefix_rewrite,omitempty"`
 	Cluster       string   `json:"cluster"`
 	Headers       []Header `json:"headers,omitempty"`
 }

@@ -29,9 +29,10 @@ func TestCommands(t *testing.T) {
 var response = make(map[string][]byte)
 
 var _ = Describe("Commands", func() {
-	response["traffic_stopped"] = []byte(`
+	response["reviews_traffic_stopped"] = []byte(`
 		{
-			"rules": [
+		  "services": {
+		    "reviews": [
 				{
 					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
 					"priority": 1,
@@ -46,13 +47,14 @@ var _ = Describe("Commands", func() {
 						]
 					}
 				}
-			],
-			"revision": 1
-		}`)
+			]
+		}
+	}`)
 
-	response["traffic_started"] = []byte(`
+	response["reviews_traffic_started"] = []byte(`
 		{
-			"rules": [
+		  "services": {
+		    "reviews": [
 				{
 					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
 					"priority": 1,
@@ -73,9 +75,9 @@ var _ = Describe("Commands", func() {
 						]
 					}
 				}
-			],
-			"revision": 2
-		}`)
+			]
+		}
+	}`)
 
 	response["weight_not_zero"] = []byte(`
 			{
@@ -100,7 +102,7 @@ var _ = Describe("Commands", func() {
 			}`)
 
 	response["no_rules"] = []byte(`
-		{"rules":[],"revision":1}
+		{"services":{}}
 	`)
 
 	response["inactive"] = []byte(`
@@ -156,9 +158,10 @@ var _ = Describe("Commands", func() {
 			]
 		}`)
 
-	response["two_rules"] = []byte(`
+	response["reviews_two_rules"] = []byte(`
 		{
-			"rules": [
+		  "services": {
+		    "reviews": [
 				{
 					"id": "41202250-8b4d-4fb4-a000-74ebb04857e4",
 					"priority": 1,
@@ -187,7 +190,7 @@ var _ = Describe("Commands", func() {
 						]
 					}
 				}
-			],
-			"revision": 1
-		}`)
+			]
+		}
+	}`)
 })

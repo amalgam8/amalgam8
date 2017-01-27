@@ -65,7 +65,10 @@ const envoyLogFormat = `` +
 	`"path":"%%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%%", ` +
 	`"protocol":"%%PROTOCOL%%", ` +
 	`"response_flags":"%%RESPONSE_FLAGS%%", ` +
+	`"x_forwarded":"%%REQ(X-FORWARDED-FOR)%%", ` +
+	`"user_agent":"%%REQ(USER-AGENT)%%", ` +
 	`"request_id":"%%REQ(X-REQUEST-ID)%%", ` +
+	`"auth":"%%REQ(:AUTHORITY)%%", ` +
 	`"upstream_host":"%%UPSTREAM_HOST%%"` +
 	"}\n"
 

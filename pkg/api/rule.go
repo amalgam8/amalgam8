@@ -1,4 +1,4 @@
-// Copyright 2016 IBM Corporation
+// Copyright 2017 IBM Corporation
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -14,141 +14,75 @@
 
 package api
 
-import "encoding/json"
-
 // Rule represents an individual rule.
 type Rule struct {
-	ID          string   `json:"id"`
-	Priority    int      `json:"priority"`
-	Tags        []string `json:"tags,omitempty"`
-	Destination string   `json:"destination"`
-	Match       *Match   `json:"match,omitempty"`
-	Route       *Route   `json:"route,omitempty"`
-	Actions     []Action `json:"actions,omitempty"`
+	ID          string   `json:"id" yaml:"id"`
+	Priority    int      `json:"priority" yaml:"priority"`
+	Tags        []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Destination string   `json:"destination" yaml:"destination"`
+	Match       *Match   `json:"match,omitempty" yaml:"match,omitempty"`
+	Route       *Route   `json:"route,omitempty" yaml:"route,omitempty"`
+	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`
 }
 
 // Source definition.
 type Source struct {
-	Name string   `json:"name"`
-	Tags []string `json:"tags,omitempty"`
+	Name string   `json:"name" yaml:"name"`
+	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty"`
 }
 
 // Match definition
 type Match struct {
-	Source  *Source           `json:"source,omitempty"`
-	Headers map[string]string `json:"headers,omitempty"`
+	Source  *Source           `json:"source,omitempty" yaml:"source,omitempty"`
+	Headers map[string]string `json:"headers,omitempty" yaml:"headers,omitempty"`
 }
 
 // Route definition
 type Route struct {
-	Backends       []Backend `json:"backends"`
+	Backends       []Backend `json:"backends" yaml:"backends"`
 	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty"`
 	HTTPReqRetries int       `json:"http_req_retries,omitempty"`
 }
 
 // URI for backends.
 type URI struct {
-	Path          string `json:"path"`
-	Prefix        string `json:"prefix"`
-	PrefixRewrite string `json:"prefix_rewrite"`
+	Path          string `json:"path" yaml:"path"`
+	Prefix        string `json:"prefix" yaml:"prefix"`
+	PrefixRewrite string `json:"prefix_rewrite" yaml:"prefix_rewrite"`
 }
 
 // Resilience cluster level circuit breaker options
 type Resilience struct {
-	MaxConnections           int     `json:"max_connections,omitempty"`
-	MaxPendingRequest        int     `json:"max_pending_requests,omitempty"`
-	MaxRequests              int     `json:"max_requests,omitempty"`
-	SleepWindow              float64 `json:"sleep_window,omitempty"`
-	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty"`
-	DetectionInterval        float64 `json:"detection_interval,omitempty"`
-	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty"`
+	MaxConnections           int     `json:"max_connections,omitempty" yaml:"max_connections,omitempty"`
+	MaxPendingRequest        int     `json:"max_pending_requests,omitempty" yaml:"max_pending_requests,omitempty"`
+	MaxRequests              int     `json:"max_requests,omitempty" yaml:"max_requests,omitempty"`
+	SleepWindow              float64 `json:"sleep_window,omitempty" yaml:"sleep_window,omitempty"`
+	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty" yaml:"consecutive_errors,omitempty"`
+	DetectionInterval        float64 `json:"detection_interval,omitempty" yaml:"detection_interval,omitempty"`
+	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty" yaml:"max_requests_per_connection,omitempty"`
 }
 
 // Backend represents a backend to route to.
 type Backend struct {
-	Name       string      `json:"name,omitempty"`
-	Tags       []string    `json:"tags"`
-	URI        *URI        `json:"uri,omitempty"`
-	Weight     float64     `json:"weight,omitempty"`
-	Resilience *Resilience `json:"resilience,omitempty"`
+	Name       string      `json:"name,omitempty" yaml:"name,omitempty"`
+	Tags       []string    `json:"tags" yaml:"tags"`
+	URI        *URI        `json:"uri,omitempty" yaml:"uri,omitempty"`
+	Weight     float64     `json:"weight,omitempty" yaml:"weight,omitempty"`
+	Resilience *Resilience `json:"resilience,omitempty" yaml:"resilience,omitempty"`
 }
 
-// Action to take.
+// Action definition
 type Action struct {
-	internal   interface{}
-	actionType string
+	Action      string   `json:"action" yaml:"action"`
+	Duration    float64  `json:"duration,omitempty" yaml:"duration,omitempty"`
+	Probability float64  `json:"probability,omitempty" yaml:"probability,omitempty"`
+	Tags        []string `json:"tags,omitempty" yaml:"tags,omitempty"`
+	ReturnCode  int      `json:"return_code,omitempty" yaml:"return_code,omitempty"`
+	LogKey      string   `json:"log_key,omitempty" yaml:"log_key,omitempty"`
+	LogValue    string   `json:"log_value,omitempty" yaml:"log_value,omitempty"`
 }
 
-// MarshalJSON implement the json marshal function
-func (a *Action) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.internal)
-}
-
-// UnmarshalJSON implement the json unmarshal function
-func (a *Action) UnmarshalJSON(data []byte) error {
-	action := struct {
-		Type string `json:"action"`
-	}{}
-	err := json.Unmarshal(data, &action)
-	if err != nil {
-		return err
-	}
-
-	a.actionType = action.Type
-
-	switch action.Type {
-	case "delay":
-		delay := DelayAction{}
-		if err = json.Unmarshal(data, &delay); err != nil {
-			return err
-		}
-		a.internal = delay
-	case "abort":
-		abort := AbortAction{}
-		if err = json.Unmarshal(data, &abort); err != nil {
-			return err
-		}
-		a.internal = abort
-	case "trace":
-		trace := TraceAction{}
-		if err = json.Unmarshal(data, &trace); err != nil {
-			return err
-		}
-		a.internal = trace
-	}
-	return nil
-}
-
-// GetType returns action type
-func (a *Action) GetType() string {
-	return a.actionType
-}
-
-// Internal returns action type interface
-func (a *Action) Internal() interface{} {
-	return a.internal
-}
-
-// DelayAction definition
-type DelayAction struct {
-	Action      string   `json:"action"`
-	Probability float64  `json:"probability"`
-	Tags        []string `json:"tags"`
-	Duration    float64  `json:"duration"`
-}
-
-// AbortAction definition
-type AbortAction struct {
-	Action      string   `json:"action"`
-	Probability float64  `json:"probability"`
-	Tags        []string `json:"tags"`
-	ReturnCode  int      `json:"return_code"`
-}
-
-// TraceAction definition
-type TraceAction struct {
-	Action   string   `json:"action"`
-	Tags     []string `json:"tags"`
-	LogKey   string   `json:"log_key"`
-	LogValue string   `json:"log_value"`
+// RulesByService definition
+type RulesByService struct {
+	Services map[string][]Rule `json:"services" yaml:"services"`
 }

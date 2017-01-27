@@ -138,6 +138,7 @@ type ProxyConfig struct {
 	AdminPort        int    `yaml:"admin_port"`
 	WorkingDir       string `yaml:"working_dir"`
 	LoggingDir       string `yaml:"logging_dir"`
+	ProxyBinary      string `yaml:"proxy_binary_path"`
 }
 
 // Config stores the various configuration options for the sidecar

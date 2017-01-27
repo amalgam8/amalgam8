@@ -14,7 +14,7 @@
 
 ##API Gateway##
 gateway:
-  image: amalgam8/a8-sidecar:alpine
+  image: amalgam8/a8-sidecar:latest
   environment:
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_REGISTRY_URL=http://registry:8080

@@ -48,24 +48,24 @@ const (
 	DefaultHTTPListenerPort = 6379
 	DefaultWorkingDir       = "/etc/envoy/"
 	DefaultLoggingDir       = "/var/log/"
+	DefaultEnvoyBinary      = "envoy"
 )
 
 const envoyLogFormat = `` +
 	`{` +
 	`"status":"%%RESPONSE_CODE%%", ` +
 	`"start_time":"%%START_TIME%%", ` +
-	`"request_time":"%%DURATION%%", ` +
+	`"request_time":%%DURATION%%, ` +
 	`"upstream_response_time":"%%RESP(X-ENVOY-UPSTREAM-SERVICE-TIME)%%", ` +
 	`"src":"%v", ` +
-	`"dst":"NEED", ` +
+	`"dst":"%%UPSTREAM_CLUSTER%%", ` +
+	`"%v":"%v", ` +
+	`"message":"%%REQ(:METHOD)%% %%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%% %%RESPONSE_CODE%%", ` +
 	`"module":"ENVOY", ` +
 	`"method":"%%REQ(:METHOD)%%", ` +
 	`"path":"%%REQ(X-ENVOY-ORIGINAL-PATH?:PATH)%%", ` +
 	`"protocol":"%%PROTOCOL%%", ` +
-	`"response_code":"%%RESPONSE_CODE%%", ` +
 	`"response_flags":"%%RESPONSE_FLAGS%%", ` +
-	`"bytes_rx":"%%BYTES_RECEIVED%%", ` +
-	`"bytes_tx":"%%BYTES_SENT%%", ` +
 	`"x_forwarded":"%%REQ(X-FORWARDED-FOR)%%", ` +
 	`"user_agent":"%%REQ(USER-AGENT)%%", ` +
 	`"request_id":"%%REQ(X-REQUEST-ID)%%", ` +
@@ -91,6 +91,7 @@ func NewManager(identity identity.Provider, conf *config.Config) Manager {
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
+			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
 	}
 }
@@ -168,7 +169,21 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		return Config{}, err
 	}
 
-	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags))
+	traceKey := "gremlin_recipe_id"
+	traceVal := "-"
+	for _, rule := range rules {
+		for _, action := range rule.Actions {
+			if action.GetType() == "trace" {
+				if rule.Match != nil && rule.Match.Source != nil && rule.Match.Source.Name == inst.ServiceName {
+					trace := action.Internal().(api.TraceAction)
+					traceKey = trace.LogKey
+					traceVal = trace.LogValue
+				}
+			}
+		}
+	}
+
+	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
 	return Config{
 		RootRuntime: RootRuntime{
@@ -183,8 +198,10 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 						Type: "read",
 						Name: "http_connection_manager",
 						Config: NetworkFilterConfig{
-							CodecType:  "auto",
-							StatPrefix: "ingress_http",
+							CodecType:         "auto",
+							StatPrefix:        "ingress_http",
+							UserAgent:         true,
+							GenerateRequestID: true,
 							RouteConfig: RouteConfig{
 								VirtualHosts: []VirtualHost{
 									{
@@ -559,7 +576,7 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 
 			if rule.Match.Source != nil && rule.Match.Source.Name == serviceName {
 				isSubset := true
-				for _, tag := range rule.Tags {
+				for _, tag := range rule.Match.Source.Tags {
 					if _, exists := tagMap[tag]; !exists {
 						isSubset = false
 						break

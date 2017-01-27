@@ -65,6 +65,10 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		conf.ProxyConfig.LoggingDir = envoy.DefaultLoggingDir
 	}
 
+	if conf.ProxyConfig.ProxyBinary == "" {
+		conf.ProxyConfig.ProxyBinary = envoy.DefaultEnvoyBinary
+	}
+
 	serverConfig := &discovery.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.ProxyConfig.DiscoveryPort),
 		Discovery:       discoveryClient,

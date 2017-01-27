@@ -8,4 +8,4 @@ fi
 
 sed -e s/ELASTICSEARCH_REPLACEME/\"$ELASTICSEARCH\"/ /etc/filebeat/filebeat.yml >/tmp/filebeat.yml
 cp /tmp/filebeat.yml /etc/
-exec filebeat -c /etc/filebeat.yml
+exec filebeat -e -c /etc/filebeat.yml

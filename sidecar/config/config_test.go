@@ -341,6 +341,7 @@ proxy_config:
   admin_port: 5813
   working_dir: "/etc/proxy/"
   logging_dir: "/var/log/"
+  proxy_binary_path: "/usr/local/bin/envoy"
 
 service:
   name: helloworld
@@ -435,6 +436,7 @@ log_level: debug
 			Expect(c.ProxyConfig.HTTPListenerPort).To(Equal(8000))
 			Expect(c.ProxyConfig.WorkingDir).To(Equal("/etc/proxy/"))
 			Expect(c.ProxyConfig.LoggingDir).To(Equal("/var/log/"))
+			Expect(c.ProxyConfig.ProxyBinary).To(Equal("/usr/local/bin/envoy"))
 			Expect(c.Service.Name).To(Equal("helloworld"))
 			Expect(c.Service.Tags).To(Equal([]string{"v1", "somethingelse"}))
 			Expect(c.Endpoint.Host).To(Equal("localhost"))

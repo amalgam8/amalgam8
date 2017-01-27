@@ -20,7 +20,7 @@ import "time"
 var DefaultConfig = Config{
 	Register:     false,
 	Proxy:        false,
-	ProxyAdapter: NGINXAdapter,
+	ProxyAdapter: EnvoyAdapter,
 	DNS:          false,
 
 	ProxyConfig: ProxyConfig{
@@ -33,6 +33,7 @@ var DefaultConfig = Config{
 		AdminPort:        0,
 		WorkingDir:       "",
 		LoggingDir:       "",
+		ProxyBinary:      "",
 	},
 
 	Service: Service{

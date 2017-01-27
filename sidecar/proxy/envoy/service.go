@@ -31,6 +31,7 @@ type Service interface {
 }
 
 type service struct {
+	binary             string            // Path to Envoy binary
 	config             string            // Envoy config filename.
 	cmdMap             map[*exec.Cmd]int // Map of known running Envoy processes and their restart epochs.
 	drainTime          int
@@ -40,6 +41,7 @@ type service struct {
 
 // ServiceConfig config for Service
 type ServiceConfig struct {
+	EnvoyBinary               string
 	EnvoyConfig               string
 	DrainTimeSeconds          int
 	ParentShutdownTimeSeconds int
@@ -48,6 +50,7 @@ type ServiceConfig struct {
 // NewService creates new instance.
 func NewService(config ServiceConfig) Service {
 	return &service{
+		binary:             config.EnvoyBinary,
 		config:             config.EnvoyConfig,
 		drainTime:          config.DrainTimeSeconds,
 		parentShutdownTime: config.ParentShutdownTimeSeconds,
@@ -76,7 +79,7 @@ func (s *service) Reload() error {
 	restartEpoch++
 
 	// Spin up a new Envoy process.
-	cmd := exec.Command("envoy",
+	cmd := exec.Command(s.binary,
 		"-c", s.config,
 		"--drain-time-s", fmt.Sprint(s.drainTime),
 		"--parent-shutdown-time-s", fmt.Sprint(s.parentShutdownTime),

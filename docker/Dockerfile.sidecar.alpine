@@ -37,9 +37,9 @@ RUN set -ex \
     && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
 
 
-ADD sidecar/nginx/lua /opt/a8_lualib
-COPY sidecar/nginx/conf/*.conf /etc/nginx/
-COPY sidecar/nginx/conf/*.tmpl /etc/nginx/
+ADD sidecar/proxy/nginx/nginx/lua /opt/a8_lualib
+COPY sidecar/proxy/nginx/nginx/conf/*.conf /etc/nginx/
+COPY sidecar/proxy/nginx/nginx/conf/*.tmpl /etc/nginx/
 ADD docker/filebeat.yml /etc/filebeat/filebeat.yml
 ADD docker/run_filebeat.sh /usr/bin/run_filebeat.sh
 

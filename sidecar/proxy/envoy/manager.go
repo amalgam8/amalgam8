@@ -48,6 +48,7 @@ const (
 	DefaultHTTPListenerPort = 6379
 	DefaultWorkingDir       = "/etc/envoy/"
 	DefaultLoggingDir       = "/var/log/"
+	DefaultEnvoyBinary      = "envoy"
 )
 
 const envoyLogFormat = `` +
@@ -90,6 +91,7 @@ func NewManager(identity identity.Provider, conf *config.Config) Manager {
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
+			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
 	}
 }

@@ -33,6 +33,7 @@ var DefaultConfig = Config{
 		AdminPort:        0,
 		WorkingDir:       "",
 		LoggingDir:       "",
+		ProxyBinary:      "",
 	},
 
 	Service: Service{

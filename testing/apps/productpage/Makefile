@@ -1,8 +1,8 @@
 APP_NAME 	:= $(shell basename `pwd`)
 IMAGE_NAME 	:= amalgam8/a8-testing-bookinfo-$(APP_NAME)
 
-BUILDFLAGS  := -i
-LDFLAGS 	:= -linkmode external -extldflags -static
+BUILDFLAGS  :=
+LDFLAGS 	:= -extldflags -static
 
 # Integration test runs within docker containers only
 GOOS        := linux

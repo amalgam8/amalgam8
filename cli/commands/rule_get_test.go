@@ -293,7 +293,7 @@ var _ = Describe("Rule-Get", func() {
 			BeforeEach(func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/v1/rules", "tags="+tags),
+						ghttp.VerifyRequest("GET", "/v1/rules", "tag="+tags),
 						ghttp.RespondWith(http.StatusOK, `{ "rules": [`+string(response[tags])+`]}`),
 					),
 				)

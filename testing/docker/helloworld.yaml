@@ -13,7 +13,7 @@
 #   limitations under the License.
 
 gateway:
-  image: amalgam8/a8-sidecar:envoy
+  image: amalgam8/a8-sidecar:latest
   environment:
     - A8_CONTROLLER_URL=http://controller:8080
     - A8_REGISTRY_URL=http://registry:8080

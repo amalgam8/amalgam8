@@ -17,17 +17,18 @@ package commands
 import (
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/urfave/cli"
 )
 
 // RuleCreateCommand is used for the rule-create command.
 type RuleCreateCommand struct {
 	ctx        *cli.Context
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -79,7 +80,7 @@ func (cmd *RuleCreateCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := Controller(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -93,18 +94,20 @@ func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
 			return err
 		}
 
-		// Convert YAML to JSON
-		if format == utils.YAML {
-			reader, err = utils.YAMLToJSON(reader, &api.RuleList{})
-			if err != nil {
-				return err
-			}
-		}
-		// Add errors in client
-		result, err := cmd.controller.SetRules(reader)
+		rules := &api.RulesSet{}
+
+		// Read rules
+		err = utils.UnmarshallReader(reader, format, rules)
 		if err != nil {
 			return err
 		}
+
+		// Add errors in client
+		result, err := cmd.controller.CreateRules(rules)
+		if err != nil {
+			return err
+		}
+
 		return utils.MarshallReader(cmd.ctx.App.Writer, result, utils.JSON)
 
 	}
@@ -124,16 +127,16 @@ func (cmd *RuleCreateCommand) DefaultAction(ctx *cli.Context) error {
 		return nil
 	}
 
-	// Convert YAML to JSON
-	if format == utils.YAML {
-		reader, err = utils.YAMLToJSON(reader, &api.RuleList{})
-		if err != nil {
-			return err
-		}
+	rules := &api.RulesSet{}
+
+	// Read Rules
+	err = utils.UnmarshallReader(reader, format, rules)
+	if err != nil {
+		return err
 	}
 
 	// TODO: return user-friendly errors
-	result, err := cmd.controller.SetRules(reader)
+	result, err := cmd.controller.CreateRules(rules)
 	if err != nil {
 		return err
 	}

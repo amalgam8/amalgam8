@@ -133,7 +133,7 @@ var _ = Describe("Rule-Create", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("POST", "/v1/rules"),
-						ghttp.RespondWith(http.StatusOK, response["json_id"]),
+						ghttp.RespondWith(http.StatusCreated, response["json_id"]),
 					),
 				)
 			})
@@ -162,7 +162,7 @@ var _ = Describe("Rule-Create", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("POST", "/v1/rules"),
-						ghttp.RespondWith(http.StatusOK, response["yaml_id"]),
+						ghttp.RespondWith(http.StatusCreated, response["yaml_id"]),
 					),
 				)
 			})

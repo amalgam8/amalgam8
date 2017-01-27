@@ -31,6 +31,7 @@ type Service interface {
 }
 
 type service struct {
+	binary             string            // Path to Envoy binary
 	config             string            // Envoy config filename.
 	cmdMap             map[*exec.Cmd]int // Map of known running Envoy processes and their restart epochs.
 	drainTime          int

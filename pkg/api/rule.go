@@ -40,8 +40,8 @@ type Match struct {
 // Route definition
 type Route struct {
 	Backends       []Backend `json:"backends" yaml:"backends"`
-	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty"`
-	HTTPReqRetries int       `json:"http_req_retries,omitempty"`
+	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty" yaml:"http_req_timeout,omitempty"`
+	HTTPReqRetries int       `json:"http_req_retries,omitempty" yaml:"http_req_retries,omitempty"`
 }
 
 // URI for backends.

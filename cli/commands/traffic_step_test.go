@@ -151,7 +151,7 @@ var _ = Describe("traffic-step", func() {
 				BeforeEach(func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v1/rules/routes/test"),
+							ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination=test"),
 							ghttp.RespondWith(http.StatusOK, response["no_rules"]),
 						),
 					)
@@ -178,8 +178,8 @@ var _ = Describe("traffic-step", func() {
 				BeforeEach(func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v1/rules/routes/reviews"),
-							ghttp.RespondWith(http.StatusOK, response["two_rules"]),
+							ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination=reviews"),
+							ghttp.RespondWith(http.StatusOK, response["reviews_two_rules"]),
 						),
 					)
 				})
@@ -205,8 +205,8 @@ var _ = Describe("traffic-step", func() {
 				BeforeEach(func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v1/rules/routes/reviews"),
-							ghttp.RespondWith(http.StatusOK, response["traffic_stopped"]),
+							ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination=reviews"),
+							ghttp.RespondWith(http.StatusOK, response["reviews_traffic_stopped"]),
 						),
 					)
 				})
@@ -232,8 +232,8 @@ var _ = Describe("traffic-step", func() {
 				BeforeEach(func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v1/rules/routes/reviews"),
-							ghttp.RespondWith(http.StatusOK, response["traffic_started"]),
+							ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination=reviews"),
+							ghttp.RespondWith(http.StatusOK, response["reviews_traffic_started"]),
 						),
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest("PUT", "/v1/rules"),
@@ -263,8 +263,8 @@ var _ = Describe("traffic-step", func() {
 				BeforeEach(func() {
 					server.AppendHandlers(
 						ghttp.CombineHandlers(
-							ghttp.VerifyRequest("GET", "/v1/rules/routes/reviews"),
-							ghttp.RespondWith(http.StatusOK, response["traffic_started"]),
+							ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination=reviews"),
+							ghttp.RespondWith(http.StatusOK, response["reviews_traffic_started"]),
 						),
 						ghttp.CombineHandlers(
 							ghttp.VerifyRequest("PUT", "/v1/rules"),

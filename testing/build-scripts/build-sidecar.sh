@@ -27,14 +27,14 @@ if [ $STATUS -ne 0 ]; then
     exit $STATUS
 fi
 
-make -C $MAKEDIR dockerize.sidecar.alpine
-STATUS=$?
-if [ $STATUS -ne 0 ]; then
-    echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"
-    exit $STATUS
-fi
+# make -C $MAKEDIR dockerize.sidecar.nginx.alpine
+# STATUS=$?
+# if [ $STATUS -ne 0 ]; then
+#     echo -e "\n***********\nFAILED: docker build failed for sidecar (alpine version)\n***********\n"
+#     exit $STATUS
+# fi
 
-make -C $MAKEDIR dockerize.sidecar.envoy
+make -C $MAKEDIR dockerize.sidecar.envoy.ubuntu
 STATUS=$?
 if [ $STATUS -ne 0 ]; then
     echo -e "\n***********\nFAILED: docker build failed for sidecar (envoy version)\n***********\n"

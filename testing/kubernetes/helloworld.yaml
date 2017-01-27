@@ -39,7 +39,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: amalgam8/a8-sidecar:envoy
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379

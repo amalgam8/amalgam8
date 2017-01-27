@@ -44,7 +44,7 @@ spec:
     spec:
       containers:
       - name: gateway
-        image: amalgam8/a8-sidecar:envoy
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
@@ -197,7 +197,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:envoy
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -239,7 +239,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:envoy
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh
@@ -298,7 +298,7 @@ spec:
         ports:
         - containerPort: 9080
       - name: serviceproxy
-        image: amalgam8/a8-sidecar:envoy
+        image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
         args:
         - /usr/bin/run_filebeat.sh

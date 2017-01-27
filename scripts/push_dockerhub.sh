@@ -48,8 +48,7 @@ major_tag="$major"
 echo "Building docker images..."
 docker build -t "$REGISTRY_IMAGE:latest" -f docker/Dockerfile.registry .
 docker build -t "$CONTROLLER_IMAGE:latest" -f docker/Dockerfile.controller .
-docker build -t "$SIDECAR_IMAGE:latest" -f docker/Dockerfile.sidecar.ubuntu .
-docker build -t "$SIDECAR_IMAGE:alpine" -f docker/Dockerfile.sidecar.alpine .
+docker build -t "$SIDECAR_IMAGE:latest" -f docker/Dockerfile.sidecar.envoy.ubuntu .
 
 echo "Listing current image tags in Docker Hub..."
 dockerhub_tags=$(curl --silent "https://registry.hub.docker.com/v1/repositories/$REGISTRY_IMAGE/tags" | jq -r ".[].name")
@@ -91,9 +90,9 @@ if [ "$push_patch" = true ]; then
     docker tag "$SIDECAR_IMAGE:latest" "$SIDECAR_IMAGE:$patch_tag"
     docker push "$SIDECAR_IMAGE:$patch_tag"
     
-    echo "Pushing '$SIDECAR_IMAGE:$patch_tag-alpine' to Docker Hub..."
-    docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$patch_tag-alpine"
-    docker push "$SIDECAR_IMAGE:$patch_tag-alpine"
+    # echo "Pushing '$SIDECAR_IMAGE:$patch_tag-alpine' to Docker Hub..."
+    # docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$patch_tag-alpine"
+    # docker push "$SIDECAR_IMAGE:$patch_tag-alpine"
 fi
 if [ "$push_minor" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:$minor_tag' to Docker Hub..."
@@ -108,9 +107,9 @@ if [ "$push_minor" = true ]; then
     docker tag "$SIDECAR_IMAGE:latest" "$SIDECAR_IMAGE:$minor_tag"
     docker push "$SIDECAR_IMAGE:$minor_tag"
     
-    echo "Pushing '$SIDECAR_IMAGE:$minor_tag-alpine' to Docker Hub..."
-    docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$minor_tag-alpine"
-    docker push "$SIDECAR_IMAGE:$minor_tag-alpine"
+    # echo "Pushing '$SIDECAR_IMAGE:$minor_tag-alpine' to Docker Hub..."
+    # docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$minor_tag-alpine"
+    # docker push "$SIDECAR_IMAGE:$minor_tag-alpine"
 fi
 if [ "$push_major" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:$major_tag' to Docker Hub..."
@@ -125,9 +124,9 @@ if [ "$push_major" = true ]; then
     docker tag "$SIDECAR_IMAGE:latest" "$SIDECAR_IMAGE:$major_tag"
     docker push "$SIDECAR_IMAGE:$major_tag"
     
-    echo "Pushing '$SIDECAR_IMAGE:$major_tag-alpine' to Docker Hub..."
-    docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$major_tag-alpine"
-    docker push "$SIDECAR_IMAGE:$major_tag-alpine"
+    # echo "Pushing '$SIDECAR_IMAGE:$major_tag-alpine' to Docker Hub..."
+    # docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$major_tag-alpine"
+    # docker push "$SIDECAR_IMAGE:$major_tag-alpine"
 fi
 if [ "$push_latest" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:latest' to Docker Hub..."
@@ -139,8 +138,8 @@ if [ "$push_latest" = true ]; then
     echo "Pushing '$SIDECAR_IMAGE:latest' to Docker Hub..."
     docker push "$SIDECAR_IMAGE:latest"
     
-    echo "Pushing '$SIDECAR_IMAGE:alpine' to Docker Hub..."
-    docker push "$SIDECAR_IMAGE:alpine"
+    # echo "Pushing '$SIDECAR_IMAGE:alpine' to Docker Hub..."
+    # docker push "$SIDECAR_IMAGE:alpine"
 fi
 
 echo "Signing out of Docker Hub"

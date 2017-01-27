@@ -429,7 +429,7 @@ func TestBookInfo(t *testing.T) {
       "destination": "reviews",
       "match": {
         "headers": {
-          "Cookie": ".*?user=jason"
+          "Cookie": "^(.*?;)?(user=jason)(;.*)?$"
         }
       },
       "route": {
@@ -504,7 +504,7 @@ func TestBookInfo(t *testing.T) {
       "destination": "ratings",
       "match": {
         "headers": {
-          "Cookie": ".*?user=jason"
+          "Cookie": "^(.*?;)?(user=jason)(;.*)?$"
         },
         "source": {
           "name": "reviews",
@@ -637,7 +637,7 @@ func TestFaults(t *testing.T) {
       "destination": "ratings",
       "match": {
         "headers": {
-          "Cookie": ".*?user=jason"
+          "Cookie": "^(.*?;)?(user=jason)(;.*)?$"
         },
         "source": {
           "name": "reviews",
@@ -663,7 +663,7 @@ func TestFaults(t *testing.T) {
       "destination": "ratings",
       "match": {
         "headers": {
-          "Cookie": ".*?user=jason"
+          "Cookie": "^(.*?;)?(user=jason)(;.*)?$"
         },
         "source": {
           "name": "reviews",
@@ -749,7 +749,7 @@ func TestFaults(t *testing.T) {
 				assert.Equal(t, conf.Delay.Duration, 7000)
 				assert.Len(t, conf.Headers, 1)
 				assert.Equal(t, conf.Headers[0].Name, "Cookie")
-				assert.Equal(t, conf.Headers[0].Value, ".*?user=jason")
+				assert.Equal(t, conf.Headers[0].Value, "^(.*?;)?(user=jason)(;.*)?$")
 			} else {
 				t.Fail()
 			}

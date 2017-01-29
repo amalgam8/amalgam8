@@ -17,8 +17,7 @@ FROM node:4-onbuild
 ARG A8_SIDECAR_RELEASE
 
 COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
-RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
 
 EXPOSE 9080
 

@@ -23,7 +23,6 @@ ADD app.py /opt/microservices/
 EXPOSE 5000
 WORKDIR /opt/microservices
 
-RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
 
 ENTRYPOINT ["a8sidecar", "--config", "/opt/microservices/config.yaml"]

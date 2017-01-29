@@ -37,8 +37,7 @@ COPY config.yaml /opt/microservices/config.yaml
 COPY run_filebeat.sh /usr/bin/run_filebeat.sh
 COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
 
-RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
 
 ENV SERVERDIRNAME reviews
 

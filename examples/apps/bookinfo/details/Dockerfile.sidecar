@@ -17,12 +17,11 @@ FROM ruby:2.3
 ARG A8_SIDECAR_RELEASE
 
 RUN mkdir -p /opt/microservices
-COPY . /opt/microservices/
-EXPOSE 9080
-WORKDIR /opt/microservices
+COPY details.rb /opt/microservices/
 
 COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
-RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
 
+EXPOSE 9080
+WORKDIR /opt/microservices
 ENTRYPOINT ["a8sidecar", "ruby", "details.rb", "9080"]

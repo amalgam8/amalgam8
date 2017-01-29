@@ -137,6 +137,13 @@ if [ "$push_minor" = true ]; then
     # echo "Pushing '$SIDECAR_IMAGE:$minor_tag-alpine' to Docker Hub..."
     # docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$minor_tag-alpine"
     # docker push "$SIDECAR_IMAGE:$minor_tag-alpine"
+
+    # tag the example images with minor_tag
+    for i in ${example_images[@]}; do
+        echo "tagging '$i' with $minor_tag"
+        docker tag "$i:$patch_tag" "$i:$minor_tag"
+        docker push "$i:$minor_tag"
+    done
 fi
 if [ "$push_major" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:$major_tag' to Docker Hub..."
@@ -154,6 +161,13 @@ if [ "$push_major" = true ]; then
     # echo "Pushing '$SIDECAR_IMAGE:$major_tag-alpine' to Docker Hub..."
     # docker tag "$SIDECAR_IMAGE:alpine" "$SIDECAR_IMAGE:$major_tag-alpine"
     # docker push "$SIDECAR_IMAGE:$major_tag-alpine"
+
+    # tag the example images with major_tag
+    for i in ${example_images[@]}; do
+        echo "tagging '$i' with $major_tag"
+        docker tag "$i:$patch_tag" "$i:$major_tag"
+        docker push "$i:$major_tag"
+    done
 fi
 if [ "$push_latest" = true ]; then
     echo "Pushing '$REGISTRY_IMAGE:latest' to Docker Hub..."

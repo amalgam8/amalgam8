@@ -23,13 +23,7 @@ ADD app.py /opt/microservices/
 EXPOSE 5000
 WORKDIR /opt/microservices
 
-# Install OpenResty and Sidecar
-ARG A8_TMP="/opt/a8temp"
-RUN mkdir -p ${A8_TMP} \
-    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C ${A8_TMP} \
-    && tar -xzf ${A8_TMP}/opt/openresty_dist/*.tar.gz -C / \
-    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm -rf ${A8_TMP} \
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
     && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
 
 ENTRYPOINT ["a8sidecar", "--config", "/opt/microservices/config.yaml"]

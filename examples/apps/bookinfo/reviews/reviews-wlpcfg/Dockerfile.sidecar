@@ -37,13 +37,7 @@ COPY config.yaml /opt/microservices/config.yaml
 COPY run_filebeat.sh /usr/bin/run_filebeat.sh
 COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
 
-# Install OpenResty and Sidecar
-ARG A8_TMP="/opt/a8temp"
-RUN mkdir -p ${A8_TMP} \
-    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C ${A8_TMP} \
-    && tar -xzf ${A8_TMP}/opt/openresty_dist/*.tar.gz -C / \
-    && tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
-    && rm -rf ${A8_TMP} \
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C / \
     && rm /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz
 
 ENV SERVERDIRNAME reviews

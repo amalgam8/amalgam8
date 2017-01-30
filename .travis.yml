@@ -41,7 +41,14 @@ script:
         make test.integration;
       fi
 
-before_deploy: 
+before_deploy:
+    # The before_deploy is run once per provider. Only run the examples once.
+    - if ! [ "$BEFORE_DEPLOY_RUN" ]; then
+        export BEFORE_DEPLOY_RUN=1;
+        make dockerize;
+        make test.examples;
+      fi
+
     - make release
 
 deploy:

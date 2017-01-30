@@ -14,7 +14,10 @@
 
 FROM node:4-onbuild
 
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.2/a8sidecar.sh | sh
+ARG A8_SIDECAR_RELEASE
+
+COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
 
 EXPOSE 9080
 

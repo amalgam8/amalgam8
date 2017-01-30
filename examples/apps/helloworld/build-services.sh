@@ -28,10 +28,15 @@ if [ "$APP_VER" == "unknown" ]; then
   exit 1
 fi
 
+A8_SIDECAR_RELEASE=$2
+
 # Remove the v from the version
 APP_VER=$(echo $APP_VER | sed "s/v//")
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+A8_SIDECAR_TAR_NAME=${A8_SIDECAR_RELEASE}.tar.gz
+A8_SIDECAR_TAR=$SCRIPTDIR/../../../release/$A8_SIDECAR_TAR_NAME
 
 #################################################################################
 # Build the helloworld image
@@ -39,5 +44,7 @@ SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 docker build -t amalgam8/a8-examples-helloworld-v1:$APP_VER $SCRIPTDIR
 docker build -t amalgam8/a8-examples-helloworld-v2:$APP_VER $SCRIPTDIR
 
-docker build -t amalgam8/a8-examples-helloworld-sidecar-v1:$APP_VER -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
-docker build -t amalgam8/a8-examples-helloworld-sidecar-v2:$APP_VER -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+cp $A8_SIDECAR_TAR $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v1:$APP_VER --build-arg A8_SIDECAR_RELEASE=$A8_SIDECAR_RELEASE -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+docker build -t amalgam8/a8-examples-helloworld-sidecar-v2:$APP_VER --build-arg A8_SIDECAR_RELEASE=$A8_SIDECAR_RELEASE -f $SCRIPTDIR/Dockerfile.sidecar $SCRIPTDIR
+rm $SCRIPTDIR/$A8_SIDECAR_TAR_NAME

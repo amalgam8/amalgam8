@@ -14,11 +14,14 @@
 
 FROM ruby:2.3
 
+ARG A8_SIDECAR_RELEASE
+
 RUN mkdir -p /opt/microservices
-COPY . /opt/microservices/
+COPY details.rb /opt/microservices/
+
+COPY ${A8_SIDECAR_RELEASE}.tar.gz /opt/microservices/
+RUN tar -xzf /opt/microservices/${A8_SIDECAR_RELEASE}.tar.gz -C /
+
 EXPOSE 9080
 WORKDIR /opt/microservices
-
-RUN wget -qO- https://github.com/amalgam8/amalgam8/releases/download/v0.4.2/a8sidecar.sh | sh
-
 ENTRYPOINT ["a8sidecar", "ruby", "details.rb", "9080"]

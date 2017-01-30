@@ -28,7 +28,7 @@ TARGET_OS 	:= linux windows darwin
 GOHOSTOS 	:= $(shell go env GOHOSTOS)
 
 ifndef GOOS
-    GOOS := $GOHOSTOS
+    GOOS := $(GOHOSTOS)
 endif
 
 ifndef GOARCH
@@ -40,7 +40,10 @@ GODIRS		= $(shell go list -f '{{.Dir}}' ./... | grep -vFf <(go list -f '{{.Dir}}
 GOPKGS		= $(shell go list ./... | grep -vFf <(go list ./vendor/...))
 
 APP_VER		:= $(shell git describe 2> /dev/null || echo "unknown")
-APP_VER_ABBR    := $(shell git describe --abbrev=0 2> /dev/null || echo "unknown")
+
+ifndef APP_VER_ABBR
+    APP_VER_ABBR    := $(shell git describe --abbrev=0 2> /dev/null || echo "unknown")
+endif
 
 REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
@@ -160,11 +163,11 @@ build.testapps:
 	@echo "--> building test apps for integration testing"
 	@testing/build-scripts/build-apps.sh
 
-build.exampleapps:
+build.exampleapps: release.sidecar
 	@echo "--> building example apps"
 	@testing/generate_example_yaml.sh "$(shell echo $(APP_VER_ABBR) | sed 's/v//')"
-	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)"
-	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)"
+	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)" $(SIDECAR_RELEASE_NAME)
+	@examples/apps/bookinfo/build-services.sh "$(APP_VER_ABBR)" $(SIDECAR_RELEASE_NAME)
 
 compile:
 	@echo "--> compiling packages"

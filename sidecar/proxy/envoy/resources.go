@@ -70,6 +70,7 @@ type Route struct {
 	PrefixRewrite string   `json:"prefix_rewrite,omitempty"`
 	Cluster       string   `json:"cluster"`
 	Headers       []Header `json:"headers,omitempty"`
+	Timeout       string   `json:"timeout_ms,omitempty"`
 }
 
 // VirtualHost definition.
@@ -134,13 +135,21 @@ type Host struct {
 // Cluster definition.
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster.html#config-cluster-manager-cluster
 type Cluster struct {
-	Name                     string `json:"name"`
-	ServiceName              string `json:"service_name,omitempty"`
-	ConnectTimeoutMs         int    `json:"connect_timeout_ms"`
-	Type                     string `json:"type"`
-	LbType                   string `json:"lb_type"`
-	MaxRequestsPerConnection int    `json:"max_requests_per_connection,omitempty"`
-	Hosts                    []Host `json:"hosts,omitempty"`
+	Name                     string         `json:"name"`
+	ServiceName              string         `json:"service_name,omitempty"`
+	ConnectTimeoutMs         int            `json:"connect_timeout_ms"`
+	Type                     string         `json:"type"`
+	LbType                   string         `json:"lb_type"`
+	MaxRequestsPerConnection int            `json:"max_requests_per_connection,omitempty"`
+	Hosts                    []Host         `json:"hosts,omitempty"`
+	Hystrix                  CircuitBreaker `json:"circuit_breaker,omitempty"`
+}
+
+type CircuitBreaker struct {
+	MaxConnections    int `json:"max_connections,omitempty"`
+	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
+	MaxRequests       int `json:"max_requests,omitempty"`
+	MaxRetries        int `json:"max_retries,omitempty"`
 }
 
 // ClustersByName implements name based sort for clusters.

@@ -292,24 +292,39 @@ func ParseServiceKey(s string) (string, []string) {
 }
 
 func buildClusters(rules []api.Rule) []Cluster {
-	clusterMap := make(map[string]struct{})
+	clusterMap := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
 				key := buildServiceKey(backend.Name, backend.Tags)
-				clusterMap[key] = struct{}{}
+				clusterMap[key] = &backend
 			}
 		}
 	}
 
 	clusters := make([]Cluster, 0, len(clusterMap))
-	for clusterName := range clusterMap {
+	for clusterName, backend := range clusterMap {
+
 		cluster := Cluster{
 			Name:             clusterName,
 			ServiceName:      clusterName,
 			Type:             "sds",
 			LbType:           "round_robin",
 			ConnectTimeoutMs: 1000,
+		}
+
+		if backend.Timeout > 0 {
+			// convert from float to int
+			cluster.ConnectTimeoutMs = int(backend.Timeout * 1000)
+		}
+
+		if backend.Retries > 0 {
+			cluster.Hystrix = CircuitBreaker{
+				MaxRetries:        backend.Retries,
+				MaxConnections:    50,
+				MaxRequests:       25,
+				MaxPendingRequest: 5,
+			}
 		}
 
 		clusters = append(clusters, cluster)

@@ -51,14 +51,25 @@ type URI struct {
 	PrefixRewrite string `json:"prefix_rewrite"`
 }
 
+type Hystrix struct {
+	TimeoutMS                float64 `json:"timeout_ms,omitempty"`
+	MaxRetries               int     `json:"max_retries,omitempty"`
+	MaxConnections           int     `json:"max_connections,omitempty"`
+	MaxPendingRequest        int     `json:"max_pending_requests,omitempty"`
+	MaxRequests              int     `json:"max_requests,omitempty"`
+	SleepWindowMS            int     `json:"sleep_window_ms,omitempty"`
+	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty"`
+	DetectionIntervalMS      int     `json:"detection_interval_ms,omitempty"`
+	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty"`
+}
+
 // Backend represents a backend to route to.
 type Backend struct {
 	Name    string   `json:"name,omitempty"`
 	Tags    []string `json:"tags"`
 	URI     *URI     `json:"uri,omitempty"`
 	Weight  float64  `json:"weight,omitempty"`
-	Timeout float64  `json:"timeout,omitempty"`
-	Retries int      `json:"retries,omitempty"`
+	Hystrix *Hystrix `json:"hystrix,omitempty"`
 }
 
 // Action to take.

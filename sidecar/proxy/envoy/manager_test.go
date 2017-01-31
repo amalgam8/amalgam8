@@ -210,6 +210,9 @@ func TestBuildClusters(t *testing.T) {
 		Type:             "sds",
 		LbType:           "round_robin",
 		ConnectTimeoutMs: 1000,
+		OutlierDetection: OutlierDetection{
+			MaxEjectionPercent: 100,
+		},
 	}, clusters[0])
 
 	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)

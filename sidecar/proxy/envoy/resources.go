@@ -135,14 +135,22 @@ type Host struct {
 // Cluster definition.
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster.html#config-cluster-manager-cluster
 type Cluster struct {
-	Name                     string         `json:"name"`
-	ServiceName              string         `json:"service_name,omitempty"`
-	ConnectTimeoutMs         int            `json:"connect_timeout_ms"`
-	Type                     string         `json:"type"`
-	LbType                   string         `json:"lb_type"`
-	MaxRequestsPerConnection int            `json:"max_requests_per_connection,omitempty"`
-	Hosts                    []Host         `json:"hosts,omitempty"`
-	Hystrix                  CircuitBreaker `json:"circuit_breaker,omitempty"`
+	Name                     string           `json:"name"`
+	ServiceName              string           `json:"service_name,omitempty"`
+	ConnectTimeoutMs         int              `json:"connect_timeout_ms"`
+	Type                     string           `json:"type"`
+	LbType                   string           `json:"lb_type"`
+	MaxRequestsPerConnection int              `json:"max_requests_per_connection,omitempty"`
+	Hosts                    []Host           `json:"hosts,omitempty"`
+	Hystrix                  CircuitBreaker   `json:"circuit_breaker"`
+	OutlierDetection         OutlierDetection `json:"outlier_detection"`
+}
+
+type OutlierDetection struct {
+	ConsecutiveError   int `json:"consecutive_5xx,omitempty"`
+	IntervalMS         int `json:"interval_ms,omitempty"`
+	BaseEjectionTimeMS int `json:"base_ejection_time_ms,omitempty"`
+	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
 }
 
 type CircuitBreaker struct {

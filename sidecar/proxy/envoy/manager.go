@@ -311,19 +311,42 @@ func buildClusters(rules []api.Rule) []Cluster {
 			Type:             "sds",
 			LbType:           "round_robin",
 			ConnectTimeoutMs: 1000,
+			Hystrix:          CircuitBreaker{},
+			OutlierDetection: OutlierDetection{
+				MaxEjectionPercent: 100,
+			},
 		}
 
-		if backend.Timeout > 0 {
-			// convert from float to int
-			cluster.ConnectTimeoutMs = int(backend.Timeout * 1000)
-		}
+		if backend.Hystrix != nil {
+			if backend.Hystrix.TimeoutMS > 0 {
+				// convert from float sec to int ms
+				cluster.ConnectTimeoutMs = int(backend.Hystrix.TimeoutMS * 1000)
+			}
+			if backend.Hystrix.MaxRequestsPerConnection > 0 {
+				cluster.MaxRequestsPerConnection = backend.Hystrix.MaxRequestsPerConnection
+			}
 
-		if backend.Retries > 0 {
-			cluster.Hystrix = CircuitBreaker{
-				MaxRetries:        backend.Retries,
-				MaxConnections:    50,
-				MaxRequests:       25,
-				MaxPendingRequest: 5,
+			if backend.Hystrix.MaxRetries > 0 {
+				cluster.Hystrix.MaxRetries = backend.Hystrix.MaxRetries
+			}
+			if backend.Hystrix.MaxConnections > 0 {
+				cluster.Hystrix.MaxConnections = backend.Hystrix.MaxConnections
+			}
+			if backend.Hystrix.MaxRequests > 0 {
+				cluster.Hystrix.MaxRequests = backend.Hystrix.MaxRequests
+			}
+			if backend.Hystrix.MaxPendingRequest > 0 {
+				cluster.Hystrix.MaxPendingRequest = backend.Hystrix.MaxPendingRequest
+			}
+
+			if backend.Hystrix.SleepWindowMS > 0 {
+				cluster.OutlierDetection.BaseEjectionTimeMS = backend.Hystrix.SleepWindowMS
+			}
+			if backend.Hystrix.ConsecutiveErrors > 0 {
+				cluster.OutlierDetection.ConsecutiveError = backend.Hystrix.ConsecutiveErrors
+			}
+			if backend.Hystrix.DetectionIntervalMS > 0 {
+				cluster.OutlierDetection.IntervalMS = backend.Hystrix.DetectionIntervalMS
 			}
 		}
 

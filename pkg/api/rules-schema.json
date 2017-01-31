@@ -165,17 +165,65 @@
           "exclusiveMinimum": true,
           "default": 1
         },
-        "timeout": {
-          "description": "Connect/read/write timeout when talking to an instance. Default is nginx's timeout (60s). Unit is in seconds (e.g, 1.234s)",
-          "type": "number",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        },
-        "retries": {
-          "description": "Number of times to retry a failed request to a different instances. Set to 0 to disable retries",
-          "type": "number",
-          "minimum": 0,
-          "exclusiveMinimum": false
+        "hystrix": {
+          "type": "object",
+          "properties": {
+            "timeout_ms": {
+              "description": "Connect/read/write timeout when talking to an instance. Default is nginx's timeout (60s). Unit is in seconds (e.g, 1.234s)",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": true
+            },
+            "max_retries": {
+              "description": "Maximum number of retries to connect to a backend",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_connections": {
+              "description": "Maximum number of connections to a backend",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_pending_requests": {
+              "description": "Maximum number of pending requests to a backend",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_requests": {
+              "description": "Maximum number of requests to a backend",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "sleep_window_ms": {
+              "description": "Minimum time the hystrix circuit will be closed",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "consecutive_errors": {
+              "description": "Number of 5XX errors before hystrix circuit is opened",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "detection_interval_ms": {
+              "description": "Interval for checking state of hystrix circuit",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_requests_per_connection": {
+              "description": "Maximum number of requests per connection to an backend.",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [

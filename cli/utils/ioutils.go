@@ -185,6 +185,14 @@ func ScannerLines(writer io.Writer, description string, instructions bool) (io.R
 		return nil, format, errors.New("No Rules")
 	}
 
+	fixedReader, err := ValidateRulesFormat(&dataBuf)
+	if err != nil {
+		return nil, format, err
+	}
+
+	dataBuf.Reset()
+	dataBuf.ReadFrom(fixedReader)
+
 	// When format is empty, probably EOF was used.
 	// findFormat() will try to guess the format of the rules.
 	if format == "" {
@@ -224,4 +232,36 @@ func findFormat(buf bytes.Buffer) (string, error) {
 		return YAML, nil
 	}
 	return "", common.ErrInvalidFormat
+}
+
+// ValidateRulesFormat .
+func ValidateRulesFormat(reader io.Reader) (io.Reader, error) {
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(reader)
+
+	format := YAML
+	// if the buffer begin with "[" or "{" assume that the content should be in JSON format
+	if strings.HasPrefix(buf.String(), "[") || strings.HasPrefix(buf.String(), "{") {
+		format = JSON
+	}
+
+	fixedBuf := &bytes.Buffer{}
+	switch format {
+	case YAML:
+		if !strings.HasPrefix(buf.String(), "rules:") {
+			fixedBuf.WriteString(fmt.Sprint("rules:\n", buf.String()))
+		}
+	case JSON:
+		if strings.HasPrefix(buf.String(), "[") {
+			fixedBuf.WriteString(fmt.Sprint("{ \"rules\": ", buf.String(), "}"))
+		}
+	default:
+		return nil, common.ErrInvalidFormat
+	}
+
+	if len(fixedBuf.String()) != 0 {
+		return fixedBuf, nil
+	}
+
+	return buf, nil
 }

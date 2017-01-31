@@ -94,10 +94,16 @@ func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
 			return err
 		}
 
+		// Verify that the rules provided in the file have the right structure
+		rulesReader, err := utils.ValidateRulesFormat(reader)
+		if err != nil {
+			return err
+		}
+
 		rules := &api.RulesSet{}
 
 		// Read rules
-		err = utils.UnmarshallReader(reader, format, rules)
+		err = utils.UnmarshallReader(rulesReader, format, rules)
 		if err != nil {
 			return err
 		}

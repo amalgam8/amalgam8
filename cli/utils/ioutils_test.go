@@ -82,7 +82,7 @@ var _ = Describe("ioutils", func() {
 				rules := &api.Rule{}
 
 				// Unmarshall JSON Reader
-				err = UnmarshallReader(reader, format, rules)
+				err = UnmarshalReader(reader, format, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("json_id"))
 				Expect(rules.Destination).To(Equal("json_destination"))
@@ -105,7 +105,7 @@ var _ = Describe("ioutils", func() {
 				rules := &api.Rule{}
 
 				// Unmarshall YAML reader
-				err = UnmarshallReader(reader, format, rules)
+				err = UnmarshalReader(reader, format, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("yaml_id"))
 				Expect(rules.Destination).To(Equal("yaml_destination"))
@@ -134,7 +134,7 @@ var _ = Describe("ioutils", func() {
 				Expect(rules.Destination).To(Equal("yaml_destination"))
 
 				// Unmarshall reader as JSON
-				err = UnmarshallReader(reader, JSON, rules)
+				err = UnmarshalReader(reader, JSON, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("yaml_id"))
 				Expect(rules.Destination).To(Equal("yaml_destination"))

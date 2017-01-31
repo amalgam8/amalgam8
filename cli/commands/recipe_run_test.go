@@ -252,7 +252,7 @@ var _ = Describe("RecipeRun Command", func() {
 
 				It("should execute script", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-run-load-script=" + ScriptPath, "-w=0s", "-f=true"})
+					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-run-load-script=" + ScriptPath, "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Hello world"))
 				})
@@ -289,7 +289,7 @@ var _ = Describe("RecipeRun Command", func() {
 
 				It("should no verify recipe", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-w=0s", "-f=true"})
+					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Recipe created but not verified"))
 				})
@@ -326,7 +326,7 @@ var _ = Describe("RecipeRun Command", func() {
 
 				It("should print table", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-w=0s", "-f=true"})
+					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
 
 					// TODO: Verify table
@@ -364,7 +364,7 @@ var _ = Describe("RecipeRun Command", func() {
 
 				It("should print JSON", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-o=json", "-w=0s", "-f=true"})
+					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-o=json", "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("\"dest\": \"productpage:v1\","))
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("\"dest\": \"productpage:v1\","))
@@ -403,7 +403,7 @@ var _ = Describe("RecipeRun Command", func() {
 
 				It("should print YAML", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "--debug", "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-o=yaml", "-w=0s", "-f=true"})
+					err := app.Run([]string{"app", "--gremlin_url=" + server.URL(), "recipe-run", "-topology=" + JSONFilePath, "-scenarios=" + JSONFilePath, "-checks=" + JSONFilePath, "-o=yaml", "-w=0s", "-f=true"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("- dest: productpage:v1"))
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("- dest: productpage:v1"))

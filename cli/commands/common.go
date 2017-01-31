@@ -36,8 +36,8 @@ var (
 	TABLE = "table"
 )
 
-// Registry .
-func Registry(ctx *cli.Context) (*reg.Client, error) {
+// NewRegistry .
+func NewRegistry(ctx *cli.Context) (*reg.Client, error) {
 	u, err := ValidateRegistryURL(ctx)
 	if err != nil {
 		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), u))
@@ -84,8 +84,8 @@ func ValidateRegistryURL(ctx *cli.Context) (string, error) {
 	return u, nil
 }
 
-// Controller .
-func Controller(ctx *cli.Context) (*ctrl.Client, error) {
+// NewController .
+func NewController(ctx *cli.Context) (*ctrl.Client, error) {
 	u, err := ValidateControllerURL(ctx)
 	if err != nil {
 		fmt.Fprintf(ctx.App.Writer, fmt.Sprintf("%s: %q\n\n", err.Error(), u))

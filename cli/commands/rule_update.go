@@ -81,7 +81,7 @@ func (cmd *RuleUpdateCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleUpdateCommand) Action(ctx *cli.Context) error {
 	T := utils.Language(common.DefaultLanguage)
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -104,7 +104,7 @@ func (cmd *RuleUpdateCommand) Action(ctx *cli.Context) error {
 		rules := &api.RulesSet{}
 
 		// Read rules
-		err = utils.UnmarshallReader(rulesReader, format, rules)
+		err = utils.UnmarshalReader(rulesReader, format, rules)
 		if err != nil {
 			return err
 		}
@@ -137,7 +137,7 @@ func (cmd *RuleUpdateCommand) DefaultAction(ctx *cli.Context) error {
 	rules := &api.RulesSet{}
 
 	// Read Rules
-	err = utils.UnmarshallReader(reader, format, rules)
+	err = utils.UnmarshalReader(reader, format, rules)
 	if err != nil {
 		return err
 	}

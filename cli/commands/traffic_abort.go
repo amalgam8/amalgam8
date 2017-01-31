@@ -80,7 +80,7 @@ func (cmd *TrafficAbortCommand) OnUsageError(ctx *cli.Context, err error, isSubc
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficAbortCommand) Action(ctx *cli.Context) error {
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -118,6 +118,10 @@ func (cmd *TrafficAbortCommand) AbortTraffic(serviceName string) error {
 		return nil
 	}
 
+	// The execution of the command should not continue if any of the following conditions are true
+	// - there is more than 1 routing rule
+	// - the routing rule does not have 2 backends
+	// - the weight of the backends is the same
 	if len(routingRules) > 1 || len(routingRules[0].Route.Backends) != 2 || routingRules[0].Route.Backends[0].Weight == routingRules[0].Route.Backends[1].Weight {
 		fmt.Fprintf(cmd.ctx.App.Writer, "Invalid state for step operation\n\n")
 		return nil

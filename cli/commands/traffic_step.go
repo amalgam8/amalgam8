@@ -85,7 +85,7 @@ func (cmd *TrafficStepCommand) OnUsageError(ctx *cli.Context, err error, isSubco
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficStepCommand) Action(ctx *cli.Context) error {
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil

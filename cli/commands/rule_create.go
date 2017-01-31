@@ -80,7 +80,7 @@ func (cmd *RuleCreateCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -103,7 +103,7 @@ func (cmd *RuleCreateCommand) Action(ctx *cli.Context) error {
 		rules := &api.RulesSet{}
 
 		// Read rules
-		err = utils.UnmarshallReader(rulesReader, format, rules)
+		err = utils.UnmarshalReader(rulesReader, format, rules)
 		if err != nil {
 			return err
 		}
@@ -136,7 +136,7 @@ func (cmd *RuleCreateCommand) DefaultAction(ctx *cli.Context) error {
 	rules := &api.RulesSet{}
 
 	// Read Rules
-	err = utils.UnmarshallReader(reader, format, rules)
+	err = utils.UnmarshalReader(reader, format, rules)
 	if err != nil {
 		return err
 	}

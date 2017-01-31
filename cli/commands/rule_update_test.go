@@ -136,7 +136,7 @@ var _ = Describe("Rule-Update", func() {
 			})
 
 			It("should read rules from the JSON file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-update", "-f=" + JSONFilePath})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-update", "-f=" + JSONFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Request Completed"))
 			})
@@ -164,7 +164,7 @@ var _ = Describe("Rule-Update", func() {
 			})
 
 			It("should read rules from the YAML file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-update", "-f=" + YAMLFilePath})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-update", "-f=" + YAMLFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Request Completed"))
 			})

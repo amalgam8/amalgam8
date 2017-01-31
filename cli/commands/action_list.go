@@ -107,7 +107,7 @@ func (cmd *ActionListCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *ActionListCommand) Action(ctx *cli.Context) error {
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -121,15 +121,12 @@ func (cmd *ActionListCommand) Action(ctx *cli.Context) error {
 	}
 
 	filter := &api.RuleFilter{}
-
 	if ctx.IsSet("id") || ctx.IsSet("i") || ctx.IsSet("destination") || ctx.IsSet("d") || ctx.IsSet("tag") || ctx.IsSet("t") {
-
 		filter = &api.RuleFilter{
 			IDs:          ctx.StringSlice("id"),
 			Destinations: ctx.StringSlice("destination"),
 			Tags:         ctx.StringSlice("tag"),
 		}
-
 	}
 
 	format := ctx.String("output")

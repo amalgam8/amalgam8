@@ -94,7 +94,7 @@ func (cmd *RouteListCommand) OnUsageError(ctx *cli.Context, err error, isSubcomm
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
-	registry, err := Registry(ctx)
+	registry, err := NewRegistry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -102,7 +102,7 @@ func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
 	// Update the registry
 	cmd.registry = registry
 
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -116,13 +116,10 @@ func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
 	}
 
 	filter := &api.RuleFilter{}
-
 	if ctx.IsSet("service") || ctx.IsSet("s") {
-
 		filter = &api.RuleFilter{
 			Destinations: ctx.StringSlice("service"),
 		}
-
 	}
 
 	format := ctx.String("output")

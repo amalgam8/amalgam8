@@ -111,7 +111,7 @@ var _ = Describe("traffic-step", func() {
 
 			It("should print the command help", func() {
 				app.Writer = bytes.NewBufferString("")
-				err := app.Run([]string{"app", "--debug", "--controller_url=" + server.URL(), "traffic-step", "-service"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "traffic-step", "-service"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(cmd.GetMetadata().Usage))
 			})
@@ -253,7 +253,7 @@ var _ = Describe("traffic-step", func() {
 
 				It("should print 'diverting 50% of traffic'", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--debug", "--controller_url=" + server.URL(), "traffic-step", "-service=reviews", "-amount=50"})
+					err := app.Run([]string{"app", "--controller_url=" + server.URL(), "traffic-step", "-service=reviews", "-amount=50"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("\"reviews\": diverting 50% of traffic from \"v1\" to \"v2\""))
 				})
@@ -283,7 +283,7 @@ var _ = Describe("traffic-step", func() {
 
 				It("should print 'service does not have active instances'", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--debug", "--controller_url=" + server.URL(), "traffic-step", "-service=reviews", "-amount=100"})
+					err := app.Run([]string{"app", "--controller_url=" + server.URL(), "traffic-step", "-service=reviews", "-amount=100"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("\"reviews\": sending 100% of traffic to \"v2\""))
 				})

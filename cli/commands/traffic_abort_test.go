@@ -111,7 +111,7 @@ var _ = Describe("traffic-abort", func() {
 
 			It("should print the command help", func() {
 				app.Writer = bytes.NewBufferString("")
-				err := app.Run([]string{"app", "--debug", "--controller_url=" + server.URL(), "traffic-abort", "-service"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "traffic-abort", "-service"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(cmd.GetMetadata().Usage))
 			})
@@ -226,7 +226,7 @@ var _ = Describe("traffic-abort", func() {
 
 				It("should print 'diverting 50% of traffic'", func() {
 					app.Writer = bytes.NewBufferString("")
-					err := app.Run([]string{"app", "--debug", "--controller_url=" + server.URL(), "traffic-abort", "-service=reviews"})
+					err := app.Run([]string{"app", "--controller_url=" + server.URL(), "traffic-abort", "-service=reviews"})
 					Expect(err).ToNot(HaveOccurred())
 					Expect(fmt.Sprint(app.Writer)).To(ContainSubstring("Transfer aborted for \"reviews\": all traffic reverted to \"v1\""))
 				})

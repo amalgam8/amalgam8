@@ -65,7 +65,7 @@ func ReadInputFile(path string) (io.Reader, string, error) {
 
 //YAMLToJSON converts the YAML data of a given reader to JSON, removes all insignificant characters and returns a new reader.
 func YAMLToJSON(reader io.Reader, dst interface{}) (io.Reader, error) {
-	err := UnmarshallReader(reader, YAML, dst)
+	err := UnmarshalReader(reader, YAML, dst)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +85,8 @@ func YAMLToJSON(reader io.Reader, dst interface{}) (io.Reader, error) {
 	return bytes.NewReader(compact.Bytes()), nil
 }
 
-// UnmarshallReader parses the reader data and stores the result in the value pointed by dest.
-func UnmarshallReader(data io.Reader, format string, dest interface{}) error {
+// UnmarshalReader parses the reader data and stores the result in the value pointed by dest.
+func UnmarshalReader(data io.Reader, format string, dest interface{}) error {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(data)
 	format = strings.ToUpper(format)

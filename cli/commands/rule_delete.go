@@ -93,7 +93,7 @@ func (cmd *RuleDeleteCommand) OnUsageError(ctx *cli.Context, err error, isSubcom
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
 	T := utils.Language(common.DefaultLanguage)
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil

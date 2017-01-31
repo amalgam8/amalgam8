@@ -91,7 +91,7 @@ func (cmd *TrafficStartCommand) OnUsageError(ctx *cli.Context, err error, isSubc
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
-	registry, err := Registry(ctx)
+	registry, err := NewRegistry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -99,7 +99,7 @@ func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
 	// Update the registry
 	cmd.registry = registry
 
-	controller, err := Controller(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil

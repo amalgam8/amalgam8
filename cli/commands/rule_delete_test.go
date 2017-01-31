@@ -133,10 +133,10 @@ var _ = Describe("Rule-Delete", func() {
 			})
 
 			It("should delete the rule", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-i=" + ID})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-delete", "-i=" + ID})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
-				fmt.Println(app.Writer)
+
 			})
 
 		})
@@ -163,10 +163,10 @@ var _ = Describe("Rule-Delete", func() {
 			})
 
 			It("should delete rule", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-d=" + destination})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-delete", "-d=" + destination})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
-				fmt.Println(app.Writer)
+
 			})
 
 		})
@@ -193,10 +193,10 @@ var _ = Describe("Rule-Delete", func() {
 			})
 
 			It("should delete rule", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-t=" + tags})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-delete", "-t=" + tags})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
-				fmt.Println(app.Writer)
+
 			})
 
 		})
@@ -222,10 +222,10 @@ var _ = Describe("Rule-Delete", func() {
 			})
 
 			It("should delete rule", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-delete", "-a=true", "-f=true"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-delete", "-a=true", "-f=true"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(T("request_completed")))
-				fmt.Println(app.Writer)
+
 			})
 
 		})

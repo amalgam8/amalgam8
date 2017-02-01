@@ -41,7 +41,9 @@ type Match struct {
 
 // Route definition
 type Route struct {
-	Backends []Backend `json:"backends"`
+	Backends          []Backend `json:"backends"`
+	TCPConnectTimeout float64   `json:"tcp_connect_timeout,omitempty"`
+	MaxRetries        int       `json:"max_retries,omitempty"`
 }
 
 // URI for backends.
@@ -51,25 +53,24 @@ type URI struct {
 	PrefixRewrite string `json:"prefix_rewrite"`
 }
 
-type Hystrix struct {
-	TimeoutMS                float64 `json:"timeout_ms,omitempty"`
-	MaxRetries               int     `json:"max_retries,omitempty"`
-	MaxConnections           int     `json:"max_connections,omitempty"`
-	MaxPendingRequest        int     `json:"max_pending_requests,omitempty"`
-	MaxRequests              int     `json:"max_requests,omitempty"`
-	SleepWindowMS            int     `json:"sleep_window_ms,omitempty"`
-	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty"`
-	DetectionIntervalMS      int     `json:"detection_interval_ms,omitempty"`
-	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty"`
+// Resilience cluster level circuit breaker options
+type Resilience struct {
+	MaxConnections           int `json:"max_connections,omitempty"`
+	MaxPendingRequest        int `json:"max_pending_requests,omitempty"`
+	MaxRequests              int `json:"max_requests,omitempty"`
+	SleepWindow              int `json:"sleep_window,omitempty"`
+	ConsecutiveErrors        int `json:"consecutive_errors,omitempty"`
+	DetectionInterval        int `json:"detection_interval,omitempty"`
+	MaxRequestsPerConnection int `json:"max_requests_per_connection,omitempty"`
 }
 
 // Backend represents a backend to route to.
 type Backend struct {
-	Name    string   `json:"name,omitempty"`
-	Tags    []string `json:"tags"`
-	URI     *URI     `json:"uri,omitempty"`
-	Weight  float64  `json:"weight,omitempty"`
-	Hystrix *Hystrix `json:"hystrix,omitempty"`
+	Name       string      `json:"name,omitempty"`
+	Tags       []string    `json:"tags"`
+	URI        *URI        `json:"uri,omitempty"`
+	Weight     float64     `json:"weight,omitempty"`
+	Resilience *Resilience `json:"resilience,omitempty"`
 }
 
 // Action to take.

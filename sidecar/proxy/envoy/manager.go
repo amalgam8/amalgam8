@@ -311,42 +311,38 @@ func buildClusters(rules []api.Rule) []Cluster {
 			Type:             "sds",
 			LbType:           "round_robin",
 			ConnectTimeoutMs: 1000,
-			Hystrix:          CircuitBreaker{},
-			OutlierDetection: OutlierDetection{
+			CircuitBreaker:   &CircuitBreaker{},
+			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
 		}
 
-		if backend.Hystrix != nil {
-			if backend.Hystrix.TimeoutMS > 0 {
-				// convert from float sec to int ms
-				cluster.ConnectTimeoutMs = int(backend.Hystrix.TimeoutMS * 1000)
-			}
-			if backend.Hystrix.MaxRequestsPerConnection > 0 {
-				cluster.MaxRequestsPerConnection = backend.Hystrix.MaxRequestsPerConnection
+		if backend.Resilience != nil {
+			// Cluster level settings
+			if backend.Resilience.MaxRequestsPerConnection > 0 {
+				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
 			}
 
-			if backend.Hystrix.MaxRetries > 0 {
-				cluster.Hystrix.MaxRetries = backend.Hystrix.MaxRetries
+			// Envoy Circuit breaker config options
+			if backend.Resilience.MaxConnections > 0 {
+				cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
 			}
-			if backend.Hystrix.MaxConnections > 0 {
-				cluster.Hystrix.MaxConnections = backend.Hystrix.MaxConnections
+			if backend.Resilience.MaxRequests > 0 {
+				cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
 			}
-			if backend.Hystrix.MaxRequests > 0 {
-				cluster.Hystrix.MaxRequests = backend.Hystrix.MaxRequests
-			}
-			if backend.Hystrix.MaxPendingRequest > 0 {
-				cluster.Hystrix.MaxPendingRequest = backend.Hystrix.MaxPendingRequest
+			if backend.Resilience.MaxPendingRequest > 0 {
+				cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
 			}
 
-			if backend.Hystrix.SleepWindowMS > 0 {
-				cluster.OutlierDetection.BaseEjectionTimeMS = backend.Hystrix.SleepWindowMS
+			// Envoy outlier detection settings that complete circuit breaker
+			if backend.Resilience.SleepWindow > 0 {
+				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
 			}
-			if backend.Hystrix.ConsecutiveErrors > 0 {
-				cluster.OutlierDetection.ConsecutiveError = backend.Hystrix.ConsecutiveErrors
+			if backend.Resilience.ConsecutiveErrors > 0 {
+				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
 			}
-			if backend.Hystrix.DetectionIntervalMS > 0 {
-				cluster.OutlierDetection.IntervalMS = backend.Hystrix.DetectionIntervalMS
+			if backend.Resilience.DetectionInterval > 0 {
+				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
 			}
 		}
 
@@ -406,6 +402,17 @@ func buildRoutes(ruleList []api.Rule) []Route {
 					PrefixRewrite: prefixRewrite,
 					Cluster:       clusterName,
 					Headers:       headers,
+					RetryPolicy: RetryPolicy{
+						Policy: "5xx,connect-failure,refused-stream",
+					},
+				}
+
+				if rule.Route.TCPConnectTimeout > 0 {
+					// convert from float sec to in ms
+					route.TimeoutMS = int(rule.Route.TCPConnectTimeout * 1000)
+				}
+				if rule.Route.MaxRetries > 0 {
+					route.RetryPolicy.NumRetries = rule.Route.MaxRetries
 				}
 
 				routes = append(routes, route)

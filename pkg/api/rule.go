@@ -86,3 +86,8 @@ type Action struct {
 type RulesByService struct {
 	Services map[string][]Rule `json:"services" yaml:"services"`
 }
+
+// RulesIDList definition
+type RulesIDList struct {
+	IDs []string `json:"ids" yaml:"ids"`
+}

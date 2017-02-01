@@ -94,12 +94,7 @@ func normalizeConfig(conf *Config) error {
 func (c *Client) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 	var rulesSet api.RulesSet
 
-	path := rulesPath
-	query := c.filterToStringQuery(filter)
-
-	if query != "" {
-		path += query
-	}
+	path := rulesPath + c.filterToStringQuery(filter)
 
 	if err := c.doRequest("GET", path, nil, nil, &rulesSet, http.StatusOK); err != nil {
 		logrus.WithError(err).Warn("Failed to retrieve rules from controller")
@@ -110,31 +105,26 @@ func (c *Client) ListRules(filter *api.RuleFilter) (*api.RulesSet, error) {
 }
 
 // CreateRules creates the rules
-func (c *Client) CreateRules(rulesSet *api.RulesSet) (interface{}, error) {
+func (c *Client) CreateRules(rulesSet *api.RulesSet) (*api.RulesIDList, error) {
 	return c.setRules("POST", rulesSet, http.StatusCreated)
 }
 
 // UpdateRules updates the rules
-func (c *Client) UpdateRules(rulesSet *api.RulesSet) (interface{}, error) {
+func (c *Client) UpdateRules(rulesSet *api.RulesSet) (*api.RulesIDList, error) {
 	return c.setRules("PUT", rulesSet, http.StatusOK)
 }
 
 // DeleteRules deletes the rules
-func (c *Client) DeleteRules(filter *api.RuleFilter) ([]byte, error) {
+func (c *Client) DeleteRules(filter *api.RuleFilter) error {
 
-	path := rulesPath
-	query := c.filterToStringQuery(filter)
-
-	if query != "" {
-		path += query
-	}
+	path := rulesPath + c.filterToStringQuery(filter)
 
 	if err := c.doRequest("DELETE", path, nil, nil, nil, http.StatusOK); err != nil {
 		logrus.WithError(err).Warn("Failed to delete rules in controller")
-		return nil, err
+		return err
 	}
 
-	return []byte("Request Completed"), nil
+	return nil
 }
 
 // ListAction retuns the list of action rules
@@ -148,14 +138,11 @@ func (c *Client) ListRoutes(filter *api.RuleFilter) (*api.RulesByService, error)
 }
 
 // setRules do the request to set the rules in the controller
-func (c *Client) setRules(method string, rulesSet *api.RulesSet, status int) (interface{}, error) {
+func (c *Client) setRules(method string, rulesSet *api.RulesSet, status int) (*api.RulesIDList, error) {
 
-	path := rulesPath
-	result := &struct {
-		IDs []string `json:"ids"`
-	}{}
+	result := &api.RulesIDList{}
 
-	if err := c.doRequest(method, path, rulesSet, nil, result, status); err != nil {
+	if err := c.doRequest(method, rulesPath, rulesSet, nil, result, status); err != nil {
 		logrus.WithError(err).Warn("Failed to set rules in controller")
 		return nil, err
 	}
@@ -167,11 +154,7 @@ func (c *Client) setRules(method string, rulesSet *api.RulesSet, status int) (in
 func (c *Client) getRulesByType(path string, filter *api.RuleFilter) (*api.RulesByService, error) {
 	rules := &api.RulesByService{}
 
-	query := c.filterToStringQuery(filter)
-
-	if query != "" {
-		path += query
-	}
+	path += c.filterToStringQuery(filter)
 
 	if err := c.doRequest("GET", path, nil, nil, rules, http.StatusOK); err != nil {
 		logrus.WithError(err).Warn("Failed to retrieve rules from controller")

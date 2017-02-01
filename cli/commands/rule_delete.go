@@ -136,7 +136,7 @@ func (cmd *RuleDeleteCommand) Action(ctx *cli.Context) error {
 // DeleteRules deletes the rules based on the given query.
 func (cmd *RuleDeleteCommand) DeleteRules(filter *api.RuleFilter) error {
 	T := utils.Language(common.DefaultLanguage)
-	_, err := cmd.controller.DeleteRules(filter)
+	err := cmd.controller.DeleteRules(filter)
 	if err != nil {
 		return err
 	}

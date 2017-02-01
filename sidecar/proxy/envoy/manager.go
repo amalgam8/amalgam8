@@ -292,24 +292,60 @@ func ParseServiceKey(s string) (string, []string) {
 }
 
 func buildClusters(rules []api.Rule) []Cluster {
-	clusterMap := make(map[string]struct{})
+	clusterMap := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
 				key := buildServiceKey(backend.Name, backend.Tags)
-				clusterMap[key] = struct{}{}
+				// TODO if two backends map to the same key, it will overwrite
+				//  and will lose resilience field options in this case
+				clusterMap[key] = &backend
 			}
 		}
 	}
 
 	clusters := make([]Cluster, 0, len(clusterMap))
-	for clusterName := range clusterMap {
+	for clusterName, backend := range clusterMap {
+
 		cluster := Cluster{
 			Name:             clusterName,
 			ServiceName:      clusterName,
 			Type:             "sds",
 			LbType:           "round_robin",
 			ConnectTimeoutMs: 1000,
+			CircuitBreaker:   &CircuitBreaker{},
+			OutlierDetection: &OutlierDetection{
+				MaxEjectionPercent: 100,
+			},
+		}
+
+		if backend.Resilience != nil {
+			// Cluster level settings
+			if backend.Resilience.MaxRequestsPerConnection > 0 {
+				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+			}
+
+			// Envoy Circuit breaker config options
+			if backend.Resilience.MaxConnections > 0 {
+				cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
+			}
+			if backend.Resilience.MaxRequests > 0 {
+				cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
+			}
+			if backend.Resilience.MaxPendingRequest > 0 {
+				cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+			}
+
+			// Envoy outlier detection settings that complete circuit breaker
+			if backend.Resilience.SleepWindow > 0 {
+				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+			}
+			if backend.Resilience.ConsecutiveErrors > 0 {
+				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+			}
+			if backend.Resilience.DetectionInterval > 0 {
+				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+			}
 		}
 
 		clusters = append(clusters, cluster)
@@ -368,6 +404,17 @@ func buildRoutes(ruleList []api.Rule) []Route {
 					PrefixRewrite: prefixRewrite,
 					Cluster:       clusterName,
 					Headers:       headers,
+					RetryPolicy: RetryPolicy{
+						Policy: "5xx,connect-failure,refused-stream",
+					},
+				}
+
+				if rule.Route.HTTPReqTimeout > 0 {
+					// convert from float sec to in ms
+					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
+				}
+				if rule.Route.HTTPReqRetries > 0 {
+					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
 				}
 
 				routes = append(routes, route)

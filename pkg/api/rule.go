@@ -41,7 +41,9 @@ type Match struct {
 
 // Route definition
 type Route struct {
-	Backends []Backend `json:"backends"`
+	Backends       []Backend `json:"backends"`
+	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty"`
+	HTTPReqRetries int       `json:"http_req_retries,omitempty"`
 }
 
 // URI for backends.
@@ -51,14 +53,24 @@ type URI struct {
 	PrefixRewrite string `json:"prefix_rewrite"`
 }
 
+// Resilience cluster level circuit breaker options
+type Resilience struct {
+	MaxConnections           int     `json:"max_connections,omitempty"`
+	MaxPendingRequest        int     `json:"max_pending_requests,omitempty"`
+	MaxRequests              int     `json:"max_requests,omitempty"`
+	SleepWindow              float64 `json:"sleep_window,omitempty"`
+	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty"`
+	DetectionInterval        float64 `json:"detection_interval,omitempty"`
+	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty"`
+}
+
 // Backend represents a backend to route to.
 type Backend struct {
-	Name    string   `json:"name,omitempty"`
-	Tags    []string `json:"tags"`
-	URI     *URI     `json:"uri,omitempty"`
-	Weight  float64  `json:"weight,omitempty"`
-	Timeout float64  `json:"timeout,omitempty"`
-	Retries int      `json:"retries,omitempty"`
+	Name       string      `json:"name,omitempty"`
+	Tags       []string    `json:"tags"`
+	URI        *URI        `json:"uri,omitempty"`
+	Weight     float64     `json:"weight,omitempty"`
+	Resilience *Resilience `json:"resilience,omitempty"`
 }
 
 // Action to take.

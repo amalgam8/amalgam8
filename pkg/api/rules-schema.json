@@ -165,17 +165,53 @@
           "exclusiveMinimum": true,
           "default": 1
         },
-        "timeout": {
-          "description": "Connect/read/write timeout when talking to an instance. Default is nginx's timeout (60s). Unit is in seconds (e.g, 1.234s)",
-          "type": "number",
-          "minimum": 0,
-          "exclusiveMinimum": true
-        },
-        "retries": {
-          "description": "Number of times to retry a failed request to a different instances. Set to 0 to disable retries",
-          "type": "number",
-          "minimum": 0,
-          "exclusiveMinimum": false
+        "resilience": {
+          "type": "object",
+          "properties": {
+            "max_connections": {
+              "description": "Maximum number of connections to a backend.  Defaults to 1024.",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_pending_requests": {
+              "description": "Maximum number of pending requests to a backend.  Defaults to 1024.",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_requests": {
+              "description": "Maximum number of requests to a backend.  Defaults to 1024",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "sleep_window": {
+              "description": "Minimum time the circuit will be closed.  Defaults to 30s",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "consecutive_errors": {
+              "description": "Number of 5XX errors before circuit is opened.  Defaults to 5",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "detection_interval": {
+              "description": "Interval for checking state of hystrix circuit.  Defaults to 10s.",
+              "type": "number",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            },
+            "max_requests_per_connection": {
+              "description": "Maximum number of requests per connection to an backend.",
+              "type": "integer",
+              "minimum": 0,
+              "exclusiveMinimum": false
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": [
@@ -192,6 +228,18 @@
           "items": {
             "$ref": "#/definitions/backend"
           }
+        },
+        "http_req_timeout": {
+          "description": "Timeout for a HTTP request. Includes retries as well. Unit is in floating point seconds. Default 15.0s",
+          "type": "number",
+          "minimum": 0,
+          "exclusiveMinimum": true
+        },
+        "http_req_retries": {
+          "description": "Number of retries for a given request. The interval between retries will be determined automatically (25ms+). Actual number of retries attempted depends on the http_req_timeout",
+          "type": "integer",
+          "minimum": 0,
+          "exclusiveMinimum": false
         }
       },
       "required": ["backends"],

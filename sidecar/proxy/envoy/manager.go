@@ -297,6 +297,8 @@ func buildClusters(rules []api.Rule) []Cluster {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
 				key := buildServiceKey(backend.Name, backend.Tags)
+				// TODO if two backends map to the same key, it will overwrite
+				//  and will lose resilience field options in this case
 				clusterMap[key] = &backend
 			}
 		}
@@ -407,12 +409,12 @@ func buildRoutes(ruleList []api.Rule) []Route {
 					},
 				}
 
-				if rule.Route.TCPConnectTimeout > 0 {
+				if rule.Route.HTTPReqTimeout > 0 {
 					// convert from float sec to in ms
-					route.TimeoutMS = int(rule.Route.TCPConnectTimeout * 1000)
+					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
 				}
-				if rule.Route.MaxRetries > 0 {
-					route.RetryPolicy.NumRetries = rule.Route.MaxRetries
+				if rule.Route.HTTPReqRetries > 0 {
+					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
 				}
 
 				routes = append(routes, route)

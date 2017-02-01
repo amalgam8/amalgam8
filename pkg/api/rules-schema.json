@@ -229,14 +229,14 @@
             "$ref": "#/definitions/backend"
           }
         },
-        "tcp_connect_timeout": {
-          "description": "Connect/read/write timeout when talking to a route. Default is 15. Unit is in seconds.",
+        "http_req_timeout": {
+          "description": "Timeout for a HTTP request. Includes retries as well. Unit is in floating point seconds. Default 15.0s",
           "type": "number",
           "minimum": 0,
           "exclusiveMinimum": true
         },
-        "max_retries": {
-          "description": "Maximum number of retries to connect to a route.  Defaults to 1.",
+        "http_req_retries": {
+          "description": "Number of retries for a given request. The interval between retries will be determined automatically (25ms+). Actual number of retries attempted depends on the http_req_timeout",
           "type": "integer",
           "minimum": 0,
           "exclusiveMinimum": false

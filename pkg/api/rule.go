@@ -41,9 +41,9 @@ type Match struct {
 
 // Route definition
 type Route struct {
-	Backends          []Backend `json:"backends"`
-	TCPConnectTimeout float64   `json:"tcp_connect_timeout,omitempty"`
-	MaxRetries        int       `json:"max_retries,omitempty"`
+	Backends       []Backend `json:"backends"`
+	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty"`
+	HTTPReqRetries int       `json:"http_req_retries,omitempty"`
 }
 
 // URI for backends.
@@ -55,13 +55,13 @@ type URI struct {
 
 // Resilience cluster level circuit breaker options
 type Resilience struct {
-	MaxConnections           int `json:"max_connections,omitempty"`
-	MaxPendingRequest        int `json:"max_pending_requests,omitempty"`
-	MaxRequests              int `json:"max_requests,omitempty"`
-	SleepWindow              int `json:"sleep_window,omitempty"`
-	ConsecutiveErrors        int `json:"consecutive_errors,omitempty"`
-	DetectionInterval        int `json:"detection_interval,omitempty"`
-	MaxRequestsPerConnection int `json:"max_requests_per_connection,omitempty"`
+	MaxConnections           int     `json:"max_connections,omitempty"`
+	MaxPendingRequest        int     `json:"max_pending_requests,omitempty"`
+	MaxRequests              int     `json:"max_requests,omitempty"`
+	SleepWindow              float64 `json:"sleep_window,omitempty"`
+	ConsecutiveErrors        int     `json:"consecutive_errors,omitempty"`
+	DetectionInterval        float64 `json:"detection_interval,omitempty"`
+	MaxRequestsPerConnection int     `json:"max_requests_per_connection,omitempty"`
 }
 
 // Backend represents a backend to route to.

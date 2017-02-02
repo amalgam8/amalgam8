@@ -15,16 +15,15 @@
 package commands
 
 import (
-	"bytes"
 	"strings"
 
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
-	a8api "github.com/amalgam8/amalgam8/pkg/api"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
@@ -33,7 +32,7 @@ import (
 type TrafficStartCommand struct {
 	ctx        *cli.Context
 	registry   *reg.Client
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -92,7 +91,7 @@ func (cmd *TrafficStartCommand) OnUsageError(ctx *cli.Context, err error, isSubc
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
-	registry, err := Registry(ctx)
+	registry, err := NewRegistry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -100,7 +99,7 @@ func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
 	// Update the registry
 	cmd.registry = registry
 
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -128,24 +127,29 @@ func (cmd *TrafficStartCommand) Action(ctx *cli.Context) error {
 
 // StartTraffic .
 func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string, amount int) error {
-	routes, err := cmd.controller.ServiceRoutes(serviceName)
+
+	filter := &api.RuleFilter{
+		Destinations: []string{serviceName},
+	}
+	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
 		return err
 	}
 
-	if len(routes.Rules) == 0 {
+	routingRules := routes.Services[serviceName]
+	if len(routingRules) == 0 {
 		fmt.Fprintf(cmd.ctx.App.Writer, "%s: %q\n\n", common.ErrNotRulesFoundForService.Error(), serviceName)
 		return nil
 	}
 
-	for _, rule := range routes.Rules {
+	for _, rule := range routingRules {
 		if len(rule.Route.Backends) > 1 {
 			fmt.Fprintf(cmd.ctx.App.Writer, "%s: service %q traffic is already being split\n\n", common.ErrInvalidStateForTrafficStart.Error(), serviceName)
 			return nil
 		}
 	}
 
-	rule := routes.Rules[0]
+	rule := routingRules[0]
 	for _, backend := range rule.Route.Backends {
 		if backend.Weight != 0 {
 			fmt.Fprintf(cmd.ctx.App.Writer, "%s: service %q traffic is already being split\n\n", common.ErrInvalidStateForTrafficStart.Error(), serviceName)
@@ -179,24 +183,17 @@ func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string,
 
 		rule.Route.Backends = append([]api.Backend{api.Backend{
 			Tags:   []string{version},
-			Weight: float32(amount) / 100,
+			Weight: float64(amount) / 100,
 		}}, rule.Route.Backends...)
 	}
 
-	ruleList := api.RuleList{
+	rulesSet := &api.RulesSet{
 		Rules: []api.Rule{
 			rule,
 		},
 	}
 
-	buf := bytes.Buffer{}
-	err = utils.MarshallReader(&buf, &ruleList, JSON)
-	if err != nil {
-		return err
-	}
-	payload := bytes.NewReader(buf.Bytes())
-
-	_, err = cmd.controller.UpdateRules(payload)
+	_, err = cmd.controller.UpdateRules(rulesSet)
 	if err != nil {
 		return err
 	}
@@ -211,7 +208,7 @@ func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string,
 }
 
 // IsServiceActive .
-func (cmd *TrafficStartCommand) IsServiceActive(serviceName, version string, instances []*a8api.ServiceInstance) bool {
+func (cmd *TrafficStartCommand) IsServiceActive(serviceName, version string, instances []*api.ServiceInstance) bool {
 	for _, instance := range instances {
 		if version == strings.Join(instance.Tags, ", ") {
 			return true

@@ -20,10 +20,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
@@ -39,7 +40,7 @@ type prettyRouteList struct {
 type RouteListCommand struct {
 	ctx        *cli.Context
 	registry   *reg.Client
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -65,10 +66,9 @@ func (cmd *RouteListCommand) GetMetadata() cli.Command {
 				Usage: T("route_list_output_usage"),
 				Value: TABLE,
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "service, s",
 				Usage: T("route_list_service_usage"),
-				Value: "",
 			},
 		},
 		Before:       cmd.Before,
@@ -94,7 +94,7 @@ func (cmd *RouteListCommand) OnUsageError(ctx *cli.Context, err error, isSubcomm
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
-	registry, err := Registry(ctx)
+	registry, err := NewRegistry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -102,7 +102,7 @@ func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
 	// Update the registry
 	cmd.registry = registry
 
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -115,12 +115,19 @@ func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
 		return nil
 	}
 
+	filter := &api.RuleFilter{}
+	if ctx.IsSet("service") || ctx.IsSet("s") {
+		filter = &api.RuleFilter{
+			Destinations: ctx.StringSlice("service"),
+		}
+	}
+
 	format := ctx.String("output")
 	switch format {
 	case JSON, YAML:
-		return cmd.PrettyPrint(ctx.String("service"), format)
+		return cmd.PrettyPrint(filter, format)
 	case TABLE:
-		return cmd.RouteTable(ctx.String("service"))
+		return cmd.RouteTable(filter)
 	}
 
 	return cmd.DefaultAction(ctx)
@@ -132,55 +139,39 @@ func (cmd *RouteListCommand) DefaultAction(ctx *cli.Context) error {
 }
 
 // PrettyPrint prints the list of services in the given format (json or yaml).
-func (cmd *RouteListCommand) PrettyPrint(serviceName string, format string) error {
+func (cmd *RouteListCommand) PrettyPrint(filter *api.RuleFilter, format string) error {
 	routeList := []prettyRouteList{}
 
-	routes, err := cmd.controller.Routes()
+	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
 		return err
 	}
 
-	// If not serviceName provided, show all Routes
-	if serviceName == "" {
-		// add services that have routing rules
-		for serviceName, routingRules := range routes.ServiceRoutes {
-			defaultVersion, selectors := routeSelectors(routingRules)
+	// add services that have routing rules
+	for serviceName, routingRules := range routes.Services {
+		defaultVersion, selectors := routeSelectors(routingRules)
+		routeList = append(
+			routeList,
+			prettyRouteList{
+				Service:   serviceName,
+				Default:   defaultVersion,
+				Selectors: selectors,
+			},
+		)
+	}
+
+	services, err := cmd.registry.ListServices()
+	if err != nil {
+		return err
+	}
+
+	// add services that don't have routing rules
+	for _, service := range services {
+		if _, ok := routes.Services[service]; !ok {
 			routeList = append(
 				routeList,
 				prettyRouteList{
-					Service:   serviceName,
-					Default:   defaultVersion,
-					Selectors: selectors,
-				},
-			)
-		}
-
-		services, err := cmd.registry.ListServices()
-		if err != nil {
-			return err
-		}
-
-		// add services that don't have routing rules
-		for _, service := range services {
-			if _, ok := routes.ServiceRoutes[service]; !ok {
-				routeList = append(
-					routeList,
-					prettyRouteList{
-						Service: service,
-					},
-				)
-			}
-		}
-	} else {
-		// Show routes fot the given serviceName
-		if route, ok := routes.ServiceRoutes[serviceName]; ok {
-			defaultVersion, selectors := routeSelectors(route)
-			routeList = append(
-				routeList,
-				prettyRouteList{
-					Service:   serviceName,
-					Default:   defaultVersion,
-					Selectors: selectors,
+					Service: service,
 				},
 			)
 		}
@@ -199,7 +190,7 @@ func (cmd *RouteListCommand) PrettyPrint(serviceName string, format string) erro
 // | reviews          | v2              |                      |
 // | ratings          |                 |                      |
 // +------------------+-----------------+----------------------+
-func (cmd *RouteListCommand) RouteTable(serviceName string) error {
+func (cmd *RouteListCommand) RouteTable(filter *api.RuleFilter) error {
 	table := CommandTable{}
 	table.header = []string{
 		"Service",
@@ -207,49 +198,33 @@ func (cmd *RouteListCommand) RouteTable(serviceName string) error {
 		"Version Selectors",
 	}
 
-	routes, err := cmd.controller.Routes()
+	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
 		return err
 	}
 
-	// If not serviceName provided, show all Routes
-	if serviceName == "" {
-		// add services that have routing rules
-		for serviceName, routingRules := range routes.ServiceRoutes {
-			defaultVersion, selectors := routeSelectors(routingRules)
-			table.body = append(
-				table.body,
-				[]string{
-					serviceName,
-					defaultVersion,
-					strings.Join(selectors, ", "),
-				},
-			)
-		}
+	// add services that have routing rules
+	for serviceName, routingRules := range routes.Services {
+		defaultVersion, selectors := routeSelectors(routingRules)
+		table.body = append(
+			table.body,
+			[]string{
+				serviceName,
+				defaultVersion,
+				strings.Join(selectors, ", "),
+			},
+		)
+	}
 
-		services, err := cmd.registry.ListServices()
-		if err != nil {
-			return err
-		}
+	services, err := cmd.registry.ListServices()
+	if err != nil {
+		return err
+	}
 
-		// add services that don't have routing rules
-		for _, service := range services {
-			if _, ok := routes.ServiceRoutes[service]; !ok {
-				table.body = append(table.body, []string{service, "", ""})
-			}
-		}
-	} else {
-		// Show routes fot the given serviceName
-		if route, ok := routes.ServiceRoutes[serviceName]; ok {
-			defaultVersion, selectors := routeSelectors(route)
-			table.body = append(
-				table.body,
-				[]string{
-					serviceName,
-					defaultVersion,
-					strings.Join(selectors, ", "),
-				},
-			)
+	// add services that don't have routing rules
+	for _, service := range services {
+		if _, ok := routes.Services[service]; !ok {
+			table.body = append(table.body, []string{service, "", ""})
 		}
 	}
 
@@ -257,11 +232,11 @@ func (cmd *RouteListCommand) RouteTable(serviceName string) error {
 	return nil
 }
 
-func routeSelectors(routingRules []api.Route) (string, sort.StringSlice) {
+func routeSelectors(routingRules []api.Rule) (string, sort.StringSlice) {
 	var selectors sort.StringSlice
 	var defaultVersion string
 	for _, route := range routingRules {
-		for _, backend := range route.Routes.Backends {
+		for _, backend := range route.Route.Backends {
 			version := strings.Join(backend.Tags, ",")
 			if route.Match != nil {
 				selectors = append(selectors, formatMatchSelector(version, route.Match, backend.Weight))
@@ -278,7 +253,7 @@ func routeSelectors(routingRules []api.Route) (string, sort.StringSlice) {
 	return defaultVersion, selectors
 }
 
-func formatMatchSelector(version string, match *api.MatchRules, weight float32) string {
+func formatMatchSelector(version string, match *api.Match, weight float64) string {
 	buf := bytes.Buffer{}
 	buf.WriteString(version + "(")
 	if match.Source != nil {

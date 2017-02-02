@@ -172,11 +172,10 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	traceVal := "-"
 	for _, rule := range rules {
 		for _, action := range rule.Actions {
-			if action.GetType() == "trace" {
+			if action.Action == "trace" {
 				if rule.Match != nil && rule.Match.Source != nil && rule.Match.Source.Name == inst.ServiceName {
-					trace := action.Internal().(api.TraceAction)
-					traceKey = trace.LogKey
-					traceVal = trace.LogValue
+					traceKey = action.LogKey
+					traceVal = action.LogValue
 				}
 			}
 		}
@@ -642,31 +641,29 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 
 				if isSubset {
 					for _, action := range rule.Actions {
-						switch action.GetType() {
+						switch action.Action {
 						case "delay":
-							delay := action.Internal().(api.DelayAction)
 							filter := Filter{
 								Type: "decoder",
 								Name: "fault",
 								Config: &FilterFaultConfig{
 									Delay: &DelayFilter{
 										Type:     "fixed",
-										Percent:  int(delay.Probability * 100),
-										Duration: int(delay.Duration * 1000),
+										Percent:  int(action.Probability * 100),
+										Duration: int(action.Duration * 1000),
 									},
 									Headers: headers,
 								},
 							}
 							filters = append(filters, filter)
 						case "abort":
-							abort := action.Internal().(api.AbortAction)
 							filter := Filter{
 								Type: "decoder",
 								Name: "fault",
 								Config: &FilterFaultConfig{
 									Abort: &AbortFilter{
-										Percent:    int(abort.Probability * 100),
-										HTTPStatus: abort.ReturnCode,
+										Percent:    int(action.Probability * 100),
+										HTTPStatus: action.ReturnCode,
 									},
 									Headers: headers,
 								},

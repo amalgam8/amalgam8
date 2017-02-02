@@ -133,7 +133,7 @@ var _ = Describe("Rule-Create", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("POST", "/v1/rules"),
-						ghttp.RespondWith(http.StatusOK, response["json_id"]),
+						ghttp.RespondWith(http.StatusCreated, response["json_id"]),
 					),
 				)
 			})
@@ -148,10 +148,10 @@ var _ = Describe("Rule-Create", func() {
 			})
 
 			It("should read rules from the JSON file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=" + JSONFilePath})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-create", "-f=" + JSONFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"json_id"`))
-				fmt.Println(app.Writer)
+
 			})
 
 		})
@@ -162,7 +162,7 @@ var _ = Describe("Rule-Create", func() {
 				server.AppendHandlers(
 					ghttp.CombineHandlers(
 						ghttp.VerifyRequest("POST", "/v1/rules"),
-						ghttp.RespondWith(http.StatusOK, response["yaml_id"]),
+						ghttp.RespondWith(http.StatusCreated, response["yaml_id"]),
 					),
 				)
 			})
@@ -177,10 +177,10 @@ var _ = Describe("Rule-Create", func() {
 			})
 
 			It("should read rules from the YAML file", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "rule-create", "-f=" + YAMLFilePath})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "rule-create", "-f=" + YAMLFilePath})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"yaml_id"`))
-				fmt.Println(app.Writer)
+
 			})
 
 		})

@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/urfave/cli"
 )
@@ -39,7 +38,7 @@ func OnUsageError(ctx *cli.Context, err error, isSubcommand bool) error {
 			}
 
 			if flag == common.ControllerURL.Flag() {
-				_, err = api.ValidateControllerURL(ctx)
+				_, err = ValidateControllerURL(ctx)
 				if err != nil {
 					fmt.Fprintf(ctx.App.Writer, "\nError: %#v\n\n", err.Error())
 					return nil
@@ -65,7 +64,7 @@ func DefaultAction(ctx *cli.Context) error {
 			return nil
 		}
 
-		_, err = api.ValidateControllerURL(ctx)
+		_, err = ValidateControllerURL(ctx)
 		if err != nil {
 			fmt.Fprintf(ctx.App.Writer, "\nError: %#v\n\n", err.Error())
 			return nil
@@ -85,6 +84,19 @@ func ValidateRegistryURL(ctx *cli.Context) (string, error) {
 	_, err := url.ParseRequestURI(u)
 	if err != nil {
 		return u, common.ErrRegistryURLInvalid
+	}
+	return u, nil
+}
+
+// ValidateControllerURL .
+func ValidateControllerURL(ctx *cli.Context) (string, error) {
+	u := ctx.GlobalString(common.ControllerURL.Flag())
+	if len(u) == 0 {
+		return "empty", common.ErrControllerURLNotFound
+	}
+	_, err := url.ParseRequestURI(u)
+	if err != nil {
+		return u, common.ErrControllerURLInvalid
 	}
 	return u, nil
 }

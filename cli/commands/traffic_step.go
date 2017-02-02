@@ -15,22 +15,22 @@
 package commands
 
 import (
-	"bytes"
 	"strings"
 
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/urfave/cli"
 )
 
 // TrafficStepCommand is used for the route-list command.
 type TrafficStepCommand struct {
 	ctx        *cli.Context
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -85,7 +85,7 @@ func (cmd *TrafficStepCommand) OnUsageError(ctx *cli.Context, err error, isSubco
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficStepCommand) Action(ctx *cli.Context) error {
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -94,13 +94,13 @@ func (cmd *TrafficStepCommand) Action(ctx *cli.Context) error {
 	cmd.controller = controller
 
 	if ctx.IsSet("service") {
-		var amount float32
+		var amount float64
 		if ctx.IsSet("amount") {
 			if ctx.Int("amount") < 0 || ctx.Int("amount") > 100 {
 				fmt.Fprintf(ctx.App.Writer, "%s\n\n", "--amount must be between 0 and 100")
 				return nil
 			}
-			amount = float32(ctx.Int("amount"))
+			amount = float64(ctx.Int("amount"))
 		}
 		return cmd.StepTraffic(ctx.String("service"), amount)
 	}
@@ -114,24 +114,29 @@ func (cmd *TrafficStepCommand) Action(ctx *cli.Context) error {
 }
 
 // StepTraffic .
-func (cmd *TrafficStepCommand) StepTraffic(serviceName string, amount float32) error {
+func (cmd *TrafficStepCommand) StepTraffic(serviceName string, amount float64) error {
 
-	routes, err := cmd.controller.ServiceRoutes(serviceName)
+	filter := &api.RuleFilter{
+		Destinations: []string{serviceName},
+	}
+
+	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
 		return err
 	}
 
-	if len(routes.Rules) == 0 {
+	routingRules := routes.Services[serviceName]
+	if len(routingRules) == 0 {
 		fmt.Fprintf(cmd.ctx.App.Writer, "%s: %q\n\n", common.ErrNotRulesFoundForService.Error(), serviceName)
 		return nil
 	}
 
-	if len(routes.Rules) > 1 || len(routes.Rules[0].Route.Backends) != 2 || routes.Rules[0].Route.Backends[0].Weight == routes.Rules[0].Route.Backends[1].Weight {
+	if len(routingRules) > 1 || len(routingRules[0].Route.Backends) != 2 || routingRules[0].Route.Backends[0].Weight == routingRules[0].Route.Backends[1].Weight {
 		fmt.Fprintf(cmd.ctx.App.Writer, "%s\n\n", common.ErrInvalidStateForTrafficStep.Error())
 		return nil
 	}
 
-	rule := routes.Rules[0]
+	rule := routingRules[0]
 
 	// Sort backends by weight, make sure default is last in the slice
 	if rule.Route.Backends[0].Weight == 0 {
@@ -154,20 +159,13 @@ func (cmd *TrafficStepCommand) StepTraffic(serviceName string, amount float32) e
 		rule.Route.Backends = []api.Backend{rule.Route.Backends[1]}
 	}
 
-	ruleList := api.RuleList{
+	rulesSet := &api.RulesSet{
 		Rules: []api.Rule{
 			rule,
 		},
 	}
 
-	buf := bytes.Buffer{}
-	err = utils.MarshallReader(&buf, &ruleList, JSON)
-
-	if err != nil {
-		return err
-	}
-	payload := bytes.NewReader(buf.Bytes())
-	_, err = cmd.controller.UpdateRules(payload)
+	_, err = cmd.controller.UpdateRules(rulesSet)
 	if err != nil {
 		return err
 	}

@@ -78,7 +78,7 @@ func (cmd *ServiceListCommand) OnUsageError(ctx *cli.Context, err error, isSubco
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *ServiceListCommand) Action(ctx *cli.Context) error {
-	registry, err := Registry(ctx)
+	registry, err := NewRegistry(ctx)
 	if err != nil {
 		// Exit if the registry returned an error
 		return nil
@@ -123,7 +123,6 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 	}
 
 	table := CommandTable{}
-
 	table.header = []string{
 		"Service",
 		"Instances",

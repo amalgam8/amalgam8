@@ -262,23 +262,23 @@ var _ = Describe("action-list", func() {
 			})
 
 			It("should print table", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "action-list"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "action-list"})
 				Expect(err).ToNot(HaveOccurred())
 				// TODO: Validate output
 			})
 
 			It("should print a JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "action-list", "-o=json"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "action-list", "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"destination": "ratings"`))
-				fmt.Println(app.Writer)
+
 			})
 
 			It("should print a YAML", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--debug=true", "action-list", "-o=yaml"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "action-list", "-o=yaml"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`destination: ratings`))
-				fmt.Println(app.Writer)
+
 			})
 
 		})

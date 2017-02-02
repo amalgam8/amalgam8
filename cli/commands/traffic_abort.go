@@ -15,22 +15,22 @@
 package commands
 
 import (
-	"bytes"
 	"strings"
 
 	"fmt"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/urfave/cli"
 )
 
 // TrafficAbortCommand is used for the route-list command.
 type TrafficAbortCommand struct {
 	ctx        *cli.Context
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -80,7 +80,7 @@ func (cmd *TrafficAbortCommand) OnUsageError(ctx *cli.Context, err error, isSubc
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *TrafficAbortCommand) Action(ctx *cli.Context) error {
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -102,22 +102,32 @@ func (cmd *TrafficAbortCommand) Action(ctx *cli.Context) error {
 
 // AbortTraffic .
 func (cmd *TrafficAbortCommand) AbortTraffic(serviceName string) error {
-	routes, err := cmd.controller.ServiceRoutes(serviceName)
+
+	filter := &api.RuleFilter{
+		Destinations: []string{serviceName},
+	}
+
+	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
 		return err
 	}
 
-	if len(routes.Rules) == 0 {
+	routingRules := routes.Services[serviceName]
+	if len(routingRules) == 0 {
 		fmt.Fprintf(cmd.ctx.App.Writer, "%s: %q\n\n", common.ErrNotRulesFoundForService.Error(), serviceName)
 		return nil
 	}
 
-	if len(routes.Rules) > 1 || len(routes.Rules[0].Route.Backends) != 2 || routes.Rules[0].Route.Backends[0].Weight == routes.Rules[0].Route.Backends[1].Weight {
+	// The execution of the command should not continue if any of the following conditions are true
+	// - there is more than 1 routing rule
+	// - the routing rule does not have 2 backends
+	// - the weight of the backends is the same
+	if len(routingRules) > 1 || len(routingRules[0].Route.Backends) != 2 || routingRules[0].Route.Backends[0].Weight == routingRules[0].Route.Backends[1].Weight {
 		fmt.Fprintf(cmd.ctx.App.Writer, "Invalid state for step operation\n\n")
 		return nil
 	}
 
-	rule := routes.Rules[0]
+	rule := routingRules[0]
 
 	// Sort backends by weight, make sure default is last in the slice
 	if rule.Route.Backends[0].Weight == 0 {
@@ -127,21 +137,13 @@ func (cmd *TrafficAbortCommand) AbortTraffic(serviceName string) error {
 	defaultVersion := strings.Join(rule.Route.Backends[1].Tags, ", ")
 	rule.Route.Backends = []api.Backend{rule.Route.Backends[1]}
 
-	ruleList := api.RuleList{
+	rulesSet := &api.RulesSet{
 		Rules: []api.Rule{
 			rule,
 		},
 	}
 
-	buf := bytes.Buffer{}
-	err = utils.MarshallReader(&buf, &ruleList, JSON)
-
-	if err != nil {
-		return err
-	}
-	payload := bytes.NewReader(buf.Bytes())
-
-	_, err = cmd.controller.UpdateRules(payload)
+	_, err = cmd.controller.UpdateRules(rulesSet)
 	if err != nil {
 		return err
 	}

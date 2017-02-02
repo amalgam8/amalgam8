@@ -15,17 +15,18 @@
 package commands
 
 import (
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	"github.com/amalgam8/amalgam8/cli/terminal"
 	"github.com/amalgam8/amalgam8/cli/utils"
+	ctrl "github.com/amalgam8/amalgam8/controller/client"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/urfave/cli"
 )
 
 // RuleGetCommand is used for the rule-get command.
 type RuleGetCommand struct {
 	ctx        *cli.Context
-	controller api.ControllerClient
+	controller *ctrl.Client
 	term       terminal.UI
 }
 
@@ -90,7 +91,7 @@ func (cmd *RuleGetCommand) OnUsageError(ctx *cli.Context, err error, isSubcomman
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RuleGetCommand) Action(ctx *cli.Context) error {
-	controller, err := api.NewControllerClient(ctx)
+	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
 		return nil
@@ -100,21 +101,18 @@ func (cmd *RuleGetCommand) Action(ctx *cli.Context) error {
 	format := ctx.String("output")
 
 	if ctx.IsSet("all") {
-		return cmd.PrettyPrint("", format)
+		return cmd.PrettyPrint(&api.RuleFilter{}, format)
 	}
 
-	query := cmd.controller.NewQuery()
 	if ctx.IsSet("id") || ctx.IsSet("i") || ctx.IsSet("destination") || ctx.IsSet("d") || ctx.IsSet("tag") || ctx.IsSet("t") {
-		for _, id := range ctx.StringSlice("id") {
-			query.Add("id", id)
+
+		filter := &api.RuleFilter{
+			IDs:          ctx.StringSlice("id"),
+			Destinations: ctx.StringSlice("destination"),
+			Tags:         ctx.StringSlice("tag"),
 		}
-		for _, dest := range ctx.StringSlice("destination") {
-			query.Add("destination", dest)
-		}
-		for _, dest := range ctx.StringSlice("tag") {
-			query.Add("tags", dest)
-		}
-		return cmd.PrettyPrint(query.Encode(), format)
+
+		return cmd.PrettyPrint(filter, format)
 	}
 
 	return cmd.DefaultAction(ctx)
@@ -126,8 +124,8 @@ func (cmd *RuleGetCommand) DefaultAction(ctx *cli.Context) error {
 }
 
 // PrettyPrint prints the rules returned by the controller in given format.
-func (cmd *RuleGetCommand) PrettyPrint(query string, format string) error {
-	rules, err := cmd.controller.Rules(query)
+func (cmd *RuleGetCommand) PrettyPrint(filter *api.RuleFilter, format string) error {
+	rules, err := cmd.controller.ListRules(filter)
 	if err != nil {
 		return err
 	}

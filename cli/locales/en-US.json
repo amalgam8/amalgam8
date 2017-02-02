@@ -96,6 +96,18 @@
     "translation": "The service name."
   },
   {
+    "id": "action_list_id_usage",
+    "translation": "The rule id."
+  },
+  {
+    "id": "action_list_tag_usage",
+    "translation": "The rule tag."
+  },
+  {
+    "id": "action_list_destination_usage",
+    "translation": "The rule destination."
+  },
+  {
     "id": "action_list_output_usage",
     "translation": "Output format. Supported values are 'json', 'yaml' or 'table'."
   },

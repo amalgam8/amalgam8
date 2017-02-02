@@ -19,9 +19,9 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/amalgam8/amalgam8/cli/api"
 	"github.com/amalgam8/amalgam8/cli/common"
 	. "github.com/amalgam8/amalgam8/cli/utils"
+	"github.com/amalgam8/amalgam8/pkg/api"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -82,7 +82,7 @@ var _ = Describe("ioutils", func() {
 				rules := &api.Rule{}
 
 				// Unmarshall JSON Reader
-				err = UnmarshallReader(reader, format, rules)
+				err = UnmarshalReader(reader, format, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("json_id"))
 				Expect(rules.Destination).To(Equal("json_destination"))
@@ -105,7 +105,7 @@ var _ = Describe("ioutils", func() {
 				rules := &api.Rule{}
 
 				// Unmarshall YAML reader
-				err = UnmarshallReader(reader, format, rules)
+				err = UnmarshalReader(reader, format, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("yaml_id"))
 				Expect(rules.Destination).To(Equal("yaml_destination"))
@@ -134,7 +134,7 @@ var _ = Describe("ioutils", func() {
 				Expect(rules.Destination).To(Equal("yaml_destination"))
 
 				// Unmarshall reader as JSON
-				err = UnmarshallReader(reader, JSON, rules)
+				err = UnmarshalReader(reader, JSON, rules)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(rules.ID).To(Equal("yaml_id"))
 				Expect(rules.Destination).To(Equal("yaml_destination"))
@@ -147,6 +147,55 @@ var _ = Describe("ioutils", func() {
 			})
 
 		})
+
+		Context("when validating JSON rules", func() {
+
+			It("should fix the rules structure", func() {
+				reader := bytes.NewBufferString("[]")
+				fixed, err := ValidateRulesFormat(reader)
+				Expect(err).NotTo(HaveOccurred())
+
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(fixed)
+				Expect(buf.String()).Should(ContainSubstring("{ \"rules\": []}"))
+			})
+
+			It("should not modify the rules structure", func() {
+				reader := bytes.NewBufferString("{[]}")
+				fixed, err := ValidateRulesFormat(reader)
+				Expect(err).NotTo(HaveOccurred())
+
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(fixed)
+				Expect(buf.String()).Should(ContainSubstring("{[]}"))
+			})
+
+		})
+
+		Context("when validating YAML rules", func() {
+
+			It("should fix the rules structure", func() {
+				reader := bytes.NewBufferString("-")
+				fixed, err := ValidateRulesFormat(reader)
+				Expect(err).NotTo(HaveOccurred())
+
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(fixed)
+				Expect(buf.String()).Should(ContainSubstring("rules:"))
+			})
+
+			It("should not modify the rules structure", func() {
+				reader := bytes.NewBufferString("rules:")
+				fixed, err := ValidateRulesFormat(reader)
+				Expect(err).NotTo(HaveOccurred())
+
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(fixed)
+				Expect(buf.String()).Should(ContainSubstring("rules:"))
+			})
+
+		})
+
 	})
 
 })

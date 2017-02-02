@@ -69,6 +69,7 @@ type Backend struct {
 	URI        *URI        `json:"uri,omitempty" yaml:"uri,omitempty"`
 	Weight     float64     `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Resilience *Resilience `json:"resilience,omitempty" yaml:"resilience,omitempty"`
+	LbType     string      `json:"lb_type,omitempty" yaml:"lb_type,omitempty"`
 }
 
 // Action definition

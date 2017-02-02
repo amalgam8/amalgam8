@@ -51,9 +51,9 @@ check_output_equality() {
     REF_OUTPUT_FILE="$1"
     ACTUAL_OUTPUT_FILE="$2"
     if [ "$A8_TEST_SUITE" == "examples" ]; then
-	    diff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE
+	    diff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE > /dev/null
     else
-	    jsondiff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE
+	    jsondiff $REF_OUTPUT_FILE $ACTUAL_OUTPUT_FILE > /dev/null
     fi
 
     if [ $? -gt 0 ]; then
@@ -180,7 +180,7 @@ echo "testing fault injection.."
 output=$( $CLIBIN rule-create -f $SCRIPTDIR/fault_injection.yaml )
 
 fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
-sleep 10
+sleep 20
 
 ###For shriram
 echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
@@ -279,6 +279,9 @@ if [ "$A8_TEST_GREMLIN" = true ]; then
   		(( retry_count=retry_count+1 ))
   		echo "failed"
   		echo "Recipe-run-results.json does not match the expected output."
+  		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+  			exit 1
+  		fi
   		echo "Retrying.."
   	else
   		break

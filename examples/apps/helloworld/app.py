@@ -13,6 +13,7 @@
 #   limitations under the License.
 
 import os
+import json
 from flask import Flask, request
 app = Flask(__name__)
 
@@ -21,7 +22,7 @@ def hello():
     service_version = os.environ.get('A8_SERVICE').split(':')
     version = service_version[1] if len(service_version) == 2 else 'UNVERSIONED'
     response = app.make_response('Hello version: %s, container: %s\n' % (version, os.environ.get('HOSTNAME')))
-    response.set_cookie('version', service_version)
+    response.set_cookie('version', json.dumps(service_version))
     return response
 
 @app.route('/health')

@@ -163,7 +163,7 @@ build.testapps:
 	@echo "--> building test apps for integration testing"
 	@testing/build-scripts/build-apps.sh
 
-build.exampleapps: release.sidecar
+build.exampleapps: release.sidecar.envoy
 	@echo "--> building example apps"
 	@testing/generate_example_yaml.sh "$(shell echo $(APP_VER_ABBR) | sed 's/v//')"
 	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)" $(SIDECAR_RELEASE_NAME)

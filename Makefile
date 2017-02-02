@@ -305,7 +305,7 @@ release.controller:
 	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
-release.sidecar.envoy: build.sidecar
+release.sidecar.envoy:
 	@echo "--> packaging sidecar for release"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/usr/bin \

@@ -163,7 +163,7 @@ build.testapps:
 	@echo "--> building test apps for integration testing"
 	@testing/build-scripts/build-apps.sh
 
-build.exampleapps: release.sidecar
+build.exampleapps: release.sidecar.envoy
 	@echo "--> building example apps"
 	@testing/generate_example_yaml.sh "$(shell echo $(APP_VER_ABBR) | sed 's/v//')"
 	@examples/apps/helloworld/build-services.sh "$(APP_VER_ABBR)" $(SIDECAR_RELEASE_NAME)
@@ -305,7 +305,7 @@ release.controller:
 	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(CONTROLLER_RELEASE_NAME).tar.gz --transform 's:^.*/::' $(BINDIR)/$(CONTROLLER_APP_NAME) README.md LICENSE
 
-release.sidecar.envoy:
+release.sidecar.envoy: build.sidecar
 	@echo "--> packaging sidecar for release"
 	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
 		$(BUILDDIR)/usr/bin \

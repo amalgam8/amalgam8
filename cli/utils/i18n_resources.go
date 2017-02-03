@@ -83,7 +83,7 @@ func localesEnUsJson() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "locales/en-US.json", size: 7370, mode: os.FileMode(493), modTime: time.Unix(1481838196, 0)}
+	info := bindataFileInfo{name: "locales/en-US.json", size: 7370, mode: os.FileMode(509), modTime: time.Unix(1484066043, 0)}
 	a := &asset{bytes: bytes, info: info}
 	return a, nil
 }

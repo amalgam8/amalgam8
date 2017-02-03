@@ -102,8 +102,8 @@ type AccessLog struct {
 	Filter string `json:"filter,omitempty"`
 }
 
-// NetworkFilterConfig definition.
-type NetworkFilterConfig struct {
+// HTTPNetworkFilterConfig definition.
+type HTTPNetworkFilterConfig struct {
 	CodecType         string      `json:"codec_type"`
 	StatPrefix        string      `json:"stat_prefix"`
 	GenerateRequestID bool        `json:"generate_request_id"`
@@ -113,12 +113,18 @@ type NetworkFilterConfig struct {
 	AccessLog         []AccessLog `json:"access_log"`
 }
 
+// TCPNetworkFilterConfig definition
+// See: https://lyft.github.io/envoy/docs/configuration/network_filters/tcp_proxy_filter.html
+type TCPNetworkFilterConfig struct {
+	Cluster string `json:"cluster"`
+}
+
 // NetworkFilter definition.
 // See: https://lyft.github.io/envoy/docs/configuration/listeners/filters.html#config-listener-filters
 type NetworkFilter struct {
 	Type   string              `json:"type"`
 	Name   string              `json:"name"`
-	Config NetworkFilterConfig `json:"config"`
+	Config interface{} `json:"config"`
 }
 
 // Listener definition.

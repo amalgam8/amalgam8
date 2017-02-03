@@ -1,5 +1,3 @@
-#!/bin/bash
-#
 # Copyright 2016 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,16 +12,19 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
+FROM scratch
 
-set -x
-set -o errexit
+WORKDIR /opt/microservices
+COPY details /opt/microservices/
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-APPSDIR=$SCRIPTDIR/../apps
+EXPOSE 9080
 
-make -C $APPSDIR/productpage build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/details build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/ratings build dockerize clean GOOS=linux GOARCH=amd64
-make -C $APPSDIR/reviews build dockerize clean GOOS=linux GOARCH=amd64
+ENTRYPOINT ["/opt/microservices/details", "9080" ]
 
-docker build -t amalgam8/a8-tcp:latest -f $APPSDIR/tcp/Dockerfile.sidecar $APPSDIR/tcp
+FROM python:2-onbuild
+
+RUN mkdir -p /opt/microservices
+ADD app.py /opt/microservices/
+EXPOSE 5000
+WORKDIR /opt/microservices
+CMD python app.py

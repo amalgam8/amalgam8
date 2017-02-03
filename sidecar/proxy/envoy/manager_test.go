@@ -20,6 +20,7 @@ import (
 
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/stretchr/testify/assert"
+	"fmt"
 )
 
 func TestSanitizeRules(t *testing.T) {
@@ -767,3 +768,162 @@ func TestFaults(t *testing.T) {
 	}
 
 }
+
+func TestGihanson(t *testing.T) {
+	ruleBytes := []byte(`[
+    {
+      "id": "b083c1bf-4110-4fc3-a410-4f112607f470",
+      "priority": 1,
+      "destination": "reviews",
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "version=v1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "a2fbeecd-550d-4a3b-a81a-5a97521b0bbc",
+      "priority": 1,
+      "destination": "productpage",
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "version=v1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "1da30605-5706-44b3-a4dd-6ad12e05d831",
+      "priority": 1,
+      "destination": "ratings",
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "version=v1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ca6ca506-9ef2-46ec-b605-1b4e8d6bf5df",
+      "priority": 1,
+      "destination": "details",
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "version=v1"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "c4b143ee-36bd-40ee-86cd-39ae89a482dc",
+      "priority": 2,
+      "destination": "reviews",
+      "match": {
+        "headers": {
+          "Cookie": "^(.*?;)?(user=jason)(;.*)?$"
+        }
+      },
+      "route": {
+        "backends": [
+          {
+            "tags": [
+              "version=v2"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+`)
+
+	var ruleList []api.Rule
+	err := json.Unmarshal(ruleBytes, &ruleList)
+	assert.NoError(t, err)
+
+	instanceBytes := []byte(`[
+    {
+      "id": "209d229b18636ba4",
+      "service_name": "details",
+      "endpoint": {
+        "type": "http",
+        "value": "172.17.0.9:9080"
+      },
+      "ttl": 60,
+      "status": "UP",
+      "last_heartbeat": "2017-02-03T17:13:32.619310263Z",
+      "tags": [
+        "version=v1"
+      ]
+    },
+    {
+      "id": "b37eb92e5704795d",
+      "service_name": "tcphelloworld",
+      "endpoint": {
+        "type": "tcp",
+        "value": "172.17.0.7:1111"
+      },
+      "ttl": 60,
+      "status": "UP",
+      "last_heartbeat": "2017-02-03T17:13:31.676828215Z"
+    },
+    {
+      "id": "2df3b93fc5064919",
+      "service_name": "ratings",
+      "endpoint": {
+        "type": "http",
+        "value": "172.17.0.13:9080"
+      },
+      "ttl": 60,
+      "status": "UP",
+      "last_heartbeat": "2017-02-03T17:13:34.361663807Z",
+      "tags": [
+        "version=v1"
+      ]
+    },
+    {
+      "id": "05f853b7b4ab8b37",
+      "service_name": "reviews",
+      "endpoint": {
+        "type": "http",
+        "value": "172.17.0.10:9080"
+      },
+      "ttl": 60,
+      "status": "UP",
+      "last_heartbeat": "2017-02-03T17:13:32.97201425Z",
+      "tags": [
+        "version=v1"
+      ]
+    }
+  ]`)
+
+	var instanceList []api.ServiceInstance
+	err = json.Unmarshal(instanceBytes, &instanceList)
+	assert.NoError(t, err)
+
+	listeners := buildListeners(ruleList, instanceList, &api.ServiceInstance{
+		ServiceName: "gihansonname",
+		Endpoint: api.ServiceEndpoint{
+			Type: "gihansontype",
+			Value: "gihansonval",
+		},
+	},8095, "/tmp/")
+
+	data, err := json.MarshalIndent(&listeners, "", "  ")
+	assert.NoError(t, err)
+
+	fmt.Println(string(data))
+}
+

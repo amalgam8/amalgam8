@@ -30,6 +30,8 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
+	"strconv"
+	"github.com/Sirupsen/logrus"
 )
 
 // Envoy config related files
@@ -81,12 +83,12 @@ type Manager interface {
 // NewManager creates new instance
 func NewManager(identity identity.Provider, conf *config.Config) Manager {
 	return &manager{
-		identity:     identity,
-		sdsPort:      conf.ProxyConfig.DiscoveryPort,
-		adminPort:    conf.ProxyConfig.AdminPort,
+		identity:       identity,
+		sdsPort:        conf.ProxyConfig.DiscoveryPort,
+		adminPort:      conf.ProxyConfig.AdminPort,
 		listenerPort: conf.ProxyConfig.HTTPListenerPort,
-		workingDir:   conf.ProxyConfig.WorkingDir,
-		loggingDir:   conf.ProxyConfig.LoggingDir,
+		workingDir:     conf.ProxyConfig.WorkingDir,
+		loggingDir:     conf.ProxyConfig.LoggingDir,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,
@@ -97,13 +99,13 @@ func NewManager(identity identity.Provider, conf *config.Config) Manager {
 }
 
 type manager struct {
-	identity     identity.Provider
-	service      Service
-	sdsPort      int
-	adminPort    int
+	identity       identity.Provider
+	service        Service
+	sdsPort        int
+	adminPort      int
 	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
-	workingDir   string
-	loggingDir   string
+	workingDir     string
+	loggingDir     string
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -152,76 +154,25 @@ func writeConfig(w io.Writer, conf Config) error {
 }
 
 func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstance) (Config, error) {
-	inst, err := m.identity.GetIdentity()
-	if err != nil {
-		return Config{}, err
-	}
 
 	sanitizeRules(rules)
 	rules = addDefaultRouteRules(rules, instances)
 
 	clusters := buildClusters(rules)
-	routes := buildRoutes(rules)
-	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
 	if err := buildFS(rules, m.workingDir); err != nil {
 		return Config{}, err
 	}
 
-	traceKey := "gremlin_recipe_id"
-	traceVal := "-"
-	for _, rule := range rules {
-		for _, action := range rule.Actions {
-			if action.GetType() == "trace" {
-				if rule.Match != nil && rule.Match.Source != nil && rule.Match.Source.Name == inst.ServiceName {
-					trace := action.Internal().(api.TraceAction)
-					traceKey = trace.LogKey
-					traceVal = trace.LogValue
-				}
-			}
-		}
-	}
-
-	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
+	inst, _ := m.identity.GetIdentity()
+	listeners := buildListeners(rules, instances, inst, m.listenerPort, m.loggingDir)
 
 	return Config{
 		RootRuntime: RootRuntime{
 			SymlinkRoot:  m.workingDir + runtimePath,
 			Subdirectory: "traffic_shift",
 		},
-		Listeners: []Listener{
-			{
-				Port: m.listenerPort, //TODO: needs to be generated based on m.listenerPort
-				Filters: []NetworkFilter{
-					{
-						Type: "read",
-						Name: "http_connection_manager",
-						Config: NetworkFilterConfig{
-							CodecType:         "auto",
-							StatPrefix:        "ingress_http",
-							UserAgent:         true,
-							GenerateRequestID: true,
-							RouteConfig: RouteConfig{
-								VirtualHosts: []VirtualHost{
-									{
-										Name:    "backend",
-										Domains: []string{"*"},
-										Routes:  routes,
-									},
-								},
-							},
-							Filters: filters,
-							AccessLog: []AccessLog{
-								{
-									Path:   m.loggingDir + accessLog,
-									Format: format,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		Listeners: listeners,
 		Admin: Admin{
 			AccessLogPath: m.loggingDir + adminLog,
 			Port:          m.adminPort,
@@ -245,6 +196,98 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			},
 		},
 	}, nil
+}
+
+//
+func buildListeners(ruleList []api.Rule, instances []api.ServiceInstance, inst *api.ServiceInstance, listenerPort int, loggingDir string) []Listener {
+
+	filters := buildFaults(ruleList, inst.ServiceName, inst.Tags)
+
+	traceKey := "gremlin_recipe_id"
+	traceVal := "-"
+	for _, rule := range ruleList {
+		for _, action := range rule.Actions {
+			if action.GetType() == "trace" {
+				if rule.Match != nil && rule.Match.Source != nil && rule.Match.Source.Name == inst.ServiceName {
+					trace := action.Internal().(api.TraceAction)
+					traceKey = trace.LogKey
+					traceVal = trace.LogValue
+				}
+			}
+		}
+	}
+
+	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
+
+	routes := buildRoutes(ruleList)
+
+	listeners := make([]Listener, 0)
+
+	listeners = append(listeners,
+			Listener{
+				Port: listenerPort,
+				Filters: []NetworkFilter{
+					{
+						Type: "read",
+						Name: "http_connection_manager",
+						Config: HTTPNetworkFilterConfig{
+							CodecType:         "auto",
+							StatPrefix:        "ingress_http",
+							UserAgent:         true,
+							GenerateRequestID: true,
+							RouteConfig: RouteConfig{
+								VirtualHosts: []VirtualHost{
+									{
+										Name:    "backend",
+										Domains: []string{"*"},
+										Routes:  routes,
+									},
+								},
+							},
+							Filters: filters,
+							AccessLog: []AccessLog{
+								{
+									Path:   loggingDir + accessLog,
+									Format: format,
+								},
+							},
+						},
+					},
+				},
+			})
+
+	tcpPorts := make(map[int]string)
+	for _, instance := range instances {
+		if instance.Endpoint.Type == "tcp" {
+			fmt.Printf("found tcp instance: %v", instance.Endpoint.Value)
+			vals := strings.Split(instance.Endpoint.Value, ":")
+			if len(vals) <= 1 {
+				logrus.Warnf("Could not retrieve tcp port information for instance: %v", instance.Endpoint.Value)
+				continue
+			}
+			if i, err := strconv.Atoi(vals[1]); err == nil {
+				tcpPorts[i] = buildServiceKey(instance.ServiceName, instance.Tags)
+			}
+		}
+	}
+
+	for port, clusterName := range tcpPorts {
+		listeners = append(listeners,
+			Listener{
+				Port: port,
+				Filters: []NetworkFilter{
+					{
+						Type: "read",
+						Name: "tcp_proxy",
+						Config: TCPNetworkFilterConfig{
+							Cluster: clusterName,
+						},
+					},
+				},
+			})
+	}
+
+	return listeners
 }
 
 const (
@@ -289,6 +332,22 @@ func ParseServiceKey(s string) (string, []string) {
 	}
 
 	return res[0], res[1:]
+}
+
+func buildClustersFromServices(rules []api.Rule, instances []api.ServiceInstance) []Cluster {
+	clusterBackends := make(map[string]*api.Backend)
+	for _, rule := range rules {
+		if rule.Route != nil {
+			for _, backend := range rule.Route.Backends {
+				key := buildServiceKey(backend.Name, backend.Tags)
+				// TODO if two backends map to the same key, it will overwrite
+				//  and will lose resilience field options in this case
+				clusterBackends[key] = &backend
+			}
+		}
+	}
+
+	clusterMap := make(map[string])
 }
 
 func buildClusters(rules []api.Rule) []Cluster {
@@ -483,7 +542,9 @@ func sanitizeRules(ruleList []api.Rule) {
 func addDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) []api.Rule {
 	serviceMap := make(map[string]struct{})
 	for _, instance := range instances {
-		serviceMap[instance.ServiceName] = struct{}{}
+		//if instance.Endpoint.Type == "http" {
+			serviceMap[instance.ServiceName] = struct{}{}
+		//}
 	}
 
 	for _, rule := range ruleList {

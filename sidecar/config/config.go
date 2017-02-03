@@ -129,16 +129,16 @@ type HealthCheck struct {
 
 // ProxyConfig stores proxy configuration.
 type ProxyConfig struct {
-	TLS              bool   `yaml:"tls"`
-	CertPath         string `yaml:"cert_path"`
-	CertKeyPath      string `yaml:"cert_key_path"`
-	CACertPath       string `yaml:"ca_cert_path"`
-	HTTPListenerPort int    `yaml:"http_listener_port"`
-	DiscoveryPort    int    `yaml:"sds_port"`
-	AdminPort        int    `yaml:"admin_port"`
-	WorkingDir       string `yaml:"working_dir"`
-	LoggingDir       string `yaml:"logging_dir"`
-	ProxyBinary      string `yaml:"proxy_binary_path"`
+	TLS              bool       `yaml:"tls"`
+	CertPath         string     `yaml:"cert_path"`
+	CertKeyPath      string     `yaml:"cert_key_path"`
+	CACertPath       string     `yaml:"ca_cert_path"`
+	HTTPListenerPort int        `yaml:"http_listener_port"`
+	DiscoveryPort    int        `yaml:"sds_port"`
+	AdminPort        int        `yaml:"admin_port"`
+	WorkingDir       string     `yaml:"working_dir"`
+	LoggingDir       string     `yaml:"logging_dir"`
+	ProxyBinary      string     `yaml:"proxy_binary_path"`
 }
 
 // Config stores the various configuration options for the sidecar

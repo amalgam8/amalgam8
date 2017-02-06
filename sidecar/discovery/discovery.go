@@ -18,6 +18,8 @@ import (
 	"net/http"
 	"sort"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
@@ -26,11 +28,53 @@ import (
 )
 
 const (
+	apiVer = "/v1"
+
 	routeParamServiceName = "sname"
-	apiVer                = "/v1"
 	registrationPath      = apiVer + "/registration"
 	registrationTemplate  = registrationPath + "/#" + routeParamServiceName
+
+	routeParamServiceClusterName = "csname"
+	routeParamServiceNodeName    = "snname"
+	clusterPath                  = apiVer + "/clusters"
+	clusterTemplate              = clusterPath + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
 )
+
+// Cluster definition.
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster.html#config-cluster-manager-cluster
+type Cluster struct {
+	Name                     string            `json:"name"`
+	ServiceName              string            `json:"service_name,omitempty"`
+	ConnectTimeoutMs         int               `json:"connect_timeout_ms"`
+	Type                     string            `json:"type"`
+	LbType                   string            `json:"lb_type"`
+	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
+	Hosts                    []Host            `json:"hosts,omitempty"`
+	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
+	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
+}
+
+// OutlierDetection definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_runtime.html#outlier-detection
+type OutlierDetection struct {
+	ConsecutiveError   int `json:"consecutive_5xx,omitempty"`
+	IntervalMS         int `json:"interval_ms,omitempty"`
+	BaseEjectionTimeMS int `json:"base_ejection_time_ms,omitempty"`
+	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
+}
+
+// CircuitBreaker definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
+type CircuitBreaker struct {
+	MaxConnections    int `json:"max_connections,omitempty"`
+	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
+	MaxRequests       int `json:"max_requests,omitempty"`
+	MaxRetries        int `json:"max_retries,omitempty"`
+}
+
+type Clusters struct {
+	Clusters []Cluster `json:"clusters"`
+}
 
 // Hosts is the array of hosts returned by the GET registration
 type Hosts struct {
@@ -68,12 +112,14 @@ func (s ByIPPort) Less(i, j int) bool {
 // Discovery handles discovery API calls
 type Discovery struct {
 	discovery api.ServiceDiscovery
+	rules     api.RulesService
 }
 
 // NewDiscovery creates struct
-func NewDiscovery(discovery api.ServiceDiscovery) *Discovery {
+func NewDiscovery(discovery api.ServiceDiscovery, rules api.RulesService) *Discovery {
 	return &Discovery{
 		discovery: discovery,
+		rules:     rules,
 	}
 }
 
@@ -81,6 +127,7 @@ func NewDiscovery(discovery api.ServiceDiscovery) *Discovery {
 func (d *Discovery) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Get(registrationTemplate, d.getRegistration),
+		rest.Get(clusterTemplate, d.getClusters),
 	}
 
 	for _, route := range routes {
@@ -92,23 +139,33 @@ func (d *Discovery) Routes(middlewares ...rest.Middleware) []*rest.Route {
 // getRegistration
 func (d *Discovery) getRegistration(w rest.ResponseWriter, req *rest.Request) {
 	sname := req.PathParam(routeParamServiceName)
-	service, tags := envoy.ParseServiceKey(sname)
 
-	instances, err := d.discovery.ListServiceInstances(service)
+	hosts, err := d.getHosts(sname)
 	if err != nil {
-		logrus.WithError(err).Warnf("Failed to get the list of service instances")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	filteredInstances := filterInstances(instances, tags)
-
 	resp := Hosts{
-		Hosts: translate(filteredInstances),
+		Hosts: hosts,
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&resp)
+}
+
+func (d *Discovery) getHosts(name string) ([]Host, error) {
+	service, tags := envoy.ParseServiceKey(name)
+
+	instances, err := d.discovery.ListServiceInstances(service)
+	if err != nil {
+		logrus.WithError(err).Warnf("Failed to get the list of service instances")
+		return []Host{}, err
+	}
+
+	filteredInstances := filterInstances(instances, tags)
+
+	return translate(filteredInstances), nil
 }
 
 // get service name, tags
@@ -158,4 +215,110 @@ func filterInstances(instances []*api.ServiceInstance, tags []string) []*api.Ser
 	}
 
 	return filtered
+}
+
+// getRegistration
+func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
+	clusterName := req.PathParam(routeParamServiceClusterName)
+
+	nodeName := req.PathParam(routeParamServiceNodeName)
+
+	fmt.Printf("ClusterName: %v", clusterName)
+	fmt.Printf("NodeName: %v", nodeName)
+
+	instances, err := d.discovery.ListInstances()
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	ruleSet, err := d.rules.ListRules(&api.RuleFilter{})
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	resp := Clusters{
+		Clusters: buildClusters(instances, ruleSet.Rules),
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&resp)
+}
+
+func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster {
+	clusterNames := make(map[string]struct{})
+	for _, instance := range instances {
+		clusterName := envoy.BuildServiceKey(instance.ServiceName, instance.Tags)
+		clusterNames[clusterName] = struct{}{}
+		// Need a default cluster for every service
+		clusterNames[instance.ServiceName] = struct{}{}
+	}
+
+	// TODO ?
+	//sanitizeRules(rules)
+	//rules = addDefaultRouteRules(rules, instances)
+
+	backends := make(map[string]*api.Backend)
+	for _, rule := range rules {
+		if rule.Route != nil {
+			for _, backend := range rule.Route.Backends {
+				key := envoy.BuildServiceKey(backend.Name, backend.Tags)
+				// TODO if two backends map to the same key, it will overwrite
+				//  and will lose resilience field options in this case
+				backends[key] = &backend
+			}
+		}
+	}
+
+	clusters := make([]Cluster, 0, len(clusterNames))
+	for name := range clusterNames {
+		cluster := Cluster{
+			Name:             name,
+			ServiceName:      name,
+			Type:             "sds",
+			LbType:           "round_robin", //TODO this needs to be configurable
+			ConnectTimeoutMs: 1000,
+			CircuitBreaker:   &CircuitBreaker{},
+			OutlierDetection: &OutlierDetection{
+				MaxEjectionPercent: 100,
+			},
+		}
+
+		if backend, ok := backends[name]; ok {
+			if backend.Resilience != nil {
+				// Cluster level settings
+				if backend.Resilience.MaxRequestsPerConnection > 0 {
+					cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+				}
+
+				// Envoy Circuit breaker config options
+				if backend.Resilience.MaxConnections > 0 {
+					cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
+				}
+				if backend.Resilience.MaxRequests > 0 {
+					cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
+				}
+				if backend.Resilience.MaxPendingRequest > 0 {
+					cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+				}
+
+				// Envoy outlier detection settings that complete circuit breaker
+				if backend.Resilience.SleepWindow > 0 {
+					cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+				}
+				if backend.Resilience.ConsecutiveErrors > 0 {
+					cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+				}
+				if backend.Resilience.DetectionInterval > 0 {
+					cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+				}
+			}
+		}
+
+		clusters = append(clusters, cluster)
+
+	}
+
+	return clusters
 }

@@ -54,7 +54,7 @@ func TestSanitizeRules(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
+	SanitizeRules(rules)
 
 	assert.InEpsilon(t, 0.25, rules[0].Route.Backends[0].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[0].Name)
@@ -144,81 +144,82 @@ func TestFS(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
 	//err := buildFS(rules)
 	//assert.NoError(t, err)
 }
 
-func TestBuildClusters(t *testing.T) {
-	rules := []api.Rule{
-		{
-			ID:          "abcdef",
-			Destination: "service1",
-			Route: &api.Route{
-				Backends: []api.Backend{
-					{
-						Name:   "service1",
-						Tags:   []string{"tag1"},
-						Weight: 0.25,
-					},
-				},
-			},
-		},
-		{
-			ID:          "abcdef",
-			Destination: "service1",
-			Route: &api.Route{
-				Backends: []api.Backend{
-					{
-						Name:   "service1",
-						Tags:   []string{"tag1", "tag2"},
-						Weight: 0.75,
-					},
-				},
-			},
-		},
-		{
-			ID:          "abcdef",
-			Destination: "service2",
-			Route: &api.Route{
-				Backends: []api.Backend{
-					{
-						Name:   "service2",
-						Tags:   []string{},
-						Weight: 1.00,
-					},
-				},
-			},
-		},
-		{
-			ID:          "abcdef",
-			Destination: "service2",
-			Actions:     []api.Action{},
-		},
-	}
-
-	clusters := buildClusters(rules)
-
-	assert.Len(t, clusters, 3)
-
-	clusterName := buildServiceKey("service1", []string{"tag1"})
-	assert.Equal(t, Cluster{
-		Name:             clusterName,
-		ServiceName:      clusterName,
-		Type:             "sds",
-		LbType:           "round_robin",
-		ConnectTimeoutMs: 1000,
-		OutlierDetection: &OutlierDetection{
-			MaxEjectionPercent: 100,
-		},
-		CircuitBreaker: &CircuitBreaker{},
-	}, clusters[0])
-
-	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
-	assert.Equal(t, buildServiceKey("service2", []string{}), clusters[2].Name)
-}
+// TODO move this test to Discovery
+//func TestBuildClusters(t *testing.T) {
+//	rules := []api.Rule{
+//		{
+//			ID:          "abcdef",
+//			Destination: "service1",
+//			Route: &api.Route{
+//				Backends: []api.Backend{
+//					{
+//						Name:   "service1",
+//						Tags:   []string{"tag1"},
+//						Weight: 0.25,
+//					},
+//				},
+//			},
+//		},
+//		{
+//			ID:          "abcdef",
+//			Destination: "service1",
+//			Route: &api.Route{
+//				Backends: []api.Backend{
+//					{
+//						Name:   "service1",
+//						Tags:   []string{"tag1", "tag2"},
+//						Weight: 0.75,
+//					},
+//				},
+//			},
+//		},
+//		{
+//			ID:          "abcdef",
+//			Destination: "service2",
+//			Route: &api.Route{
+//				Backends: []api.Backend{
+//					{
+//						Name:   "service2",
+//						Tags:   []string{},
+//						Weight: 1.00,
+//					},
+//				},
+//			},
+//		},
+//		{
+//			ID:          "abcdef",
+//			Destination: "service2",
+//			Actions:     []api.Action{},
+//		},
+//	}
+//
+//	clusters := buildClusters(rules)
+//
+//	assert.Len(t, clusters, 3)
+//
+//	clusterName := BuildServiceKey("service1", []string{"tag1"})
+//	assert.Equal(t, Cluster{
+//		Name:             clusterName,
+//		ServiceName:      clusterName,
+//		Type:             "sds",
+//		LbType:           "round_robin",
+//		ConnectTimeoutMs: 1000,
+//		OutlierDetection: &OutlierDetection{
+//			MaxEjectionPercent: 100,
+//		},
+//		CircuitBreaker: &CircuitBreaker{},
+//	}, clusters[0])
+//
+//	assert.Equal(t, BuildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
+//	assert.Equal(t, BuildServiceKey("service2", []string{}), clusters[2].Name)
+//}
 
 func TestBuildServiceKey(t *testing.T) {
 	type TestCase struct {
@@ -256,7 +257,7 @@ func TestBuildServiceKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actual := buildServiceKey(testCase.Service, testCase.Tags)
+		actual := BuildServiceKey(testCase.Service, testCase.Tags)
 		assert.Equal(t, testCase.Expected, actual)
 	}
 }
@@ -333,7 +334,7 @@ func TestBuildParseServiceKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		s := buildServiceKey(testCase.Service, testCase.Tags)
+		s := BuildServiceKey(testCase.Service, testCase.Tags)
 		service, tags := ParseServiceKey(s)
 		assert.Equal(t, testCase.Service, service)
 		assert.Equal(t, testCase.Tags, tags)
@@ -415,8 +416,8 @@ func TestConvert2(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
 	//configRoot, err := generateConfig(rules, instances, "gateway")
 	//assert.NoError(t, err)

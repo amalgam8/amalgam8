@@ -197,11 +197,17 @@ type SDS struct {
 	RefreshDelayMs int     `json:"refresh_delay_ms"`
 }
 
+type CDS struct {
+	Cluster        Cluster `json:"cluster"`
+	RefreshDelayMs int     `json:"refresh_delay_ms"`
+}
+
 // ClusterManager definition.
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_manager.html#config-cluster-manager
 type ClusterManager struct {
 	Clusters []Cluster `json:"clusters"`
 	SDS      SDS       `json:"sds"`
+	CDS      CDS       `json:"cds"`
 }
 
 // RootRuntime definition.

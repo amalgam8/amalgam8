@@ -22,4 +22,5 @@ import (
 type Config struct {
 	HTTPAddressSpec string
 	Discovery       api.ServiceDiscovery
+	Rules           api.RulesService
 }

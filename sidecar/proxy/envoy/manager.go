@@ -157,10 +157,9 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		return Config{}, err
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
-	clusters := buildClusters(rules)
 	routes := buildRoutes(rules)
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
@@ -226,10 +225,25 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
-			Clusters: clusters,
+			Clusters: []Cluster{},
 			SDS: SDS{
 				Cluster: Cluster{
 					Name:             "sds",
+					Type:             "strict_dns",
+					ConnectTimeoutMs: 1000,
+					LbType:           "round_robin",
+					Hosts: []Host{
+						{
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+						},
+					},
+					MaxRequestsPerConnection: 1,
+				},
+				RefreshDelayMs: 1000,
+			},
+			CDS: CDS{
+				Cluster: Cluster{
+					Name:             "cds",
 					Type:             "strict_dns",
 					ConnectTimeoutMs: 1000,
 					LbType:           "round_robin",
@@ -255,7 +269,7 @@ const (
 // form "serviceName:tag1=value1,tag2=value2,tag3=value3" where ':' is the
 // service delimiter and ',' is the tag delimiter. We assume that the service
 // name and the tags do not contain either delimiter.
-func buildServiceKey(service string, tags []string) string {
+func BuildServiceKey(service string, tags []string) string {
 	sort.Strings(tags)
 
 	buf := bytes.NewBufferString(service)
@@ -290,73 +304,8 @@ func ParseServiceKey(s string) (string, []string) {
 	return res[0], res[1:]
 }
 
-func buildClusters(rules []api.Rule) []Cluster {
-	clusterMap := make(map[string]*api.Backend)
-	for _, rule := range rules {
-		if rule.Route != nil {
-			for _, backend := range rule.Route.Backends {
-				key := buildServiceKey(backend.Name, backend.Tags)
-				// TODO if two backends map to the same key, it will overwrite
-				//  and will lose resilience field options in this case
-				clusterMap[key] = &backend
-			}
-		}
-	}
-
-	clusters := make([]Cluster, 0, len(clusterMap))
-	for clusterName, backend := range clusterMap {
-
-		cluster := Cluster{
-			Name:             clusterName,
-			ServiceName:      clusterName,
-			Type:             "sds",
-			LbType:           "round_robin",
-			ConnectTimeoutMs: 1000,
-			CircuitBreaker:   &CircuitBreaker{},
-			OutlierDetection: &OutlierDetection{
-				MaxEjectionPercent: 100,
-			},
-		}
-
-		if backend.Resilience != nil {
-			// Cluster level settings
-			if backend.Resilience.MaxRequestsPerConnection > 0 {
-				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
-			}
-
-			// Envoy Circuit breaker config options
-			if backend.Resilience.MaxConnections > 0 {
-				cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
-			}
-			if backend.Resilience.MaxRequests > 0 {
-				cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
-			}
-			if backend.Resilience.MaxPendingRequest > 0 {
-				cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-			}
-
-			// Envoy outlier detection settings that complete circuit breaker
-			if backend.Resilience.SleepWindow > 0 {
-				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-			}
-			if backend.Resilience.ConsecutiveErrors > 0 {
-				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-			}
-			if backend.Resilience.DetectionInterval > 0 {
-				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
-			}
-		}
-
-		clusters = append(clusters, cluster)
-	}
-
-	sort.Sort(ClustersByName(clusters))
-
-	return clusters
-}
-
 func buildWeightKey(service string, tags []string) string {
-	return fmt.Sprintf("%v.%v", service, buildServiceKey("_", tags))
+	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
 }
 
 func buildRoutes(ruleList []api.Rule) []Route {
@@ -389,7 +338,7 @@ func buildRoutes(ruleList []api.Rule) []Route {
 					prefixRewrite = "/"
 				}
 
-				clusterName := buildServiceKey(backend.Name, backend.Tags)
+				clusterName := BuildServiceKey(backend.Name, backend.Tags)
 
 				runtime := &Runtime{
 					Key:     buildWeightKey(backend.Name, backend.Tags),
@@ -442,7 +391,7 @@ func (s ByPriority) Less(i, j int) bool {
 	return s[i].Priority < s[j].Priority
 }
 
-func sanitizeRules(ruleList []api.Rule) {
+func SanitizeRules(ruleList []api.Rule) {
 	for i := range ruleList {
 		rule := &ruleList[i]
 		if rule.Route != nil {
@@ -479,7 +428,7 @@ func sanitizeRules(ruleList []api.Rule) {
 	sort.Sort(sort.Reverse(ByPriority(ruleList))) // Descending order
 }
 
-func addDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) []api.Rule {
+func AddDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) []api.Rule {
 	serviceMap := make(map[string]struct{})
 	for _, instance := range instances {
 		serviceMap[instance.ServiceName] = struct{}{}
@@ -537,7 +486,7 @@ func buildFS(ruleList []api.Rule, workingDir string) error {
 				w += int(100 * backend.Weight)
 				weight := weightSpec{
 					Service: backend.Name,
-					Cluster: buildServiceKey("_", backend.Tags),
+					Cluster: BuildServiceKey("_", backend.Tags),
 					Weight:  w,
 				}
 				weights = append(weights, weight)

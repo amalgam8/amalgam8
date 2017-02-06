@@ -83,6 +83,8 @@ func (s *service) Reload() error {
 		"-c", s.config,
 		"--drain-time-s", fmt.Sprint(s.drainTime),
 		"--parent-shutdown-time-s", fmt.Sprint(s.parentShutdownTime),
+		"--service-cluster", "a8clusters",
+		"--service-node", "a8nodes",
 		"--restart-epoch", fmt.Sprint(restartEpoch))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

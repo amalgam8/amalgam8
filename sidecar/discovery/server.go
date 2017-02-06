@@ -101,7 +101,7 @@ func (s *server) setup() (http.Handler, error) {
 		&rest.ContentTypeCheckerMiddleware{},
 	)
 
-	discoveryAPI := NewDiscovery(s.config.Discovery)
+	discoveryAPI := NewDiscovery(s.config.Discovery, s.config.Rules)
 
 	router, err := rest.MakeRouter(discoveryAPI.Routes()...)
 	if err != nil {

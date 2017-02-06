@@ -25,9 +25,9 @@ var DefaultConfig = Config{
 
 	ProxyConfig: ProxyConfig{
 		TLS:              false,
-		CertPath:         "",
-		CertKeyPath:      "",
-		CACertPath:       "",
+		CertChainFile:    "",
+		PrivateKeyFile:   "",
+		CACertFile:       "",
 		HTTPListenerPort: 0,
 		DiscoveryPort:    0,
 		AdminPort:        0,

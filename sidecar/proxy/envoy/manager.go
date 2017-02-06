@@ -80,7 +80,7 @@ type Manager interface {
 
 // NewManager creates new instance
 func NewManager(identity identity.Provider, conf *config.Config) Manager {
-	return &manager{
+	m := &manager{
 		identity:     identity,
 		sdsPort:      conf.ProxyConfig.DiscoveryPort,
 		adminPort:    conf.ProxyConfig.AdminPort,
@@ -94,6 +94,16 @@ func NewManager(identity identity.Provider, conf *config.Config) Manager {
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
 	}
+
+	if conf.ProxyConfig.TLS {
+		m.tlsConfig = &SSLContext{
+			CertChainFile:  conf.ProxyConfig.CertChainFile,
+			PrivateKeyFile: conf.ProxyConfig.PrivateKeyFile,
+			CACertFile:     &conf.ProxyConfig.CACertFile,
+		}
+	}
+
+	return m
 }
 
 type manager struct {
@@ -101,7 +111,8 @@ type manager struct {
 	service      Service
 	sdsPort      int
 	adminPort    int
-	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
+	listenerPort int         //Single listener port. TODO: Change to array, with port type Http|TCP
+	tlsConfig    *SSLContext //TODO: move into listener
 	workingDir   string
 	loggingDir   string
 }
@@ -190,7 +201,8 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		},
 		Listeners: []Listener{
 			{
-				Port: m.listenerPort, //TODO: needs to be generated based on m.listenerPort
+				Port:       m.listenerPort, //TODO: needs to be generated based on m.listenerPort
+				SSLContext: m.tlsConfig,
 				Filters: []NetworkFilter{
 					{
 						Type: "read",

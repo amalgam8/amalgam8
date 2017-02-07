@@ -219,15 +219,15 @@ func (cmd *RecipeRunCommand) DefaultAction(ctx *cli.Context) error {
 
 // RecipeResultsTable .
 func (cmd *RecipeRunCommand) RecipeResultsTable(results *api.RecipeResults) error {
-	table := CommandTable{}
+	table := cmd.term.NewTable()
 
-	table.header = []string{
+	table.SetHeader([]string{
 		"Assertion",
 		"Source",
 		"Destination",
 		"Result",
 		"Error",
-	}
+	})
 
 	for _, result := range results.Results {
 
@@ -236,8 +236,7 @@ func (cmd *RecipeRunCommand) RecipeResultsTable(results *api.RecipeResults) erro
 			testResult = "PASS"
 		}
 
-		table.body = append(
-			table.body,
+		table.AddRow(
 			[]string{
 				result["name"].(string),
 				result["source"].(string),
@@ -247,7 +246,7 @@ func (cmd *RecipeRunCommand) RecipeResultsTable(results *api.RecipeResults) erro
 			},
 		)
 	}
-
-	cmd.term.PrintTable(table.header, table.body)
+	table.SortByColumnIndex(0)
+	table.PrintTable()
 	return nil
 }

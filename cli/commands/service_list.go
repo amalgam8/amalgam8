@@ -122,11 +122,11 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 		return err
 	}
 
-	table := CommandTable{}
-	table.header = []string{
+	table := cmd.term.NewTable()
+	table.SetHeader([]string{
 		"Service",
 		"Instances",
-	}
+	})
 
 	for _, service := range services {
 		instances, errI := cmd.registry.ListServiceInstances(service)
@@ -139,16 +139,15 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 				fmt.Fprintf(&tagsBuffer, "%s(%d), ", tag, len(instance.Tags))
 			}
 		}
-		table.body = append(
-			table.body,
+		table.AddRow(
 			[]string{
 				service,
 				tagsBuffer.String()[:tagsBuffer.Len()-2],
 			},
 		)
 	}
-
-	cmd.term.PrintTable(table.header, table.body)
+	table.SortByColumnIndex(0)
+	table.PrintTable()
 	return nil
 }
 

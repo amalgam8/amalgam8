@@ -14,12 +14,6 @@
 
 package commands
 
-// CommandTable .
-type CommandTable struct {
-	header []string
-	body   [][]string
-}
-
 // ServiceInstancesList .
 type ServiceInstancesList struct {
 	Service   string   `json:"service" yaml:"service"`

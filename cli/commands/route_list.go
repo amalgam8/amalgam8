@@ -191,12 +191,12 @@ func (cmd *RouteListCommand) PrettyPrint(filter *api.RuleFilter, format string) 
 // | ratings          |                 |                      |
 // +------------------+-----------------+----------------------+
 func (cmd *RouteListCommand) RouteTable(filter *api.RuleFilter) error {
-	table := CommandTable{}
-	table.header = []string{
+	table := cmd.term.NewTable()
+	table.SetHeader([]string{
 		"Service",
 		"Default Version",
 		"Version Selectors",
-	}
+	})
 
 	routes, err := cmd.controller.ListRoutes(filter)
 	if err != nil {
@@ -206,8 +206,7 @@ func (cmd *RouteListCommand) RouteTable(filter *api.RuleFilter) error {
 	// add services that have routing rules
 	for serviceName, routingRules := range routes.Services {
 		defaultVersion, selectors := routeSelectors(routingRules)
-		table.body = append(
-			table.body,
+		table.AddRow(
 			[]string{
 				serviceName,
 				defaultVersion,
@@ -224,11 +223,12 @@ func (cmd *RouteListCommand) RouteTable(filter *api.RuleFilter) error {
 	// add services that don't have routing rules
 	for _, service := range services {
 		if _, ok := routes.Services[service]; !ok {
-			table.body = append(table.body, []string{service, "", ""})
+			table.AddRow([]string{service, "", ""})
 		}
 	}
 
-	cmd.term.PrintTable(table.header, table.body)
+	table.SortByColumnIndex(0)
+	table.PrintTable()
 	return nil
 }
 

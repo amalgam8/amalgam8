@@ -33,7 +33,7 @@ def hello():
         if not version:
             version = 'UNVERSIONED'
     response = app.make_response('Hello version: %s, container: %s\n' % (version, os.environ.get('HOSTNAME')))
-    response.set_cookie('version', json.dumps(service_version))
+    response.set_cookie('version', json.dumps(version))
     return response
 
 @app.route('/health')

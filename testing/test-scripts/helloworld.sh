@@ -54,6 +54,7 @@ A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get a
 # passing test.
+# TODO: add k8s TPR based testing
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Set/Verify setting of default route #############
@@ -124,6 +125,7 @@ done
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get an
 # approximate test of 75%/25% routing.
+# TODO: add k8s TPR based testing
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Split Traffic Between v1 and v2 #############

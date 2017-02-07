@@ -121,11 +121,20 @@ type NetworkFilter struct {
 	Config NetworkFilterConfig `json:"config"`
 }
 
+// SSLContext defintion
+// See: https://lyft.github.io/envoy/docs/configuration/listeners/ssl.html#config-listener-ssl-context
+type SSLContext struct {
+	CertChainFile  string  `json:"cert_chain_file"`
+	PrivateKeyFile string  `json:"private_key_file"`
+	CACertFile     *string `json:"ca_cert_file,omitempty"`
+}
+
 // Listener definition.
 // See: https://lyft.github.io/envoy/docs/configuration/listeners/listeners.html#config-listeners
 type Listener struct {
-	Port    int             `json:"port"`
-	Filters []NetworkFilter `json:"filters"`
+	Port       int             `json:"port"`
+	Filters    []NetworkFilter `json:"filters"`
+	SSLContext *SSLContext     `json:"ssl_context,omitempty"`
 }
 
 // Admin definition.

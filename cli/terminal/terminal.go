@@ -21,7 +21,7 @@ import (
 
 // UI defines the UI Interface
 type UI interface {
-	PrintTable(header []string, body [][]string)
+	NewTable() Table
 }
 
 type term struct {
@@ -43,4 +43,8 @@ func NewUI(input io.Reader, output io.Writer) UI {
 		Input:  input,
 		Output: output,
 	}
+}
+
+func (t term) NewTable() Table {
+	return NewTable(t.Output)
 }

@@ -22,9 +22,9 @@ import (
 )
 
 type sslTemplate struct {
-	CertPath    string
-	CertKeyPath string
-	CACertPath  string
+	CertChainFile  string
+	PrivateKeyFile string
+	CACertFile     string
 }
 
 const (
@@ -35,9 +35,9 @@ const (
 // GenerateConfig generates a NGINX service config with SSL.
 func GenerateConfig(conf config.ProxyConfig) error {
 	sslTmpl := &sslTemplate{
-		CertPath:    conf.CertPath,
-		CertKeyPath: conf.CertKeyPath,
-		CACertPath:  conf.CACertPath,
+		CertChainFile:  conf.CertChainFile,
+		PrivateKeyFile: conf.PrivateKeyFile,
+		CACertFile:     conf.CACertFile,
 	}
 
 	return executeTemplate(

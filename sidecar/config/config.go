@@ -124,15 +124,15 @@ type HealthCheck struct {
 	Method     string        `yaml:"method"`
 	Code       int           `yaml:"code"`
 	Args       []string      `yaml:"args"`
-	CACertPath string        `yaml:"ca_cert_path"`
+	CACertFile string        `yaml:"ca_cert_file"`
 }
 
 // ProxyConfig stores proxy configuration.
 type ProxyConfig struct {
 	TLS              bool   `yaml:"tls"`
-	CertPath         string `yaml:"cert_path"`
-	CertKeyPath      string `yaml:"cert_key_path"`
-	CACertPath       string `yaml:"ca_cert_path"`
+	CertChainFile    string `yaml:"cert_chain_file"`
+	PrivateKeyFile   string `yaml:"private_key_file"`
+	CACertFile       string `yaml:"ca_cert_file"`
 	HTTPListenerPort int    `yaml:"http_listener_port"`
 	DiscoveryPort    int    `yaml:"sds_port"`
 	AdminPort        int    `yaml:"admin_port"`
@@ -244,9 +244,9 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Register, registerFlag)
 	loadFromContextIfSet(&c.Proxy, proxyFlag)
 	loadFromContextIfSet(&c.ProxyConfig.TLS, proxyTLSFlag)
-	loadFromContextIfSet(&c.ProxyConfig.CertPath, proxyCertPathFlag)
-	loadFromContextIfSet(&c.ProxyConfig.CertKeyPath, proxyCertKeyPathFlag)
-	loadFromContextIfSet(&c.ProxyConfig.CACertPath, proxyCACertPathFlag)
+	loadFromContextIfSet(&c.ProxyConfig.CertChainFile, proxyCertChainFileFlag)
+	loadFromContextIfSet(&c.ProxyConfig.PrivateKeyFile, proxyPrivateKeyFileFlag)
+	loadFromContextIfSet(&c.ProxyConfig.CACertFile, proxyCACertFileFlag)
 	loadFromContextIfSet(&c.ProxyAdapter, proxyAdapterFlag)
 	loadFromContextIfSet(&c.DNS, dnsFlag)
 	loadFromContextIfSet(&c.Endpoint.Host, endpointHostFlag)
@@ -397,9 +397,9 @@ func (c *Config) Validate() error {
 
 		if c.ProxyConfig.TLS {
 			validators = append(validators,
-				IsNotEmpty("Certificate path", c.ProxyConfig.CertPath),
-				IsNotEmpty("Certificate key path", c.ProxyConfig.CertKeyPath),
-				IsNotEmpty("CA certificate path", c.ProxyConfig.CACertPath),
+				IsNotEmpty("Certificate chain file", c.ProxyConfig.CertChainFile),
+				IsNotEmpty("Private key file", c.ProxyConfig.PrivateKeyFile),
+				IsNotEmpty("CA cert file", c.ProxyConfig.CACertFile),
 			)
 		}
 	}

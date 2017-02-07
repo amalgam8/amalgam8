@@ -94,6 +94,7 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		instances: []api.ServiceInstance{},
 		rules:     []api.Rule{},
 	}, nil
+
 }
 
 // Start Envoy proxy.

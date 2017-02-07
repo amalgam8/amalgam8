@@ -16,11 +16,22 @@ import os
 import json
 from flask import Flask, request
 app = Flask(__name__)
+version = ""
 
 @app.route('/hello')
 def hello():
-    service_version = os.environ.get('A8_SERVICE').split(':')
-    version = service_version[1] if len(service_version) == 2 else 'UNVERSIONED'
+    global version
+    service_version = ""
+
+    if not version:
+        if os.environ.get('A8_SERVICE'):
+            service_version = os.environ.get('A8_SERVICE').split(':')
+            if len(service_version) == 2:
+                version = service_version[1]
+        elif os.environ.get('A8_HELLO_VERSION'):
+            version = os.environ.get('A8_HELLO_VERSION')
+        if not version:
+            version = 'UNVERSIONED'
     response = app.make_response('Hello version: %s, container: %s\n' % (version, os.environ.get('HOSTNAME')))
     response.set_cookie('version', json.dumps(service_version))
     return response

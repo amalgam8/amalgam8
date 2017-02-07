@@ -88,40 +88,39 @@ func (cmd *InfoCommand) Action(ctx *cli.Context) error {
 // | A8_DEBUG            | false                      |
 // +---------------------+----------------------------+
 func (cmd *InfoCommand) DefaultAction(ctx *cli.Context) error {
-	table := CommandTable{}
-	table.header = []string{"Env. Variable", "Value"}
-	table.body = append(
-		table.body,
-		[]string{
-			common.RegistryURL.EnvVar(),
-			ctx.GlobalString(common.RegistryURL.Flag()),
-		},
-		[]string{
+	table := cmd.term.NewTable()
+	table.SetHeader([]string{"Env. Variable", "Value"})
+	table.AddMultipleRows([][]string{{
+		common.RegistryURL.EnvVar(),
+		ctx.GlobalString(common.RegistryURL.Flag()),
+	},
+		{
 			common.RegistryToken.EnvVar(),
 			ctx.GlobalString(common.RegistryToken.Flag()),
 		},
-		[]string{
+		{
 			common.ControllerURL.EnvVar(),
 			ctx.GlobalString(common.ControllerURL.Flag()),
 		},
-		[]string{
+		{
 			common.ControllerToken.EnvVar(),
 			ctx.GlobalString(common.ControllerToken.Flag()),
 		},
-		[]string{
+		{
 			common.GremlinURL.EnvVar(),
 			ctx.GlobalString(common.GremlinURL.Flag()),
 		},
-		[]string{
+		{
 			common.GremlinToken.EnvVar(),
 			ctx.GlobalString(common.GremlinToken.Flag()),
 		},
-		[]string{
+		{
 			common.Debug.EnvVar(),
 			ctx.GlobalString(common.Debug.Flag()),
 		},
-	)
+	})
 	fmt.Fprintf(ctx.App.Writer, "\nAmalgam8 info...\n")
-	cmd.term.PrintTable(table.header, table.body)
+	table.SortByColumnIndex(0)
+	table.PrintTable()
 	return nil
 }

@@ -44,7 +44,7 @@
     }
   },
   "additionalFields": false,
-  "required": ["destination"],
+  "required": ["destination", "id", "priority"],
   "oneOf": [
     {
       "title": "Route rule",

@@ -1,4 +1,4 @@
-# Copyright 2016-2017 IBM Corporation
+# Copyright 2017 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -12,28 +12,15 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-apiVersion: v1
-kind: ReplicationController
+apiVersion: "amalgam8.io/v1"
+kind: RoutingRule
 metadata:
-  name: rules
-  labels:
-    app: rules
+  name: "set-helloworld-25p-v2"
 spec:
-  replicas: 1
-  selector:
-    app: rules
-  template:
-    metadata:
-      name: rules
-      labels:
-        app: rules
-    spec:
-      containers:
-        - name: rules
-          image: amalgam8/a8-k8s-rules-controller:latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+  priority: 1
+  destination: "helloworld"
+  route:
+    backends:
+      - weight: 0.25
+        tags:
+        - "version=v2"

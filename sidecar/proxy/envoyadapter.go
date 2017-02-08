@@ -84,7 +84,11 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		return nil, err
 	}
 
-	manager := envoy.NewManager(identity, conf)
+	manager, err := envoy.NewManager(identity, conf)
+	if err != nil {
+		logrus.WithError(err).Error("Envoy manager failed to init")
+		return nil, err
+	}
 
 	return &EnvoyAdapter{
 		manager:          manager,

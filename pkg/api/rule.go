@@ -16,10 +16,10 @@ package api
 
 // Rule represents an individual rule.
 type Rule struct {
-	ID          string   `json:"id" yaml:"id"`
-	Priority    int      `json:"priority" yaml:"priority"`
+	ID          string   `json:"id,omitempty" yaml:"id,omitempty"`
+	Priority    int      `json:"priority,omitempty" yaml:"priority,omitempty"`
 	Tags        []string `json:"tags,omitempty" yaml:"tags,omitempty"`
-	Destination string   `json:"destination" yaml:"destination"`
+	Destination string   `json:"destination,omitempty" yaml:"destination,omitempty"`
 	Match       *Match   `json:"match,omitempty" yaml:"match,omitempty"`
 	Route       *Route   `json:"route,omitempty" yaml:"route,omitempty"`
 	Actions     []Action `json:"actions,omitempty" yaml:"actions,omitempty"`

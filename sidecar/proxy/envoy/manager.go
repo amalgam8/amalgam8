@@ -182,7 +182,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	sanitizeRules(rules)
 	rules = addDefaultRouteRules(rules, instances)
 
-	clusters := buildClusters(rules)
+	clusters := buildClusters(rules, m.tlsConfig)
 	routes := buildRoutes(rules)
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
@@ -208,8 +208,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		},
 		Listeners: []Listener{
 			{
-				Port:       m.listenerPort, //TODO: needs to be generated based on m.listenerPort
-				SSLContext: m.tlsConfig,
+				Port: m.listenerPort, //TODO: needs to be generated based on m.listenerPort
 				Filters: []NetworkFilter{
 					{
 						Type: "read",
@@ -309,7 +308,7 @@ func ParseServiceKey(s string) (string, []string) {
 	return res[0], res[1:]
 }
 
-func buildClusters(rules []api.Rule) []Cluster {
+func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 	clusterMap := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
@@ -335,6 +334,7 @@ func buildClusters(rules []api.Rule) []Cluster {
 			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
+			SSLContext: tlsConfig,
 		}
 
 		if backend.Resilience != nil {

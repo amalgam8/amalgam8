@@ -29,9 +29,9 @@ if [ -z "$A8_TEST_DOCKER" ]; then
     A8_TEST_DOCKER="true"
 fi
 
-if [ -z "$A8_TEST_K8S" ]; then
-    A8_TEST_K8S="true"
-fi
+#if [ -z "$A8_TEST_K8S" ]; then
+#    A8_TEST_K8S="true"
+#fi
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 

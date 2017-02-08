@@ -19,13 +19,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"path/filepath"
 	"sort"
 
 	"strings"
+
+	"io/ioutil"
 
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
@@ -79,7 +80,7 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(identity identity.Provider, conf *config.Config) Manager {
+func NewManager(identity identity.Provider, conf *config.Config) (Manager, error) {
 	m := &manager{
 		identity:     identity,
 		sdsPort:      conf.ProxyConfig.DiscoveryPort,
@@ -103,7 +104,11 @@ func NewManager(identity identity.Provider, conf *config.Config) Manager {
 		}
 	}
 
-	return m
+	if err := buildFS(m.workingDir); err != nil {
+		return nil, err
+	}
+
+	return m, nil
 }
 
 type manager struct {
@@ -118,6 +123,12 @@ type manager struct {
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
+
+	// TODO if only fault or route values have changed, can update the filesystem and do not need to reload
+	//if err := updateFS(m.workingDir, instances, rules); err != nil {
+	//	return Config{}, err
+	//}
+
 	conf, err := m.generateConfig(rules, instances)
 	if err != nil {
 		return err
@@ -174,10 +185,6 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	clusters := buildClusters(rules, m.tlsConfig)
 	routes := buildRoutes(rules)
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
-
-	if err := buildFS(rules, m.workingDir); err != nil {
-		return Config{}, err
-	}
 
 	traceKey := "gremlin_recipe_id"
 	traceVal := "-"
@@ -405,7 +412,7 @@ func buildRoutes(ruleList []api.Rule) []Route {
 
 				runtime := &Runtime{
 					Key:     buildWeightKey(backend.Name, backend.Tags),
-					Default: 0,
+					Default: int(backend.Weight * 100),
 				}
 
 				route := Route{
@@ -485,6 +492,12 @@ func sanitizeRules(ruleList []api.Rule) {
 					}
 				}
 			}
+
+			sum = 0
+			for j := range rule.Route.Backends {
+				sum += rule.Route.Backends[j].Weight
+				rule.Route.Backends[j].Weight = sum
+			}
 		}
 	}
 
@@ -534,7 +547,22 @@ func randFilename(prefix string) string {
 	return fmt.Sprintf("%s%s", prefix, data)
 }
 
-func buildFS(ruleList []api.Rule, workingDir string) error {
+func buildFS(workingDir string) error {
+	if err := os.MkdirAll(filepath.Dir(workingDir+runtimePath), configDirPerm); err != nil { // FIXME: hack
+		return err
+	}
+
+	if err := os.MkdirAll(workingDir+runtimeVersionsPath, configDirPerm); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func updateFS(workingDir string, instances []api.ServiceInstance, ruleList []api.Rule) error {
+	sanitizeRules(ruleList)
+	rules := addDefaultRouteRules(ruleList, instances)
+
 	type weightSpec struct {
 		Service string
 		Cluster string
@@ -542,7 +570,7 @@ func buildFS(ruleList []api.Rule, workingDir string) error {
 	}
 
 	var weights []weightSpec
-	for _, rule := range ruleList {
+	for _, rule := range rules {
 		if rule.Route != nil {
 			w := 0
 			for _, backend := range rule.Route.Backends {
@@ -555,14 +583,6 @@ func buildFS(ruleList []api.Rule, workingDir string) error {
 				weights = append(weights, weight)
 			}
 		}
-	}
-
-	if err := os.MkdirAll(filepath.Dir(workingDir+runtimePath), configDirPerm); err != nil { // FIXME: hack
-		return err
-	}
-
-	if err := os.MkdirAll(workingDir+runtimeVersionsPath, configDirPerm); err != nil {
-		return err
 	}
 
 	dirName, err := ioutil.TempDir(workingDir+runtimeVersionsPath, "")

@@ -58,7 +58,7 @@ func TestSanitizeRules(t *testing.T) {
 
 	assert.InEpsilon(t, 0.25, rules[0].Route.Backends[0].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[0].Name)
-	assert.InEpsilon(t, 0.75, rules[0].Route.Backends[1].Weight, 0.01)
+	assert.InEpsilon(t, 1.0, rules[0].Route.Backends[1].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[1].Name)
 	assert.Len(t, rules[0].Route.Backends[1].Tags, 2)
 	assert.Equal(t, "tag1", rules[0].Route.Backends[1].Tags[0])

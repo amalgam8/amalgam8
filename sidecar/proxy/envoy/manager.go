@@ -328,13 +328,18 @@ func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 			Name:             clusterName,
 			ServiceName:      clusterName,
 			Type:             "sds",
-			LbType:           "round_robin",
+			LbType:           backend.LbType,
 			ConnectTimeoutMs: 1000,
 			CircuitBreaker:   &CircuitBreaker{},
 			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
 			SSLContext: tlsConfig,
+		}
+
+		if cluster.LbType == "" {
+			// Set default value of LbType to be "round_robin"
+			cluster.LbType = "round_robin"
 		}
 
 		if backend.Resilience != nil {

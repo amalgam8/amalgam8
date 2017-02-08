@@ -31,6 +31,7 @@ import (
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
+	"github.com/amalgam8/amalgam8/sidecar/util"
 )
 
 // Envoy config related files
@@ -330,6 +331,17 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 	rules = AddDefaultRouteRules(rules, instances)
 
 	backends := make(map[string]*api.Backend)
+	staticClusters := make(map[string]*api.Backend)
+	instanceByClusterMap := make(map[string][]*api.ServiceInstance)
+	for _, inst := range instances {
+		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
+		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
+			staticClusters[clusterName] = nil
+		}
+		instanceByClusterMap[clusterName] = append(instanceByClusterMap[clusterName], inst)
+	}
+
+	clusterMap := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
@@ -337,58 +349,35 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 				// TODO if two backends map to the same key, it will overwrite
 				//  and will lose resilience field options in this case
 				backends[key] = &backend
+
+				if _, exists := staticClusters[key]; !exists {
+					clusterMap[key] = &backend
+				} else {
+					staticClusters[key] = &backend
+				}
 			}
 		}
 	}
 
-	clusters := make([]Cluster, 0, len(backends))
-	for name, backend := range backends {
-		cluster := Cluster{
-			Name:             name,
-			ServiceName:      name,
-			Type:             "sds",
-			LbType:           "round_robin",
-			ConnectTimeoutMs: 1000,
-			CircuitBreakers:  &CircuitBreakers{},
-			OutlierDetection: &OutlierDetection{
-				MaxEjectionPercent: 100,
-			},
-			SSLContext: tlsConfig,
+	clusters := make([]Cluster, 0, len(clusterMap))
+	for clusterName, backend := range clusterMap {
+
+		cluster := buildCluster(clusterName, backend, tlsConfig)
+
+		clusters = append(clusters, cluster)
+	}
+
+	for clusterName, backend := range staticClusters {
+		cluster := buildCluster(clusterName, backend, tlsConfig)
+		cluster.Type = "strict_dns"
+		hosts := make([]Host, 0, len(instanceByClusterMap[clusterName]))
+		for _, inst := range instanceByClusterMap[clusterName] {
+			host := Host{
+				URL: fmt.Sprintf("tcp://%v", inst.Endpoint.Value),
+			}
+			hosts = append(hosts, host)
 		}
-
-		if backend.LbType != "" {
-			cluster.LbType = backend.LbType
-		}
-
-		if backend.Resilience != nil {
-			// Cluster level settings
-			if backend.Resilience.MaxRequestsPerConnection > 0 {
-				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
-			}
-
-			// Envoy Circuit breaker config options
-			if backend.Resilience.MaxConnections > 0 {
-				cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
-			}
-			if backend.Resilience.MaxRequests > 0 {
-				cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
-			}
-			if backend.Resilience.MaxPendingRequest > 0 {
-				cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-			}
-
-			// Envoy outlier detection settings that complete circuit breaker
-			if backend.Resilience.SleepWindow > 0 {
-				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-			}
-			if backend.Resilience.ConsecutiveErrors > 0 {
-				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-			}
-			if backend.Resilience.DetectionInterval > 0 {
-				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
-			}
-		}
-
+		cluster.Hosts = hosts
 		clusters = append(clusters, cluster)
 
 	}
@@ -401,6 +390,56 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 // BuildWeightKey builds filesystem key for Route Runtime weight keys
 func BuildWeightKey(service string, tags []string) string {
 	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
+}
+
+func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContext) Cluster {
+	cluster := Cluster{
+		Name:             clusterName,
+		ServiceName:      clusterName,
+		Type:             "sds",
+		LbType:           "round_robin",
+		ConnectTimeoutMs: 1000,
+		CircuitBreakers:  &CircuitBreakers{},
+		OutlierDetection: &OutlierDetection{
+			MaxEjectionPercent: 100,
+		},
+		SSLContext: tlsConfig,
+	}
+
+	if backend.LbType != "" {
+		cluster.LbType = backend.LbType
+	}
+
+	if backend.Resilience != nil {
+		// Cluster level settings
+		if backend.Resilience.MaxRequestsPerConnection > 0 {
+			cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+		}
+
+		// Envoy Circuit breaker config options
+		if backend.Resilience.MaxConnections > 0 {
+			cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
+		}
+		if backend.Resilience.MaxRequests > 0 {
+			cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
+		}
+		if backend.Resilience.MaxPendingRequest > 0 {
+			cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+		}
+
+		// Envoy outlier detection settings that complete circuit breaker
+		if backend.Resilience.SleepWindow > 0 {
+			cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+		}
+		if backend.Resilience.ConsecutiveErrors > 0 {
+			cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+		}
+		if backend.Resilience.DetectionInterval > 0 {
+			cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+		}
+	}
+
+	return cluster
 }
 
 // BuildRoutes builds routes based on rules.  Assumes at least one route for each service

@@ -199,7 +199,7 @@ func TestBuildClusters(t *testing.T) {
 		},
 	}
 
-	clusters := buildClusters(rules)
+	clusters := buildClusters(rules, nil)
 
 	assert.Len(t, clusters, 3)
 

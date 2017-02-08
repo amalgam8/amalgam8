@@ -161,6 +161,7 @@ type Cluster struct {
 	Hosts                    []Host            `json:"hosts,omitempty"`
 	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
 	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
+	SSLContext               *SSLContext       `json:"ssl_context,omitempty"`
 }
 
 // OutlierDetection definition

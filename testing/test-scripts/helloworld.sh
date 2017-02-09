@@ -51,6 +51,7 @@ dump_debug() {
 MAX_LOOP=5
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXAMPLESDIR=$SCRIPTDIR/../../examples
 A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 
 . $SCRIPTDIR/testing-common.sh
@@ -68,9 +69,9 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
     echo ""
     echo "Set/verify the Hello World default route to v1"
     if [ "$ENV" == "docker" ]; then
-        create_rule $SCRIPTDIR/helloworld-default-route-rules.json
+        create_rule $EXAMPLESDIR/docker-helloworld-default-route-rules.json
     else
-        create_rule $SCRIPTDIR/helloworld-default-route-rules.yaml
+        create_rule $EXAMPLESDIR/k8s-helloworld-default-route-rules.yaml
     fi
 
     sleep 15
@@ -134,15 +135,12 @@ retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Split Traffic Between v1 and v2 #############
 
-    # Clean up the routing rules from the previous testcase
-    cleanup_all_rules
-
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
     if [ "$ENV" == "docker" ]; then
-        create_rule $SCRIPTDIR/helloworld-v1-v2-route-rules.json
+        create_rule $EXAMPLESDIR/docker-helloworld-v1-v2-route-rules.json
     else
-        create_rule $SCRIPTDIR/helloworld-v1-v2-route-rules.yaml
+        create_rule $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
     fi
 
     sleep 15

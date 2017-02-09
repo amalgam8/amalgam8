@@ -160,7 +160,6 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	SanitizeRules(rules)
 	rules = AddDefaultRouteRules(rules, instances)
 
-	routes := buildRoutes(rules)
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
 	if err := buildFS(rules, m.workingDir); err != nil {
@@ -199,15 +198,31 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 							StatPrefix:        "ingress_http",
 							UserAgent:         true,
 							GenerateRequestID: true,
-							RouteConfig: RouteConfig{
-								VirtualHosts: []VirtualHost{
-									{
-										Name:    "backend",
-										Domains: []string{"*"},
-										Routes:  routes,
+							RDS: RDS{
+								Cluster: Cluster{
+									Name:             "rds",
+									Type:             "strict_dns",
+									ConnectTimeoutMs: 1000,
+									LbType:           "round_robin",
+									Hosts: []Host{
+										{
+											URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+										},
 									},
+									MaxRequestsPerConnection: 1,
 								},
+								RouteConfigName: "gihanson",
+								RefreshDelayMS:  1000,
 							},
+							//RouteConfig: RouteConfig{
+							//	VirtualHosts: []VirtualHost{
+							//		{
+							//			Name:    "backend",
+							//			Domains: []string{"*"},
+							//			Routes:  routes,
+							//		},
+							//	},
+							//},
 							Filters: filters,
 							AccessLog: []AccessLog{
 								{
@@ -304,73 +319,8 @@ func ParseServiceKey(s string) (string, []string) {
 	return res[0], res[1:]
 }
 
-func buildWeightKey(service string, tags []string) string {
+func BuildWeightKey(service string, tags []string) string {
 	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
-}
-
-func buildRoutes(ruleList []api.Rule) []Route {
-	routes := []Route{}
-	for _, rule := range ruleList {
-		if rule.Route != nil {
-			var headers []Header
-			if rule.Match != nil {
-				headers = make([]Header, 0, len(rule.Match.Headers))
-				for k, v := range rule.Match.Headers {
-					headers = append(
-						headers,
-						Header{
-							Name:  k,
-							Value: v,
-							Regex: true,
-						},
-					)
-				}
-			}
-
-			for _, backend := range rule.Route.Backends {
-				var path, prefix, prefixRewrite string
-				if backend.URI != nil {
-					path = backend.URI.Path
-					prefix = backend.URI.Prefix
-					prefixRewrite = backend.URI.PrefixRewrite
-				} else {
-					prefix = fmt.Sprintf("/%v/", backend.Name)
-					prefixRewrite = "/"
-				}
-
-				clusterName := BuildServiceKey(backend.Name, backend.Tags)
-
-				runtime := &Runtime{
-					Key:     buildWeightKey(backend.Name, backend.Tags),
-					Default: 0,
-				}
-
-				route := Route{
-					Runtime:       runtime,
-					Path:          path,
-					Prefix:        prefix,
-					PrefixRewrite: prefixRewrite,
-					Cluster:       clusterName,
-					Headers:       headers,
-					RetryPolicy: RetryPolicy{
-						Policy: "5xx,connect-failure,refused-stream",
-					},
-				}
-
-				if rule.Route.HTTPReqTimeout > 0 {
-					// convert from float sec to in ms
-					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
-				}
-				if rule.Route.HTTPReqRetries > 0 {
-					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
-				}
-
-				routes = append(routes, route)
-			}
-		}
-	}
-
-	return routes
 }
 
 // ByPriority implement sort

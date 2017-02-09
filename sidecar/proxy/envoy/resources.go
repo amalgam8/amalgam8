@@ -102,6 +102,12 @@ type AccessLog struct {
 	Filter string `json:"filter,omitempty"`
 }
 
+type RDS struct {
+	Cluster         Cluster `json:"cluster"`
+	RefreshDelayMS  int     `json:"refresh_delay_ms"`
+	RouteConfigName string  `json:"route_config_name"`
+}
+
 // NetworkFilterConfig definition.
 type NetworkFilterConfig struct {
 	CodecType         string      `json:"codec_type"`
@@ -109,6 +115,7 @@ type NetworkFilterConfig struct {
 	GenerateRequestID bool        `json:"generate_request_id"`
 	UserAgent         bool        `json:"add_user_agent"`
 	RouteConfig       RouteConfig `json:"route_config"`
+	RDS               RDS         `json:"rds"`
 	Filters           []Filter    `json:"filters"`
 	AccessLog         []AccessLog `json:"access_log"`
 }
@@ -150,7 +157,7 @@ type Cluster struct {
 	LbType                   string            `json:"lb_type"`
 	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
 	Hosts                    []Host            `json:"hosts,omitempty"`
-	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
+	CircuitBreakers          *CircuitBreakers  `json:"circuit_breakers,omitempty"`
 	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
 }
 
@@ -163,9 +170,9 @@ type OutlierDetection struct {
 	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
 }
 
-// CircuitBreaker definition
+// CircuitBreakers definition
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreaker struct {
+type CircuitBreakers struct {
 	MaxConnections    int `json:"max_connections,omitempty"`
 	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
 	MaxRequests       int `json:"max_requests,omitempty"`

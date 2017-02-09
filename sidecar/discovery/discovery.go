@@ -28,17 +28,64 @@ import (
 )
 
 const (
-	apiVer = "/v1"
+	apiVer                       = "/v1"
+	routeParamServiceClusterName = "csname"
+	routeParamServiceNodeName    = "snname"
 
 	routeParamServiceName = "sname"
 	registrationPath      = apiVer + "/registration"
 	registrationTemplate  = registrationPath + "/#" + routeParamServiceName
 
-	routeParamServiceClusterName = "csname"
-	routeParamServiceNodeName    = "snname"
-	clusterPath                  = apiVer + "/clusters"
-	clusterTemplate              = clusterPath + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
+	clusterPath     = apiVer + "/clusters"
+	clusterTemplate = clusterPath + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
+
+	routeParamRouteConfigName = "route_conf_name"
+	routesPath                = apiVer + "/routes"
+	routesTemplate            = routesPath + "/#" + routeParamRouteConfigName + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
+	///v1/routes/(string: route_config_name)/(string: service_cluster)/(string: service_node)
 )
+
+// Header definition.
+// See: https://lyft.github.io/envoy/docs/configuration/http_filters/fault_filter.html#config-http-filters-fault-injection-headers
+type Header struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+	Regex bool   `json:"regex"`
+}
+
+// Runtime definition.
+type Runtime struct {
+	Key     string `json:"key"`
+	Default int    `json:"default"`
+}
+
+// RetryPolicy definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#retry-policy
+type RetryPolicy struct {
+	Policy     string `json:"retry_on"` //5xx,connect-failure,refused-stream
+	NumRetries int    `json:"num_retries,omitempty"`
+}
+
+// Route definition.
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#config-http-conn-man-route-table-route
+type Route struct {
+	Runtime       *Runtime    `json:"runtime,omitempty"`
+	Path          string      `json:"path,omitempty"`
+	Prefix        string      `json:"prefix,omitempty"`
+	PrefixRewrite string      `json:"prefix_rewrite,omitempty"`
+	Cluster       string      `json:"cluster"`
+	Headers       []Header    `json:"headers,omitempty"`
+	TimeoutMS     int         `json:"timeout_ms,omitempty"`
+	RetryPolicy   RetryPolicy `json:"retry_policy"`
+}
+
+// VirtualHost definition.
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/vhost.html#config-http-conn-man-route-table-vhost
+type VirtualHost struct {
+	Name    string   `json:"name"`
+	Domains []string `json:"domains"`
+	Routes  []Route  `json:"routes"`
+}
 
 // Cluster definition.
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster.html#config-cluster-manager-cluster
@@ -50,7 +97,7 @@ type Cluster struct {
 	LbType                   string            `json:"lb_type"`
 	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
 	Hosts                    []Host            `json:"hosts,omitempty"`
-	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
+	CircuitBreakers          *CircuitBreakers  `json:"circuit_breakers,omitempty"`
 	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
 }
 
@@ -65,7 +112,7 @@ type OutlierDetection struct {
 
 // CircuitBreaker definition
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreaker struct {
+type CircuitBreakers struct {
 	MaxConnections    int `json:"max_connections,omitempty"`
 	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
 	MaxRequests       int `json:"max_requests,omitempty"`
@@ -128,6 +175,7 @@ func (d *Discovery) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Get(registrationTemplate, d.getRegistration),
 		rest.Get(clusterTemplate, d.getClusters),
+		rest.Get(routesTemplate, d.getRoutes),
 	}
 
 	for _, route := range routes {
@@ -219,12 +267,9 @@ func filterInstances(instances []*api.ServiceInstance, tags []string) []*api.Ser
 
 // getRegistration
 func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
-	clusterName := req.PathParam(routeParamServiceClusterName)
-
-	nodeName := req.PathParam(routeParamServiceNodeName)
-
-	fmt.Printf("ClusterName: %v", clusterName)
-	fmt.Printf("NodeName: %v", nodeName)
+	//clusterName := req.PathParam(routeParamServiceClusterName)
+	//
+	//nodeName := req.PathParam(routeParamServiceNodeName)
 
 	instances, err := d.discovery.ListInstances()
 	if err != nil {
@@ -279,7 +324,7 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 			Type:             "sds",
 			LbType:           "round_robin", //TODO this needs to be configurable
 			ConnectTimeoutMs: 1000,
-			CircuitBreaker:   &CircuitBreaker{},
+			CircuitBreakers:  &CircuitBreakers{},
 			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
@@ -294,13 +339,13 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 
 				// Envoy Circuit breaker config options
 				if backend.Resilience.MaxConnections > 0 {
-					cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
+					cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
 				}
 				if backend.Resilience.MaxRequests > 0 {
-					cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
+					cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
 				}
 				if backend.Resilience.MaxPendingRequest > 0 {
-					cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+					cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
 				}
 
 				// Envoy outlier detection settings that complete circuit breaker
@@ -321,4 +366,103 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 	}
 
 	return clusters
+}
+
+func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
+	instances, err := d.discovery.ListInstances()
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	ruleSet, err := d.rules.ListRules(&api.RuleFilter{})
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	envoy.SanitizeRules(ruleSet.Rules)
+	rules := envoy.AddDefaultRouteRules(ruleSet.Rules, instances)
+
+	routes := buildRoutes(rules)
+
+	respJSON := struct {
+		VirtualHosts []VirtualHost `json:"virtual_hosts"`
+	}{
+		[]VirtualHost{
+			{
+				Name:    "backend",
+				Domains: []string{"*"},
+				Routes:  routes,
+			},
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&respJSON)
+}
+
+func buildRoutes(ruleList []api.Rule) []Route {
+	routes := []Route{}
+	for _, rule := range ruleList {
+		if rule.Route != nil {
+			var headers []Header
+			if rule.Match != nil {
+				headers = make([]Header, 0, len(rule.Match.Headers))
+				for k, v := range rule.Match.Headers {
+					headers = append(
+						headers,
+						Header{
+							Name:  k,
+							Value: v,
+							Regex: true,
+						},
+					)
+				}
+			}
+
+			for _, backend := range rule.Route.Backends {
+				var path, prefix, prefixRewrite string
+				if backend.URI != nil {
+					path = backend.URI.Path
+					prefix = backend.URI.Prefix
+					prefixRewrite = backend.URI.PrefixRewrite
+				} else {
+					prefix = fmt.Sprintf("/%v/", backend.Name)
+					prefixRewrite = "/"
+				}
+
+				clusterName := envoy.BuildServiceKey(backend.Name, backend.Tags)
+
+				runtime := &Runtime{
+					Key:     envoy.BuildWeightKey(backend.Name, backend.Tags),
+					Default: 0,
+				}
+
+				route := Route{
+					Runtime:       runtime,
+					Path:          path,
+					Prefix:        prefix,
+					PrefixRewrite: prefixRewrite,
+					Cluster:       clusterName,
+					Headers:       headers,
+					RetryPolicy: RetryPolicy{
+						Policy: "5xx,connect-failure,refused-stream",
+					},
+				}
+
+				if rule.Route.HTTPReqTimeout > 0 {
+					// convert from float sec to in ms
+					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
+				}
+				if rule.Route.HTTPReqRetries > 0 {
+					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
+				}
+
+				routes = append(routes, route)
+			}
+		}
+	}
+
+	return routes
 }

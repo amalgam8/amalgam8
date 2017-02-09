@@ -17,7 +17,7 @@ kind: RoutingRule
 metadata:
   name: "set-helloworld-25p-v2"
 spec:
-  priority: 1
+  priority: 2
   destination: "helloworld"
   route:
     backends:

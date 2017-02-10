@@ -406,7 +406,8 @@ func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContex
 		SSLContext: tlsConfig,
 	}
 
-	if backend.LbType != "" {
+	if backend != nil &&   backend.LbType != "" {
+		// Set default value of LbType to be "round_robin"
 		cluster.LbType = backend.LbType
 	}
 

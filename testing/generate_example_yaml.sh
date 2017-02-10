@@ -39,6 +39,7 @@ replace(){
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$SCRIPTDIR/../examples
+TEST_SCRIPTS_DIR=$SCRIPTDIR/test-scripts
 
 ##### DOCKER ######
 DOCKER_DIR=$SCRIPTDIR/docker
@@ -46,6 +47,9 @@ DOCKER_DIR=$SCRIPTDIR/docker
 replace $DOCKER_DIR/bookinfo.yaml $EXAMPLESDIR/docker-bookinfo.yaml
 replace $DOCKER_DIR/helloworld.yaml $EXAMPLESDIR/docker-helloworld.yaml
 cp $DOCKER_DIR/controlplane.yaml $EXAMPLESDIR/docker-controlplane.yaml
+# Copy the rules over to examples/
+cp $TEST_SCRIPTS_DIR/helloworld-default-route-rules.json $EXAMPLESDIR/docker-helloworld-default-route-rules.json
+cp $TEST_SCRIPTS_DIR/helloworld-v1-v2-route-rules.json $EXAMPLESDIR/docker-helloworld-v1-v2-route-rules.json
 
 ##### K8S ######
 K8S_DIR=$SCRIPTDIR/kubernetes
@@ -53,6 +57,9 @@ K8S_DIR=$SCRIPTDIR/kubernetes
 replace $K8S_DIR/bookinfo.yaml $EXAMPLESDIR/k8s-bookinfo.yaml
 replace $K8S_DIR/helloworld.yaml $EXAMPLESDIR/k8s-helloworld.yaml
 cp $K8S_DIR/controlplane.yaml $EXAMPLESDIR/k8s-controlplane.yaml
+# Copy the rules over to examples/
+cp $TEST_SCRIPTS_DIR/helloworld-default-route-rules.yaml $EXAMPLESDIR/k8s-helloworld-default-route-rules.yaml
+cp $TEST_SCRIPTS_DIR/helloworld-v1-v2-route-rules.yaml $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
 
 ##### Bluemix cfg file #####
 replace $SCRIPTDIR/bluemix.cfg $EXAMPLESDIR/bluemix.cfg

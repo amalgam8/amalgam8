@@ -197,7 +197,7 @@ test.integration: build.testapps
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
 
-test.examples: build.exampleapps dockerize.sidecar.envoy.ubuntu
+test.examples: build.exampleapps dockerize.sidecar.envoy.ubuntu dockerize.k8srules
 	@echo "--> running automated examples"
 	@testing/run_tests.sh "examples" $(APP_VER_ABBR)
 

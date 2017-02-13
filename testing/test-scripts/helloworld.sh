@@ -14,16 +14,17 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-set -o errexit
-
 # docker or k8s
-ENV=$1
+if [ -z "$A8_CONTAINER_ENV" ]; then
+    A8_CONTAINER_ENV="docker"
+fi
+ENV=$A8_CONTAINER_ENV
 
 # Dump some possibly useful data on failures to help debug
 dump_debug() {
-    curl localhost:31200/v1/rules
 
     if [ "$ENV" == "docker" ]; then
+        curl localhost:31200/v1/rules
         docker exec -it gateway a8sidecar --debug show-state
         docker logs gateway
         docker exec gateway ps aux
@@ -37,6 +38,7 @@ dump_debug() {
     fi
 
     if [ "$ENV" == "k8s" ]; then
+        kubectl get routingrule -o json
 	PODNAME=$(kubectl get pods | grep gateway | awk '{print $1}')
 	kubectl exec $PODNAME -- a8sidecar --debug show-state
 	kubectl logs $PODNAME
@@ -49,28 +51,35 @@ dump_debug() {
 MAX_LOOP=5
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXAMPLESDIR=$SCRIPTDIR/../../examples
 A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
+
+. $SCRIPTDIR/testing-common.sh
 
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get a
 # passing test.
-# TODO: add k8s TPR based testing
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Set/Verify setting of default route #############
 
     # Clean up the routing rules from the previous testcase
-    $A8CLI rule-delete -a -f
+    cleanup_all_rules
 
     echo ""
     echo "Set/verify the Hello World default route to v1"
-    echo "  Invoking a8ctl to set the default route"
-    $A8CLI rule-create -f $SCRIPTDIR/helloworld-default-route-rules.json > /tmp/a8ctl_output.txt
+    if [ "$ENV" == "docker" ]; then
+        create_rule $EXAMPLESDIR/docker-helloworld-default-route-rules.json
+    else
+        create_rule $EXAMPLESDIR/k8s-helloworld-default-route-rules.yaml
+    fi
+
+    sleep 15
 
     echo ""
-    echo "  Calling the Controller /v1/rules API to verify the route was set to helloworld v1"
-    temp_var1=$(curl -s -X "GET" $A8_CONTROLLER_URL/v1/rules | jq -r '.rules[0].destination')
-    temp_var2=$(curl -s -X "GET" $A8_CONTROLLER_URL/v1/rules | jq -r '.rules[0].route.backends[0].tags[0]')
+    echo "  Verifying the route was set to helloworld v1"
+    temp_var1=$(list_rules "destination")
+    temp_var2=$(list_rules "route.backends[0].tags[0]")
 
     if [ "${temp_var1}" != "helloworld" ] || [ "${temp_var2}" != "version=v1" ]; then
         echo "  The default route was not set as expected."
@@ -81,9 +90,6 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
         echo "  Passed test"
         echo ""
     fi
-
-    # Sleep a bit to make sure the rules are applied
-    sleep 5
 
     ############# Test traffic routes to v1 #############
     echo ""
@@ -125,27 +131,28 @@ done
 # On single runs, have seen the routing to not be 100% following the
 # rule set.  So will loop to retry a few times to see if can get an
 # approximate test of 75%/25% routing.
-# TODO: add k8s TPR based testing
 retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Split Traffic Between v1 and v2 #############
 
-    # Clean up the routing rules from the previous testcase
-    $A8CLI rule-delete -a -f
-
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
-    echo "  Invoking a8ctl to set a rule to split the traffic."
-    $A8CLI rule-create -f $SCRIPTDIR/helloworld-v1-v2-route-rules.json > /tmp/a8ctl_output.txt
+    if [ "$ENV" == "docker" ]; then
+        create_rule $EXAMPLESDIR/docker-helloworld-v1-v2-route-rules.json
+    else
+        create_rule $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
+    fi
+
+    sleep 15
 
     echo ""
-    echo "  Calling the Controller API to verify the rule was set."
+    echo "  Verifying the rule was set."
     for count in {0..1}
     do
-        temp_var1=$(curl -s -X "GET" $A8_CONTROLLER_URL/v1/rules | jq -r '.rules[0].route.backends['"$count"'].tags[0]')
+	temp_var1=$(list_rules "route.backends[$count].tags[0]")
 
-        if [ "${temp_var1}" == "v1" ]; then
-            temp_var2=$(curl -s -X "GET" $A8_CONTROLLER_URL/v1/rules | jq -r '.rules[0].route.backends['"$count"'].weight')
+        if [ "${temp_var1}" == "version=v1" ]; then
+	    temp_var2=$(list_rules "route.backends[$count].weight")
 
             if [ "${temp_var2}" != "null" ]; then
                 echo "    The v1 route was not set as the default 75% as expected."
@@ -158,7 +165,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
         fi
 
         if [ "${temp_var1}" == "version=v2" ]; then
-            temp_var2=$(curl -s -X "GET" $A8_CONTROLLER_URL/v1/rules | jq -r '.rules[0].route.backends['"$count"'].weight')
+            temp_var2=$(list_rules "route.backends[$count].weight")
 
             if [ "${temp_var2}" != "0.25" ]; then
                 echo "    The v2 route was not set to 25% as expected."
@@ -172,8 +179,6 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
     done
     echo "  Passed test"
     echo ""
-
-    sleep 5
 
     ############# Test traffic is split between v1 and v2 #############
     echo ""
@@ -218,7 +223,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 done
 
 # Clean up the routing rules from the previous testcase
-$A8CLI rule-delete -a -f
+cleanup_all_rules
 
 echo ""
 echo "Verification of the Hello World example application completed successfully."

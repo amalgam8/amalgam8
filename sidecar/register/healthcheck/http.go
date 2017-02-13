@@ -50,13 +50,13 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 	}
 	var client *http.Client
 	if conf.Type == config.HTTPSHealthCheck &&
-		conf.CACertPath != "" {
+		conf.CACertFile != "" {
 
-		logrus.Debug("HTTPS HealthCheck, CA cert path = " + conf.CACertPath)
+		logrus.Debug("HTTPS HealthCheck, CA cert file = " + conf.CACertFile)
 		// Load trusted CA certs
-		caCerts, err := ioutil.ReadFile(conf.CACertPath)
+		caCerts, err := ioutil.ReadFile(conf.CACertFile)
 		if err != nil {
-			logrus.WithError(err).Debug("Error reading CA trust .pem file: " + conf.CACertPath)
+			logrus.WithError(err).Debug("Error reading CA trust .pem file: " + conf.CACertFile)
 			return nil, err
 		}
 		certPool := x509.NewCertPool()
@@ -67,7 +67,7 @@ func NewHTTP(conf config.HealthCheck) (Check, error) {
 		client = &http.Client{Transport: transport,
 			Timeout: conf.Timeout}
 	} else {
-		logrus.Debug("HTTP HealthCheck: " + conf.Type + " " + conf.CACertPath)
+		logrus.Debug("HTTP HealthCheck: " + conf.Type + " " + conf.CACertFile)
 		client = &http.Client{Timeout: conf.Timeout}
 	}
 	return &HTTP{

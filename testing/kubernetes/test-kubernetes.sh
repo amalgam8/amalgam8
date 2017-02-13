@@ -67,6 +67,8 @@ if [ "$A8_TEST_SUITE" == "examples" ]; then
     BOOKINFO_YAML=$SCRIPTDIR/../../examples/k8s-bookinfo.yaml
     CONTROLPLANE_YAML=$SCRIPTDIR/../../examples/k8s-controlplane.yaml
 else
+    # Disable the k8s integration tests for now
+    exit 0
     echo "======= Running the integration test suite ======="
     export A8_TEST_ENV="testing"
     HELLOWORLD_YAML=$SCRIPTDIR/helloworld.yaml
@@ -92,17 +94,18 @@ echo "Starting control plane"
 startup_pods $CONTROLPLANE_YAML
 sleep 10
 
-startup_pods $BOOKINFO_YAML
-echo "Waiting for the services to come online.."
-sleep 10
+# Disable the bookinfo tests for k8s for now
+#startup_pods $BOOKINFO_YAML
+#echo "Waiting for the services to come online.."
+#sleep 10
 
 # Run the actual test workload
-$SCRIPTDIR/../test-scripts/bookinfo.sh $A8_TEST_SUITE
+#$SCRIPTDIR/../test-scripts/bookinfo.sh $A8_TEST_SUITE
 
-echo "Kubernetes tests successful."
-echo "Cleaning up Bookinfo apps.."
-shutdown_pods $BOOKINFO_YAML || echo "Probably already down"
-sleep 5
+#echo "Kubernetes tests successful."
+#echo "Cleaning up Bookinfo apps.."
+#shutdown_pods $BOOKINFO_YAML || echo "Probably already down"
+#sleep 5
 
 if [ "$A8_TEST_SUITE" == "examples" ]; then
 	startup_pods $HELLOWORLD_YAML

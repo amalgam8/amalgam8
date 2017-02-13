@@ -328,9 +328,14 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
+			// FIXME set TLS config!
 		}
 
 		if backend, ok := backends[name]; ok {
+			if backend.LbType != "" {
+				cluster.LbType = backend.LbType
+			}
+
 			if backend.Resilience != nil {
 				// Cluster level settings
 				if backend.Resilience.MaxRequestsPerConnection > 0 {

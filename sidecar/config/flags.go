@@ -26,9 +26,9 @@ const (
 	registerFlag            = "register"
 	proxyFlag               = "proxy"
 	proxyTLSFlag            = "proxy_tls"
-	proxyCertPathFlag       = "proxy_cert_path"
-	proxyCertKeyPathFlag    = "proxy_cert_key_path"
-	proxyCACertPathFlag     = "proxy_ca_cert_path"
+	proxyCertChainFileFlag  = "proxy_cert_chain_file"
+	proxyPrivateKeyFileFlag = "proxy_private_key_file"
+	proxyCACertFileFlag     = "proxy_ca_cert_file"
 	proxyAdapterFlag        = "proxy_adapter"
 	serviceFlag             = "service"
 	endpointHostFlag        = "endpoint_host"
@@ -93,19 +93,19 @@ var Flags = []cli.Flag{
 		Usage:  "Enable proxy TLS communication",
 	},
 	cli.StringFlag{
-		Name:   proxyCertPathFlag,
-		EnvVar: envVar(proxyCertPathFlag),
-		Usage:  "Location of server certificate for proxy inbound https requests",
+		Name:   proxyCertChainFileFlag,
+		EnvVar: envVar(proxyCertChainFileFlag),
+		Usage:  "File containing the certificate chain file for the service (to present to clients)",
 	},
 	cli.StringFlag{
-		Name:   proxyCertKeyPathFlag,
-		EnvVar: envVar(proxyCertKeyPathFlag),
-		Usage:  "Location of server private key for proxy inbound https requests",
+		Name:   proxyPrivateKeyFileFlag,
+		EnvVar: envVar(proxyPrivateKeyFileFlag),
+		Usage:  "File containing the private key that corresponds to the certificate chain file",
 	},
 	cli.StringFlag{
-		Name:   proxyCACertPathFlag,
-		EnvVar: envVar(proxyCACertPathFlag),
-		Usage:  "Location of trusted CA certificate(s) for proxy outbound https services",
+		Name:   proxyCACertFileFlag,
+		EnvVar: envVar(proxyCACertFileFlag),
+		Usage:  "File containing CA certificate(s) to verify client connections",
 	},
 	cli.StringFlag{
 		Name:   serviceFlag,

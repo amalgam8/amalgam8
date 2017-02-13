@@ -8,13 +8,13 @@ include /etc/nginx/nginx-customizations.conf;
 server {
        listen 6379 ssl;
 
-       ssl_certificate {{.CertPath}};
-       ssl_certificate_key {{.CertKeyPath}};
+       ssl_certificate {{.CertChainFile}};
+       ssl_certificate_key {{.PrivateKeyFile}};
 
        location ~ ^/(?<service_name>.*?)(?<reqpath>/(.*))?$ {
          include /etc/nginx/amalgam8-rules.conf;
 
-         proxy_ssl_trusted_certificate {{.CACertPath}};
+         proxy_ssl_trusted_certificate {{.CACertFile}};
        }
 
        access_log /var/log/nginx/a8_access.log a8log;

@@ -58,7 +58,7 @@ func TestSanitizeRules(t *testing.T) {
 
 	assert.InEpsilon(t, 0.25, rules[0].Route.Backends[0].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[0].Name)
-	assert.InEpsilon(t, 0.75, rules[0].Route.Backends[1].Weight, 0.01)
+	assert.InEpsilon(t, 1.0, rules[0].Route.Backends[1].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[1].Name)
 	assert.Len(t, rules[0].Route.Backends[1].Tags, 2)
 	assert.Equal(t, "tag1", rules[0].Route.Backends[1].Tags[0])
@@ -151,7 +151,6 @@ func TestFS(t *testing.T) {
 	//assert.NoError(t, err)
 }
 
-// TODO move this test to Discovery
 //func TestBuildClusters(t *testing.T) {
 //	rules := []api.Rule{
 //		{
@@ -200,11 +199,11 @@ func TestFS(t *testing.T) {
 //		},
 //	}
 //
-//	clusters := buildClusters(rules)
+//	clusters := buildClusters(rules, nil)
 //
 //	assert.Len(t, clusters, 3)
 //
-//	clusterName := BuildServiceKey("service1", []string{"tag1"})
+//	clusterName := buildServiceKey("service1", []string{"tag1"})
 //	assert.Equal(t, Cluster{
 //		Name:             clusterName,
 //		ServiceName:      clusterName,
@@ -217,8 +216,8 @@ func TestFS(t *testing.T) {
 //		CircuitBreaker: &CircuitBreaker{},
 //	}, clusters[0])
 //
-//	assert.Equal(t, BuildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
-//	assert.Equal(t, BuildServiceKey("service2", []string{}), clusters[2].Name)
+//	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
+//	assert.Equal(t, buildServiceKey("service2", []string{}), clusters[2].Name)
 //}
 
 func TestBuildServiceKey(t *testing.T) {

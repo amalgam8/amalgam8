@@ -212,7 +212,10 @@
             }
           },
           "additionalProperties": false
-        }
+        },
+	"lb_type": {
+	  "enum": ["round_robin","least_request","random"]
+	}
       },
       "required": [
         "tags"

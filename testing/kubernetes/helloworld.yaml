@@ -1,4 +1,4 @@
-# Copyright 2016 IBM Corporation
+# Copyright 2017 IBM Corporation
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ spec:
     name: gateway
   type: NodePort
 ---
+
 apiVersion: v1
 kind: ReplicationController
 metadata:
@@ -43,21 +44,17 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
-        args:
-        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_PROXY
           value: "true"
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_POLL
-          value: 5s
-        - name: A8_SERVICE
-          value: gateway:none
         - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
-        - name: A8_ELASTICSEARCH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):9200
+        - name: A8_RULES_ADAPTER
+          value: kubernetes
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
 ---
 apiVersion: v1
 kind: Service
@@ -86,13 +83,13 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: amalgam8/a8-${A8_TEST_ENV}-helloworld-v1:${A8_RELEASE}
+        image: amalgam8/a8-examples-helloworld-v1:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
-        - name: A8_SERVICE
-          value: helloworld:version=v1
+        - name: A8_SERVICE_VERSION
+          value: version=v1
 ---
 apiVersion: v1
 kind: ReplicationController
@@ -108,10 +105,10 @@ spec:
     spec:
       containers:
       - name: helloworld
-        image: amalgam8/a8-${A8_TEST_ENV}-helloworld-v2:${A8_RELEASE}
+        image: amalgam8/a8-examples-helloworld-v2:${A8_RELEASE}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5000
         env:
-        - name: A8_SERVICE
-          value: helloworld:version=v2
+        - name: A8_SERVICE_VERSION
+          value: version=v2

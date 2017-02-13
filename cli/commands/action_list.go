@@ -184,15 +184,15 @@ func (cmd *ActionListCommand) PrettyPrint(filter *api.RuleFilter, format string)
 // | productpage | gateway        | Cookie:.*?user=jason | 10       | v1(trace)                   | 0f12b977-9ab9-4d69-8dfe-3eae07c8f115 |
 // +-------------+----------------+----------------------+----------+-----------------------------+--------------------------------------+
 func (cmd *ActionListCommand) ActionTable(filter *api.RuleFilter) error {
-	table := CommandTable{}
-	table.header = []string{
+	table := cmd.term.NewTable()
+	table.SetHeader([]string{
 		"Destination",
 		"Source",
 		"Headers",
 		"Priority",
 		"Actions",
 		"Rule ID",
-	}
+	})
 
 	actions, err := cmd.controller.ListAction(filter)
 	if err != nil {
@@ -201,8 +201,7 @@ func (cmd *ActionListCommand) ActionTable(filter *api.RuleFilter) error {
 
 	for _, service := range actions.Services {
 		for _, action := range service {
-			table.body = append(
-				table.body,
+			table.AddRow(
 				[]string{
 					action.Destination,
 					formatMatch(action.Match),
@@ -214,8 +213,8 @@ func (cmd *ActionListCommand) ActionTable(filter *api.RuleFilter) error {
 			)
 		}
 	}
-
-	cmd.term.PrintTable(table.header, table.body)
+	table.SortByColumnIndex(0)
+	table.PrintTable()
 	return nil
 }
 

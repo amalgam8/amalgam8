@@ -179,9 +179,6 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		return Config{}, err
 	}
 
-	SanitizeRules(rules)
-	rules = AddDefaultRouteRules(rules, instances)
-
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
 	traceKey := "gremlin_recipe_id"
@@ -216,31 +213,11 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 							StatPrefix:        "ingress_http",
 							UserAgent:         true,
 							GenerateRequestID: true,
-							RDS: RDS{
-								Cluster: Cluster{
-									Name:             "rds",
-									Type:             "strict_dns",
-									ConnectTimeoutMs: 1000,
-									LbType:           "round_robin",
-									Hosts: []Host{
-										{
-											URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
-										},
-									},
-									MaxRequestsPerConnection: 1,
-								},
+							RDS: &RDS{
+								Cluster:         "rds",
 								RouteConfigName: "gihanson",
 								RefreshDelayMS:  1000,
 							},
-							//RouteConfig: RouteConfig{
-							//	VirtualHosts: []VirtualHost{
-							//		{
-							//			Name:    "backend",
-							//			Domains: []string{"*"},
-							//			Routes:  routes,
-							//		},
-							//	},
-							//},
 							Filters: filters,
 							AccessLog: []AccessLog{
 								{
@@ -258,7 +235,20 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
-			Clusters: []Cluster{},
+			Clusters: []Cluster{
+				{
+					Name:             "rds",
+					Type:             "strict_dns",
+					ConnectTimeoutMs: 1000,
+					LbType:           "round_robin",
+					Hosts: []Host{
+						{
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+						},
+					},
+					MaxRequestsPerConnection: 1,
+				},
+			},
 			SDS: SDS{
 				Cluster: Cluster{
 					Name:             "sds",
@@ -298,7 +288,7 @@ const (
 	tagDelimiter     = ','
 )
 
-// buildServiceKey builds a service key given a service name and tags in the
+// BuildServiceKey builds a service key given a service name and tags in the
 // form "serviceName:tag1=value1,tag2=value2,tag3=value3" where ':' is the
 // service delimiter and ',' is the tag delimiter. We assume that the service
 // name and the tags do not contain either delimiter.
@@ -337,6 +327,7 @@ func ParseServiceKey(s string) (string, []string) {
 	return res[0], res[1:]
 }
 
+// BuildWeightKey builds filesystem key for Route Runtime weight keys
 func BuildWeightKey(service string, tags []string) string {
 	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
 }
@@ -359,6 +350,7 @@ func (s ByPriority) Less(i, j int) bool {
 	return s[i].Priority < s[j].Priority
 }
 
+// SanitizeRules performs sorts on rule backends and rules.  Also calculates remaining weights
 func SanitizeRules(ruleList []api.Rule) {
 	for i := range ruleList {
 		rule := &ruleList[i]
@@ -402,6 +394,7 @@ func SanitizeRules(ruleList []api.Rule) {
 	sort.Sort(sort.Reverse(ByPriority(ruleList))) // Descending order
 }
 
+// AddDefaultRules adds a route rule for a service that currently does not have one
 func AddDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) []api.Rule {
 	serviceMap := make(map[string]struct{})
 	for _, instance := range instances {

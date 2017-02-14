@@ -16,6 +16,7 @@ package discovery
 
 import (
 	"github.com/amalgam8/amalgam8/pkg/api"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
 )
 
 // Config encapsulates REST server configuration parameters
@@ -23,4 +24,5 @@ type Config struct {
 	HTTPAddressSpec string
 	Discovery       api.ServiceDiscovery
 	Rules           api.RulesService
+	TLSConfig       *envoy.SSLContext
 }

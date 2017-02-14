@@ -69,10 +69,20 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		conf.ProxyConfig.ProxyBinary = envoy.DefaultEnvoyBinary
 	}
 
+	var tlsConfig *envoy.SSLContext
+	if conf.ProxyConfig.TLS {
+		tlsConfig = &envoy.SSLContext{
+			CertChainFile:  conf.ProxyConfig.CertChainFile,
+			PrivateKeyFile: conf.ProxyConfig.PrivateKeyFile,
+			CACertFile:     &conf.ProxyConfig.CACertFile,
+		}
+	}
+
 	serverConfig := &discovery.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.ProxyConfig.DiscoveryPort),
 		Discovery:       discoveryClient,
 		Rules:           rulesClient,
+		TLSConfig:       tlsConfig,
 	}
 	server, err := discovery.NewDiscoveryServer(serverConfig)
 	if err != nil {

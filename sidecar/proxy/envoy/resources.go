@@ -102,22 +102,24 @@ type AccessLog struct {
 	Filter string `json:"filter,omitempty"`
 }
 
+// RDS definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/rds.html#config-http-conn-man-rds
 type RDS struct {
-	Cluster         Cluster `json:"cluster"`
-	RefreshDelayMS  int     `json:"refresh_delay_ms"`
-	RouteConfigName string  `json:"route_config_name"`
+	Cluster         string `json:"cluster"`
+	RefreshDelayMS  int    `json:"refresh_delay_ms"`
+	RouteConfigName string `json:"route_config_name"`
 }
 
 // NetworkFilterConfig definition.
 type NetworkFilterConfig struct {
-	CodecType         string      `json:"codec_type"`
-	StatPrefix        string      `json:"stat_prefix"`
-	GenerateRequestID bool        `json:"generate_request_id"`
-	UserAgent         bool        `json:"add_user_agent"`
-	RouteConfig       RouteConfig `json:"route_config"`
-	RDS               RDS         `json:"rds"`
-	Filters           []Filter    `json:"filters"`
-	AccessLog         []AccessLog `json:"access_log"`
+	CodecType         string       `json:"codec_type"`
+	StatPrefix        string       `json:"stat_prefix"`
+	GenerateRequestID bool         `json:"generate_request_id"`
+	UserAgent         bool         `json:"add_user_agent"`
+	RouteConfig       *RouteConfig `json:"route_config,omitempty"`
+	RDS               *RDS         `json:"rds,omitempty"`
+	Filters           []Filter     `json:"filters"`
+	AccessLog         []AccessLog  `json:"access_log"`
 }
 
 // NetworkFilter definition.
@@ -214,6 +216,8 @@ type SDS struct {
 	RefreshDelayMs int     `json:"refresh_delay_ms"`
 }
 
+// CDS definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cds.html#config-cluster-manager-cds
 type CDS struct {
 	Cluster        Cluster `json:"cluster"`
 	RefreshDelayMs int     `json:"refresh_delay_ms"`

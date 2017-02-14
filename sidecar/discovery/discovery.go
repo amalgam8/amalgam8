@@ -45,82 +45,14 @@ const (
 	///v1/routes/(string: route_config_name)/(string: service_cluster)/(string: service_node)
 )
 
-// Header definition.
-// See: https://lyft.github.io/envoy/docs/configuration/http_filters/fault_filter.html#config-http-filters-fault-injection-headers
-type Header struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-	Regex bool   `json:"regex"`
+// VirtualHosts is the array of route info returned by GET routes
+type VirtualHosts struct {
+	VirtualHosts []envoy.VirtualHost `json:"virtual_hosts"`
 }
 
-// Runtime definition.
-type Runtime struct {
-	Key     string `json:"key"`
-	Default int    `json:"default"`
-}
-
-// RetryPolicy definition
-// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#retry-policy
-type RetryPolicy struct {
-	Policy     string `json:"retry_on"` //5xx,connect-failure,refused-stream
-	NumRetries int    `json:"num_retries,omitempty"`
-}
-
-// Route definition.
-// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#config-http-conn-man-route-table-route
-type Route struct {
-	Runtime       *Runtime    `json:"runtime,omitempty"`
-	Path          string      `json:"path,omitempty"`
-	Prefix        string      `json:"prefix,omitempty"`
-	PrefixRewrite string      `json:"prefix_rewrite,omitempty"`
-	Cluster       string      `json:"cluster"`
-	Headers       []Header    `json:"headers,omitempty"`
-	TimeoutMS     int         `json:"timeout_ms,omitempty"`
-	RetryPolicy   RetryPolicy `json:"retry_policy"`
-}
-
-// VirtualHost definition.
-// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/vhost.html#config-http-conn-man-route-table-vhost
-type VirtualHost struct {
-	Name    string   `json:"name"`
-	Domains []string `json:"domains"`
-	Routes  []Route  `json:"routes"`
-}
-
-// Cluster definition.
-// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster.html#config-cluster-manager-cluster
-type Cluster struct {
-	Name                     string            `json:"name"`
-	ServiceName              string            `json:"service_name,omitempty"`
-	ConnectTimeoutMs         int               `json:"connect_timeout_ms"`
-	Type                     string            `json:"type"`
-	LbType                   string            `json:"lb_type"`
-	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
-	Hosts                    []Host            `json:"hosts,omitempty"`
-	CircuitBreakers          *CircuitBreakers  `json:"circuit_breakers,omitempty"`
-	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
-}
-
-// OutlierDetection definition
-// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_runtime.html#outlier-detection
-type OutlierDetection struct {
-	ConsecutiveError   int `json:"consecutive_5xx,omitempty"`
-	IntervalMS         int `json:"interval_ms,omitempty"`
-	BaseEjectionTimeMS int `json:"base_ejection_time_ms,omitempty"`
-	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
-}
-
-// CircuitBreaker definition
-// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreakers struct {
-	MaxConnections    int `json:"max_connections,omitempty"`
-	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
-	MaxRequests       int `json:"max_requests,omitempty"`
-	MaxRetries        int `json:"max_retries,omitempty"`
-}
-
+// Clusters is the array of clusters returned by GET clusters
 type Clusters struct {
-	Clusters []Cluster `json:"clusters"`
+	Clusters []envoy.Cluster `json:"clusters"`
 }
 
 // Hosts is the array of hosts returned by the GET registration
@@ -160,13 +92,15 @@ func (s ByIPPort) Less(i, j int) bool {
 type Discovery struct {
 	discovery api.ServiceDiscovery
 	rules     api.RulesService
+	tlsConfig *envoy.SSLContext
 }
 
 // NewDiscovery creates struct
-func NewDiscovery(discovery api.ServiceDiscovery, rules api.RulesService) *Discovery {
+func NewDiscovery(discovery api.ServiceDiscovery, rules api.RulesService, tlsConfig *envoy.SSLContext) *Discovery {
 	return &Discovery{
 		discovery: discovery,
 		rules:     rules,
+		tlsConfig: tlsConfig,
 	}
 }
 
@@ -284,14 +218,15 @@ func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
 	}
 
 	resp := Clusters{
-		Clusters: buildClusters(instances, ruleSet.Rules),
+		Clusters: buildClusters(instances, ruleSet.Rules, d.tlsConfig),
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&resp)
 }
 
-func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster {
+func buildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig *envoy.SSLContext) []envoy.Cluster {
+
 	clusterNames := make(map[string]struct{})
 	for _, instance := range instances {
 		clusterName := envoy.BuildServiceKey(instance.ServiceName, instance.Tags)
@@ -301,8 +236,8 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 	}
 
 	// TODO ?
-	//sanitizeRules(rules)
-	//rules = addDefaultRouteRules(rules, instances)
+	envoy.SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
 	backends := make(map[string]*api.Backend)
 	for _, rule := range rules {
@@ -316,19 +251,19 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 		}
 	}
 
-	clusters := make([]Cluster, 0, len(clusterNames))
+	clusters := make([]envoy.Cluster, 0, len(clusterNames))
 	for name := range clusterNames {
-		cluster := Cluster{
+		cluster := envoy.Cluster{
 			Name:             name,
 			ServiceName:      name,
 			Type:             "sds",
 			LbType:           "round_robin", //TODO this needs to be configurable
 			ConnectTimeoutMs: 1000,
-			CircuitBreakers:  &CircuitBreakers{},
-			OutlierDetection: &OutlierDetection{
+			CircuitBreakers:  &envoy.CircuitBreakers{},
+			OutlierDetection: &envoy.OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
-			// FIXME set TLS config!
+			SSLContext: tlsConfig,
 		}
 
 		if backend, ok := backends[name]; ok {
@@ -370,31 +305,34 @@ func buildClusters(instances []*api.ServiceInstance, rules []api.Rule) []Cluster
 
 	}
 
+	sort.Sort(envoy.ClustersByName(clusters))
+
 	return clusters
 }
 
 func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
+
 	instances, err := d.discovery.ListInstances()
 	if err != nil {
+		logrus.WithError(err).Error("Unable to retrieve instances")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	ruleSet, err := d.rules.ListRules(&api.RuleFilter{})
 	if err != nil {
+		logrus.WithError(err).Error("Unable to retrieve rules")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
 	envoy.SanitizeRules(ruleSet.Rules)
-	rules := envoy.AddDefaultRouteRules(ruleSet.Rules, instances)
+	rules := AddDefaultRouteRules(ruleSet.Rules, instances)
 
 	routes := buildRoutes(rules)
 
-	respJSON := struct {
-		VirtualHosts []VirtualHost `json:"virtual_hosts"`
-	}{
-		[]VirtualHost{
+	respJSON := VirtualHosts{
+		VirtualHosts: []envoy.VirtualHost{
 			{
 				Name:    "backend",
 				Domains: []string{"*"},
@@ -407,17 +345,17 @@ func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
 	w.WriteJson(&respJSON)
 }
 
-func buildRoutes(ruleList []api.Rule) []Route {
-	routes := []Route{}
+func buildRoutes(ruleList []api.Rule) []envoy.Route {
+	routes := []envoy.Route{}
 	for _, rule := range ruleList {
 		if rule.Route != nil {
-			var headers []Header
+			var headers []envoy.Header
 			if rule.Match != nil {
-				headers = make([]Header, 0, len(rule.Match.Headers))
+				headers = make([]envoy.Header, 0, len(rule.Match.Headers))
 				for k, v := range rule.Match.Headers {
 					headers = append(
 						headers,
-						Header{
+						envoy.Header{
 							Name:  k,
 							Value: v,
 							Regex: true,
@@ -439,19 +377,19 @@ func buildRoutes(ruleList []api.Rule) []Route {
 
 				clusterName := envoy.BuildServiceKey(backend.Name, backend.Tags)
 
-				runtime := &Runtime{
+				runtime := &envoy.Runtime{
 					Key:     envoy.BuildWeightKey(backend.Name, backend.Tags),
-					Default: 0,
+					Default: int(backend.Weight * 100),
 				}
 
-				route := Route{
+				route := envoy.Route{
 					Runtime:       runtime,
 					Path:          path,
 					Prefix:        prefix,
 					PrefixRewrite: prefixRewrite,
 					Cluster:       clusterName,
 					Headers:       headers,
-					RetryPolicy: RetryPolicy{
+					RetryPolicy: envoy.RetryPolicy{
 						Policy: "5xx,connect-failure,refused-stream",
 					},
 				}
@@ -470,4 +408,37 @@ func buildRoutes(ruleList []api.Rule) []Route {
 	}
 
 	return routes
+}
+
+// AddDefaultRouteRules TODO same as the one in envoy manager but takes []*api.ServiceInstance instead of []api.ServiceInstance
+func AddDefaultRouteRules(ruleList []api.Rule, instances []*api.ServiceInstance) []api.Rule {
+	serviceMap := make(map[string]struct{})
+	for _, instance := range instances {
+		serviceMap[instance.ServiceName] = struct{}{}
+	}
+
+	for _, rule := range ruleList {
+		if rule.Route != nil {
+			for _, backend := range rule.Route.Backends {
+				delete(serviceMap, backend.Name)
+			}
+		}
+	}
+
+	// Provide defaults for all services without any routing rules.
+	defaults := make([]api.Rule, 0, len(serviceMap))
+	for service := range serviceMap {
+		defaults = append(defaults, api.Rule{
+			Route: &api.Route{
+				Backends: []api.Backend{
+					{
+						Name:   service,
+						Weight: 1.0,
+					},
+				},
+			},
+		})
+	}
+
+	return append(ruleList, defaults...)
 }

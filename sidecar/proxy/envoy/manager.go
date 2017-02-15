@@ -96,14 +96,6 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 		}),
 	}
 
-	if conf.ProxyConfig.TLS {
-		m.tlsConfig = &SSLContext{
-			CertChainFile:  conf.ProxyConfig.CertChainFile,
-			PrivateKeyFile: conf.ProxyConfig.PrivateKeyFile,
-			CACertFile:     &conf.ProxyConfig.CACertFile,
-		}
-	}
-
 	if err := buildFS(m.workingDir); err != nil {
 		return nil, err
 	}
@@ -116,8 +108,7 @@ type manager struct {
 	service      Service
 	sdsPort      int
 	adminPort    int
-	listenerPort int         //Single listener port. TODO: Change to array, with port type Http|TCP
-	tlsConfig    *SSLContext //TODO: move into listener
+	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
 	workingDir   string
 	loggingDir   string
 }

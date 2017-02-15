@@ -53,7 +53,7 @@ type controller struct {
 	namespace string
 
 	// TPR list name
-	resources string
+	ruleTPRListName string
 }
 
 // New creates and starts the controller.
@@ -87,15 +87,15 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 
 	workqueue := kubepkg.NewWorkqueue()
 	controller := &controller{
-		client:    client,
-		workqueue: workqueue,
-		validator: validator,
-		namespace: namespace,
-		resources: fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)),
+		client:          client,
+		workqueue:       workqueue,
+		validator:       validator,
+		namespace:       namespace,
+		ruleTPRListName: fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)),
 	}
 
 	controller.rulesCache, controller.rulesController = cache.NewInformer(
-		cache.NewListWatchFromClient(client, controller.resources, namespace, nil),
+		cache.NewListWatchFromClient(client, controller.ruleTPRListName, namespace, nil),
 		&kuberules.RoutingRule{},
 		cacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
@@ -192,7 +192,7 @@ func (c *controller) patchObject(namespace, name string, rule *kuberules.Routing
 	}
 
 	err = c.client.Patch(api.MergePatchType).
-		Resource(c.resources).
+		Resource(c.ruleTPRListName).
 		Namespace(namespace).
 		Name(name).
 		Body(data).

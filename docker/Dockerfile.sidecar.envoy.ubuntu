@@ -16,6 +16,7 @@ FROM amalgam8/envoy:latest
 
 ARG FILEBEAT_VERSION="5.1.1"
 RUN set -ex \
+    && apt-get -y install curl \
     && curl -fsSL https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-${FILEBEAT_VERSION}-linux-x86_64.tar.gz -o /tmp/filebeat.tar.gz \
     && cd /tmp \
     && tar -xzf filebeat.tar.gz \

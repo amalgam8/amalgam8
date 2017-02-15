@@ -22,10 +22,8 @@ examples/bluemix.cfg
 examples/docker-bookinfo.yaml
 examples/docker-controlplane.yaml
 examples/docker-helloworld.yaml
-examples/k8s-bookinfo.yaml
-examples/k8s-controlplane.yaml
-examples/k8s-helloworld.yaml
 examples/docker-helloworld-default-route-rules.json
 examples/docker-helloworld-v1-v2-route-rules.json
-examples/k8s-helloworld-default-route-rules.yaml
-examples/k8s-helloworld-v1-v2-route-rules.yaml
+examples/k8s-controlplane.yaml
+examples/k8s-helloworld*.yaml
+examples/k8s-bookinfo*.yaml

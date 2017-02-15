@@ -119,7 +119,6 @@ func (c *controller) Stop() error {
 
 func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 	var updRule kuberules.RoutingRule
-	var ignored kuberules.RoutingRule
 
 	if rule.Spec.ID == "" {
 		updRule.Spec.ID = rule.Metadata.Name
@@ -135,20 +134,7 @@ func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 		updRule.Status.State = kuberules.RuleStateValid
 	}
 
-	data, err := json.Marshal(&updRule)
-	if err != nil {
-		logger.WithError(err).Errorf("Failed encoding status for rule %s", rule.Metadata.Name)
-		return err
-	}
-
-	err = c.client.Patch(api.MergePatchType).
-		Resource(c.resources).
-		Namespace(rule.Metadata.Namespace).
-		Name(rule.Metadata.Name).
-		Body(data).
-		Do().
-		Into(&ignored)
-
+	err = c.patchObject(rule.Metadata.Namespace, rule.Metadata.Name, &updRule)
 	if err != nil {
 		logger.WithError(err).Errorf("Failed updating status for rule %s", rule.Metadata.Name)
 	}
@@ -196,4 +182,21 @@ func (c *controller) updateRule(oldObj, newObj interface{}) {
 	if newRule.Status.State == "" {
 		c.validateRule(newRule)
 	}
+}
+
+func (c *controller) patchObject(namespace, name string, rule *kuberules.RoutingRule) error {
+	data, err := json.Marshal(&rule)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed encoding status for rule %s", rule.Metadata.Name)
+		return err
+	}
+
+	err = c.client.Patch(api.MergePatchType).
+		Resource(c.resources).
+		Namespace(namespace).
+		Name(name).
+		Body(data).
+		Do().
+		Into(&kuberules.RoutingRule{})
+	return err
 }

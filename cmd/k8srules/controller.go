@@ -51,6 +51,9 @@ type controller struct {
 
 	// namespace from which to sync endpoints/pods
 	namespace string
+
+	// TPR list name
+	resources string
 }
 
 // New creates and starts the controller.
@@ -88,10 +91,11 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 		workqueue: workqueue,
 		validator: validator,
 		namespace: namespace,
+		resources: fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)),
 	}
 
 	controller.rulesCache, controller.rulesController = cache.NewInformer(
-		cache.NewListWatchFromClient(client, fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)), namespace, nil),
+		cache.NewListWatchFromClient(client, controller.resources, namespace, nil),
 		&kuberules.RoutingRule{},
 		cacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
@@ -115,7 +119,7 @@ func (c *controller) Stop() error {
 
 func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 	var updRule kuberules.RoutingRule
-	var result kuberules.RoutingRule
+	var ignored kuberules.RoutingRule
 
 	if rule.Spec.ID == "" {
 		updRule.Spec.ID = rule.Metadata.Name
@@ -138,12 +142,12 @@ func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 	}
 
 	err = c.client.Patch(api.MergePatchType).
-		Resource(fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1))).
+		Resource(c.resources).
 		Namespace(rule.Metadata.Namespace).
 		Name(rule.Metadata.Name).
 		Body(data).
 		Do().
-		Into(&result)
+		Into(&ignored)
 
 	if err != nil {
 		logger.WithError(err).Errorf("Failed updating status for rule %s", rule.Metadata.Name)

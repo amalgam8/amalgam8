@@ -330,7 +330,7 @@ func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 			Type:             "sds",
 			LbType:           backend.LbType,
 			ConnectTimeoutMs: 1000,
-			CircuitBreaker:   &CircuitBreaker{},
+			CircuitBreakers:  &CircuitBreakers{},
 			OutlierDetection: &OutlierDetection{
 				MaxEjectionPercent: 100,
 			},
@@ -350,13 +350,13 @@ func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 
 			// Envoy Circuit breaker config options
 			if backend.Resilience.MaxConnections > 0 {
-				cluster.CircuitBreaker.MaxConnections = backend.Resilience.MaxConnections
+				cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
 			}
 			if backend.Resilience.MaxRequests > 0 {
-				cluster.CircuitBreaker.MaxRequests = backend.Resilience.MaxRequests
+				cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
 			}
 			if backend.Resilience.MaxPendingRequest > 0 {
-				cluster.CircuitBreaker.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+				cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
 			}
 
 			// Envoy outlier detection settings that complete circuit breaker

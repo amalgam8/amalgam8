@@ -213,7 +213,7 @@ func TestBuildClusters(t *testing.T) {
 		OutlierDetection: &OutlierDetection{
 			MaxEjectionPercent: 100,
 		},
-		CircuitBreaker: &CircuitBreaker{},
+		CircuitBreakers: &CircuitBreakers{},
 	}, clusters[0])
 
 	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)

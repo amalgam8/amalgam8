@@ -159,7 +159,7 @@ type Cluster struct {
 	LbType                   string            `json:"lb_type"`
 	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
 	Hosts                    []Host            `json:"hosts,omitempty"`
-	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
+	CircuitBreakers          *CircuitBreakers  `json:"circuit_breakers,omitempty"`
 	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
 	SSLContext               *SSLContext       `json:"ssl_context,omitempty"`
 }
@@ -175,7 +175,7 @@ type OutlierDetection struct {
 
 // CircuitBreaker definition
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreaker struct {
+type CircuitBreakers struct {
 	MaxConnections    int `json:"max_connections,omitempty"`
 	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
 	MaxRequests       int `json:"max_requests,omitempty"`

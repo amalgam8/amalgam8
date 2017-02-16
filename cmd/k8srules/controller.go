@@ -51,6 +51,9 @@ type controller struct {
 
 	// namespace from which to sync endpoints/pods
 	namespace string
+
+	// TPR list name
+	ruleTPRListName string
 }
 
 // New creates and starts the controller.
@@ -64,8 +67,8 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 		GroupName:   kuberules.ResourceGroupName,
 		Version:     kuberules.ResourceVersion,
 		Description: kuberules.ResourceDescription,
-		Type:        &kuberules.RoutingRule{},
-		ListType:    &kuberules.RoutingRuleList{}}
+		Type:        &RoutingRule{},
+		ListType:    &RoutingRuleList{}}
 
 	if err := kubepkg.InitThirdPartyResource(tprConfig); err != nil {
 		return nil, err
@@ -84,15 +87,16 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 
 	workqueue := kubepkg.NewWorkqueue()
 	controller := &controller{
-		client:    client,
-		workqueue: workqueue,
-		validator: validator,
-		namespace: namespace,
+		client:          client,
+		workqueue:       workqueue,
+		validator:       validator,
+		namespace:       namespace,
+		ruleTPRListName: fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)),
 	}
 
 	controller.rulesCache, controller.rulesController = cache.NewInformer(
-		cache.NewListWatchFromClient(client, fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1)), namespace, nil),
-		&kuberules.RoutingRule{},
+		cache.NewListWatchFromClient(client, controller.ruleTPRListName, namespace, nil),
+		&RoutingRule{},
 		cacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    workqueue.EnqueueingAddFunc(controller.addRule),
@@ -113,15 +117,17 @@ func (c *controller) Stop() error {
 	return nil
 }
 
-func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
+func (c *controller) validateRule(rule *kuberules.RoutingRule, err error) error {
 	var updRule kuberules.RoutingRule
-	var result kuberules.RoutingRule
 
 	if rule.Spec.ID == "" {
 		updRule.Spec.ID = rule.Metadata.Name
 	}
 
-	err := c.validator.Validate(rule.Spec)
+	if err == nil { // Spec seems to be syntactically valid
+		err = c.validator.Validate(rule.Spec)
+	}
+
 	if err != nil {
 		logger.WithError(err).Warnf("Rule %#v is not valid", rule)
 		updRule.Status.State = kuberules.RuleStateInvalid
@@ -131,20 +137,7 @@ func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 		updRule.Status.State = kuberules.RuleStateValid
 	}
 
-	data, err := json.Marshal(&updRule)
-	if err != nil {
-		logger.WithError(err).Errorf("Failed encoding status for rule %s", rule.Metadata.Name)
-		return err
-	}
-
-	err = c.client.Patch(api.MergePatchType).
-		Resource(fmt.Sprintf("%ss", strings.Replace(kuberules.ResourceName, "-", "", -1))).
-		Namespace(rule.Metadata.Namespace).
-		Name(rule.Metadata.Name).
-		Body(data).
-		Do().
-		Into(&result)
-
+	err = c.patchObject(rule.Metadata.Namespace, rule.Metadata.Name, &updRule)
 	if err != nil {
 		logger.WithError(err).Errorf("Failed updating status for rule %s", rule.Metadata.Name)
 	}
@@ -154,7 +147,7 @@ func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 
 // addRule is the callback invoked by the Kubernetes cache when a rule API resource is added.
 func (c *controller) addRule(obj interface{}) {
-	rule, ok := obj.(*kuberules.RoutingRule)
+	rule, ok := obj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule added: object is of type %T", obj)
 		return
@@ -166,18 +159,18 @@ func (c *controller) addRule(obj interface{}) {
 		rule.Metadata.ResourceVersion)
 
 	if rule.Status.State == "" {
-		c.validateRule(rule)
+		c.validateRule(rule.reify())
 	}
 }
 
 // updateRule is the callback invoked by the Kubernetes cache when a rule API resource is updated.
 func (c *controller) updateRule(oldObj, newObj interface{}) {
-	oldRule, ok := oldObj.(*kuberules.RoutingRule)
+	oldRule, ok := oldObj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule update: old object is of type %T", oldObj)
 		return
 	}
-	newRule, ok := newObj.(*kuberules.RoutingRule)
+	newRule, ok := newObj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule update: new object is of type %T", newObj)
 		return
@@ -190,6 +183,18 @@ func (c *controller) updateRule(oldObj, newObj interface{}) {
 		newRule.Metadata.ResourceVersion)
 
 	if newRule.Status.State == "" {
-		c.validateRule(newRule)
+		c.validateRule(newRule.reify())
 	}
+}
+
+func (c *controller) patchObject(namespace, name string, rule *kuberules.RoutingRule) error {
+	data, err := json.Marshal(&rule)
+	if err != nil {
+		logger.WithError(err).Errorf("Failed encoding status for rule %s", rule.Metadata.Name)
+		return err
+	}
+
+	err = c.client.Patch(api.MergePatchType).Resource(c.ruleTPRListName).Namespace(namespace).
+		Name(name).Body(data).Do().Into(&kuberules.RoutingRule{})
+	return err
 }

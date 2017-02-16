@@ -96,14 +96,6 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 		}),
 	}
 
-	if conf.ProxyConfig.TLS {
-		m.tlsConfig = &SSLContext{
-			CertChainFile:  conf.ProxyConfig.CertChainFile,
-			PrivateKeyFile: conf.ProxyConfig.PrivateKeyFile,
-			CACertFile:     &conf.ProxyConfig.CACertFile,
-		}
-	}
-
 	if err := buildFS(m.workingDir); err != nil {
 		return nil, err
 	}
@@ -116,8 +108,7 @@ type manager struct {
 	service      Service
 	sdsPort      int
 	adminPort    int
-	listenerPort int         //Single listener port. TODO: Change to array, with port type Http|TCP
-	tlsConfig    *SSLContext //TODO: move into listener
+	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
 	workingDir   string
 	loggingDir   string
 }
@@ -179,11 +170,6 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		return Config{}, err
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
-
-	clusters := buildClusters(rules, m.tlsConfig)
-	routes := buildRoutes(rules)
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
 	traceKey := "gremlin_recipe_id"
@@ -208,7 +194,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 		},
 		Listeners: []Listener{
 			{
-				Port: m.listenerPort, //TODO: needs to be generated based on m.listenerPort
+				Port: m.listenerPort,
 				Filters: []NetworkFilter{
 					{
 						Type: "read",
@@ -218,14 +204,10 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 							StatPrefix:        "ingress_http",
 							UserAgent:         true,
 							GenerateRequestID: true,
-							RouteConfig: RouteConfig{
-								VirtualHosts: []VirtualHost{
-									{
-										Name:    "backend",
-										Domains: []string{"*"},
-										Routes:  routes,
-									},
-								},
+							RDS: &RDS{
+								Cluster:         "rds",
+								RouteConfigName: "amalgam8",
+								RefreshDelayMS:  1000,
 							},
 							Filters: filters,
 							AccessLog: []AccessLog{
@@ -244,10 +226,38 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
-			Clusters: clusters,
+			Clusters: []Cluster{
+				{
+					Name:             "rds",
+					Type:             "strict_dns",
+					ConnectTimeoutMs: 1000,
+					LbType:           "round_robin",
+					Hosts: []Host{
+						{
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+						},
+					},
+					MaxRequestsPerConnection: 1,
+				},
+			},
 			SDS: SDS{
 				Cluster: Cluster{
 					Name:             "sds",
+					Type:             "strict_dns",
+					ConnectTimeoutMs: 1000,
+					LbType:           "round_robin",
+					Hosts: []Host{
+						{
+							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+						},
+					},
+					MaxRequestsPerConnection: 1,
+				},
+				RefreshDelayMs: 1000,
+			},
+			CDS: CDS{
+				Cluster: Cluster{
+					Name:             "cds",
 					Type:             "strict_dns",
 					ConnectTimeoutMs: 1000,
 					LbType:           "round_robin",
@@ -269,11 +279,11 @@ const (
 	tagDelimiter     = ','
 )
 
-// buildServiceKey builds a service key given a service name and tags in the
+// BuildServiceKey builds a service key given a service name and tags in the
 // form "serviceName:tag1=value1,tag2=value2,tag3=value3" where ':' is the
 // service delimiter and ',' is the tag delimiter. We assume that the service
 // name and the tags do not contain either delimiter.
-func buildServiceKey(service string, tags []string) string {
+func BuildServiceKey(service string, tags []string) string {
 	sort.Strings(tags)
 
 	buf := bytes.NewBufferString(service)
@@ -308,27 +318,38 @@ func ParseServiceKey(s string) (string, []string) {
 	return res[0], res[1:]
 }
 
-func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
-	clusterMap := make(map[string]*api.Backend)
+// BuildClusters builds clusters from instances applying rule backend info where necessary
+func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig *SSLContext) []Cluster {
+	clusterNames := make(map[string]struct{})
+	for _, instance := range instances {
+		clusterName := BuildServiceKey(instance.ServiceName, instance.Tags)
+		clusterNames[clusterName] = struct{}{}
+		// Need a default cluster for every service
+		clusterNames[instance.ServiceName] = struct{}{}
+	}
+
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
+
+	backends := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
-				key := buildServiceKey(backend.Name, backend.Tags)
+				key := BuildServiceKey(backend.Name, backend.Tags)
 				// TODO if two backends map to the same key, it will overwrite
 				//  and will lose resilience field options in this case
-				clusterMap[key] = &backend
+				backends[key] = &backend
 			}
 		}
 	}
 
-	clusters := make([]Cluster, 0, len(clusterMap))
-	for clusterName, backend := range clusterMap {
-
+	clusters := make([]Cluster, 0, len(clusterNames))
+	for name := range clusterNames {
 		cluster := Cluster{
-			Name:             clusterName,
-			ServiceName:      clusterName,
+			Name:             name,
+			ServiceName:      name,
 			Type:             "sds",
-			LbType:           backend.LbType,
+			LbType:           "round_robin",
 			ConnectTimeoutMs: 1000,
 			CircuitBreakers:  &CircuitBreakers{},
 			OutlierDetection: &OutlierDetection{
@@ -337,41 +358,43 @@ func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 			SSLContext: tlsConfig,
 		}
 
-		if cluster.LbType == "" {
-			// Set default value of LbType to be "round_robin"
-			cluster.LbType = "round_robin"
-		}
-
-		if backend.Resilience != nil {
-			// Cluster level settings
-			if backend.Resilience.MaxRequestsPerConnection > 0 {
-				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+		if backend, ok := backends[name]; ok {
+			if backend.LbType != "" {
+				cluster.LbType = backend.LbType
 			}
 
-			// Envoy Circuit breaker config options
-			if backend.Resilience.MaxConnections > 0 {
-				cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
-			}
-			if backend.Resilience.MaxRequests > 0 {
-				cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
-			}
-			if backend.Resilience.MaxPendingRequest > 0 {
-				cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-			}
+			if backend.Resilience != nil {
+				// Cluster level settings
+				if backend.Resilience.MaxRequestsPerConnection > 0 {
+					cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+				}
 
-			// Envoy outlier detection settings that complete circuit breaker
-			if backend.Resilience.SleepWindow > 0 {
-				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-			}
-			if backend.Resilience.ConsecutiveErrors > 0 {
-				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-			}
-			if backend.Resilience.DetectionInterval > 0 {
-				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+				// Envoy Circuit breaker config options
+				if backend.Resilience.MaxConnections > 0 {
+					cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
+				}
+				if backend.Resilience.MaxRequests > 0 {
+					cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
+				}
+				if backend.Resilience.MaxPendingRequest > 0 {
+					cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+				}
+
+				// Envoy outlier detection settings that complete circuit breaker
+				if backend.Resilience.SleepWindow > 0 {
+					cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+				}
+				if backend.Resilience.ConsecutiveErrors > 0 {
+					cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+				}
+				if backend.Resilience.DetectionInterval > 0 {
+					cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+				}
 			}
 		}
 
 		clusters = append(clusters, cluster)
+
 	}
 
 	sort.Sort(ClustersByName(clusters))
@@ -379,11 +402,13 @@ func buildClusters(rules []api.Rule, tlsConfig *SSLContext) []Cluster {
 	return clusters
 }
 
-func buildWeightKey(service string, tags []string) string {
-	return fmt.Sprintf("%v.%v", service, buildServiceKey("_", tags))
+// BuildWeightKey builds filesystem key for Route Runtime weight keys
+func BuildWeightKey(service string, tags []string) string {
+	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
 }
 
-func buildRoutes(ruleList []api.Rule) []Route {
+// BuildRoutes builds routes based on rules.  Assumes at least one route for each service
+func BuildRoutes(ruleList []api.Rule) []Route {
 	routes := []Route{}
 	for _, rule := range ruleList {
 		if rule.Route != nil {
@@ -413,10 +438,10 @@ func buildRoutes(ruleList []api.Rule) []Route {
 					prefixRewrite = "/"
 				}
 
-				clusterName := buildServiceKey(backend.Name, backend.Tags)
+				clusterName := BuildServiceKey(backend.Name, backend.Tags)
 
 				runtime := &Runtime{
-					Key:     buildWeightKey(backend.Name, backend.Tags),
+					Key:     BuildWeightKey(backend.Name, backend.Tags),
 					Default: int(backend.Weight * 100),
 				}
 
@@ -466,7 +491,8 @@ func (s ByPriority) Less(i, j int) bool {
 	return s[i].Priority < s[j].Priority
 }
 
-func sanitizeRules(ruleList []api.Rule) {
+// SanitizeRules performs sorts on rule backends and rules.  Also calculates remaining weights
+func SanitizeRules(ruleList []api.Rule) {
 	for i := range ruleList {
 		rule := &ruleList[i]
 		if rule.Route != nil {
@@ -509,7 +535,8 @@ func sanitizeRules(ruleList []api.Rule) {
 	sort.Sort(sort.Reverse(ByPriority(ruleList))) // Descending order
 }
 
-func addDefaultRouteRules(ruleList []api.Rule, instances []api.ServiceInstance) []api.Rule {
+// AddDefaultRouteRules adds a route rule for a service that currently does not have one
+func AddDefaultRouteRules(ruleList []api.Rule, instances []*api.ServiceInstance) []api.Rule {
 	serviceMap := make(map[string]struct{})
 	for _, instance := range instances {
 		serviceMap[instance.ServiceName] = struct{}{}
@@ -565,8 +592,13 @@ func buildFS(workingDir string) error {
 }
 
 func updateFS(workingDir string, instances []api.ServiceInstance, ruleList []api.Rule) error {
-	sanitizeRules(ruleList)
-	rules := addDefaultRouteRules(ruleList, instances)
+	SanitizeRules(ruleList)
+
+	ptrInstances := make([]*api.ServiceInstance, 0, len(instances))
+	for _, inst := range instances {
+		ptrInstances = append(ptrInstances, &inst)
+	}
+	rules := AddDefaultRouteRules(ruleList, ptrInstances)
 
 	type weightSpec struct {
 		Service string
@@ -582,7 +614,7 @@ func updateFS(workingDir string, instances []api.ServiceInstance, ruleList []api
 				w += int(100 * backend.Weight)
 				weight := weightSpec{
 					Service: backend.Name,
-					Cluster: buildServiceKey("_", backend.Tags),
+					Cluster: BuildServiceKey("_", backend.Tags),
 					Weight:  w,
 				}
 				weights = append(weights, weight)

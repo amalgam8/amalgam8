@@ -54,7 +54,7 @@ func TestSanitizeRules(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
+	SanitizeRules(rules)
 
 	assert.InEpsilon(t, 0.25, rules[0].Route.Backends[0].Weight, 0.01)
 	assert.Equal(t, "service1", rules[0].Route.Backends[0].Name)
@@ -102,7 +102,7 @@ func TestFS(t *testing.T) {
 		},
 	}
 
-	instances := []api.ServiceInstance{
+	instances := []*api.ServiceInstance{
 		{
 			ServiceName: "service1",
 			Endpoint: api.ServiceEndpoint{
@@ -144,14 +144,40 @@ func TestFS(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
 	//err := buildFS(rules)
 	//assert.NoError(t, err)
 }
 
 func TestBuildClusters(t *testing.T) {
+	instances := []*api.ServiceInstance{
+		{
+			ServiceName: "service1",
+			Tags:        []string{"tag1"},
+			ID:          "1",
+			Endpoint:    api.ServiceEndpoint{Type: "http", Value: "127.0.0.1:8080"},
+		},
+		{
+			ServiceName: "service1",
+			Tags:        []string{"tag1", "tag2"},
+			ID:          "2",
+			Endpoint:    api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.5:5050"},
+		},
+		{
+			ServiceName: "service1",
+			ID:          "3",
+			Endpoint:    api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.4:3050"},
+		},
+		{
+			Tags:        []string{"second"},
+			ServiceName: "service2",
+			ID:          "8",
+			Endpoint:    api.ServiceEndpoint{Type: "tcp", Value: "127.0.0.4:3050"},
+		},
+	}
+
 	rules := []api.Rule{
 		{
 			ID:          "abcdef",
@@ -175,6 +201,7 @@ func TestBuildClusters(t *testing.T) {
 						Name:   "service1",
 						Tags:   []string{"tag1", "tag2"},
 						Weight: 0.75,
+						LbType: "random",
 					},
 				},
 			},
@@ -199,11 +226,11 @@ func TestBuildClusters(t *testing.T) {
 		},
 	}
 
-	clusters := buildClusters(rules, nil)
+	clusters := BuildClusters(instances, rules, nil)
 
-	assert.Len(t, clusters, 3)
+	assert.Len(t, clusters, 5)
 
-	clusterName := buildServiceKey("service1", []string{"tag1"})
+	clusterName := BuildServiceKey("service1", []string{"tag1"})
 	assert.Equal(t, Cluster{
 		Name:             clusterName,
 		ServiceName:      clusterName,
@@ -214,10 +241,10 @@ func TestBuildClusters(t *testing.T) {
 			MaxEjectionPercent: 100,
 		},
 		CircuitBreakers: &CircuitBreakers{},
-	}, clusters[0])
+	}, clusters[1])
 
-	assert.Equal(t, buildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
-	assert.Equal(t, buildServiceKey("service2", []string{}), clusters[2].Name)
+	assert.Equal(t, BuildServiceKey("service1", []string{"tag1", "tag2"}), clusters[2].Name)
+	assert.Equal(t, BuildServiceKey("service2", []string{}), clusters[3].Name)
 }
 
 func TestBuildServiceKey(t *testing.T) {
@@ -256,7 +283,7 @@ func TestBuildServiceKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		actual := buildServiceKey(testCase.Service, testCase.Tags)
+		actual := BuildServiceKey(testCase.Service, testCase.Tags)
 		assert.Equal(t, testCase.Expected, actual)
 	}
 }
@@ -333,7 +360,7 @@ func TestBuildParseServiceKey(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		s := buildServiceKey(testCase.Service, testCase.Tags)
+		s := BuildServiceKey(testCase.Service, testCase.Tags)
 		service, tags := ParseServiceKey(s)
 		assert.Equal(t, testCase.Service, service)
 		assert.Equal(t, testCase.Tags, tags)
@@ -341,7 +368,7 @@ func TestBuildParseServiceKey(t *testing.T) {
 }
 
 func TestConvert2(t *testing.T) {
-	instances := []api.ServiceInstance{
+	instances := []*api.ServiceInstance{
 		{
 			ServiceName: "service1",
 			Endpoint: api.ServiceEndpoint{
@@ -415,8 +442,8 @@ func TestConvert2(t *testing.T) {
 		},
 	}
 
-	sanitizeRules(rules)
-	rules = addDefaultRouteRules(rules, instances)
+	SanitizeRules(rules)
+	rules = AddDefaultRouteRules(rules, instances)
 
 	//configRoot, err := generateConfig(rules, instances, "gateway")
 	//assert.NoError(t, err)

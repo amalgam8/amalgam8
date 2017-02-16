@@ -43,7 +43,7 @@ type EnvoyAdapter struct {
 // NewEnvoyAdapter creates a new adapter instance.
 func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMonitor,
 	identity identity.Provider, rulesMonitor monitor.RulesMonitor,
-	discoveryClient api.ServiceDiscovery) (*EnvoyAdapter, error) {
+	discoveryClient api.ServiceDiscovery, rulesClient api.RulesService) (*EnvoyAdapter, error) {
 
 	if conf.ProxyConfig.HTTPListenerPort == 0 {
 		conf.ProxyConfig.HTTPListenerPort = envoy.DefaultHTTPListenerPort
@@ -69,9 +69,20 @@ func NewEnvoyAdapter(conf *config.Config, discoveryMonitor monitor.DiscoveryMoni
 		conf.ProxyConfig.ProxyBinary = envoy.DefaultEnvoyBinary
 	}
 
+	var tlsConfig *envoy.SSLContext
+	if conf.ProxyConfig.TLS {
+		tlsConfig = &envoy.SSLContext{
+			CertChainFile:  conf.ProxyConfig.CertChainFile,
+			PrivateKeyFile: conf.ProxyConfig.PrivateKeyFile,
+			CACertFile:     &conf.ProxyConfig.CACertFile,
+		}
+	}
+
 	serverConfig := &discovery.Config{
 		HTTPAddressSpec: fmt.Sprintf(":%d", conf.ProxyConfig.DiscoveryPort),
 		Discovery:       discoveryClient,
+		Rules:           rulesClient,
+		TLSConfig:       tlsConfig,
 	}
 	server, err := discovery.NewDiscoveryServer(serverConfig)
 	if err != nil {
@@ -136,10 +147,11 @@ func (a *EnvoyAdapter) CatalogChange(instances []api.ServiceInstance) error {
 	defer a.mutex.Unlock()
 
 	a.instances = instances
-	return a.manager.Update(a.instances, a.rules)
+	// Envoy uses SDS api for dynamically updating services - do NOT need to notify envoy of any changes
+	return nil
 }
 
-// RuleChange updates NGINX on a change in the proxy configuration.
+// RuleChange updates Envoy on a change in the proxy configuration.
 func (a *EnvoyAdapter) RuleChange(rules []api.Rule) error {
 	a.mutex.Lock()
 	defer a.mutex.Unlock()

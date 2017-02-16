@@ -18,8 +18,6 @@ import (
 	"net/http"
 	"sort"
 
-	"fmt"
-
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
@@ -42,7 +40,6 @@ const (
 	routeParamRouteConfigName = "route_conf_name"
 	routesPath                = apiVer + "/routes"
 	routesTemplate            = routesPath + "/#" + routeParamRouteConfigName + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
-	///v1/routes/(string: route_config_name)/(string: service_cluster)/(string: service_node)
 )
 
 // VirtualHosts is the array of route info returned by GET routes
@@ -201,9 +198,6 @@ func filterInstances(instances []*api.ServiceInstance, tags []string) []*api.Ser
 
 // getRegistration
 func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
-	//clusterName := req.PathParam(routeParamServiceClusterName)
-	//
-	//nodeName := req.PathParam(routeParamServiceNodeName)
 
 	instances, err := d.discovery.ListInstances()
 	if err != nil {
@@ -218,100 +212,14 @@ func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
 	}
 
 	resp := Clusters{
-		Clusters: buildClusters(instances, ruleSet.Rules, d.tlsConfig),
+		Clusters: envoy.BuildClusters(instances, ruleSet.Rules, d.tlsConfig),
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&resp)
 }
 
-func buildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig *envoy.SSLContext) []envoy.Cluster {
-
-	clusterNames := make(map[string]struct{})
-	for _, instance := range instances {
-		clusterName := envoy.BuildServiceKey(instance.ServiceName, instance.Tags)
-		clusterNames[clusterName] = struct{}{}
-		// Need a default cluster for every service
-		clusterNames[instance.ServiceName] = struct{}{}
-	}
-
-	// TODO ?
-	envoy.SanitizeRules(rules)
-	rules = AddDefaultRouteRules(rules, instances)
-
-	backends := make(map[string]*api.Backend)
-	for _, rule := range rules {
-		if rule.Route != nil {
-			for _, backend := range rule.Route.Backends {
-				key := envoy.BuildServiceKey(backend.Name, backend.Tags)
-				// TODO if two backends map to the same key, it will overwrite
-				//  and will lose resilience field options in this case
-				backends[key] = &backend
-			}
-		}
-	}
-
-	clusters := make([]envoy.Cluster, 0, len(clusterNames))
-	for name := range clusterNames {
-		cluster := envoy.Cluster{
-			Name:             name,
-			ServiceName:      name,
-			Type:             "sds",
-			LbType:           "round_robin", //TODO this needs to be configurable
-			ConnectTimeoutMs: 1000,
-			CircuitBreakers:  &envoy.CircuitBreakers{},
-			OutlierDetection: &envoy.OutlierDetection{
-				MaxEjectionPercent: 100,
-			},
-			SSLContext: tlsConfig,
-		}
-
-		if backend, ok := backends[name]; ok {
-			if backend.LbType != "" {
-				cluster.LbType = backend.LbType
-			}
-
-			if backend.Resilience != nil {
-				// Cluster level settings
-				if backend.Resilience.MaxRequestsPerConnection > 0 {
-					cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
-				}
-
-				// Envoy Circuit breaker config options
-				if backend.Resilience.MaxConnections > 0 {
-					cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
-				}
-				if backend.Resilience.MaxRequests > 0 {
-					cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
-				}
-				if backend.Resilience.MaxPendingRequest > 0 {
-					cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-				}
-
-				// Envoy outlier detection settings that complete circuit breaker
-				if backend.Resilience.SleepWindow > 0 {
-					cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-				}
-				if backend.Resilience.ConsecutiveErrors > 0 {
-					cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-				}
-				if backend.Resilience.DetectionInterval > 0 {
-					cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
-				}
-			}
-		}
-
-		clusters = append(clusters, cluster)
-
-	}
-
-	sort.Sort(envoy.ClustersByName(clusters))
-
-	return clusters
-}
-
 func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
-
 	instances, err := d.discovery.ListInstances()
 	if err != nil {
 		logrus.WithError(err).Error("Unable to retrieve instances")
@@ -327,9 +235,9 @@ func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
 	}
 
 	envoy.SanitizeRules(ruleSet.Rules)
-	rules := AddDefaultRouteRules(ruleSet.Rules, instances)
+	rules := envoy.AddDefaultRouteRules(ruleSet.Rules, instances)
 
-	routes := buildRoutes(rules)
+	routes := envoy.BuildRoutes(rules)
 
 	respJSON := VirtualHosts{
 		VirtualHosts: []envoy.VirtualHost{
@@ -343,102 +251,4 @@ func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&respJSON)
-}
-
-func buildRoutes(ruleList []api.Rule) []envoy.Route {
-	routes := []envoy.Route{}
-	for _, rule := range ruleList {
-		if rule.Route != nil {
-			var headers []envoy.Header
-			if rule.Match != nil {
-				headers = make([]envoy.Header, 0, len(rule.Match.Headers))
-				for k, v := range rule.Match.Headers {
-					headers = append(
-						headers,
-						envoy.Header{
-							Name:  k,
-							Value: v,
-							Regex: true,
-						},
-					)
-				}
-			}
-
-			for _, backend := range rule.Route.Backends {
-				var path, prefix, prefixRewrite string
-				if backend.URI != nil {
-					path = backend.URI.Path
-					prefix = backend.URI.Prefix
-					prefixRewrite = backend.URI.PrefixRewrite
-				} else {
-					prefix = fmt.Sprintf("/%v/", backend.Name)
-					prefixRewrite = "/"
-				}
-
-				clusterName := envoy.BuildServiceKey(backend.Name, backend.Tags)
-
-				runtime := &envoy.Runtime{
-					Key:     envoy.BuildWeightKey(backend.Name, backend.Tags),
-					Default: int(backend.Weight * 100),
-				}
-
-				route := envoy.Route{
-					Runtime:       runtime,
-					Path:          path,
-					Prefix:        prefix,
-					PrefixRewrite: prefixRewrite,
-					Cluster:       clusterName,
-					Headers:       headers,
-					RetryPolicy: envoy.RetryPolicy{
-						Policy: "5xx,connect-failure,refused-stream",
-					},
-				}
-
-				if rule.Route.HTTPReqTimeout > 0 {
-					// convert from float sec to in ms
-					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
-				}
-				if rule.Route.HTTPReqRetries > 0 {
-					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
-				}
-
-				routes = append(routes, route)
-			}
-		}
-	}
-
-	return routes
-}
-
-// AddDefaultRouteRules TODO same as the one in envoy manager but takes []*api.ServiceInstance instead of []api.ServiceInstance
-func AddDefaultRouteRules(ruleList []api.Rule, instances []*api.ServiceInstance) []api.Rule {
-	serviceMap := make(map[string]struct{})
-	for _, instance := range instances {
-		serviceMap[instance.ServiceName] = struct{}{}
-	}
-
-	for _, rule := range ruleList {
-		if rule.Route != nil {
-			for _, backend := range rule.Route.Backends {
-				delete(serviceMap, backend.Name)
-			}
-		}
-	}
-
-	// Provide defaults for all services without any routing rules.
-	defaults := make([]api.Rule, 0, len(serviceMap))
-	for service := range serviceMap {
-		defaults = append(defaults, api.Rule{
-			Route: &api.Route{
-				Backends: []api.Backend{
-					{
-						Name:   service,
-						Weight: 1.0,
-					},
-				},
-			},
-		})
-	}
-
-	return append(ruleList, defaults...)
 }

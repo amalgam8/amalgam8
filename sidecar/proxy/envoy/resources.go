@@ -68,17 +68,32 @@ type RetryPolicy struct {
 	NumRetries int    `json:"num_retries,omitempty"`
 }
 
+// WeightedCluster definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#weighted-clusters
+type WeightedCluster struct {
+	Name   string `json:"name"`
+	Weight int    `json:"weight"`
+}
+
+// WeightedClusters definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#weighted-clusters
+type WeightedClusters struct {
+	Clusters         []WeightedCluster `json:"clusters"`
+	RunTimeKeyPrefix string            `json:"runtime_key_prefix,omitempty"`
+}
+
 // Route definition.
 // See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#config-http-conn-man-route-table-route
 type Route struct {
-	Runtime       *Runtime    `json:"runtime,omitempty"`
-	Path          string      `json:"path,omitempty"`
-	Prefix        string      `json:"prefix,omitempty"`
-	PrefixRewrite string      `json:"prefix_rewrite,omitempty"`
-	Cluster       string      `json:"cluster"`
-	Headers       []Header    `json:"headers,omitempty"`
-	TimeoutMS     int         `json:"timeout_ms,omitempty"`
-	RetryPolicy   RetryPolicy `json:"retry_policy"`
+	Runtime          *Runtime         `json:"runtime,omitempty"`
+	Path             string           `json:"path,omitempty"`
+	Prefix           string           `json:"prefix,omitempty"`
+	PrefixRewrite    string           `json:"prefix_rewrite,omitempty"`
+	WeightedClusters WeightedClusters `json:"weighted_clusters,omitempty"`
+	Cluster          string           `json:"cluster,omitempty"`
+	Headers          []Header         `json:"headers,omitempty"`
+	TimeoutMS        int              `json:"timeout_ms,omitempty"`
+	RetryPolicy      RetryPolicy      `json:"retry_policy"`
 }
 
 // VirtualHost definition.

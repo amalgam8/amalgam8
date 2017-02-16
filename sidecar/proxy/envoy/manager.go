@@ -412,65 +412,68 @@ func BuildRoutes(ruleList []api.Rule) []Route {
 	routes := []Route{}
 	for _, rule := range ruleList {
 		if rule.Route != nil {
-			var headers []Header
-			if rule.Match != nil {
-				headers = make([]Header, 0, len(rule.Match.Headers))
-				for k, v := range rule.Match.Headers {
-					headers = append(
-						headers,
-						Header{
-							Name:  k,
-							Value: v,
-							Regex: true,
-						},
-					)
-				}
-			}
-
-			for _, backend := range rule.Route.Backends {
-				var path, prefix, prefixRewrite string
-				if backend.URI != nil {
-					path = backend.URI.Path
-					prefix = backend.URI.Prefix
-					prefixRewrite = backend.URI.PrefixRewrite
-				} else {
-					prefix = fmt.Sprintf("/%v/", backend.Name)
-					prefixRewrite = "/"
-				}
-
-				clusterName := BuildServiceKey(backend.Name, backend.Tags)
-
-				runtime := &Runtime{
-					Key:     BuildWeightKey(backend.Name, backend.Tags),
-					Default: int(backend.Weight * 100),
-				}
-
-				route := Route{
-					Runtime:       runtime,
-					Path:          path,
-					Prefix:        prefix,
-					PrefixRewrite: prefixRewrite,
-					Cluster:       clusterName,
-					Headers:       headers,
-					RetryPolicy: RetryPolicy{
-						Policy: "5xx,connect-failure,refused-stream",
-					},
-				}
-
-				if rule.Route.HTTPReqTimeout > 0 {
-					// convert from float sec to in ms
-					route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
-				}
-				if rule.Route.HTTPReqRetries > 0 {
-					route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
-				}
-
-				routes = append(routes, route)
-			}
+			routes = append(routes, buildRoute(&rule))
 		}
 	}
 
 	return routes
+}
+
+func buildRoute(rule *api.Rule) Route {
+	var headers []Header
+	if rule.Match != nil {
+		headers = make([]Header, 0, len(rule.Match.Headers))
+		for k, v := range rule.Match.Headers {
+			headers = append(
+				headers,
+				Header{
+					Name:  k,
+					Value: v,
+					Regex: true,
+				},
+			)
+		}
+	}
+
+	var path, prefix, prefixRewrite string
+	if rule.Route.URI != nil {
+		path = rule.Route.URI.Path
+		prefix = rule.Route.URI.Prefix
+		prefixRewrite = rule.Route.URI.PrefixRewrite
+	} else {
+		prefix = fmt.Sprintf("/%v/", rule.Destination)
+		prefixRewrite = "/"
+	}
+
+	route := Route{
+		Path:          path,
+		Prefix:        prefix,
+		PrefixRewrite: prefixRewrite,
+		Headers:       headers,
+		RetryPolicy: RetryPolicy{
+			Policy: "5xx,connect-failure,refused-stream",
+		},
+		WeightedClusters: WeightedClusters{
+			Clusters: make([]WeightedCluster, 0),
+		},
+	}
+
+	if rule.Route.HTTPReqTimeout > 0 {
+		// convert from float sec to in ms
+		route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
+	}
+	if rule.Route.HTTPReqRetries > 0 {
+		route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
+	}
+
+	for _, backend := range rule.Route.Backends {
+		route.WeightedClusters.Clusters = append(route.WeightedClusters.Clusters, WeightedCluster{
+			Name:   BuildServiceKey(backend.Name, backend.Tags),
+			Weight: int(backend.Weight * 100),
+		})
+	}
+
+	return route
 }
 
 // ByPriority implement sort
@@ -522,12 +525,6 @@ func SanitizeRules(ruleList []api.Rule) {
 						backend.Weight = w
 					}
 				}
-			}
-
-			sum = 0
-			for j := range rule.Route.Backends {
-				sum += rule.Route.Backends[j].Weight
-				rule.Route.Backends[j].Weight = sum
 			}
 		}
 	}

@@ -67,8 +67,8 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 		GroupName:   kuberules.ResourceGroupName,
 		Version:     kuberules.ResourceVersion,
 		Description: kuberules.ResourceDescription,
-		Type:        &kuberules.RoutingRule{},
-		ListType:    &kuberules.RoutingRuleList{}}
+		Type:        &RoutingRule{},
+		ListType:    &RoutingRuleList{}}
 
 	if err := kubepkg.InitThirdPartyResource(tprConfig); err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func new(ctx context.Context, namespace string) (*controller, error) {
 
 	controller.rulesCache, controller.rulesController = cache.NewInformer(
 		cache.NewListWatchFromClient(client, controller.ruleTPRListName, namespace, nil),
-		&kuberules.RoutingRule{},
+		&RoutingRule{},
 		cacheResyncPeriod,
 		cache.ResourceEventHandlerFuncs{
 			AddFunc:    workqueue.EnqueueingAddFunc(controller.addRule),
@@ -117,14 +117,17 @@ func (c *controller) Stop() error {
 	return nil
 }
 
-func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
+func (c *controller) validateRule(rule *kuberules.RoutingRule, err error) error {
 	var updRule kuberules.RoutingRule
 
 	if rule.Spec.ID == "" {
 		updRule.Spec.ID = rule.Metadata.Name
 	}
 
-	err := c.validator.Validate(rule.Spec)
+	if err == nil { // Spec seems to be syntactically valid
+		err = c.validator.Validate(rule.Spec)
+	}
+
 	if err != nil {
 		logger.WithError(err).Warnf("Rule %#v is not valid", rule)
 		updRule.Status.State = kuberules.RuleStateInvalid
@@ -144,7 +147,7 @@ func (c *controller) validateRule(rule *kuberules.RoutingRule) error {
 
 // addRule is the callback invoked by the Kubernetes cache when a rule API resource is added.
 func (c *controller) addRule(obj interface{}) {
-	rule, ok := obj.(*kuberules.RoutingRule)
+	rule, ok := obj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule added: object is of type %T", obj)
 		return
@@ -156,18 +159,18 @@ func (c *controller) addRule(obj interface{}) {
 		rule.Metadata.ResourceVersion)
 
 	if rule.Status.State == "" {
-		c.validateRule(rule)
+		c.validateRule(rule.reify())
 	}
 }
 
 // updateRule is the callback invoked by the Kubernetes cache when a rule API resource is updated.
 func (c *controller) updateRule(oldObj, newObj interface{}) {
-	oldRule, ok := oldObj.(*kuberules.RoutingRule)
+	oldRule, ok := oldObj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule update: old object is of type %T", oldObj)
 		return
 	}
-	newRule, ok := newObj.(*kuberules.RoutingRule)
+	newRule, ok := newObj.(*RoutingRule)
 	if !ok {
 		logger.Errorf("Invalid rule update: new object is of type %T", newObj)
 		return
@@ -180,7 +183,7 @@ func (c *controller) updateRule(oldObj, newObj interface{}) {
 		newRule.Metadata.ResourceVersion)
 
 	if newRule.Status.State == "" {
-		c.validateRule(newRule)
+		c.validateRule(newRule.reify())
 	}
 }
 
@@ -191,12 +194,7 @@ func (c *controller) patchObject(namespace, name string, rule *kuberules.Routing
 		return err
 	}
 
-	err = c.client.Patch(api.MergePatchType).
-		Resource(c.ruleTPRListName).
-		Namespace(namespace).
-		Name(name).
-		Body(data).
-		Do().
-		Into(&kuberules.RoutingRule{})
+	err = c.client.Patch(api.MergePatchType).Resource(c.ruleTPRListName).Namespace(namespace).
+		Name(name).Body(data).Do().Into(&kuberules.RoutingRule{})
 	return err
 }

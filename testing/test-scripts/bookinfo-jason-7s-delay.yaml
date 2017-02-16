@@ -23,7 +23,7 @@ spec:
     source:
       name: "reviews"
       tags:
-      - "varsion=v2"
+      - "version=v2"
     headers:
       Cookie: "^(.*?;)?(user=jason)(;.*)?$"
   actions:

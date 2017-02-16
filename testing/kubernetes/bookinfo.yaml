@@ -12,9 +12,9 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-##################################################################################################
-# Gateway service
-##################################################################################################
+#------------------
+# Gateway
+#------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -23,8 +23,8 @@ spec:
   ports:
   - port: 6379
     targetPort: 6379
-    protocol: TCP
     nodePort: 32000
+    protocol: TCP
   selector:
     name: gateway
   type: NodePort
@@ -40,7 +40,6 @@ spec:
     metadata:
       labels:
         name: gateway
-        version: none
     spec:
       containers:
       - name: gateway
@@ -48,28 +47,77 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 6379
-        args:
-        - /usr/bin/run_filebeat.sh
         env:
         - name: A8_PROXY
           value: "true"
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
         - name: A8_DISCOVERY_ADAPTER
+          value: kubernetes
+        - name: A8_RULES_ADAPTER
           value: kubernetes
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: A8_ELASTICSEARCH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):9200
-        - name: A8_CONTROLLER_POLL
-          value: 5s
 ---
 
-##################################################################################################
-# Details service
-##################################################################################################
+#------------------
+# Productpage
+#------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: productpage
+spec:
+  clusterIP: None
+  ports:
+  - port: 9080
+    protocol: TCP
+    name: http
+  selector:
+    name: productpage
+---
+
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: productpage-v1
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: productpage
+        version: v1
+    spec:
+      containers:
+      - name: productpage
+        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-productpage-v1:${A8_RELEASE}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9080
+      - name: serviceproxy
+        image: amalgam8/a8-sidecar:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 6379
+        env:
+        - name: A8_PROXY
+          value: "true"
+        - name: A8_DISCOVERY_ADAPTER
+          value: kubernetes
+        - name: A8_RULES_ADAPTER
+          value: kubernetes
+        - name: A8_KUBERNETES_POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: A8_LOG
+          value: "false"
+---
+
+#------------------
+# Details
+#------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -104,9 +152,9 @@ spec:
         - containerPort: 9080
 ---
 
-##################################################################################################
-# Ratings service
-##################################################################################################
+#------------------
+# Ratings
+#------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -140,10 +188,10 @@ spec:
         ports:
         - containerPort: 9080
 ---
-##################################################################################################
-# Reviews service
-##################################################################################################
 
+#------------------
+# Reviews
+#------------------
 apiVersion: v1
 kind: Service
 metadata:
@@ -199,8 +247,6 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
-        args:
-        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
@@ -208,16 +254,14 @@ spec:
           value: "true"
         - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_POLL
-          value: 5s
+        - name: A8_RULES_ADAPTER
+          value: kubernetes
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: A8_ELASTICSEARCH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):9200
+        - name: A8_LOG
+          value: "false"
 ---
 
 apiVersion: v1
@@ -241,8 +285,6 @@ spec:
       - name: serviceproxy
         image: amalgam8/a8-sidecar:latest
         imagePullPolicy: IfNotPresent
-        args:
-        - /usr/bin/run_filebeat.sh
         ports:
         - containerPort: 6379
         env:
@@ -250,72 +292,12 @@ spec:
           value: "true"
         - name: A8_DISCOVERY_ADAPTER
           value: kubernetes
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_POLL
-          value: 5s
-        - name: A8_KUBERNETES_POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: A8_ELASTICSEARCH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):9200
----
-
-##################################################################################################
-# Productpage service
-##################################################################################################
-apiVersion: v1
-kind: Service
-metadata:
-  name: productpage
-spec:
-  clusterIP: None
-  ports:
-  - port: 9080
-    protocol: TCP
-    name: http
-  selector:
-    name: productpage
----
-
-apiVersion: v1
-kind: ReplicationController
-metadata:
-  name: productpage-v1
-spec:
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        name: productpage
-        version: v1
-    spec:
-      containers:
-      - name: productpage
-        image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-productpage-v1:${A8_RELEASE}
-        imagePullPolicy: IfNotPresent
-        ports:
-        - containerPort: 9080
-      - name: serviceproxy
-        image: amalgam8/a8-sidecar:latest
-        imagePullPolicy: IfNotPresent
-        args:
-        - /usr/bin/run_filebeat.sh
-        ports:
-        - containerPort: 6379
-        env:
-        - name: A8_PROXY
-          value: "true"
-        - name: A8_DISCOVERY_ADAPTER
+        - name: A8_RULES_ADAPTER
           value: kubernetes
-        - name: A8_CONTROLLER_URL
-          value: http://$(CONTROLLER_SERVICE_HOST):$(CONTROLLER_SERVICE_PORT)
-        - name: A8_CONTROLLER_POLL
-          value: 5s
         - name: A8_KUBERNETES_POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        - name: A8_ELASTICSEARCH_SERVER
-          value: $(LOGSERVER_SERVICE_HOST):9200
+        - name: A8_LOG
+          value: "false"
+---

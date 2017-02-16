@@ -58,8 +58,9 @@ replace $K8S_DIR/bookinfo.yaml $EXAMPLESDIR/k8s-bookinfo.yaml
 replace $K8S_DIR/helloworld.yaml $EXAMPLESDIR/k8s-helloworld.yaml
 cp $K8S_DIR/controlplane.yaml $EXAMPLESDIR/k8s-controlplane.yaml
 # Copy the rules over to examples/
-cp $TEST_SCRIPTS_DIR/helloworld-default-route-rules.yaml $EXAMPLESDIR/k8s-helloworld-default-route-rules.yaml
-cp $TEST_SCRIPTS_DIR/helloworld-v1-v2-route-rules.yaml $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
+for f in $TEST_SCRIPTS_DIR/{helloworld,bookinfo}*.yaml; do \
+    cp $f $EXAMPLESDIR/k8s-`basename $f`; \
+done
 
 ##### Bluemix cfg file #####
 replace $SCRIPTDIR/bluemix.cfg $EXAMPLESDIR/bluemix.cfg

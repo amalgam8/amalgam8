@@ -96,6 +96,15 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 		}),
 	}
 
+	if conf.ProxyConfig.TLS {
+		m.tlsConfig = &SSLContext{
+			CertChainFile:   conf.ProxyConfig.CertChainFile,
+			PrivateKeyFile:  conf.ProxyConfig.PrivateKeyFile,
+			CACertFile:      &conf.ProxyConfig.CACertFile,
+			GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
+		}
+	}
+
 	if err := buildFS(m.workingDir); err != nil {
 		return nil, err
 	}
@@ -171,6 +180,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	}
 
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
+	filters = append(filters, buildGrpcHttp1BridgeFilter(m.tlsConfig))
 
 	traceKey := "gremlin_recipe_id"
 	traceVal := "-"
@@ -750,6 +760,19 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 	})
 
 	return filters
+}
+
+func buildGrpcHttp1BridgeFilter(tlsConfig *SSLContext) Filter {
+	var filter Filter
+	if tlsConfig != nil && tlsConfig.GrpcHttp1Bridge {
+		// Construct http1_grpc_bridge filter
+		filter = Filter{
+			Type:   "both",
+			Name:   "grpc_http1_bridge",
+			Config: &GrpcHttp1BridgeFilter{},
+		}
+	}
+	return filter
 }
 
 func buildSourceName(service string, tags []string) string {

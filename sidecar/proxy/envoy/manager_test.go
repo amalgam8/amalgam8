@@ -19,7 +19,9 @@ import (
 	"testing"
 
 	"github.com/amalgam8/amalgam8/pkg/api"
+	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/stretchr/testify/assert"
+	"gopkg.in/yaml.v2"
 )
 
 func TestSanitizeRules(t *testing.T) {
@@ -149,6 +151,42 @@ func TestFS(t *testing.T) {
 
 	//err := buildFS(rules)
 	//assert.NoError(t, err)
+}
+
+func TestBuildGrpcHttp1BridgeFilter(t *testing.T) {
+	configYaml := []byte(`
+  tls:           true
+  cert_chain_file:     /etc/certs/server.pem
+  private_key_file: /etc/certs/server_key.pem
+  ca_cert_file:  /etc/certs/ca.pem
+  http_listener_port: 8000
+  sds_port: 6000
+  admin_port: 5813
+  working_dir: "/etc/proxy/"
+  logging_dir: "/var/log/"
+  proxy_binary_path: "/usr/local/bin/envoy"
+  grpc_http1_bridge: true
+`)
+	var proxyConfig config.ProxyConfig
+	err := yaml.Unmarshal(configYaml, &proxyConfig)
+	assert.NoError(t, err)
+
+	var tlsConfig *SSLContext
+	if proxyConfig.TLS {
+		tlsConfig = &SSLContext{
+			CertChainFile:   proxyConfig.CertChainFile,
+			PrivateKeyFile:  proxyConfig.PrivateKeyFile,
+			CACertFile:      &proxyConfig.CACertFile,
+			GrpcHttp1Bridge: proxyConfig.GrpcHttp1Bridge,
+		}
+	}
+
+	filter := buildGrpcHttp1BridgeFilter(tlsConfig)
+	assert.Equal(t, Filter{
+		Type:   "both",
+		Name:   "grpc_http1_bridge",
+		Config: &GrpcHttp1BridgeFilter{},
+	}, filter)
 }
 
 func TestBuildClusters(t *testing.T) {

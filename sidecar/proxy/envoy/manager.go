@@ -180,7 +180,10 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	}
 
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
-	filters = append(filters, buildGrpcHttp1BridgeFilter(m.tlsConfig))
+
+	if m.tlsConfig != nil && m.tlsConfig.GrpcHttp1Bridge {
+		filters = append(filters, buildGrpcHttp1BridgeFilter(m.tlsConfig))
+	}
 
 	traceKey := "gremlin_recipe_id"
 	traceVal := "-"
@@ -763,16 +766,12 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 }
 
 func buildGrpcHttp1BridgeFilter(tlsConfig *SSLContext) Filter {
-	var filter Filter
-	if tlsConfig != nil && tlsConfig.GrpcHttp1Bridge {
-		// Construct http1_grpc_bridge filter
-		filter = Filter{
+	// Construct http1_grpc_bridge filter
+	return  Filter{
 			Type:   "both",
 			Name:   "grpc_http1_bridge",
 			Config: &GrpcHttp1BridgeFilter{},
 		}
-	}
-	return filter
 }
 
 func buildSourceName(service string, tags []string) string {

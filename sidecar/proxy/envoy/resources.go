@@ -68,17 +68,32 @@ type RetryPolicy struct {
 	NumRetries int    `json:"num_retries,omitempty"`
 }
 
+// WeightedCluster definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#weighted-clusters
+type WeightedCluster struct {
+	Name   string `json:"name"`
+	Weight int    `json:"weight"`
+}
+
+// WeightedClusters definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#weighted-clusters
+type WeightedClusters struct {
+	Clusters         []WeightedCluster `json:"clusters"`
+	RunTimeKeyPrefix string            `json:"runtime_key_prefix,omitempty"`
+}
+
 // Route definition.
 // See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route.html#config-http-conn-man-route-table-route
 type Route struct {
-	Runtime       *Runtime    `json:"runtime,omitempty"`
-	Path          string      `json:"path,omitempty"`
-	Prefix        string      `json:"prefix,omitempty"`
-	PrefixRewrite string      `json:"prefix_rewrite,omitempty"`
-	Cluster       string      `json:"cluster"`
-	Headers       []Header    `json:"headers,omitempty"`
-	TimeoutMS     int         `json:"timeout_ms,omitempty"`
-	RetryPolicy   RetryPolicy `json:"retry_policy"`
+	Runtime          *Runtime         `json:"runtime,omitempty"`
+	Path             string           `json:"path,omitempty"`
+	Prefix           string           `json:"prefix,omitempty"`
+	PrefixRewrite    string           `json:"prefix_rewrite,omitempty"`
+	WeightedClusters WeightedClusters `json:"weighted_clusters,omitempty"`
+	Cluster          string           `json:"cluster,omitempty"`
+	Headers          []Header         `json:"headers,omitempty"`
+	TimeoutMS        int              `json:"timeout_ms,omitempty"`
+	RetryPolicy      RetryPolicy      `json:"retry_policy"`
 }
 
 // VirtualHost definition.
@@ -102,15 +117,24 @@ type AccessLog struct {
 	Filter string `json:"filter,omitempty"`
 }
 
+// RDS definition
+// See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/rds.html#config-http-conn-man-rds
+type RDS struct {
+	Cluster         string `json:"cluster"`
+	RefreshDelayMS  int    `json:"refresh_delay_ms"`
+	RouteConfigName string `json:"route_config_name"`
+}
+
 // NetworkFilterConfig definition.
 type NetworkFilterConfig struct {
-	CodecType         string      `json:"codec_type"`
-	StatPrefix        string      `json:"stat_prefix"`
-	GenerateRequestID bool        `json:"generate_request_id"`
-	UserAgent         bool        `json:"add_user_agent"`
-	RouteConfig       RouteConfig `json:"route_config"`
-	Filters           []Filter    `json:"filters"`
-	AccessLog         []AccessLog `json:"access_log"`
+	CodecType         string       `json:"codec_type"`
+	StatPrefix        string       `json:"stat_prefix"`
+	GenerateRequestID bool         `json:"generate_request_id"`
+	UserAgent         bool         `json:"add_user_agent"`
+	RouteConfig       *RouteConfig `json:"route_config,omitempty"`
+	RDS               *RDS         `json:"rds,omitempty"`
+	Filters           []Filter     `json:"filters"`
+	AccessLog         []AccessLog  `json:"access_log"`
 }
 
 // NetworkFilter definition.
@@ -159,7 +183,7 @@ type Cluster struct {
 	LbType                   string            `json:"lb_type"`
 	MaxRequestsPerConnection int               `json:"max_requests_per_connection,omitempty"`
 	Hosts                    []Host            `json:"hosts,omitempty"`
-	CircuitBreaker           *CircuitBreaker   `json:"circuit_breaker,omitempty"`
+	CircuitBreakers          *CircuitBreakers  `json:"circuit_breakers,omitempty"`
 	OutlierDetection         *OutlierDetection `json:"outlier_detection,omitempty"`
 	SSLContext               *SSLContext       `json:"ssl_context,omitempty"`
 }
@@ -173,9 +197,9 @@ type OutlierDetection struct {
 	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
 }
 
-// CircuitBreaker definition
+// CircuitBreakers definition
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreaker struct {
+type CircuitBreakers struct {
 	MaxConnections    int `json:"max_connections,omitempty"`
 	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
 	MaxRequests       int `json:"max_requests,omitempty"`
@@ -207,11 +231,19 @@ type SDS struct {
 	RefreshDelayMs int     `json:"refresh_delay_ms"`
 }
 
+// CDS definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cds.html#config-cluster-manager-cds
+type CDS struct {
+	Cluster        Cluster `json:"cluster"`
+	RefreshDelayMs int     `json:"refresh_delay_ms"`
+}
+
 // ClusterManager definition.
 // See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_manager.html#config-cluster-manager
 type ClusterManager struct {
 	Clusters []Cluster `json:"clusters"`
 	SDS      SDS       `json:"sds"`
+	CDS      CDS       `json:"cds"`
 }
 
 // RootRuntime definition.

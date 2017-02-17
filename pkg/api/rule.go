@@ -40,6 +40,7 @@ type Match struct {
 // Route definition
 type Route struct {
 	Backends       []Backend `json:"backends" yaml:"backends"`
+	URI            *URI      `json:"uri,omitempty" yaml:"uri,omitempty"`
 	HTTPReqTimeout float64   `json:"http_req_timeout,omitempty" yaml:"http_req_timeout,omitempty"`
 	HTTPReqRetries int       `json:"http_req_retries,omitempty" yaml:"http_req_retries,omitempty"`
 }
@@ -66,7 +67,6 @@ type Resilience struct {
 type Backend struct {
 	Name       string      `json:"name,omitempty" yaml:"name,omitempty"`
 	Tags       []string    `json:"tags" yaml:"tags"`
-	URI        *URI        `json:"uri,omitempty" yaml:"uri,omitempty"`
 	Weight     float64     `json:"weight,omitempty" yaml:"weight,omitempty"`
 	Resilience *Resilience `json:"resilience,omitempty" yaml:"resilience,omitempty"`
 	LbType     string      `json:"lb_type,omitempty" yaml:"lb_type,omitempty"`

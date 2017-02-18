@@ -559,6 +559,7 @@ func AddDefaultRouteRules(ruleList []api.Rule, instances []*api.ServiceInstance)
 					},
 				},
 			},
+			Destination: service,
 		})
 	}
 

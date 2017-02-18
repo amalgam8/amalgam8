@@ -94,15 +94,7 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
-	}
-
-	if conf.ProxyConfig.TLS {
-		m.tlsConfig = &SSLContext{
-			CertChainFile:   conf.ProxyConfig.CertChainFile,
-			PrivateKeyFile:  conf.ProxyConfig.PrivateKeyFile,
-			CACertFile:      &conf.ProxyConfig.CACertFile,
-			GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
-		}
+		GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -113,13 +105,14 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 }
 
 type manager struct {
-	identity     identity.Provider
-	service      Service
-	sdsPort      int
-	adminPort    int
-	listenerPort int //Single listener port. TODO: Change to array, with port type Http|TCP
-	workingDir   string
-	loggingDir   string
+	identity        identity.Provider
+	service         Service
+	sdsPort         int
+	adminPort       int
+	listenerPort    int //Single listener port. TODO: Change to array, with port type Http|TCP
+	workingDir      string
+	loggingDir      string
+	GrpcHttp1Bridge bool
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -181,8 +174,8 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
-	if m.tlsConfig != nil && m.tlsConfig.GrpcHttp1Bridge {
-		filters = append(filters, buildGrpcHttp1BridgeFilter(m.tlsConfig))
+	if m.GrpcHttp1Bridge {
+		filters = append(filters, buildGrpcHttp1BridgeFilter())
 	}
 
 	traceKey := "gremlin_recipe_id"
@@ -765,13 +758,13 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 	return filters
 }
 
-func buildGrpcHttp1BridgeFilter(tlsConfig *SSLContext) Filter {
+func buildGrpcHttp1BridgeFilter() Filter {
 	// Construct http1_grpc_bridge filter
-	return  Filter{
-			Type:   "both",
-			Name:   "grpc_http1_bridge",
-			Config: &GrpcHttp1BridgeFilter{},
-		}
+	return Filter{
+		Type:   "both",
+		Name:   "grpc_http1_bridge",
+		Config: &GrpcHttp1BridgeFilter{},
+	}
 }
 
 func buildSourceName(service string, tags []string) string {

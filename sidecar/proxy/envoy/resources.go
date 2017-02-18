@@ -154,7 +154,6 @@ type SSLContext struct {
 	CertChainFile   string  `json:"cert_chain_file"`
 	PrivateKeyFile  string  `json:"private_key_file"`
 	CACertFile      *string `json:"ca_cert_file,omitempty"`
-	GrpcHttp1Bridge bool    `json:"grpc_http1_bridge,omitempty"`
 }
 
 // Listener definition.

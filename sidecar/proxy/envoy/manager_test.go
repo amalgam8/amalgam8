@@ -171,22 +171,14 @@ func TestBuildGrpcHttp1BridgeFilter(t *testing.T) {
 	err := yaml.Unmarshal(configYaml, &proxyConfig)
 	assert.NoError(t, err)
 
-	var tlsConfig *SSLContext
-	if proxyConfig.TLS {
-		tlsConfig = &SSLContext{
-			CertChainFile:   proxyConfig.CertChainFile,
-			PrivateKeyFile:  proxyConfig.PrivateKeyFile,
-			CACertFile:      &proxyConfig.CACertFile,
-			GrpcHttp1Bridge: proxyConfig.GrpcHttp1Bridge,
-		}
+	if proxyConfig.GrpcHttp1Bridge {
+		filter := buildGrpcHttp1BridgeFilter()
+		assert.Equal(t, Filter{
+			Type:   "both",
+			Name:   "grpc_http1_bridge",
+			Config: &GrpcHttp1BridgeFilter{},
+		}, filter)
 	}
-
-	filter := buildGrpcHttp1BridgeFilter(tlsConfig)
-	assert.Equal(t, Filter{
-		Type:   "both",
-		Name:   "grpc_http1_bridge",
-		Config: &GrpcHttp1BridgeFilter{},
-	}, filter)
 }
 
 func TestBuildClusters(t *testing.T) {

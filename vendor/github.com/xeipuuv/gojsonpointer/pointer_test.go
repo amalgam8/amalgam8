@@ -15,12 +15,12 @@
 // author  			xeipuuv
 // author-github 	https://github.com/xeipuuv
 // author-mail		xeipuuv@gmail.com
-// 
+//
 // repository-name	gojsonpointer
 // repository-desc	An implementation of JSON Pointer - Go language
-// 
+//
 // description		Automated tests on package.
-// 
+//
 // created      	03-03-2013
 
 package gojsonpointer

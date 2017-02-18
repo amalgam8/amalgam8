@@ -151,9 +151,9 @@ type NetworkFilter struct {
 // SSLContext defintion
 // See: https://lyft.github.io/envoy/docs/configuration/listeners/ssl.html#config-listener-ssl-context
 type SSLContext struct {
-	CertChainFile   string  `json:"cert_chain_file"`
-	PrivateKeyFile  string  `json:"private_key_file"`
-	CACertFile      *string `json:"ca_cert_file,omitempty"`
+	CertChainFile  string  `json:"cert_chain_file"`
+	PrivateKeyFile string  `json:"private_key_file"`
+	CACertFile     *string `json:"ca_cert_file,omitempty"`
 }
 
 // Listener definition.

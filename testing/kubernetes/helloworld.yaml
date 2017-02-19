@@ -31,7 +31,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: gateway
 spec:
@@ -78,7 +78,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: helloworld-v1
 spec:
@@ -101,7 +101,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: helloworld-v2
 spec:

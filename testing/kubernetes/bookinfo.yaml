@@ -31,7 +31,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: gateway
 spec:
@@ -78,7 +78,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: productpage-v1
 spec:
@@ -133,7 +133,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: details-v1
 spec:
@@ -170,7 +170,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: ratings-v1
 spec:
@@ -207,7 +207,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: reviews-v1
 spec:
@@ -227,7 +227,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: reviews-v2
 spec:
@@ -265,7 +265,7 @@ spec:
 ---
 
 apiVersion: v1
-kind: ReplicationController
+kind: ReplicaSet
 metadata:
   name: reviews-v3
 spec:

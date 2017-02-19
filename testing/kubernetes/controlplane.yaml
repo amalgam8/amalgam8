@@ -12,8 +12,8 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-apiVersion: v1
-kind: ReplicationController
+apiVersion: extensions/v1beta1
+kind: ReplicaSet
 metadata:
   name: rules
   labels:
@@ -21,7 +21,8 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app: rules
+    matchLabels:
+      app: rules
   template:
     metadata:
       name: rules

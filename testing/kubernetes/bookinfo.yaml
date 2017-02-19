@@ -36,6 +36,9 @@ metadata:
   name: gateway
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: gateway
   template:
     metadata:
       labels:
@@ -83,6 +86,10 @@ metadata:
   name: productpage-v1
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: productpage
+      version: v1
   template:
     metadata:
       labels:
@@ -138,6 +145,10 @@ metadata:
   name: details-v1
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: details
+      version: v1
   template:
     metadata:
       labels:
@@ -175,6 +186,10 @@ metadata:
   name: ratings-v1
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: ratings
+      version: v1
   template:
     metadata:
       labels:
@@ -212,6 +227,10 @@ metadata:
   name: reviews-v1
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: reviews
+      version: v1
   template:
     metadata:
       labels:
@@ -232,6 +251,10 @@ metadata:
   name: reviews-v2
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: reviews
+      version: v2
   template:
     metadata:
       labels:
@@ -270,6 +293,10 @@ metadata:
   name: reviews-v3
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: reviews
+      version: v3
   template:
     metadata:
       labels:

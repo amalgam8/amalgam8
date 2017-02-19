@@ -21,7 +21,8 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app: rules
+    matchLabels:
+      app: rules
   template:
     metadata:
       name: rules

@@ -36,6 +36,9 @@ metadata:
   name: gateway
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      name: gateway
   template:
     metadata:
       labels:
@@ -83,6 +86,11 @@ metadata:
   name: helloworld-v1
 spec:
   replicas: 2
+  selector:
+    matchLabels:
+      name: helloworld
+    matchExpressions:
+      - {key: version, operator: In, values: [v1]}
   template:
     metadata:
       labels:
@@ -106,6 +114,11 @@ metadata:
   name: helloworld-v2
 spec:
   replicas: 2
+  selector:
+    matchLabels:
+      name: helloworld
+    matchExpressions:
+      - {key: version, operator: In, values: [v2]}
   template:
     metadata:
       labels:

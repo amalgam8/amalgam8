@@ -30,7 +30,7 @@ spec:
   type: NodePort
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: gateway
@@ -77,7 +77,7 @@ spec:
     name: productpage
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: productpage-v1
@@ -132,7 +132,7 @@ spec:
     name: details
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: details-v1
@@ -169,7 +169,7 @@ spec:
     name: ratings
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: ratings-v1
@@ -206,7 +206,7 @@ spec:
     name: reviews
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: reviews-v1
@@ -226,7 +226,7 @@ spec:
         - containerPort: 9080
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: reviews-v2
@@ -264,7 +264,7 @@ spec:
           value: "false"
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: reviews-v3

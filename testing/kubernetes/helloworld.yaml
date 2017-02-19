@@ -30,7 +30,7 @@ spec:
   type: NodePort
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: gateway
@@ -77,7 +77,7 @@ spec:
     name: helloworld
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: helloworld-v1
@@ -100,7 +100,7 @@ spec:
           value: version=v1
 ---
 
-apiVersion: v1
+apiVersion: extensions/v1beta1
 kind: ReplicaSet
 metadata:
   name: helloworld-v2

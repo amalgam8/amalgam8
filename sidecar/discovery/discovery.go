@@ -26,11 +26,31 @@ import (
 )
 
 const (
+	apiVer                       = "/v1"
+	routeParamServiceClusterName = "csname"
+	routeParamServiceNodeName    = "snname"
+
 	routeParamServiceName = "sname"
-	apiVer                = "/v1"
 	registrationPath      = apiVer + "/registration"
 	registrationTemplate  = registrationPath + "/#" + routeParamServiceName
+
+	clusterPath     = apiVer + "/clusters"
+	clusterTemplate = clusterPath + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
+
+	routeParamRouteConfigName = "route_conf_name"
+	routesPath                = apiVer + "/routes"
+	routesTemplate            = routesPath + "/#" + routeParamRouteConfigName + "/#" + routeParamServiceClusterName + "/#" + routeParamServiceNodeName
 )
+
+// VirtualHosts is the array of route info returned by GET routes
+type VirtualHosts struct {
+	VirtualHosts []envoy.VirtualHost `json:"virtual_hosts"`
+}
+
+// Clusters is the array of clusters returned by GET clusters
+type Clusters struct {
+	Clusters []envoy.Cluster `json:"clusters"`
+}
 
 // Hosts is the array of hosts returned by the GET registration
 type Hosts struct {
@@ -68,12 +88,16 @@ func (s ByIPPort) Less(i, j int) bool {
 // Discovery handles discovery API calls
 type Discovery struct {
 	discovery api.ServiceDiscovery
+	rules     api.RulesService
+	tlsConfig *envoy.SSLContext
 }
 
 // NewDiscovery creates struct
-func NewDiscovery(discovery api.ServiceDiscovery) *Discovery {
+func NewDiscovery(discovery api.ServiceDiscovery, rules api.RulesService, tlsConfig *envoy.SSLContext) *Discovery {
 	return &Discovery{
 		discovery: discovery,
+		rules:     rules,
+		tlsConfig: tlsConfig,
 	}
 }
 
@@ -81,6 +105,8 @@ func NewDiscovery(discovery api.ServiceDiscovery) *Discovery {
 func (d *Discovery) Routes(middlewares ...rest.Middleware) []*rest.Route {
 	routes := []*rest.Route{
 		rest.Get(registrationTemplate, d.getRegistration),
+		rest.Get(clusterTemplate, d.getClusters),
+		rest.Get(routesTemplate, d.getRoutes),
 	}
 
 	for _, route := range routes {
@@ -92,23 +118,33 @@ func (d *Discovery) Routes(middlewares ...rest.Middleware) []*rest.Route {
 // getRegistration
 func (d *Discovery) getRegistration(w rest.ResponseWriter, req *rest.Request) {
 	sname := req.PathParam(routeParamServiceName)
-	service, tags := envoy.ParseServiceKey(sname)
 
-	instances, err := d.discovery.ListServiceInstances(service)
+	hosts, err := d.getHosts(sname)
 	if err != nil {
-		logrus.WithError(err).Warnf("Failed to get the list of service instances")
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	filteredInstances := filterInstances(instances, tags)
-
 	resp := Hosts{
-		Hosts: translate(filteredInstances),
+		Hosts: hosts,
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.WriteJson(&resp)
+}
+
+func (d *Discovery) getHosts(name string) ([]Host, error) {
+	service, tags := envoy.ParseServiceKey(name)
+
+	instances, err := d.discovery.ListServiceInstances(service)
+	if err != nil {
+		logrus.WithError(err).Warnf("Failed to get the list of service instances")
+		return []Host{}, err
+	}
+
+	filteredInstances := filterInstances(instances, tags)
+
+	return translate(filteredInstances), nil
 }
 
 // get service name, tags
@@ -158,4 +194,61 @@ func filterInstances(instances []*api.ServiceInstance, tags []string) []*api.Ser
 	}
 
 	return filtered
+}
+
+// getRegistration
+func (d *Discovery) getClusters(w rest.ResponseWriter, req *rest.Request) {
+
+	instances, err := d.discovery.ListInstances()
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	ruleSet, err := d.rules.ListRules(&api.RuleFilter{})
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	resp := Clusters{
+		Clusters: envoy.BuildClusters(instances, ruleSet.Rules, d.tlsConfig),
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&resp)
+}
+
+func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
+	instances, err := d.discovery.ListInstances()
+	if err != nil {
+		logrus.WithError(err).Error("Unable to retrieve instances")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	ruleSet, err := d.rules.ListRules(&api.RuleFilter{})
+	if err != nil {
+		logrus.WithError(err).Error("Unable to retrieve rules")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		return
+	}
+
+	envoy.SanitizeRules(ruleSet.Rules)
+	rules := envoy.AddDefaultRouteRules(ruleSet.Rules, instances)
+
+	routes := envoy.BuildRoutes(rules)
+
+	respJSON := VirtualHosts{
+		VirtualHosts: []envoy.VirtualHost{
+			{
+				Name:    "backend",
+				Domains: []string{"*"},
+				Routes:  routes,
+			},
+		},
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.WriteJson(&respJSON)
 }

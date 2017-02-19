@@ -153,9 +153,6 @@
         "tags": {
           "$ref": "#/definitions/tags"
         },
-        "uri": {
-          "$ref": "#/definitions/uri"
-        },
         "weight": {
           "title": "Traffic weight",
           "description": "Percentage of traffic to route to this backend.",
@@ -243,6 +240,9 @@
           "type": "integer",
           "minimum": 0,
           "exclusiveMinimum": false
+        },
+        "uri": {
+          "$ref": "#/definitions/uri"
         }
       },
       "required": ["backends"],

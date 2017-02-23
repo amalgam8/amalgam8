@@ -193,7 +193,7 @@ test.long:
 	@echo "--> running unit tests, including long tests"
 	@go test -v $(GOPKGS)
 
-test.integration: build.testapps
+test.integration: build.testapps dockerize.k8srules
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
 

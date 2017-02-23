@@ -78,8 +78,8 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 
     echo ""
     echo "  Verifying the route was set to helloworld v1"
-    temp_var1=$(list_rules "destination")
-    temp_var2=$(list_rules "route.backends[0].tags[0]")
+    temp_var1=$(list_rules "destination" 0)
+    temp_var2=$(list_rules "route.backends[0].tags[0]" 0)
 
     if [ "${temp_var1}" != "helloworld" ] || [ "${temp_var2}" != "version=v1" ]; then
         echo "  The default route was not set as expected."
@@ -135,6 +135,9 @@ retry_count=1
 while [  $retry_count -le $((MAX_LOOP)) ]; do
     ############# Split Traffic Between v1 and v2 #############
 
+    # Clean up the routing rules from the previous testcase
+    cleanup_all_rules
+
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
     if [ "$ENV" == "docker" ]; then
@@ -143,16 +146,16 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
         create_rule $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
     fi
 
-    sleep 15
+    sleep 20
 
     echo ""
     echo "  Verifying the rule was set."
     for count in {0..1}
     do
-	temp_var1=$(list_rules "route.backends[$count].tags[0]")
+	temp_var1=$(list_rules "route.backends[0].tags[0]" $count)
 
         if [ "${temp_var1}" == "version=v1" ]; then
-	    temp_var2=$(list_rules "route.backends[$count].weight")
+	    temp_var2=$(list_rules "route.backends[0].weight" $count)
 
             if [ "${temp_var2}" != "null" ]; then
                 echo "    The v1 route was not set as the default 75% as expected."
@@ -165,7 +168,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
         fi
 
         if [ "${temp_var1}" == "version=v2" ]; then
-            temp_var2=$(list_rules "route.backends[$count].weight")
+            temp_var2=$(list_rules "route.backends[0].weight" $count)
 
             if [ "${temp_var2}" != "0.25" ]; then
                 echo "    The v2 route was not set to 25% as expected."

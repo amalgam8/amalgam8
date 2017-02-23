@@ -137,7 +137,7 @@ check_routing_rules() {
     return 0
 }
 
-A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
+A8CLI=$SCRIPTDIR/../../bin/a8ctl-linux
 
 . $SCRIPTDIR/testing-common.sh
 

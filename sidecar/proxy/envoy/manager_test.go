@@ -258,7 +258,7 @@ func TestBuildClusters(t *testing.T) {
 
 	clusters := BuildClusters(instances, rules, nil)
 
-	assert.Len(t, clusters, 5)
+	assert.Len(t, clusters, 3)
 
 	clusterName := BuildServiceKey("service1", []string{"tag1"})
 	assert.Equal(t, Cluster{
@@ -271,10 +271,10 @@ func TestBuildClusters(t *testing.T) {
 			MaxEjectionPercent: 100,
 		},
 		CircuitBreakers: &CircuitBreakers{},
-	}, clusters[1])
+	}, clusters[0])
 
-	assert.Equal(t, BuildServiceKey("service1", []string{"tag1", "tag2"}), clusters[2].Name)
-	assert.Equal(t, BuildServiceKey("service2", []string{}), clusters[3].Name)
+	assert.Equal(t, BuildServiceKey("service1", []string{"tag1", "tag2"}), clusters[1].Name)
+	assert.Equal(t, BuildServiceKey("service2", []string{}), clusters[2].Name)
 }
 
 func TestBuildServiceKey(t *testing.T) {

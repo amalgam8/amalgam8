@@ -326,14 +326,6 @@ func ParseServiceKey(s string) (string, []string) {
 
 // BuildClusters builds clusters from instances applying rule backend info where necessary
 func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig *SSLContext) []Cluster {
-	clusterNames := make(map[string]struct{})
-	for _, instance := range instances {
-		clusterName := BuildServiceKey(instance.ServiceName, instance.Tags)
-		clusterNames[clusterName] = struct{}{}
-		// Need a default cluster for every service
-		clusterNames[instance.ServiceName] = struct{}{}
-	}
-
 	SanitizeRules(rules)
 	rules = AddDefaultRouteRules(rules, instances)
 
@@ -349,8 +341,8 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 		}
 	}
 
-	clusters := make([]Cluster, 0, len(clusterNames))
-	for name := range clusterNames {
+	clusters := make([]Cluster, 0, len(backends))
+	for name, backend := range backends {
 		cluster := Cluster{
 			Name:             name,
 			ServiceName:      name,
@@ -364,38 +356,36 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 			SSLContext: tlsConfig,
 		}
 
-		if backend, ok := backends[name]; ok {
-			if backend.LbType != "" {
-				cluster.LbType = backend.LbType
+		if backend.LbType != "" {
+			cluster.LbType = backend.LbType
+		}
+
+		if backend.Resilience != nil {
+			// Cluster level settings
+			if backend.Resilience.MaxRequestsPerConnection > 0 {
+				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
 			}
 
-			if backend.Resilience != nil {
-				// Cluster level settings
-				if backend.Resilience.MaxRequestsPerConnection > 0 {
-					cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
-				}
+			// Envoy Circuit breaker config options
+			if backend.Resilience.MaxConnections > 0 {
+				cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
+			}
+			if backend.Resilience.MaxRequests > 0 {
+				cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
+			}
+			if backend.Resilience.MaxPendingRequest > 0 {
+				cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+			}
 
-				// Envoy Circuit breaker config options
-				if backend.Resilience.MaxConnections > 0 {
-					cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
-				}
-				if backend.Resilience.MaxRequests > 0 {
-					cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
-				}
-				if backend.Resilience.MaxPendingRequest > 0 {
-					cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-				}
-
-				// Envoy outlier detection settings that complete circuit breaker
-				if backend.Resilience.SleepWindow > 0 {
-					cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-				}
-				if backend.Resilience.ConsecutiveErrors > 0 {
-					cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-				}
-				if backend.Resilience.DetectionInterval > 0 {
-					cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
-				}
+			// Envoy outlier detection settings that complete circuit breaker
+			if backend.Resilience.SleepWindow > 0 {
+				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+			}
+			if backend.Resilience.ConsecutiveErrors > 0 {
+				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+			}
+			if backend.Resilience.DetectionInterval > 0 {
+				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
 			}
 		}
 
@@ -414,9 +404,12 @@ func BuildWeightKey(service string, tags []string) string {
 }
 
 // BuildRoutes builds routes based on rules.  Assumes at least one route for each service
-func BuildRoutes(ruleList []api.Rule) []Route {
+func BuildRoutes(ruleList []api.Rule, instances []*api.ServiceInstance) []Route {
+	SanitizeRules(ruleList)
+	rules := AddDefaultRouteRules(ruleList, instances)
+
 	routes := []Route{}
-	for _, rule := range ruleList {
+	for _, rule := range rules {
 		if rule.Route != nil {
 			routes = append(routes, buildRoute(&rule))
 		}

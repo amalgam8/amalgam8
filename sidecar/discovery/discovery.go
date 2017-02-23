@@ -234,10 +234,7 @@ func (d *Discovery) getRoutes(w rest.ResponseWriter, req *rest.Request) {
 		return
 	}
 
-	envoy.SanitizeRules(ruleSet.Rules)
-	rules := envoy.AddDefaultRouteRules(ruleSet.Rules, instances)
-
-	routes := envoy.BuildRoutes(rules)
+	routes := envoy.BuildRoutes(ruleSet.Rules, instances)
 
 	respJSON := VirtualHosts{
 		VirtualHosts: []envoy.VirtualHost{

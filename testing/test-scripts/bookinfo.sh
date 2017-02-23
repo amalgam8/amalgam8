@@ -127,6 +127,26 @@ CLIBIN=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 $CLIBIN rule-delete -a -f
 sleep 2
 
+######Verify services have default route#######
+echo "testing default route behavior.."
+MAX_LOOP=5
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    response=$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:32000/productpage/productpage)
+    if [ $response -ne 200 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Prior to creating any rules, services are unreachable."
+        sleep 2
+    else
+        break
+    fi
+done
+echo "works!"
+
 ######Version Routing##############
 echo "testing version routing.."
 MAX_LOOP=5

@@ -24,3 +24,5 @@ spec:
       - weight: 0.25
         tags:
         - "version=v2"
+      - tags:
+        - "version=v1"

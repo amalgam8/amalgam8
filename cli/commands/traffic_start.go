@@ -210,8 +210,10 @@ func (cmd *TrafficStartCommand) StartTraffic(serviceName string, version string,
 // IsServiceActive .
 func (cmd *TrafficStartCommand) IsServiceActive(serviceName, version string, instances []*api.ServiceInstance) bool {
 	for _, instance := range instances {
-		if version == strings.Join(instance.Tags, ", ") {
-			return true
+		for _, tag := range instance.Tags {
+			if version == tag {
+				return true
+			}
 		}
 	}
 	return false

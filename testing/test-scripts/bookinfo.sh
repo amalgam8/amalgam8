@@ -14,29 +14,51 @@
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
 
-set -x
-
 # Set local vars
+SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+EXAMPLESDIR=$SCRIPTDIR/../../examples
 A8_TEST_SUITE=$1
 if [ "$A8_TEST_SUITE" == "examples" ]; then
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.html"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.html"
     PRODUCTPAGE_V3_OUTPUT="productpage_v3.html"
     PRODUCTPAGE_RULEMATCH="productpage_rulematch.html"
+    RULESDIR=$EXAMPLESDIR
 else
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.json"
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.json"
     PRODUCTPAGE_V3_OUTPUT="productpage_v3.json"
     PRODUCTPAGE_RULEMATCH="productpage_rulematch.json"
+    RULESDIR=$SCRIPTDIR
 fi
 # docker or k8s
 if [ -z "$A8_CONTAINER_ENV" ]; then
     A8_CONTAINER_ENV="docker"
 fi
+ENV=$A8_CONTAINER_ENV
 
 if [ -z "$A8_TEST_GREMLIN" ]; then
     A8_TEST_GREMLIN="true"
 fi
+
+dump_debug() {
+    if [ "$ENV" == "k8s" ]; then
+        kubectl get pods
+        kubectl get routingrule
+        kubectl get routingrule -o json
+        GATEWAY_PODNAME=$(kubectl get pods | grep gateway | awk '{print $1}')
+        kubectl logs $GATEWAY_PODNAME
+        kubectl exec -it $GATEWAY_PODNAME cat /etc/envoy/envoy.json
+        kubectl exec -it $GATEWAY_PODNAME tail /var/log/a8_access.log
+        kubectl exec -it $GATEWAY_PODNAME curl localhost:6500/v1/clusters/blah/blah
+        kubectl exec -it $GATEWAY_PODNAME curl localhost:6500/v1/routes/blah/blah/blah
+        PRODUCTPAGE_PODNAME=$(kubectl get pods | grep productpage | awk '{print $1}')
+        kubectl logs $PRODUCTPAGE_PODNAME -c productpage
+        kubectl logs $PRODUCTPAGE_PODNAME -c serviceproxy
+        RULES_PODNAME=$(kubectl get pods | grep rules | awk '{print $1}')
+        kubectl logs $RULES_PODNAME
+    fi
+}
 
 jsondiff() {
     # Sort JSON fields, or fallback to original text
@@ -65,20 +87,20 @@ check_output_equality() {
 # Call the specified endpoint and compare against expected output
 # Ensure the % falls within the expected range
 check_routing_rules() {
-	COMMAND_INPUT="$1"
-	EXPECTED_OUTPUT1="$2"
-	EXPECTED_OUTPUT2="$3"
-	EXPECTED_PERCENT="$4"
-	MAX_LOOP=5
-	retry_count=1
+    COMMAND_INPUT="$1"
+    EXPECTED_OUTPUT1="$2"
+    EXPECTED_OUTPUT2="$3"
+    EXPECTED_PERCENT="$4"
+    MAX_LOOP=5
+    retry_count=1
     COMMAND_INPUT="${COMMAND_INPUT} >/tmp/routing.tmp"
 
-	while [  $retry_count -le $((MAX_LOOP)) ]; do
-		v1_count=0
-		v2_count=0
-		for count in {1..100}
-		do
-			temp_var1=$(eval $COMMAND_INPUT)
+    while [  $retry_count -le $((MAX_LOOP)) ]; do
+        v1_count=0
+        v2_count=0
+        for count in {1..100}
+        do
+            temp_var1=$(eval $COMMAND_INPUT)
             check_output_equality $EXPECTED_OUTPUT1 "/tmp/routing.tmp"
             if [ $? -eq 0 ]; then
                 (( v1_count=v1_count+1 ))
@@ -88,55 +110,71 @@ check_routing_rules() {
                     (( v2_count=v2_count+1 ))
                 fi
             fi
-			# if [[ "${temp_var1}" = *"$EXPECTED_OUTPUT1"* ]]; then
-			# 	(( v1_count=v1_count+1 ))
-			# elif [[ "${temp_var1}" = *"$EXPECTED_OUTPUT2"* ]]; then
-			# 	(( v2_count=v2_count+1 ))
-			# fi
-		done
-		echo "    v1 was hit: "$v1_count" times"
-		echo "    v2 was hit: "$v2_count" times"
-		echo ""
+        done
+        echo "    v1 was hit: "$v1_count" times"
+        echo "    v2 was hit: "$v2_count" times"
+        echo ""
 
-		EXPECTED_V1_PERCENT=$((100-$EXPECTED_PERCENT))
-		ADJUST=5
-		if [ $v1_count -lt $(($EXPECTED_V1_PERCENT-$ADJUST)) ] || [  $v1_count -gt $(($EXPECTED_V1_PERCENT+$ADJUST)) ]; then
-			echo "  The routing did not meet the rule that was set, try again."
-			(( retry_count=retry_count+1 ))
-		else
-			# Test passed, time to exit the loop
-			retry_count=100
-		fi
+        EXPECTED_V1_PERCENT=$((100-$EXPECTED_PERCENT))
+        ADJUST=5
+        if [ $v1_count -lt $(($EXPECTED_V1_PERCENT-$ADJUST)) ] || [  $v1_count -gt $(($EXPECTED_V1_PERCENT+$ADJUST)) ]; then
+            echo "  The routing did not meet the rule that was set, try again."
+            (( retry_count=retry_count+1 ))
+        else
+            # Test passed, time to exit the loop
+            retry_count=100
+        fi
 
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			echo "  Test failed"
-			echo ""
-			#dump_debug
-			return 1
-		elif [ $retry_count -eq 100 ]; then
-			echo "  Passed test"
-			echo ""
-		fi
-	done
-	return 0
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            echo "  Test failed"
+            echo ""
+            return 1
+        elif [ $retry_count -eq 100 ]; then
+            echo "  Passed test"
+            echo ""
+        fi
+    done
+    return 0
 }
 
-SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
-CLIBIN=$SCRIPTDIR/../../bin/a8ctl-beta-linux
+A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
 
-$CLIBIN rule-delete -a -f
-sleep 2
+. $SCRIPTDIR/testing-common.sh
+
+cleanup_all_rules
+sleep 30
+
+######Verify services have default route#######
+echo "testing default route behavior.."
+MAX_LOOP=5
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    response=$(curl --write-out %{http_code} --silent --output /dev/null http://localhost:32000/productpage/productpage)
+    if [ $response -ne 200 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Prior to creating any rules, services are unreachable."
+        sleep 10
+    else
+        break
+    fi
+done
+echo "works!"
 
 ######Version Routing##############
 echo "testing version routing.."
 MAX_LOOP=5
 retry_count=1
 
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-    $CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
-    $CLIBIN rule-create -f $SCRIPTDIR/route_jason_v2.yaml
-    sleep 45
+create_rule $RULESDIR/$ENV-bookinfo-default-route-rules.yaml
+create_rule $RULESDIR/$ENV-bookinfo-jason-reviews-v2-route-rules.yaml
 
+sleep 30
+
+while [  $retry_count -le $((MAX_LOOP)) ]; do
     echo -n "injecting traffic for user=shriram, expecting productpage_v1.."
     curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
 
@@ -153,116 +191,163 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
         fi
         echo "failed, retrying"
         echo "Productpage not match productpage_v1 after setting route to reviews:v2 for user=shriram in version routing test phase"
+	dump_debug
+	sleep 10
     else
         break
     fi
 done
 echo "works!"
 
-echo -n "injecting traffic for user=jason, expecting productpage_v2.."
-curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    echo -n "injecting traffic for user=jason, expecting productpage_v2.."
+    curl -s -b 'foo=bar;user=jason;ding=dong;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
 
-if [ "$A8_TEST_SUITE" == "examples" ]; then
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
 	diff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
-else
+    else
 	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
-fi
+    fi
 
-if [ $? -gt 0 ]; then
-    echo "failed"
-    echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
-    exit 1
-fi
+    if [ $? -gt 0 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Productpage does not match productpage_v2 after setting route to reviews:v2 for user=jason in version routing test phase"
+	sleep 10
+    else
+        break
+    fi
+done
 echo "works!"
 
 ########Fault injection
 echo "testing fault injection.."
-output=$( $CLIBIN rule-create -f $SCRIPTDIR/fault_injection.yaml )
+output=$(create_rule $RULESDIR/$ENV-bookinfo-jason-7s-delay.yaml)
+if [ "$ENV" == "docker" ]; then
+    fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
+else
+    fault_rule_id=$(echo $output | cut -d'"' -f2)
+fi
 
-fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
 sleep 20
 
-###For shriram
-echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
-before=$(date +"%s")
-curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
-after=$(date +"%s")
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    ###For shriram
+    echo -n "injecting traffic for user=shriram, expecting productpage_v1 in less than 2s.."
+    before=$(date +"%s")
+    curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V1_OUTPUT
+    after=$(date +"%s")
 
-delta=$(($after-$before))
-if [ $delta -gt 2 ]; then
-    echo "failed"
-    echo "Productpage took more $delta seconds to respond (expected 2s) for user=shriram in fault injection phase"
-    exit 1
-fi
+    delta=$(($after-$before))
+    if [ $delta -gt 2 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Productpage took more $delta seconds to respond (expected 2s) for user=shriram in fault injection phase"
+        continue
+    fi
 
-if [ "$A8_TEST_SUITE" == "examples" ]; then
-	diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
-else
-	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
-fi
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+        diff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+    else
+        jsondiff $SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT /tmp/$PRODUCTPAGE_V1_OUTPUT
+    fi
 
-if [ $? -gt 0 ]; then
-    echo "failed"
-    echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
-    exit 1
-fi
+    if [ $? -gt 0 ]; then
+        echo "failed"
+        echo "Productpage does not match productpage_v1 after injecting fault rule for user=shriram in fault injection test phase"
+        exit 1
+    else
+        break
+    fi
+done
 echo "works!"
 
-####For jason
-echo -n "injecting traffic for user=jason, expecting 'reviews unavailable' message in approx 7s.."
-before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_RULEMATCH
-after=$(date +"%s")
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    ####For jason
+    echo -n "injecting traffic for user=jason, expecting 'reviews unavailable' message in approx 7s.."
+    before=$(date +"%s")
+    curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_RULEMATCH
+    after=$(date +"%s")
 
-delta=$(($after-$before))
-if [ $delta -gt 8 -o $delta -lt 5 ]; then
-    echo "failed"
-    echo "Productpage took more $delta seconds to respond (expected <8s && >5s) for user=jason in fault injection phase"
-    exit 1
-fi
+    delta=$(($after-$before))
+    if [ $delta -gt 8 -o $delta -lt 5 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Productpage took more $delta seconds to respond (expected <8s && >5s) for user=jason in fault injection phase"
+        continue
+    fi
 
-if [ "$A8_TEST_SUITE" == "examples" ]; then
-	diff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
-else
-	jsondiff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
-fi
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+        diff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
+    else
+        jsondiff $SCRIPTDIR/$PRODUCTPAGE_RULEMATCH /tmp/$PRODUCTPAGE_RULEMATCH
+    fi
 
-if [ $? -gt 0 ]; then
-    echo "failed"
-    echo "Productpage does not match productpage_rulematch.json after injecting fault rule for user=jason in fault injection test phase"
-    exit 1
-fi
+    if [ $? -gt 0 ]; then
+        echo "failed"
+        echo "Productpage does not match productpage_rulematch.json after injecting fault rule for user=jason in fault injection test phase"
+        exit 1
+    else
+        break
+    fi
+done
 echo "works!"
 
 #####Clear rules and check
-echo "clearing all rules.."
-$CLIBIN rule-delete -i $fault_rule_id
+echo "clearing fault injection rule.."
+delete_rule $fault_rule_id
 sleep 15
 
-echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
-before=$(date +"%s")
-curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
-after=$(date +"%s")
+retry_count=1
+while [  $retry_count -le $((MAX_LOOP)) ]; do
+    echo -n "Testing app again for user=jason, expecting productpage_v2 in less than 2s.."
+    before=$(date +"%s")
+    curl -s -b 'foo=bar;user=jason;x' http://localhost:32000/productpage/productpage >/tmp/$PRODUCTPAGE_V2_OUTPUT
+    after=$(date +"%s")
 
-delta=$(($after-$before))
-if [ $delta -gt 2 ]; then
-    echo "failed"
-    echo "Productpage took more $delta seconds to respond (expected <2s) after clearing rules for user=jason in fault injection phase"
-    exit 1
-fi
+    delta=$(($after-$before))
+    if [ $delta -gt 2 ]; then
+        (( retry_count=retry_count+1 ))
+        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+            exit 1
+        fi
+        echo "failed, retrying"
+        echo "Productpage took more $delta seconds to respond (expected <2s) after clearing rules for user=jason in fault injection phase"
+        continue
+    fi
 
-if [ "$A8_TEST_SUITE" == "examples" ]; then
-	diff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
-else
-	jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
-fi
+    if [ "$A8_TEST_SUITE" == "examples" ]; then
+        diff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+    else
+        jsondiff $SCRIPTDIR/$PRODUCTPAGE_V2_OUTPUT /tmp/$PRODUCTPAGE_V2_OUTPUT
+    fi
 
-if [ $? -gt 0 ]; then
-    echo "failed"
-    echo "Productpage does not match productpage_v2.json after clearing fault rules for user=jason in fault injection test phase"
-    exit 1
-fi
+    if [ $? -gt 0 ]; then
+        echo "failed"
+        echo "Productpage does not match productpage_v2.json after clearing fault rules for user=jason in fault injection test phase"
+        exit 1
+    else
+        break
+    fi
+done
 echo "works!"
+
+if [ "$A8_CONTAINER_ENV" == "k8s" ]; then
+	# k8s doesn't support the gremlin or traffic commands
+	exit 0
+fi
 
 #######Gremlin
 if [ "$A8_TEST_GREMLIN" = true ]; then
@@ -272,7 +357,7 @@ if [ "$A8_TEST_GREMLIN" = true ]; then
   MAX_LOOP=5
   retry_count=1
   while [  $retry_count -le $((MAX_LOOP)) ]; do
-  	$CLIBIN recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='^(.*?;)?(user=jason)(;.*)?$' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
+  	$A8CLI recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='^(.*?;)?(user=jason)(;.*)?$' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
 
   	jsondiff $SCRIPTDIR/recipe-run-results.json /tmp/recipe-run-results.json
   	if [ $? -gt 0 ]; then
@@ -292,18 +377,13 @@ else
   echo "Skip Gremlin recipe test.."
 fi
 
-if [ "$A8_CONTAINER_ENV" == "k8s" ]; then
-	# k8s doesn't support the traffic commands
-	exit 0
-fi
-
 #######Gradually migrate traffic to reviews:v3 for all users
-$CLIBIN rule-delete -a -f
+cleanup_all_rules
 
 # Quiet things down a bit
 set +x
 
-$CLIBIN rule-create -f $SCRIPTDIR/default_routes.yaml
+create_rule $RULESDIR/$ENV-bookinfo-default-route-rules.yaml
 sleep 10
 
 MAX_LOOP=5
@@ -315,7 +395,7 @@ EXPECTED_OUTPUT1="$SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT"
 EXPECTED_OUTPUT2="$SCRIPTDIR/$PRODUCTPAGE_V3_OUTPUT"
 echo "Setting traffic-start.  Expecting 10% of traffic to be diverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_START_RESP=$($CLIBIN traffic-start -s reviews -v version=v3)
+	TRAFFIC_START_RESP=$($A8CLI traffic-start -s reviews -v version=v3)
 	if [ "$TRAFFIC_START_RESP" != "Transfer starting for \"reviews\": diverting 10% of traffic from \"version=v1\" to \"version=v3\"" ]; then
 		echo "failed"
 		echo "Failed to divert 10% traffic to v3"
@@ -335,7 +415,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 			exit 1
 		fi
 		# Make sure to call traffic-abort since we call traffic-start again
-		$CLIBIN traffic-abort -s reviews
+		$A8CLI traffic-abort -s reviews
 	else
 		break
 	fi
@@ -345,7 +425,7 @@ MAX_LOOP=5
 retry_count=1
 echo "Setting traffic-step.  Expecting 20% of traffic to be diverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP_RESP=$($CLIBIN traffic-step -s reviews)
+	TRAFFIC_STEP_RESP=$($A8CLI traffic-step -s reviews)
 	if [ "$TRAFFIC_STEP_RESP" != "Transfer starting for \"reviews\": diverting 20% of traffic from \"version=v1\" to \"version=v3\"" ]; then
 		echo "failed"
 		echo "Failed to divert 20% of traffic to v3"
@@ -364,7 +444,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 			exit 1
 		fi
 		# Reset the step back to 10% since the traffic-step will be called again
-		$CLIBIN traffic-step -s reviews --amount 10
+		$A8CLI traffic-step -s reviews --amount 10
 	else
 		break
 	fi
@@ -374,7 +454,7 @@ MAX_LOOP=5
 retry_count=1
 echo "Setting traffic-step.  Expecting 50% of traffic to be diverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP50_RESP=$($CLIBIN traffic-step -s reviews --amount 50)
+	TRAFFIC_STEP50_RESP=$($A8CLI traffic-step -s reviews --amount 50)
 	if [ "$TRAFFIC_STEP50_RESP" != "Transfer starting for \"reviews\": diverting 50% of traffic from \"version=v1\" to \"version=v3\"" ]; then
 		echo "failed"
 		echo "Failed to divert 50% of traffic to v3"
@@ -401,7 +481,7 @@ MAX_LOOP=5
 retry_count=1
 echo "Setting traffic-step.  Expecting 100% of traffic to be diverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP100_RESP=$($CLIBIN traffic-step -s reviews --amount 100)
+	TRAFFIC_STEP100_RESP=$($A8CLI traffic-step -s reviews --amount 100)
 	if [ "$TRAFFIC_STEP100_RESP" != "Transfer complete for \"reviews\": sending 100% of traffic to \"version=v3\"" ]; then
 		echo "failed"
 		echo "Failed to send 100% of traffic to v3"
@@ -429,7 +509,7 @@ retry_count=1
 echo "Setting traffic-start.  Expecting 50% of traffic to be diverted to v1."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
 	# The default route is now v3.  Start 50% traffic to v1.
-	TRAFFIC_START_RESP=$($CLIBIN traffic-start -s reviews -v version=v1 -a 50)
+	TRAFFIC_START_RESP=$($A8CLI traffic-start -s reviews -v version=v1 -a 50)
 	if [ "$TRAFFIC_START_RESP" != "Transfer starting for \"reviews\": diverting 50% of traffic from \"version=v3\" to \"version=v1\"" ]; then
 		echo "failed: $TRAFFIC_START_RESP"
 		echo "Failed to divert 50% traffic to v1"
@@ -448,7 +528,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 			exit 1
 		fi
 		# Make sure the traffic-abort is called before traffic-start gets called again
-		$CLIBIN traffic-abort -s reviews
+		$A8CLI traffic-abort -s reviews
 	else
 		break
 	fi
@@ -458,7 +538,7 @@ MAX_LOOP=5
 retry_count=1
 echo "Setting traffic-abort.  Expecting 100% of traffic to be reverted to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_ABORT_RESP=$($CLIBIN traffic-abort -s reviews)
+	TRAFFIC_ABORT_RESP=$($A8CLI traffic-abort -s reviews)
 	if [ "$TRAFFIC_ABORT_RESP" != "Transfer aborted for \"reviews\": all traffic reverted to \"version=v3\"" ]; then
 		echo "failed"
 		echo "Failed to abort"

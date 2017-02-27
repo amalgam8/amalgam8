@@ -49,7 +49,7 @@ REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
 K8SRULES_APP_NAME		:= a8k8srulescontroller
-CLI_APP_NAME			:= a8ctl-beta
+CLI_APP_NAME			:= a8ctl
 
 REGISTRY_IMAGE_NAME			:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME		:= amalgam8/a8-controller:latest
@@ -142,13 +142,13 @@ build.cli.linux: tools.go-bindata
 build.cli.darwin: tools.go-bindata
 	@echo "--> building cli for OS X"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-	@GOOS=darwin GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-darwin ./cmd/cli/
+	@GOOS=darwin GOARCH=amd64 go build -o $(BINDIR)/$(CLI_APP_NAME)-darwin ./cmd/cli/
 	@goimports -w ./cli/utils/i18n_resources.go
 
 build.cli.windows: tools.go-bindata
 	@echo "--> building cli for Windows"
 	@go-bindata -pkg=utils -prefix "./cli" -o ./cli/utils/i18n_resources.go ./cli/locales
-	@GOOS=windows GOARCH=amd64 go build $(BUILDFLAGS) -o $(BINDIR)/$(CLI_APP_NAME)-windows.exe ./cmd/cli/
+	@GOOS=windows GOARCH=amd64 go build -o $(BINDIR)/$(CLI_APP_NAME)-windows.exe ./cmd/cli/
 	@goimports -w ./cli/utils/i18n_resources.go
 
 # build.cli: tools.go-bindata
@@ -272,9 +272,9 @@ dockerize.k8srules:
 #-- release
 #---------------
 
-.PHONY: release release.registry release.controller release.sidecar.nginx release.sidecar.envoy release.examples compress compress.registry compress.controller compress.sidecar
+.PHONY: release release.registry release.controller release.sidecar.nginx release.sidecar.envoy release.examples release.cli compress compress.registry compress.controller compress.sidecar
 
-release: release.registry release.controller release.sidecar.envoy release.examples
+release: release.registry release.controller release.sidecar.envoy release.examples release.cli
 
 
 compress: COMPRESSED_FILE :=
@@ -339,6 +339,14 @@ release.examples:
 	@mkdir -p $(RELEASEDIR)
 	@tar -czf $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).tar.gz --exclude examples/apps --exclude examples/.vagrant examples
 	@zip -9 -r --exclude=*apps* --exclude=*.vagrant*  $(RELEASEDIR)/$(EXAMPLES_RELEASE_NAME).zip examples
+
+release.cli: build.cli.linux build.cli.darwin build.cli.windows
+	@echo "--> packaging cli for release"
+	@mkdir -p $(RELEASEDIR)
+	@cp $(BINDIR)/$(CLI_APP_NAME)-linux $(RELEASEDIR)/
+	@cp $(BINDIR)/$(CLI_APP_NAME)-darwin $(RELEASEDIR)/
+	@cp $(BINDIR)/$(CLI_APP_NAME)-windows.exe $(RELEASEDIR)/
+
 
 #---------------
 #-- tools

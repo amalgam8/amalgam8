@@ -16,11 +16,21 @@
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# Need to enable mount propagation.  Older Ubuntu doesn't use
+# systemd so need to do it manually
+type -a systemctl > /dev/null
+if [ $? -ne 0 ]; then
+    mkdir -p /var/lib/kubelet
+    mount --bind /var/lib/kubelet /var/lib/kubelet
+    mount --make-shared /var/lib/kubelet
+fi
+
 export K8S_VERSION="v1.5.2"
 export ARCH=amd64
 
 docker run -d \
-    --volume=/sys:/sys:rw \
+    --volume=/:/rootfs:ro \
+    --volume=/sys:/sys:ro \
     --volume=/var/lib/docker/:/var/lib/docker:rw \
     --volume=/var/lib/kubelet/:/var/lib/kubelet:rw,shared \
     --volume=/var/run:/var/run:rw \
@@ -33,8 +43,6 @@ docker run -d \
         --hostname-override=127.0.0.1 \
         --api-servers=http://localhost:8080 \
         --config=/etc/kubernetes/manifests \
-        --cluster-dns=10.0.0.10 \
-        --cluster-domain=cluster.local \
         --allow-privileged --v=2
 
 # Install kubernetes CLI

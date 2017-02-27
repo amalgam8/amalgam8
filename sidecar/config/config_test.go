@@ -342,6 +342,7 @@ proxy_config:
   working_dir: "/etc/proxy/"
   logging_dir: "/var/log/"
   proxy_binary_path: "/usr/local/bin/envoy"
+  grpc_http1_bridge: true
 
 service:
   name: helloworld

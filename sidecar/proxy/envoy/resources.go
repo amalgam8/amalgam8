@@ -27,6 +27,9 @@ type DelayFilter struct {
 	Duration int    `json:"fixed_duration_ms,omitempty"`
 }
 
+// GrpcHttp1BridgeFilter definition
+type GrpcHttp1BridgeFilter struct{}
+
 // Header definition.
 // See: https://lyft.github.io/envoy/docs/configuration/http_filters/fault_filter.html#config-http-filters-fault-injection-headers
 type Header struct {

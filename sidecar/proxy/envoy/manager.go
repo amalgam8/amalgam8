@@ -98,7 +98,8 @@ func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLC
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
-		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
+		GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
+		tcpProxyConfigs: conf.TCPProxyConfigs,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -118,6 +119,7 @@ type manager struct {
 	loggingDir      string
 	GRPCHTTP1Bridge bool
 	tlsConfig       *SSLContext
+	tcpProxyConfigs []config.TCPProxyConfig
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -198,41 +200,13 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
+	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs)
 	return Config{
 		RootRuntime: RootRuntime{
 			SymlinkRoot:  m.workingDir + runtimePath,
 			Subdirectory: "traffic_shift",
 		},
-		Listeners: []Listener{
-			{
-				Port: m.listenerPort,
-				Filters: []NetworkFilter{
-					{
-						Type: "read",
-						Name: "http_connection_manager",
-						Config: NetworkFilterConfig{
-							CodecType:         "auto",
-							StatPrefix:        "ingress_http",
-							UserAgent:         true,
-							GenerateRequestID: true,
-							RDS: &RDS{
-								Cluster:         "rds",
-								RouteConfigName: "amalgam8",
-								RefreshDelayMS:  1000,
-							},
-							Filters: filters,
-							AccessLog: []AccessLog{
-								{
-									Path:   m.loggingDir + accessLog,
-									Format: format,
-								},
-							},
-						},
-					},
-				},
-				SSLContext: m.tlsConfig,
-			},
-		},
+		Listeners: listeners,
 		Admin: Admin{
 			AccessLogPath: m.loggingDir + adminLog,
 			Port:          m.adminPort,
@@ -284,6 +258,59 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			},
 		},
 	}, nil
+}
+
+func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig) []Listener {
+	// Build Http Listeners
+	listeners := []Listener{
+		{
+			Port: httpPort,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "http_connection_manager",
+					Config: HttpFilterConfig{
+						CodecType:         "auto",
+						StatPrefix:        "ingress_http",
+						UserAgent:         true,
+						GenerateRequestID: true,
+						RDS: &RDS{
+							Cluster:         "rds",
+							RouteConfigName: "amalgam8",
+							RefreshDelayMS:  1000,
+						},
+						Filters: filters,
+						AccessLog: []AccessLog{
+							{
+								Path:   httpAccessLogPath,
+								Format: format,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	// Build TCP Proxy Listeners
+	for _, proxy := range tcpProxyList {
+		listener := Listener{
+			Port: proxy.ListenerPort,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "tcp_proxy",
+					Config: TCPFilterConfig{
+						RouteConfig: &TCPRouteConfig{
+							Routes: []TCPRoute{{Cluster: proxy.Cluster}},
+						},
+					},
+				},
+			},
+		}
+		listeners = append(listeners, listener)
+	}
+
+	return listeners
 }
 
 const (

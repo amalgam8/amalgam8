@@ -824,3 +824,82 @@ func TestFaults(t *testing.T) {
 	}
 
 }
+
+func TestBuildListeners(t *testing.T) {
+
+	testPort := 8080
+	testPath := "test_path"
+	testFilters := []Filter{
+		{
+			Type: "test_filter_type",
+			Name: "test_filter_name",
+		},
+	}
+	testFormat := "test_format"
+	testListeners := []Listener{
+		{
+			Port: testPort,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "http_connection_manager",
+					Config: HttpFilterConfig{
+						CodecType:         "auto",
+						StatPrefix:        "ingress_http",
+						UserAgent:         true,
+						GenerateRequestID: true,
+						RDS: &RDS{
+							Cluster:         "rds",
+							RouteConfigName: "amalgam8",
+							RefreshDelayMS:  1000,
+						},
+						Filters: testFilters,
+						AccessLog: []AccessLog{
+							{
+								Path:   testPath,
+								Format: testFormat,
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			Port: 80,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "tcp_proxy",
+					Config: TCPFilterConfig{
+						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service1"},}},
+					},
+				},
+			},
+		},
+		{
+			Port: 90,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "tcp_proxy",
+					Config: TCPFilterConfig{
+						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service2"},}},
+					},
+				},
+			},
+		},
+	}
+	configYaml := []byte(`
+- cluster: service1
+  listener_port: 80
+- cluster: service2
+  listener_port: 90
+`)
+	var conf []config.TCPProxyConfig
+	err := yaml.Unmarshal(configYaml, &conf)
+	assert.NoError(t, err)
+
+	listeners := BuildListeners(testPort, testFilters, testFormat, testPath, conf)
+
+	assert.Equal(t, testListeners, listeners)
+}

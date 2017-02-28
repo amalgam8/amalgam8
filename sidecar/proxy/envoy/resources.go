@@ -108,10 +108,24 @@ type VirtualHost struct {
 	Routes  []Route  `json:"routes"`
 }
 
-// RouteConfig definition.
+// TCPRoute definition
+type TCPRoute struct {
+	Cluster           string   `json:"cluster"`
+	DestinationIPList []string `json:"destination_ip_list,omitempty"`
+	DestinationPorts  string   `json:"destination_ports,omitempty"`
+	SourceIPList      []string `json:"source_ip_list,omitempty"`
+	SourcePorts       string   `json:"source_ports,omitempty"`
+}
+
+// HttpRouteConfig definition.
 // See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route_config.html#config-http-conn-man-route-table
-type RouteConfig struct {
+type HttpRouteConfig struct {
 	VirtualHosts []VirtualHost `json:"virtual_hosts"`
+}
+
+// TCPRouteConfig definition
+type TCPRouteConfig struct {
+	Routes []TCPRoute `json:"routes"`
 }
 
 // AccessLog definition.
@@ -129,24 +143,30 @@ type RDS struct {
 	RouteConfigName string `json:"route_config_name"`
 }
 
-// NetworkFilterConfig definition.
-type NetworkFilterConfig struct {
-	CodecType         string       `json:"codec_type"`
-	StatPrefix        string       `json:"stat_prefix"`
-	GenerateRequestID bool         `json:"generate_request_id"`
-	UserAgent         bool         `json:"add_user_agent"`
-	RouteConfig       *RouteConfig `json:"route_config,omitempty"`
-	RDS               *RDS         `json:"rds,omitempty"`
-	Filters           []Filter     `json:"filters"`
-	AccessLog         []AccessLog  `json:"access_log"`
+// HttpFilterConfig definition.
+type HttpFilterConfig struct {
+	CodecType         string           `json:"codec_type"`
+	StatPrefix        string           `json:"stat_prefix"`
+	GenerateRequestID bool             `json:"generate_request_id"`
+	UserAgent         bool             `json:"add_user_agent"`
+	RouteConfig       *HttpRouteConfig `json:"route_config,omitempty"`
+	RDS               *RDS             `json:"rds,omitempty"`
+	Filters           []Filter         `json:"filters"`
+	AccessLog         []AccessLog      `json:"access_log"`
+}
+
+// TcpFilterConfig definition
+type TCPFilterConfig struct {
+	StatPrefix  string          `json:"stat_prefix"`
+	RouteConfig *TCPRouteConfig `json:"route_config"`
 }
 
 // NetworkFilter definition.
 // See: https://lyft.github.io/envoy/docs/configuration/listeners/filters.html#config-listener-filters
 type NetworkFilter struct {
-	Type   string              `json:"type"`
-	Name   string              `json:"name"`
-	Config NetworkFilterConfig `json:"config"`
+	Type   string      `json:"type"`
+	Name   string      `json:"name"`
+	Config interface{} `json:"config"`
 }
 
 // SSLContext defintion

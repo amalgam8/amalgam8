@@ -141,6 +141,11 @@ type ProxyConfig struct {
 	GRPCHTTP1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
 }
 
+type TCPProxyConfig struct {
+	Cluster      string `yaml:"cluster"`
+	ListenerPort int    `yaml:"listener_port"`
+}
+
 // Config stores the various configuration options for the sidecar
 type Config struct {
 	Register     bool   `yaml:"register"`
@@ -166,6 +171,8 @@ type Config struct {
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	ProxyConfig ProxyConfig `yaml:"proxy_config"`
+
+	TCPProxyConfigs []TCPProxyConfig `yaml:"tcp_proxy_configs"`
 
 	LogLevel string `yaml:"log_level"`
 

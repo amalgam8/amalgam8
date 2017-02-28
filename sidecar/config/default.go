@@ -37,6 +37,8 @@ var DefaultConfig = Config{
 		GRPCHTTP1Bridge:  false,
 	},
 
+	TCPProxyConfigs: nil,
+
 	Service: Service{
 		Name: "",
 		Tags: nil,

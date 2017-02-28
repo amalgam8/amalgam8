@@ -52,7 +52,7 @@ MAX_LOOP=5
 
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$SCRIPTDIR/../../examples
-A8CLI=$SCRIPTDIR/../../bin/a8ctl-beta-linux
+A8CLI=$SCRIPTDIR/../../bin/a8ctl-linux
 
 . $SCRIPTDIR/testing-common.sh
 

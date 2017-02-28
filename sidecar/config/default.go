@@ -34,6 +34,7 @@ var DefaultConfig = Config{
 		WorkingDir:       "",
 		LoggingDir:       "",
 		ProxyBinary:      "",
+		GrpcHttp1Bridge:  false,
 	},
 
 	Service: Service{

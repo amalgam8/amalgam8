@@ -128,16 +128,34 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 		"Instances",
 	})
 
+	type serviceTags struct {
+		Tags map[string]int
+	}
+	tagList := make(map[string]serviceTags)
 	for _, service := range services {
 		instances, errI := cmd.registry.ListServiceInstances(service)
 		if errI != nil {
 			return errI
 		}
-		var tagsBuffer bytes.Buffer
+
+		serviceTag, ok := tagList[service]
+		if !ok {
+			serviceTag = serviceTags{
+				Tags: make(map[string]int),
+			}
+		}
 		for _, instance := range instances {
 			for _, tag := range instance.Tags {
-				fmt.Fprintf(&tagsBuffer, "%s(%d), ", tag, len(instance.Tags))
+				serviceTag.Tags[tag] = serviceTag.Tags[tag] + 1
 			}
+		}
+		tagList[service] = serviceTag
+	}
+
+	for service, tags := range tagList {
+		var tagsBuffer bytes.Buffer
+		for tag, count := range tags.Tags {
+			fmt.Fprintf(&tagsBuffer, "%s(%d), ", tag, count)
 		}
 		table.AddRow(
 			[]string{
@@ -146,6 +164,7 @@ func (cmd *ServiceListCommand) ServiceTable() error {
 			},
 		)
 	}
+
 	table.SortByColumnIndex(0)
 	table.PrintTable()
 	return nil
@@ -158,18 +177,38 @@ func (cmd *ServiceListCommand) PrettyPrint(format string) error {
 		return err
 	}
 
-	serviceList := make([]ServiceInstancesList, len(services))
-	for i, service := range services {
+	type serviceTags struct {
+		Tags map[string]int
+	}
+
+	tagList := make(map[string]serviceTags)
+	for _, service := range services {
 		instances, errI := cmd.registry.ListServiceInstances(service)
 		if errI != nil {
 			return errI
 		}
-		serviceList[i].Service = service
-		for _, instance := range instances {
-			for _, tag := range instance.Tags {
-				serviceList[i].Instances = append(serviceList[i].Instances, fmt.Sprintf("%s(%d)", tag, len(instance.Tags)))
+		serviceTag, ok := tagList[service]
+		if !ok {
+			serviceTag = serviceTags{
+				Tags: make(map[string]int),
 			}
 		}
+		for _, instance := range instances {
+			for _, tag := range instance.Tags {
+				serviceTag.Tags[tag] = serviceTag.Tags[tag] + 1
+			}
+		}
+		tagList[service] = serviceTag
+	}
+
+	serviceList := make([]ServiceInstancesList, len(services))
+	i := 0
+	for name, tags := range tagList {
+		serviceList[i].Service = name
+		for tag, count := range tags.Tags {
+			serviceList[i].Instances = append(serviceList[i].Instances, fmt.Sprintf("%s(%d)", tag, count))
+		}
+
 	}
 
 	return utils.MarshallReader(cmd.ctx.App.Writer, serviceList, format)

@@ -377,6 +377,9 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 			}
 			hosts = append(hosts, host)
 		}
+		if len(instanceByClusterMap[clusterName]) > 0 {
+			cluster.ServiceName = ""
+		}
 		cluster.Hosts = hosts
 		clusters = append(clusters, cluster)
 
@@ -448,10 +451,23 @@ func BuildRoutes(ruleList []api.Rule, instances []*api.ServiceInstance) []Route 
 	SanitizeRules(ruleList)
 	rules := AddDefaultRouteRules(ruleList, instances)
 
+	staticClusters := make(map[string]*api.Backend)
+	for _, inst := range instances {
+		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
+		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
+			staticClusters[clusterName] = nil
+		}
+	}
+
 	routes := []Route{}
 	for _, rule := range rules {
 		if rule.Route != nil {
-			routes = append(routes, buildRoute(&rule))
+			route := buildRoute(&rule)
+			// Enable auto_host_rewrite if cluster contains strict_dns hosts
+			if _, ok := staticClusters[route.Cluster]; ok {
+				route.AutoHostRewrite = true
+			}
+			routes = append(routes, route)
 		}
 	}
 
@@ -495,6 +511,14 @@ func buildRoute(rule *api.Rule) Route {
 		WeightedClusters: WeightedClusters{
 			Clusters: make([]WeightedCluster, 0),
 		},
+	}
+
+	if rule.Route.HTTPReqTimeout > 0 {
+		// convert from float sec to in ms
+		route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
+	}
+	if rule.Route.HTTPReqRetries > 0 {
+		route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
 	}
 
 	if rule.Route.HTTPReqTimeout > 0 {

@@ -97,6 +97,7 @@ type Route struct {
 	Headers          []Header         `json:"headers,omitempty"`
 	TimeoutMS        int              `json:"timeout_ms,omitempty"`
 	RetryPolicy      RetryPolicy      `json:"retry_policy"`
+	AutoHostRewrite  bool             `json:"auto_host_rewrite,omitempty"`
 }
 
 // VirtualHost definition.

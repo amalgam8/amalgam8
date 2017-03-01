@@ -28,6 +28,8 @@ import (
 
 	"io/ioutil"
 
+	"strconv"
+
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
@@ -372,8 +374,19 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 		cluster.Type = "strict_dns"
 		hosts := make([]Host, 0, len(instanceByClusterMap[clusterName]))
 		for _, inst := range instanceByClusterMap[clusterName] {
+			portSet := false
+			url := fmt.Sprintf("tcp://%v", inst.Endpoint.Value)
+			for _, p := range strings.Split(inst.Endpoint.Value, ":") {
+				if _, err := strconv.Atoi(p); err == nil {
+					portSet = true
+					break
+				}
+			}
+			if !portSet {
+				url = fmt.Sprintf("tcp://%v:80", inst.Endpoint.Value)
+			}
 			host := Host{
-				URL: fmt.Sprintf("tcp://%v", inst.Endpoint.Value),
+				URL: url,
 			}
 			hosts = append(hosts, host)
 		}
@@ -409,7 +422,7 @@ func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContex
 		SSLContext: tlsConfig,
 	}
 
-	if backend != nil &&   backend.LbType != "" {
+	if backend != nil && backend.LbType != "" {
 		// Set default value of LbType to be "round_robin"
 		cluster.LbType = backend.LbType
 	}
@@ -466,6 +479,11 @@ func BuildRoutes(ruleList []api.Rule, instances []*api.ServiceInstance) []Route 
 			// Enable auto_host_rewrite if cluster contains strict_dns hosts
 			if _, ok := staticClusters[route.Cluster]; ok {
 				route.AutoHostRewrite = true
+			}
+			for _, w := range route.WeightedClusters.Clusters {
+				if _, ok := staticClusters[w.Name]; ok {
+					route.AutoHostRewrite = true
+				}
 			}
 			routes = append(routes, route)
 		}

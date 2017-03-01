@@ -332,15 +332,16 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 	SanitizeRules(rules)
 	rules = AddDefaultRouteRules(rules, instances)
 
-	backends := make(map[string]*api.Backend)
-	staticClusters := make(map[string]*api.Backend)
-	instanceByClusterMap := make(map[string][]*api.ServiceInstance)
+	staticClusters := make(map[string]struct{})
+	instancesByClusterMap := make(map[string][]*api.ServiceInstance)
 	for _, inst := range instances {
 		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
 		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
-			staticClusters[clusterName] = nil
+			staticClusters[clusterName] = struct{}{}
+			staticClusters[inst.ServiceName] = struct{}{}
 		}
-		instanceByClusterMap[clusterName] = append(instanceByClusterMap[clusterName], inst)
+		instancesByClusterMap[clusterName] = append(instancesByClusterMap[clusterName], inst)
+		instancesByClusterMap[inst.ServiceName] = append(instancesByClusterMap[inst.ServiceName], inst)
 	}
 
 	clusterMap := make(map[string]*api.Backend)
@@ -350,52 +351,43 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 				key := BuildServiceKey(backend.Name, backend.Tags)
 				// TODO if two backends map to the same key, it will overwrite
 				//  and will lose resilience field options in this case
-				backends[key] = &backend
-
-				if _, exists := staticClusters[key]; !exists {
-					clusterMap[key] = &backend
-				} else {
-					staticClusters[key] = &backend
-				}
+				clusterMap[key] = &backend
 			}
 		}
 	}
 
 	clusters := make([]Cluster, 0, len(clusterMap))
+
 	for clusterName, backend := range clusterMap {
-
 		cluster := buildCluster(clusterName, backend, tlsConfig)
 
-		clusters = append(clusters, cluster)
-	}
-
-	for clusterName, backend := range staticClusters {
-		cluster := buildCluster(clusterName, backend, tlsConfig)
-		cluster.Type = "strict_dns"
-		hosts := make([]Host, 0, len(instanceByClusterMap[clusterName]))
-		for _, inst := range instanceByClusterMap[clusterName] {
-			portSet := false
-			url := fmt.Sprintf("tcp://%v", inst.Endpoint.Value)
-			for _, p := range strings.Split(inst.Endpoint.Value, ":") {
-				if _, err := strconv.Atoi(p); err == nil {
-					portSet = true
-					break
-				}
-			}
-			if !portSet {
-				url = fmt.Sprintf("tcp://%v:80", inst.Endpoint.Value)
-			}
-			host := Host{
-				URL: url,
-			}
-			hosts = append(hosts, host)
-		}
-		if len(instanceByClusterMap[clusterName]) > 0 {
+		// if cluster contains strict_dns hosts, append them
+		if _, exists := staticClusters[clusterName]; exists {
+			cluster.Type = "strict_dns"
 			cluster.ServiceName = ""
-		}
-		cluster.Hosts = hosts
-		clusters = append(clusters, cluster)
+			hosts := make([]Host, 0, len(instancesByClusterMap[clusterName]))
+			for _, inst := range instancesByClusterMap[clusterName] {
+				portSet := false
+				url := fmt.Sprintf("tcp://%v", inst.Endpoint.Value)
+				// Envoy complains if no port provided, append :80 by default
+				for _, p := range strings.Split(inst.Endpoint.Value, ":") {
+					if _, err := strconv.Atoi(p); err == nil {
+						portSet = true
+						break
+					}
+				}
+				if !portSet {
+					url = fmt.Sprintf("tcp://%v:80", inst.Endpoint.Value)
+				}
+				host := Host{
+					URL: url,
+				}
+				hosts = append(hosts, host)
+			}
+			cluster.Hosts = hosts
 
+		}
+		clusters = append(clusters, cluster)
 	}
 
 	sort.Sort(ClustersByName(clusters))
@@ -464,11 +456,12 @@ func BuildRoutes(ruleList []api.Rule, instances []*api.ServiceInstance) []Route 
 	SanitizeRules(ruleList)
 	rules := AddDefaultRouteRules(ruleList, instances)
 
-	staticClusters := make(map[string]*api.Backend)
+	staticClusters := make(map[string]struct{})
 	for _, inst := range instances {
 		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
 		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
-			staticClusters[clusterName] = nil
+			staticClusters[clusterName] = struct{}{}
+			staticClusters[inst.ServiceName] = struct{}{}
 		}
 	}
 

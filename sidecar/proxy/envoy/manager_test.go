@@ -871,7 +871,7 @@ func TestBuildListeners(t *testing.T) {
 					Type: "read",
 					Name: "tcp_proxy",
 					Config: TCPFilterConfig{
-						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service1"},}},
+						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service1"}}},
 					},
 				},
 			},
@@ -883,7 +883,7 @@ func TestBuildListeners(t *testing.T) {
 					Type: "read",
 					Name: "tcp_proxy",
 					Config: TCPFilterConfig{
-						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service2"},}},
+						RouteConfig: &TCPRouteConfig{Routes: []TCPRoute{{Cluster: "service2"}}},
 					},
 				},
 			},

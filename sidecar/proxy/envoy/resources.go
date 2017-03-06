@@ -201,13 +201,19 @@ type OutlierDetection struct {
 	MaxEjectionPercent int `json:"max_ejection_percent,omitempty"`
 }
 
-// CircuitBreakers definition
-// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
-type CircuitBreakers struct {
+// DefaultCB definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#config-cluster-manager-cluster-circuit-breakers
+type DefaultCB struct {
 	MaxConnections    int `json:"max_connections,omitempty"`
 	MaxPendingRequest int `json:"max_pending_requests,omitempty"`
 	MaxRequests       int `json:"max_requests,omitempty"`
 	MaxRetries        int `json:"max_retries,omitempty"`
+}
+
+// CircuitBreakers definition
+// See: https://lyft.github.io/envoy/docs/configuration/cluster_manager/cluster_circuit_breakers.html#circuit-breakers
+type CircuitBreakers struct {
+	Default DefaultCB `json:"default,omitempty"`
 }
 
 // ClustersByName implements name based sort for clusters.

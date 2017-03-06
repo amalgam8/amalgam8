@@ -427,13 +427,13 @@ func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContex
 
 		// Envoy Circuit breaker config options
 		if backend.Resilience.MaxConnections > 0 {
-			cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
+			cluster.CircuitBreakers.Default.MaxConnections = backend.Resilience.MaxConnections
 		}
 		if backend.Resilience.MaxRequests > 0 {
-			cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
+			cluster.CircuitBreakers.Default.MaxRequests = backend.Resilience.MaxRequests
 		}
 		if backend.Resilience.MaxPendingRequest > 0 {
-			cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+			cluster.CircuitBreakers.Default.MaxPendingRequest = backend.Resilience.MaxPendingRequest
 		}
 
 		// Envoy outlier detection settings that complete circuit breaker

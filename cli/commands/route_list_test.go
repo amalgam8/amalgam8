@@ -154,45 +154,19 @@ var _ = Describe("route-list", func() {
 			})
 
 			It("should exit with ErrControllerURLInvalid error", func() {
-				err := app.Run([]string{"app", "--controller_url=123", "--registry_url=http://localhost", "route-list"})
+				err := app.Run([]string{"app", "--controller_url=123", "route-list"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(common.ErrControllerURLInvalid.Error()))
 			})
 
 			It("should exit with ErrControllerURLNotFound error", func() {
-				err := app.Run([]string{"app", "--controller_url=", "--registry_url=http://localhost", "route-list"})
+				err := app.Run([]string{"app", "--controller_url=", "route-list"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(common.ErrControllerURLNotFound.Error()))
 			})
 
 			It("should error", func() {
-				err := app.Run([]string{"app", "--controller_url=http://localhost", "--registry_url=http://localhost", "--x"})
-				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(app.Name))
-			})
-
-		})
-
-		Describe("Validate Registry URL", func() {
-
-			JustBeforeEach(func() {
-				app.Writer = bytes.NewBufferString("")
-			})
-
-			It("should exit with ErrRegistryURLInvalid error", func() {
-				err := app.Run([]string{"app", "--registry_url=123", "--controller_url=http://localhost", "route-list"})
-				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(common.ErrRegistryURLInvalid.Error()))
-			})
-
-			It("should exit with ErrRegistryURLNotFound error", func() {
-				err := app.Run([]string{"app", "--registry_url=", "--controller_url=http://localhost", "route-list"})
-				Expect(err).ToNot(HaveOccurred())
-				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(common.ErrRegistryURLNotFound.Error()))
-			})
-
-			It("should error", func() {
-				err := app.Run([]string{"app", "--registry_url=http://localhost", "--controller_url=http://localhost", "--x"})
+				err := app.Run([]string{"app", "--controller_url=http://localhost", "--x"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(app.Name))
 			})
@@ -221,7 +195,7 @@ var _ = Describe("route-list", func() {
 
 			It("should print the command help", func() {
 				app.Writer = bytes.NewBufferString("")
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "--bad"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "--bad"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(cmd.GetMetadata().Usage))
 			})
@@ -237,10 +211,6 @@ var _ = Describe("route-list", func() {
 						ghttp.VerifyRequest("GET", "/v1/rules/routes"),
 						ghttp.RespondWith(http.StatusOK, response["all_routes"]),
 					),
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/api/v1/services"),
-						ghttp.RespondWith(http.StatusOK, response["services"]),
-					),
 				)
 			})
 
@@ -254,20 +224,20 @@ var _ = Describe("route-list", func() {
 			})
 
 			It("should print table", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list"})
 				Expect(err).ToNot(HaveOccurred())
 				// TODO: Validate output
 			})
 
 			It("should print a JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "-o=json"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "-o=json"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"v2(header=\"Foo:bar\")"`))
 
 			})
 
 			It("should print a YAML", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "-o=yaml"})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "-o=yaml"})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`- v2(header="Foo:bar")`))
 
@@ -284,10 +254,6 @@ var _ = Describe("route-list", func() {
 						ghttp.VerifyRequest("GET", "/v1/rules/routes", "destination="+service),
 						ghttp.RespondWith(http.StatusOK, response["reviews_routes"]),
 					),
-					ghttp.CombineHandlers(
-						ghttp.VerifyRequest("GET", "/api/v1/services"),
-						ghttp.RespondWith(http.StatusOK, response["services"]),
-					),
 				)
 			})
 
@@ -301,20 +267,20 @@ var _ = Describe("route-list", func() {
 			})
 
 			It("should print table", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "-s=" + service})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "-s=" + service})
 				Expect(err).ToNot(HaveOccurred())
 				// TODO: Validate output
 			})
 
 			It("should print a JSON", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "-o=json", "-s=" + service})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "-o=json", "-s=" + service})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`"v2(header=\"Foo:bar\")"`))
 
 			})
 
 			It("should print a YAML", func() {
-				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "--registry_url=" + server.URL(), "route-list", "-o=yaml", "-s=" + service})
+				err := app.Run([]string{"app", "--controller_url=" + server.URL(), "route-list", "-o=yaml", "-s=" + service})
 				Expect(err).ToNot(HaveOccurred())
 				Expect(fmt.Sprint(app.Writer)).To(ContainSubstring(`- v2(header="Foo:bar")`))
 

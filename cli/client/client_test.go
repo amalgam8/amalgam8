@@ -62,12 +62,6 @@ var _ = Describe("Amalgam8 Client", func() {
 			})
 		})
 
-		Describe("set a new Registry Token", func() {
-			It("should not fail", func() {
-				client.SetToken("")
-			})
-		})
-
 		Describe("Token", func() {
 			BeforeEach(func() {
 				server.AppendHandlers(
@@ -235,15 +229,6 @@ var _ = Describe("Amalgam8 Client", func() {
 			It("should not fail", func() {
 				err := client.DELETE("/services", false, nil, nil)
 				Expect(err).ToNot(HaveOccurred())
-			})
-		})
-
-		Describe("set a new Registry URL", func() {
-			It("should fail", func() {
-
-				client.SetURL("")
-				err := client.DELETE("/test", false, nil, nil)
-				Expect(err).To(HaveOccurred())
 			})
 		})
 

@@ -21,17 +21,13 @@ import (
 
 // Used for EnvVars or Flags
 const (
-	// RegistryURL .
-	RegistryURL Const = "REGISTRY_URL"
-	// RegistryToken .
-	RegistryToken Const = "REGISTRY_TOKEN"
 	// ControllerURL .
 	ControllerURL Const = "CONTROLLER_URL"
-	// ContrllerToken .
+	// ControllerToken .
 	ControllerToken Const = "CONTROLLER_TOKEN"
-	// ControllerURL .
+	// GremlinURL .
 	GremlinURL Const = "GREMLIN_URL"
-	// ContrllerToken .
+	// GremlinToken .
 	GremlinToken Const = "GREMLIN_TOKEN"
 
 	// Debug .

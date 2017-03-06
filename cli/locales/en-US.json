@@ -28,14 +28,6 @@
     "translation": "Invalid URL or empty."
   },
   {
-    "id": "registry_url_usage",
-    "translation": "Registry URL"
-  },
-  {
-    "id": "registry_token_usage",
-    "translation": "Registry Token"
-  },
-  {
     "id": "controller_url_usage",
     "translation": "Controller URL"
   },

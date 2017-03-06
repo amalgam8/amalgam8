@@ -19,16 +19,12 @@ $ a8ctl-beta -h
 
 Commands
 --------
-- a8ctl-beta service-list
 - a8ctl-beta route-list
 - a8ctl-beta action-list
 - a8ctl-beta rule-create
 - a8ctl-beta rule-update
 - a8ctl-beta rule-get
 - a8ctl-beta rule-delete
-- a8ctl-beta traffic-start
-- a8ctl-beta traffic-step
-- a8ctl-beta traffic-abort
 - a8ctl-beta recipe-run
 - a8ctl-beta info
 
@@ -231,43 +227,6 @@ If the -f option is specified, no confirmation will be asked.
 * $ a8ctl-beta rule-delete -d service1
 * $ a8ctl-beta rule-delete -a -f
 
-#### service-list
-```
-a8ctl-beta service-list [-o json|yaml]
-```
-Output a table listing all of the currently defined services along with any active instances of them.
-
-*  $ a8ctl-beta service-list
-```
-+-------------+---------------------+
-| Service     | Instances           |
-+-------------+---------------------+
-| reviews     | v1(1), v2(1), v3(1) |
-| productpage | v1(1)               |
-| ratings     | v1(1)               |
-| helloworld  | v1(2), v2(2)        |
-| details     | v1(1)               |
-+-------------+---------------------+
-```
-
-* $ a8ctl-beta service-list -o yaml
-```
-- service: details
-    instances:
-    - v1(1)
-  - service: productpage
-    instances:
-    - v1(1)
-  - service: reviews
-    instances:
-    - v3(1)
-    - v2(1)
-    - v1(1)
-  - service: ratings
-    instances:
-    - v1(1)
-```
-
 #### route-list
 ```
 a8ctl-beta route-list [-o json|yaml]
@@ -282,8 +241,6 @@ Output a table listing all of the currently defined routing-type rules.
 | service1         | v21,v22,json    |                                      |
 | ratings          | v2              | v2(user="jason")                     |
 | reviews          | v2              | v2(header="Foo:bar"), v3(weight=0.5) |
-| details          |                 |                                      |
-| productpage      |                 |                                      |
 +------------------+-----------------+--------------------------------------+
 ```
 
@@ -307,48 +264,6 @@ Output a table listing all of the currently defined action-type rules.
 +-------------+--------------------------------------+----------+---------------------------------------------------------+-----------------------------------+
 ```
 
-#### traffic-start
-```
-a8ctl-beta traffic-start [-s service] [-v version] [-a amount]
-```
-Start transferring traffic from one version of a microservice to another.
-If the -a option is not specified, the default value will be used [-a 10].
-
-* a8ctl-beta traffic-start -s reviews -v v3
-```
-Transfer starting for "reviews": diverting 10% of traffic from "v1" to "v3"
-```
-
-#### traffic-step
-```
-a8ctl-beta traffic-step [-s service] [-a amount]
-```
-Increase the amount of traffic sent to an specific version of a microservice.
-
-* a8ctl-beta traffic-step -s reviews
-```
-Transfer step for reviews: diverting 20% of traffic from v1 to v3
-```
-* a8ctl-beta traffic-step -s reviews -a 90
-```
-Transfer step for reviews: diverting 90% of traffic from v1 to v3
-```
-* a8ctl-beta traffic-step -s reviews
-```
-Transfer complete for reviews: sending 100% of traffic to v3
-```
-
-#### traffic-abort
-```
-a8ctl-beta traffic-abort [-s service]
-```
-Stop transferring traffic to another version of a microservice.
-
-* a8ctl-beta traffic-abort -s reviews
-```
-Transfer aborted for reviews: all traffic reverted to v1
-```
-
 #### recipe-run
 ```
 a8ctl-beta recipe-run [-t topology] [-s scenarios] [-c checks] [-r run-load-script] [-H header] [-p pattern] [-w wait] [-f force] [-o output]
@@ -367,8 +282,6 @@ Amalgam8 info...
 +---------------------+------------------------+
 | Env. Variable       | Value                  |
 +---------------------+------------------------+
-| A8_REGISTRY_URL     | http://127.0.0.1:31300 |
-| A8_REGISTRY_TOKEN   |                        |
 | A8_CONTROLLER_URL   | http://127.0.0.1:31200 |
 | A8_CONTROLLER_TOKEN |                        |
 | A8_GREMLIN_URL      | http://127.0.0.1:31500 |

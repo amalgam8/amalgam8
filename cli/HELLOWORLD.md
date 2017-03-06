@@ -1,17 +1,6 @@
 CLI command equivalents for Hello World example
 ============================================
 
-#### List the Services in the App
-* Old
-```
-a8ctl service-list
-```
-
-* New
-```
-a8ctl-beta service-list
-```
-
 #### Version-based routing
 * Old
 ```

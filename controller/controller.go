@@ -92,13 +92,19 @@ func Run(conf *config.Config) error {
 	}
 
 	var ruleManager rules.Manager
-	if conf.Database.Type == "redis" {
+	switch conf.Database.Type { // TODO: backend/adapter is more appropriate than database
+	case config.DatabaseTypeRedis:
 		ruleManager = rules.NewRedisManager(
 			conf.Database.Host,
 			conf.Database.Password,
 			validator,
 		)
-	} else {
+	case config.DatabaseTypeK8S:
+		ruleManager, err = rules.NewK8S(conf.Database.Namespace)
+		if err != nil {
+			return err
+		}
+	default:
 		ruleManager = rules.NewMemoryManager(validator)
 	}
 	rulesAPI := api.NewRule(ruleManager, reporter)

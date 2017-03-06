@@ -27,6 +27,8 @@ import (
 const (
 	// ResourceName defines the name of the third party resource in kubernetes
 	ResourceName = "routing-rule"
+	// ResourceKind defines the kind of the third party resource in kubernetes
+	ResourceKind = "RoutingRule"
 	// ResourceGroupName defines the group name of the third party resource in kubernetes
 	ResourceGroupName = "amalgam8.io"
 	// ResourceVersion defines the version of the third party resource in kubernetes

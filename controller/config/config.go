@@ -25,13 +25,20 @@ import (
 	"github.com/urfave/cli"
 )
 
+// Database types
+const (
+	DatabaseTypeRedis  = "redis"
+	DatabaseTypeMemory = "memory"
+	DatabaseTypeK8S    = "k8s"
+)
+
 // Database config
 type Database struct {
-	Type     string
-	Username string
-	Password string
-	Host     string
-	//URL string
+	Type      string
+	Username  string
+	Password  string
+	Host      string
+	Namespace string
 }
 
 // Config for the controller
@@ -47,8 +54,6 @@ type Config struct {
 
 // New config instance
 func New(context *cli.Context) *Config {
-	// TODO: add HTTPS to database host if not present?
-
 	// TODO: parse this more gracefully
 	loggingLevel := logrus.DebugLevel
 	logLevelArg := context.String(logLevelFlag)
@@ -60,10 +65,11 @@ func New(context *cli.Context) *Config {
 
 	return &Config{
 		Database: Database{
-			Type:     context.String(dbTypeFlag),
-			Username: context.String(dbUserFlag),
-			Password: context.String(dbPasswordFlag),
-			Host:     context.String(dbHostFlag),
+			Type:      context.String(dbTypeFlag),
+			Username:  context.String(dbUserFlag),
+			Password:  context.String(dbPasswordFlag),
+			Host:      context.String(dbHostFlag),
+			Namespace: context.String(dbNamespace),
 		},
 		APIPort:      context.Int(apiPortFlag),
 		SecretKey:    context.String(secretKeyFlag),
@@ -83,14 +89,8 @@ func (c *Config) Validate() error {
 		util.IsNotEmpty("Secret key", c.SecretKey),
 	}
 
-	if c.Database.Type == "cloudant" {
-		additionalValidators := []util.ValidatorFunc{
-			util.IsNotEmpty("Database password", c.Database.Password),
-			util.IsNotEmpty("Database username", c.Database.Username),
-			util.IsNotEmpty("Database host name", c.Database.Host),
-		}
-		validators = append(validators, additionalValidators...)
-	} else if c.Database.Type == "redis" {
+	switch c.Database.Type {
+	case DatabaseTypeRedis:
 		validators = append(
 			validators,
 			func() error {
@@ -106,8 +106,12 @@ func (c *Config) Validate() error {
 				return nil
 			},
 		)
-		// TODO: redis logic
-	} else if c.Database.Type != "memory" {
+	case DatabaseTypeK8S:
+		validators = append(validators,
+			util.IsNotEmpty("Database namespace", c.Database.Namespace),
+		)
+	case DatabaseTypeMemory:
+	default:
 		return fmt.Errorf("Invalid database type %v", c.Database.Type)
 	}
 

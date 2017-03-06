@@ -1,0 +1,7 @@
+rules:
+- priority: 1
+  destination: details
+  route:
+    backends:
+    - tags:
+      - version=v1

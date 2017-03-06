@@ -11,30 +11,45 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-
-apiVersion: extensions/v1beta1
-kind: ReplicaSet
+apiVersion: v1
+kind: Service
 metadata:
-  name: rules
-  labels:
-    app: rules
+  name: controller
+spec:
+  ports:
+  - port: 6080
+    targetPort: 8080
+    nodePort: 31200
+    protocol: TCP
+  selector:
+    name: controller
+  type: NodePort
+---
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: controller
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: rules
   template:
     metadata:
-      name: rules
       labels:
-        app: rules
+        name: controller
     spec:
       containers:
-        - name: rules
-          image: amalgam8/a8-k8s-rules-controller:latest
-          imagePullPolicy: IfNotPresent
-          env:
-            - name: K8S_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
+      - name: controller
+        image: amalgam8/a8-controller
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: A8_LOG_LEVEL
+          value: info
+        - name: A8_DATABASE_TYPE
+          value: k8s
+        - name: A8_DATABASE_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+          name: http
+---

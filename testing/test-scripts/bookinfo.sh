@@ -37,10 +37,6 @@ if [ -z "$A8_CONTAINER_ENV" ]; then
 fi
 ENV=$A8_CONTAINER_ENV
 
-if [ -z "$A8_TEST_GREMLIN" ]; then
-    A8_TEST_GREMLIN="true"
-fi
-
 dump_debug() {
     if [ "$ENV" == "k8s" ]; then
         kubectl get pods
@@ -169,8 +165,11 @@ echo "testing version routing.."
 MAX_LOOP=5
 retry_count=1
 
-create_rule $RULESDIR/$ENV-bookinfo-default-route-rules.yaml
-create_rule $RULESDIR/$ENV-bookinfo-jason-reviews-v2-route-rules.yaml
+create_rule $RULESDIR/bookinfo-default-route-details.yaml
+create_rule $RULESDIR/bookinfo-default-route-productpage.yaml
+create_rule $RULESDIR/bookinfo-default-route-ratings.yaml
+create_rule $RULESDIR/bookinfo-default-route-reviews.yaml
+create_rule $RULESDIR/bookinfo-jason-reviews-v2-route-rules.yaml
 
 sleep 30
 
@@ -226,12 +225,8 @@ echo "works!"
 
 ########Fault injection
 echo "testing fault injection.."
-output=$(create_rule $RULESDIR/$ENV-bookinfo-jason-7s-delay.yaml)
-if [ "$ENV" == "docker" ]; then
-    fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
-else
-    fault_rule_id=$(echo $output | cut -d'"' -f2)
-fi
+output=$(create_rule $RULESDIR/bookinfo-jason-7s-delay.yaml)
+fault_rule_id=$( tr -d ' \t\n\r' <<< "$output" | sed -e 's/\({"ids":\["\)//g' -e 's/\("\]}\)//g' )
 
 sleep 20
 
@@ -344,46 +339,16 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 done
 echo "works!"
 
-if [ "$A8_CONTAINER_ENV" == "k8s" ]; then
-	# k8s doesn't support the gremlin or traffic commands
-	exit 0
-fi
-
-#######Gremlin
-if [ "$A8_TEST_GREMLIN" = true ]; then
-  GREMLIN_FILES=$SCRIPTDIR/../../examples
-  echo "Testing gremlin recipe.."
-  echo "please wait.."
-  MAX_LOOP=5
-  retry_count=1
-  while [  $retry_count -le $((MAX_LOOP)) ]; do
-  	$A8CLI recipe-run -t $GREMLIN_FILES/bookinfo-topology.json -s $GREMLIN_FILES/bookinfo-gremlins.json -c $GREMLIN_FILES/bookinfo-checks.json -r $SCRIPTDIR/load-productpage.sh --header 'Cookie' --pattern='^(.*?;)?(user=jason)(;.*)?$' -w 30s -f -o json | jq '.' > /tmp/recipe-run-results.json
-
-  	jsondiff $SCRIPTDIR/recipe-run-results.json /tmp/recipe-run-results.json
-  	if [ $? -gt 0 ]; then
-  		(( retry_count=retry_count+1 ))
-  		echo "failed"
-  		echo "Recipe-run-results.json does not match the expected output."
-  		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-  			exit 1
-  		fi
-  		echo "Retrying.."
-  	else
-  		break
-  	fi
-  done
-  echo "works!"
-else
-  echo "Skip Gremlin recipe test.."
-fi
-
 #######Gradually migrate traffic to reviews:v3 for all users
 cleanup_all_rules
 
 # Quiet things down a bit
 set +x
 
-create_rule $RULESDIR/$ENV-bookinfo-default-route-rules.yaml
+create_rule $RULESDIR/bookinfo-default-route-details.yaml
+create_rule $RULESDIR/bookinfo-default-route-productpage.yaml
+create_rule $RULESDIR/bookinfo-default-route-ratings.yaml
+create_rule $RULESDIR/bookinfo-default-route-reviews.yaml
 sleep 10
 
 MAX_LOOP=5
@@ -398,7 +363,7 @@ MAX_LOOP=5
 retry_count=1
 echo "Percentage based routing. 25% to v1 and 75% to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	create_rule $RULESDIR/$ENV-bookinfo-reviews-routing.yaml
+	create_rule $RULESDIR/bookinfo-reviews-routing.yaml
 
 	# Give it a bit to process the request
 	sleep $SLEEP_TIME

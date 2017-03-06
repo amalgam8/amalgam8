@@ -393,128 +393,12 @@ GATEWAY_URL=localhost:32000
 COMMAND_INPUT="curl -s -b 'foo=bar;user=shriram;x' http://localhost:32000/productpage/productpage"
 EXPECTED_OUTPUT1="$SCRIPTDIR/$PRODUCTPAGE_V1_OUTPUT"
 EXPECTED_OUTPUT2="$SCRIPTDIR/$PRODUCTPAGE_V3_OUTPUT"
-echo "Setting traffic-start.  Expecting 10% of traffic to be diverted to v3."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_START_RESP=$($A8CLI traffic-start -s reviews -v version=v3)
-	if [ "$TRAFFIC_START_RESP" != "Transfer starting for \"reviews\": diverting 10% of traffic from \"version=v1\" to \"version=v3\"" ]; then
-		echo "failed"
-		echo "Failed to divert 10% traffic to v3"
-		exit 1
-	fi
-
-	# Give it a bit to process the request
-	sleep $SLEEP_TIME
-
-	# Validate that 10% of traffic is routing to v3
-    
-	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT1" "$EXPECTED_OUTPUT2" 10
-	if [ $? -gt 0 ]; then
-		(( retry_count=retry_count+1 ))
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			exit 1
-		fi
-		# Make sure to call traffic-abort since we call traffic-start again
-		$A8CLI traffic-abort -s reviews
-	else
-		break
-	fi
-done
 
 MAX_LOOP=5
 retry_count=1
-echo "Setting traffic-step.  Expecting 20% of traffic to be diverted to v3."
+echo "Percentage based routing. 25% to v1 and 75% to v3."
 while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP_RESP=$($A8CLI traffic-step -s reviews)
-	if [ "$TRAFFIC_STEP_RESP" != "Transfer starting for \"reviews\": diverting 20% of traffic from \"version=v1\" to \"version=v3\"" ]; then
-		echo "failed"
-		echo "Failed to divert 20% of traffic to v3"
-		exit 1
-	fi
-
-	# Give it a bit to process the request
-	sleep $SLEEP_TIME
-
-	# Validate that 20% of traffic is routing to v3
-	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT1" "$EXPECTED_OUTPUT2" 20
-	if [ $? -gt 0 ]; then
-		(( retry_count=retry_count+1 ))
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			exit 1
-		fi
-		# Reset the step back to 10% since the traffic-step will be called again
-		$A8CLI traffic-step -s reviews --amount 10
-	else
-		break
-	fi
-done
-
-MAX_LOOP=5
-retry_count=1
-echo "Setting traffic-step.  Expecting 50% of traffic to be diverted to v3."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP50_RESP=$($A8CLI traffic-step -s reviews --amount 50)
-	if [ "$TRAFFIC_STEP50_RESP" != "Transfer starting for \"reviews\": diverting 50% of traffic from \"version=v1\" to \"version=v3\"" ]; then
-		echo "failed"
-		echo "Failed to divert 50% of traffic to v3"
-		exit 1
-	fi
-
-	# Give it a bit to process the request
-	sleep $SLEEP_TIME
-
-	# Validate that 50% of traffic is routing to v3
-	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT1" "$EXPECTED_OUTPUT2" 50
-	if [ $? -gt 0 ]; then
-		(( retry_count=retry_count+1 ))
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			exit 1
-		fi
-	else
-		break
-	fi
-done
-
-MAX_LOOP=5
-retry_count=1
-echo "Setting traffic-step.  Expecting 100% of traffic to be diverted to v3."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_STEP100_RESP=$($A8CLI traffic-step -s reviews --amount 100)
-	if [ "$TRAFFIC_STEP100_RESP" != "Transfer complete for \"reviews\": sending 100% of traffic to \"version=v3\"" ]; then
-		echo "failed"
-		echo "Failed to send 100% of traffic to v3"
-		exit 1
-	fi
-
-	# Give it a bit to process the request
-	sleep $SLEEP_TIME
-
-	# Validate that 100% of traffic is routing to v3
-	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT1" "$EXPECTED_OUTPUT2" 100
-	if [ $? -gt 0 ]; then
-		(( retry_count=retry_count+1 ))
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			exit 1
-		fi
-	else
-		break
-	fi
-done
-
-MAX_LOOP=5
-retry_count=1
-echo "Setting traffic-start.  Expecting 50% of traffic to be diverted to v1."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	# The default route is now v3.  Start 50% traffic to v1.
-	TRAFFIC_START_RESP=$($A8CLI traffic-start -s reviews -v version=v1 -a 50)
-	if [ "$TRAFFIC_START_RESP" != "Transfer starting for \"reviews\": diverting 50% of traffic from \"version=v3\" to \"version=v1\"" ]; then
-		echo "failed: $TRAFFIC_START_RESP"
-		echo "Failed to divert 50% traffic to v1"
-		exit 1
-	fi
+	create_rule $RULESDIR/$ENV-bookinfo-reviews-routing.yaml
 
 	# Give it a bit to process the request
 	sleep $SLEEP_TIME
@@ -522,35 +406,6 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 	# Validate that 50% of traffic is routing to v1
 	# Curl the health check and check the version cookie
 	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT2" "$EXPECTED_OUTPUT1" 50
-	if [ $? -gt 0 ]; then
-		(( retry_count=retry_count+1 ))
-		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
-			exit 1
-		fi
-		# Make sure the traffic-abort is called before traffic-start gets called again
-		$A8CLI traffic-abort -s reviews
-	else
-		break
-	fi
-done
-
-MAX_LOOP=5
-retry_count=1
-echo "Setting traffic-abort.  Expecting 100% of traffic to be reverted to v3."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	TRAFFIC_ABORT_RESP=$($A8CLI traffic-abort -s reviews)
-	if [ "$TRAFFIC_ABORT_RESP" != "Transfer aborted for \"reviews\": all traffic reverted to \"version=v3\"" ]; then
-		echo "failed"
-		echo "Failed to abort"
-		exit 1
-	fi
-
-	# Give it a bit to process the request
-	sleep $SLEEP_TIME
-
-	# Validate that traffic is back routing to v3
-	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT2" "$EXPECTED_OUTPUT1" 100
 	if [ $? -gt 0 ]; then
 		(( retry_count=retry_count+1 ))
 		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then

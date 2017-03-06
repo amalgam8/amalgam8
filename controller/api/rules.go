@@ -43,7 +43,6 @@ func NewRule(m rules.Manager, r metrics.Reporter) *Rule {
 
 // Routes returns this API's routes wrapped by the middlewares.
 func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
-
 	routes := []*rest.Route{
 		rest.Post("/v1/rules", reportMetric(r.reporter, r.add, "add_rules")),
 		rest.Get("/v1/rules", reportMetric(r.reporter, r.list, "get_rules")),
@@ -53,8 +52,6 @@ func (r *Rule) Routes(middlewares ...rest.Middleware) []*rest.Route {
 		rest.Get("/v1/rules/routes", reportMetric(r.reporter, r.getRoutes, "get_all_routes")),
 		rest.Get("/v1/rules/actions", reportMetric(r.reporter, r.getActions, "get_all_actions")),
 
-		rest.Put("/v1/rules/routes/#destination", reportMetric(r.reporter, r.setRouteDestination, "put_rule_route_destination")),
-		rest.Put("/v1/rules/actions/#destination", reportMetric(r.reporter, r.setActionDestination, "put_rule_action_destination")),
 		rest.Get("/v1/rules/routes/#destination", reportMetric(r.reporter, r.getRouteDestination, "get_rule_route_destination")),
 		rest.Get("/v1/rules/actions/#destination", reportMetric(r.reporter, r.getActionDestination, "get_rule_action_destination")),
 		rest.Delete("/v1/rules/routes/#destination", reportMetric(r.reporter, r.deleteRouteDestination, "delete_rule_route_destination")),
@@ -244,60 +241,6 @@ func (r *Rule) remove(w rest.ResponseWriter, req *rest.Request) error {
 	}
 
 	return r.delete(ns, f, w, req)
-}
-
-func (r *Rule) set(ns string, f api.RuleFilter, w rest.ResponseWriter, req *rest.Request) error {
-	rulesSet := api.RulesSet{}
-	if err := req.DecodeJsonPayload(&rulesSet); err != nil {
-		i18n.RestError(w, req, http.StatusBadRequest, i18n.ErrorInvalidJSON)
-		return err
-	}
-
-	for i := range rulesSet.Rules {
-		if rulesSet.Rules[i].Tags == nil {
-			rulesSet.Rules[i].Tags = []string{}
-		}
-	}
-
-	newRules, err := r.manager.SetRules(ns, f, rulesSet.Rules)
-	if err != nil {
-		handleManagerError(w, req, err)
-		return err
-	}
-
-	resp := struct {
-		IDs []string `json:"ids"`
-	}{
-		IDs: newRules.IDs,
-	}
-
-	w.WriteHeader(http.StatusCreated)
-	w.WriteJson(&resp)
-	return nil
-}
-
-func (r *Rule) setRouteDestination(w rest.ResponseWriter, req *rest.Request) error {
-	ns := GetNamespace(req)
-	dest := req.PathParam("destination")
-
-	f := api.RuleFilter{
-		Destinations: []string{dest},
-		RuleType:     api.RuleRoute,
-	}
-
-	return r.set(ns, f, w, req)
-}
-
-func (r *Rule) setActionDestination(w rest.ResponseWriter, req *rest.Request) error {
-	ns := GetNamespace(req)
-	dest := req.PathParam("destination")
-
-	f := api.RuleFilter{
-		Destinations: []string{dest},
-		RuleType:     api.RuleAction,
-	}
-
-	return r.set(ns, f, w, req)
 }
 
 func (r *Rule) getRouteDestination(w rest.ResponseWriter, req *rest.Request) error {

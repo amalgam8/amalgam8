@@ -126,33 +126,6 @@ func (r *redisManager) GetRules(namespace string, filter api.RuleFilter) (Retrie
 	}, nil
 }
 
-func (r *redisManager) SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error) {
-	for i := range rules {
-		rules[i].ID = uuid.New()
-	}
-
-	// Validate rules
-	for _, rule := range rules {
-		if err := r.validator.Validate(rule); err != nil {
-			return NewRules{}, &InvalidRuleError{}
-		}
-	}
-
-	if err := r.db.SetByDestination(namespace, filter, rules); err != nil {
-		return NewRules{}, err
-	}
-
-	// Get the new IDs
-	ids := make([]string, len(rules))
-	for i, rule := range rules {
-		ids[i] = rule.ID
-	}
-
-	return NewRules{
-		IDs: ids,
-	}, nil
-}
-
 func (r *redisManager) UpdateRules(namespace string, rules []api.Rule) error {
 	if len(rules) == 0 {
 		return errors.New("rules: no rules provided")
@@ -186,5 +159,5 @@ func (r *redisManager) UpdateRules(namespace string, rules []api.Rule) error {
 }
 
 func (r *redisManager) DeleteRules(namespace string, filter api.RuleFilter) error {
-	return r.db.SetByDestination(namespace, filter, []api.Rule{})
+	return r.db.DeleteEntriesByFilter(namespace, filter)
 }

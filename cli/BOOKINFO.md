@@ -1,17 +1,6 @@
 CLI command equivalents for Bookinfo example
 ============================================
 
-#### List the Services in the App
-* Old
-```
-a8ctl service-list
-```
-
-* New
-```
-a8ctl-beta service-list
-```
-
 #### Set the default routes
 * Old
 ```
@@ -139,23 +128,6 @@ a8ctl recipe-run --topology examples/bookinfo-topology.json --scenarios examples
 * New
 ```
 a8ctl-beta recipe-run -t examples/bookinfo-topology.json -s examples/bookinfo-gremlins.json -c examples/bookinfo-checks.json -H Cookie -p "^(.*?;)?(user=jason)(;.*)?$"
-```
-
-#### Gradually migrate traffic to reviews:v3 for all users
-* Old
-```
-a8ctl traffic-start reviews v3
-a8ctl traffic-step reviews
-a8ctl traffic-step reviews --amount 50
-a8ctl traffic-step reviews --amount 100
-```
-
-* New
-```
-a8ctl-beta traffic-start -s reviews -v v3
-a8ctl-beta traffic-step -s reviews
-a8ctl-beta traffic-step -s reviews -a 50
-a8ctl-beta traffic-step -s reviews -a 100
 ```
 
 Documentation

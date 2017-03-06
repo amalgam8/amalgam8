@@ -19,10 +19,6 @@ import (
 )
 
 var (
-	// ErrRegistryURLInvalid .
-	ErrRegistryURLInvalid = errors.New("Invalid Registry URL")
-	// ErrRegistryURLNotFound .
-	ErrRegistryURLNotFound = errors.New("Registry URL has not been set")
 	// ErrControllerURLInvalid .
 	ErrControllerURLInvalid = errors.New("Invalid Controller URL")
 	// ErrControllerURLNotFound .

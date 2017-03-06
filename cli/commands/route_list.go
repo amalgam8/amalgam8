@@ -25,7 +25,6 @@ import (
 	"github.com/amalgam8/amalgam8/cli/utils"
 	ctrl "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/pkg/api"
-	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
 

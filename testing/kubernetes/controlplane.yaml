@@ -44,7 +44,7 @@ spec:
         - name: A8_LOG_LEVEL
           value: info
         - name: A8_DATABASE_TYPE
-          value: k8s
+          value: kubernetes
         - name: A8_DATABASE_NAMESPACE
           valueFrom:
             fieldRef:

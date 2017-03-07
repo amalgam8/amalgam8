@@ -20,13 +20,8 @@ var (
 // K8S controller. Currently no bulk insert/update operations are supported and
 // the controller is bound to a single namespace.
 type K8S struct {
-	// kubernetes REST client
-	client *rest.RESTClient
-
-	// validator validates rules against the rule schema
+	client    *rest.RESTClient
 	validator api.Validator
-
-	// namespace from which to sync endpoints/pods
 	namespace string
 }
 
@@ -68,7 +63,6 @@ func NewK8S(ns string) (*K8S, error) {
 }
 
 // AddRules validates the rules and adds them to the collection for the namespace.
-// TODO: bulk operations
 func (k8s *K8S) AddRules(_ string, rules []api.Rule) (out NewRules, err error) {
 	if len(rules) != 1 {
 		return out, ErrBulkNotSupported
@@ -88,7 +82,6 @@ func (k8s *K8S) GetRules(_ string, f api.RuleFilter) (RetrievedRules, error) {
 }
 
 // UpdateRules updates rules by ID in the namespace.
-// TODO: bulk operations
 func (k8s *K8S) UpdateRules(_ string, rules []api.Rule) (err error) {
 	if len(rules) != 1 {
 		return ErrBulkNotSupported

@@ -29,7 +29,7 @@ export A8_GATEWAY_URL=http://localhost:32000
 export A8_LOG_SERVER=http://localhost:30200
 
 # The test script checks this var to determine if we're using docker or k8s
-export A8_CONTAINER_ENV="docker" # FIXME
+export A8_CONTAINER_ENV="k8s"
 
 startup_pods(){
     if [ "$A8_TEST_SUITE" == "examples" ]; then

@@ -29,7 +29,7 @@ import (
 const (
 	DatabaseTypeRedis  = "redis"
 	DatabaseTypeMemory = "memory"
-	DatabaseTypeK8S    = "k8s"
+	DatabaseTypeK8S    = "kubernetes"
 )
 
 // Database config

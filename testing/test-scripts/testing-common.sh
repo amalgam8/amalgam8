@@ -15,7 +15,7 @@
 #   limitations under the License.
 
 cleanup_all_rules() {
-    echo "Cleaning up docker rules"
+    echo "Cleaning up rules"
     $A8CLI rule-delete -a -f
 	return $?
 }

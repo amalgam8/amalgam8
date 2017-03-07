@@ -13,8 +13,8 @@ import (
 )
 
 var (
-	// BulkNotSupportedError is returned when unsupported bulk operations are attempted.
-	BulkNotSupportedError = fmt.Errorf("bulk operations not supported")
+	// ErrBulkNotSupported is returned when unsupported bulk operations are attempted.
+	ErrBulkNotSupported = fmt.Errorf("bulk operations not supported")
 )
 
 // K8S controller. Currently no bulk insert/update operations are supported and
@@ -71,7 +71,7 @@ func NewK8S(ns string) (*K8S, error) {
 // TODO: bulk operations
 func (k8s *K8S) AddRules(_ string, rules []api.Rule) (out NewRules, err error) {
 	if len(rules) != 1 {
-		return out, BulkNotSupportedError
+		return out, ErrBulkNotSupported
 	}
 
 	rule := rules[0]
@@ -91,7 +91,7 @@ func (k8s *K8S) GetRules(_ string, f api.RuleFilter) (RetrievedRules, error) {
 // TODO: bulk operations
 func (k8s *K8S) UpdateRules(_ string, rules []api.Rule) (err error) {
 	if len(rules) != 1 {
-		return BulkNotSupportedError
+		return ErrBulkNotSupported
 	}
 
 	rule := rules[0]

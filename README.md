@@ -85,7 +85,7 @@ resilience testing, etc.
 
 * In the data plane, the [Amalgam8 sidecar](https://amalgam8.io/docs/sidecar/) runs alongside each
   microservice instance. The sidecar is an
-  [Nginx/OpenResty](https://openresty.org) reverse proxy. In addition to proxying
+  [Envoy](https://lyft.github.io/envoy/) reverse proxy. In addition to proxying
   requests to other microservices, the sidecar is responsible for service
   registration, heartbeat, service discovery, load balancing, intelligent
   request routing, and fault injection.

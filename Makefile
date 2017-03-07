@@ -53,15 +53,12 @@ CLI_APP_NAME			:= a8ctl
 
 REGISTRY_IMAGE_NAME			:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME		:= amalgam8/a8-controller:latest
-SIDECAR_NGINX_IMAGE_NAME	:= amalgam8/a8-sidecar:nginx
 #SIDECAR_ALPINE_IMAGE_NAME	:= amalgam8/a8-sidecar:alpine
 SIDECAR_ENVOY_IMAGE_NAME	:= amalgam8/a8-sidecar:latest
 K8SRULES_IMAGE_NAME			:= amalgam8/a8-k8s-rules-controller:latest
 
 REGISTRY_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.controller
-SIDECAR_NGINX_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.nginx.ubuntu
-#SIDECAR_ALPINE_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.nginx.alpine
 SIDECAR_ENVOY_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.envoy.ubuntu
 K8SRULES_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.k8srules
 
@@ -240,7 +237,7 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu dockerize.sidecar.nginx dockerize.k8srules dockerize.sidecar.nginx.alpine dockerize.sidecar.nginx.ubuntu
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu dockerize.k8srules
 
 dockerize: dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu
 
@@ -251,14 +248,6 @@ dockerize.registry:
 dockerize.controller:
 	@echo "--> building controller docker image"
 	@docker build -t $(CONTROLLER_IMAGE_NAME) -f $(CONTROLLER_DOCKERFILE) .
-
-dockerize.sidecar.nginx.alpine:
-	@echo "--> building alpine sidecar docker image"
-	@docker build -t $(SIDECAR_ALPINE_IMAGE_NAME) -f $(SIDECAR_ALPINE_DOCKERFILE) .
-
-dockerize.sidecar.nginx.ubuntu:
-	@echo "--> building nginx sidecar docker image"
-	@docker build -t $(SIDECAR_NGINX_IMAGE_NAME) -f $(SIDECAR_NGINX_DOCKERFILE) .
 
 dockerize.sidecar.envoy.ubuntu:
 	@echo "--> building envoy sidecar docker image"
@@ -272,7 +261,7 @@ dockerize.k8srules:
 #-- release
 #---------------
 
-.PHONY: release release.registry release.controller release.sidecar.nginx release.sidecar.envoy release.examples release.cli compress compress.registry compress.controller compress.sidecar
+.PHONY: release release.registry release.controller release.sidecar.envoy release.examples release.cli compress compress.registry compress.controller compress.sidecar
 
 release: release.registry release.controller release.sidecar.envoy release.examples release.cli
 
@@ -316,23 +305,6 @@ release.sidecar.envoy:
 	@cp sidecar/proxy/envoy/bin/envoy $(BUILDDIR)/usr/bin/
 	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME).tar.gz --transform 's:^./::' .
 	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar-envoy.sh > $(RELEASEDIR)/a8sidecar.sh
-
-release.sidecar.nginx:
-	@echo "--> packaging sidecar for release"
-	@mkdir -p $(RELEASEDIR) $(BUILDDIR) \
-		$(BUILDDIR)/opt/a8_lualib \
-		$(BUILDDIR)/opt/openresty_dist \
-		$(BUILDDIR)/etc/nginx \
-		$(BUILDDIR)/etc/nginx/stream \
-		$(BUILDDIR)/usr/bin \
-		$(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
-	@cp sidecar/proxy/nginx/nginx/conf/*.conf $(BUILDDIR)/etc/nginx/
-	@cp sidecar/proxy/nginx/nginx/lua/*.lua $(BUILDDIR)/opt/a8_lualib/
-	@cp LICENSE README.md $(BUILDDIR)/usr/share/$(SIDECAR_APP_NAME)
-	@cp $(BINDIR)/$(SIDECAR_APP_NAME) $(BUILDDIR)/usr/bin/
-	@cp sidecar/proxy/nginx/nginx/openresty/*.tar.gz $(BUILDDIR)/opt/openresty_dist/
-	@tar -C $(BUILDDIR) -czf $(RELEASEDIR)/$(SIDECAR_RELEASE_NAME)-nginx.tar.gz --transform 's:^./::' .
-#	@sed -e "s/A8SIDECAR_RELEASE=.*/A8SIDECAR_RELEASE=$(APP_VER)/" scripts/a8sidecar-nginx.sh > $(RELEASEDIR)/a8sidecar.sh
 
 release.examples:
 	@echo "--> packaging examples for release"

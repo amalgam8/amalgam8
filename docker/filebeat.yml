@@ -31,7 +31,6 @@ filebeat.prospectors:
   # For each file found under this path, a harvester is started.
   # Make sure not file is defined twice as this can lead to unexpected behaviour.
   paths:
-    - /var/log/nginx/a8_access.log
     - /var/log/a8_access.log
     #- c:\programdata\elasticsearch\logs\*
 

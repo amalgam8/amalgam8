@@ -1,5 +1,6 @@
 rules:
-- priority: 2
+- id: bookinfo-jason-reviews-v2-route-rules
+  priority: 2
   destination: reviews
   match:
     headers:

@@ -197,7 +197,9 @@ func (m *memory) deleteRulesByFilter(namespace string, filter api.RuleFilter) er
 
 func (m *memory) generateRuleIDs(rules []api.Rule) {
 	for i := range rules {
-		rules[i].ID = uuid.New() // Generate an ID for each rule
+		if rules[i].ID == "" {
+			rules[i].ID = uuid.New() // Generate an ID for each rule
+		}
 	}
 }
 

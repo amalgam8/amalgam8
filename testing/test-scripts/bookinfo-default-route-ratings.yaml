@@ -1,5 +1,6 @@
 rules:
-- priority: 1
+- id: bookinfo-default-route-ratings
+  priority: 1
   destination: ratings
   route:
     backends:

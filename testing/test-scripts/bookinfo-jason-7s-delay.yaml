@@ -1,5 +1,6 @@
 rules:
-- priority: 10
+- id: bookinfo-jason-7s-delay
+  priority: 10
   destination: ratings
   match:
     source:

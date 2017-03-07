@@ -48,19 +48,16 @@ endif
 REGISTRY_APP_NAME		:= a8registry
 CONTROLLER_APP_NAME		:= a8controller
 SIDECAR_APP_NAME		:= a8sidecar
-K8SRULES_APP_NAME		:= a8k8srulescontroller
 CLI_APP_NAME			:= a8ctl
 
 REGISTRY_IMAGE_NAME			:= amalgam8/a8-registry:latest
 CONTROLLER_IMAGE_NAME		:= amalgam8/a8-controller:latest
 #SIDECAR_ALPINE_IMAGE_NAME	:= amalgam8/a8-sidecar:alpine
 SIDECAR_ENVOY_IMAGE_NAME	:= amalgam8/a8-sidecar:latest
-K8SRULES_IMAGE_NAME			:= amalgam8/a8-k8s-rules-controller:latest
 
 REGISTRY_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.registry
 CONTROLLER_DOCKERFILE		:= $(DOCKERDIR)/Dockerfile.controller
 SIDECAR_ENVOY_DOCKERFILE	:= $(DOCKERDIR)/Dockerfile.sidecar.envoy.ubuntu
-K8SRULES_DOCKERFILE			:= $(DOCKERDIR)/Dockerfile.k8srules
 
 REGISTRY_RELEASE_NAME	:= $(REGISTRY_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
 CONTROLLER_RELEASE_NAME	:= $(CONTROLLER_APP_NAME)-$(APP_VER)-$(GOOS)-$(GOARCH)
@@ -110,9 +107,9 @@ precommit: format verify
 #---------
 #-- build
 #---------
-.PHONY: build build.registry build.controller build.sidecar build.k8srules build.cli.linux build.cli.darwin build.cli.windows build.testapps build.exampleapps compile clean
+.PHONY: build build.registry build.controller build.sidecar build.cli.linux build.cli.darwin build.cli.windows build.testapps build.exampleapps compile clean
 
-build: build.registry build.controller build.sidecar build.k8srules build.cli.linux
+build: build.registry build.controller build.sidecar build.cli.linux
 
 build.registry:
 	@echo "--> building registry"
@@ -125,10 +122,6 @@ build.controller:
 build.sidecar:
 	@echo "--> building sidecar"
 	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(SIDECAR_APP_NAME) ./cmd/sidecar/
-
-build.k8srules:
-	@echo "--> building kubernetes routingrules controller"
-	@go build $(BUILDFLAGS) -ldflags '$(LDFLAGS)' -o $(BINDIR)/$(K8SRULES_APP_NAME) ./cmd/k8srules/
 
 build.cli.linux: tools.go-bindata
 	@echo "--> building cli for Linux"
@@ -190,11 +183,11 @@ test.long:
 	@echo "--> running unit tests, including long tests"
 	@go test -v $(GOPKGS)
 
-test.integration: build.testapps dockerize.k8srules
+test.integration: build.testapps
 	@echo "--> running integration tests"
 	@testing/run_tests.sh
 
-test.examples: build.exampleapps dockerize.sidecar.envoy.ubuntu dockerize.k8srules
+test.examples: build.exampleapps dockerize.sidecar.envoy.ubuntu
 	@echo "--> running automated examples"
 	@testing/run_tests.sh "examples" $(APP_VER_ABBR)
 
@@ -237,7 +230,7 @@ depend.install:	tools.glide
 #---------------
 #-- dockerize
 #---------------
-.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu dockerize.k8srules
+.PHONY: dockerize dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu
 
 dockerize: dockerize.registry dockerize.controller dockerize.sidecar.envoy.ubuntu
 
@@ -252,10 +245,6 @@ dockerize.controller:
 dockerize.sidecar.envoy.ubuntu:
 	@echo "--> building envoy sidecar docker image"
 	@docker build -t $(SIDECAR_ENVOY_IMAGE_NAME) -f $(SIDECAR_ENVOY_DOCKERFILE) .
-
-dockerize.k8srules:
-	@echo "--> building k8srules docker image"
-	@docker build -t $(K8SRULES_IMAGE_NAME) -f $(K8SRULES_DOCKERFILE) .
 
 #---------------
 #-- release

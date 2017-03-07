@@ -51,14 +51,15 @@ func (r *redisManager) AddRules(namespace string, rules []api.Rule) (NewRules, e
 
 	entries := make(map[string]string)
 	for i := range rules {
-		id := uuid.New() // Generate an ID for each rule
-		rules[i].ID = id
+		if rules[i].ID == "" {
+			rules[i].ID = uuid.New() // Generate an ID for each rule
+		}
 		data, err := json.Marshal(&rules[i])
 		if err != nil {
 			return NewRules{}, &JSONMarshalError{Message: err.Error()}
 		}
 
-		entries[id] = string(data)
+		entries[rules[i].ID] = string(data)
 	}
 
 	if err := r.db.InsertEntries(namespace, entries); err != nil {

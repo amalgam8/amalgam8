@@ -97,7 +97,7 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
-		GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
+		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -115,7 +115,7 @@ type manager struct {
 	listenerPort    int //Single listener port. TODO: Change to array, with port type Http|TCP
 	workingDir      string
 	loggingDir      string
-	GrpcHttp1Bridge bool
+	GRPCHTTP1Bridge bool
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -177,8 +177,8 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
-	if m.GrpcHttp1Bridge {
-		filters = append(filters, buildGrpcHttp1BridgeFilter())
+	if m.GRPCHTTP1Bridge {
+		filters = append(filters, buildGRPCHTTP1BridgeFilter())
 	}
 
 	traceKey := "gremlin_recipe_id"
@@ -826,12 +826,12 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 	return filters
 }
 
-func buildGrpcHttp1BridgeFilter() Filter {
+func buildGRPCHTTP1BridgeFilter() Filter {
 	// Construct http1_grpc_bridge filter
 	return Filter{
 		Type:   "both",
 		Name:   "grpc_http1_bridge",
-		Config: &GrpcHttp1BridgeFilter{},
+		Config: &GRPCHTTP1BridgeFilter{},
 	}
 }
 

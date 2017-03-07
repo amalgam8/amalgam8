@@ -171,12 +171,12 @@ func TestBuildGrpcHttp1BridgeFilter(t *testing.T) {
 	err := yaml.Unmarshal(configYaml, &proxyConfig)
 	assert.NoError(t, err)
 
-	if proxyConfig.GrpcHttp1Bridge {
-		filter := buildGrpcHttp1BridgeFilter()
+	if proxyConfig.GRPCHTTP1Bridge {
+		filter := buildGRPCHTTP1BridgeFilter()
 		assert.Equal(t, Filter{
 			Type:   "both",
 			Name:   "grpc_http1_bridge",
-			Config: &GrpcHttp1BridgeFilter{},
+			Config: &GRPCHTTP1BridgeFilter{},
 		}, filter)
 	}
 }

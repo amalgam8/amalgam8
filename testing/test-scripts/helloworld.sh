@@ -59,7 +59,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 
     echo ""
     echo "Set/verify the Hello World default route to v1"
-    create_rule $EXAMPLESDIR/docker-helloworld-default-route-rules.json
+    create_rule $EXAMPLESDIR/helloworld-default-route-rules.json
 
     sleep 15
 
@@ -127,7 +127,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
-    create_rule $EXAMPLESDIR/docker-helloworld-v1-v2-route-rules.json
+    create_rule $EXAMPLESDIR/helloworld-v1-v2-route-rules.json
 
     sleep 20
 

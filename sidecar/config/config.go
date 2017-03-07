@@ -138,7 +138,7 @@ type ProxyConfig struct {
 	WorkingDir       string `yaml:"working_dir"`
 	LoggingDir       string `yaml:"logging_dir"`
 	ProxyBinary      string `yaml:"proxy_binary_path"`
-	GrpcHttp1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
+	GRPCHTTP1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
 }
 
 // Config stores the various configuration options for the sidecar

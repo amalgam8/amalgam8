@@ -22,9 +22,9 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
-	"github.com/amalgam8/amalgam8/sidecar/discovery"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy"
+	"github.com/amalgam8/amalgam8/sidecar/proxy/envoy/discovery"
 	"github.com/amalgam8/amalgam8/sidecar/proxy/monitor"
 )
 

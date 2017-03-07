@@ -109,7 +109,7 @@ The following Makefile targets are available for the `amalgam8` repository.
 | `release`        | invokes targets `release.controller`, `release.registry`, `release.sidecar` |
 | `release.controller`        | creates a tarball with the controller binary |
 | `release.registry`        | creates a tarball with the registry binary |
-| `release.sidecar`        | creates a tarball with the sidecar binary, openresty binaries, and nginx configuration files required to run the sidecar|
+| `release.sidecar`        | creates a tarball with the sidecar binary |
 | `precommit`      | runs code formatting and checks. `make precommit` must be run before committing code changes and sending pull requests |
 | `test`           | runs (short duration) tests using `go test`. You can also use `make test.long` to include long running tests. |
 | `test.integration`           | runs end to end integration tests using docker-compose and kubernetes. The test scripts can be found under the testing folder relative to root of repository. |

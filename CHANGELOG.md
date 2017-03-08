@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.0.0 (March 8, 2017)
+
+- Added support for Kubernetes based controller backend. This enables a8ctl to be used to manipulate rules with Kubernetes. ([PR#534](https://github.com/amalgam8/amalgam8/pull/534))
+
+- Deprecated the bulk set API. ([PR#537](https://github.com/amalgam8/amalgam8/pull/537))
+
+- Deprecated a8ctl service-list command. ([PR#536](https://github.com/amalgam8/amalgam8/pull/536))
+
+- Deprecated a8ctl traffic-set, traffic-step, and traffic-abort commands. ([PR#535](https://github.com/amalgam8/amalgam8/pull/535))
+
+- Added support for configurable load balancing algorithms: round robin, least request and random. ([PR#494](https://github.com/amalgam8/amalgam8/pull/494))
+
+- Added support for circuit breakers.
+
+- Added support for rate limiting.
+
+- Replaced NGINX proxy with Envoy based proxy.
+
+- Improvements to zombie process cleanup in app supervision. ([PR#421](https://github.com/amalgam8/amalgam8/pull/421), [PR#423](https://github.com/amalgam8/amalgam8/pull/423))
+
+- Python CLI has been replaced with Go CLI. ([PR#396](https://github.com/amalgam8/amalgam8/pull/396))
+
 ## 0.4.2 (November 10, 2016)
 
 - Bug fix for sidecar proxy host header propagation logic. ([PR#384](https://github.com/amalgam8/amalgam8/pull/384))

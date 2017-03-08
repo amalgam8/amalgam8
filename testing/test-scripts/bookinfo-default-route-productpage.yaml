@@ -6,3 +6,11 @@ rules:
     backends:
     - tags:
       - version=v1
+      resilience:
+        max_connections: 1111
+        max_pending_requests: 222
+        max_requests: 222
+        sleep_window: 0.9
+        consecutive_errors: 9
+        detection_interval: 0.5
+        max_requests_per_connection: 1234

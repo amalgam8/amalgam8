@@ -7,10 +7,10 @@ rules:
     - tags:
       - version=v1
       resilience:
-        max_connections: 1111
-        max_pending_requests: 222
-        max_requests: 222
-        sleep_window: 0.9
-        consecutive_errors: 9
+        max_connections: 1000
+        max_pending_requests: 200
+        max_requests: 200
+        sleep_window: 2.5
+        consecutive_errors: 10
         detection_interval: 0.5
-        max_requests_per_connection: 1234
+        max_requests_per_connection: 1000

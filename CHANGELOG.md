@@ -6,7 +6,7 @@
 
 - Support for HTTP/2, gRPC proxying (downstream and upstream)
 
-- Support for gRPC over HTTP/1.1
+- Support for gRPC bridging over HTTP/1.1
 
 - Support for configuring circuit breakers, bulkheads, timeouts, retries
 

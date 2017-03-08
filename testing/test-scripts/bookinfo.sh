@@ -88,10 +88,10 @@ check_routing_rules() {
     EXPECTED_OUTPUT2="$3"
     EXPECTED_PERCENT="$4"
     MAX_LOOP=5
-    retry_count=1
+    routing_retry_count=1
     COMMAND_INPUT="${COMMAND_INPUT} >/tmp/routing.tmp"
 
-    while [  $retry_count -le $((MAX_LOOP)) ]; do
+    while [  $routing_retry_count -le $((MAX_LOOP)) ]; do
         v1_count=0
         v2_count=0
         for count in {1..100}
@@ -115,17 +115,17 @@ check_routing_rules() {
         ADJUST=5
         if [ $v1_count -lt $(($EXPECTED_V1_PERCENT-$ADJUST)) ] || [  $v1_count -gt $(($EXPECTED_V1_PERCENT+$ADJUST)) ]; then
             echo "  The routing did not meet the rule that was set, try again."
-            (( retry_count=retry_count+1 ))
+            (( routing_retry_count=routing_retry_count+1 ))
         else
             # Test passed, time to exit the loop
-            retry_count=100
+            routing_retry_count=100
         fi
 
-        if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+        if [ $routing_retry_count -eq $((MAX_LOOP+1)) ]; then
             echo "  Test failed"
             echo ""
             return 1
-        elif [ $retry_count -eq 100 ]; then
+        elif [ $routing_retry_count -eq 100 ]; then
             echo "  Passed test"
             echo ""
         fi
@@ -345,12 +345,6 @@ cleanup_all_rules
 # Quiet things down a bit
 set +x
 
-create_rule $RULESDIR/bookinfo-default-route-details.yaml
-create_rule $RULESDIR/bookinfo-default-route-productpage.yaml
-create_rule $RULESDIR/bookinfo-default-route-ratings.yaml
-create_rule $RULESDIR/bookinfo-default-route-reviews.yaml
-sleep 10
-
 MAX_LOOP=5
 retry_count=1
 SLEEP_TIME=15
@@ -362,20 +356,23 @@ EXPECTED_OUTPUT2="$SCRIPTDIR/$PRODUCTPAGE_V3_OUTPUT"
 MAX_LOOP=5
 retry_count=1
 echo "Percentage based routing. 25% to v1 and 75% to v3."
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-	create_rule $RULESDIR/bookinfo-reviews-routing.yaml
 
+create_rule $RULESDIR/bookinfo-reviews-routing.yaml
+
+while [  $retry_count -le $((MAX_LOOP)) ]; do
 	# Give it a bit to process the request
 	sleep $SLEEP_TIME
 
-	# Validate that 50% of traffic is routing to v1
+	# Validate that 25% of traffic is routing to v1
 	# Curl the health check and check the version cookie
-	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT2" "$EXPECTED_OUTPUT1" 50
+	check_routing_rules "$COMMAND_INPUT" "$EXPECTED_OUTPUT2" "$EXPECTED_OUTPUT1" 25
 	if [ $? -gt 0 ]; then
 		(( retry_count=retry_count+1 ))
 		if [ $retry_count -eq $((MAX_LOOP+1)) ]; then
+			echo "Exiting"
 			exit 1
 		fi
+		echo "Retrying..."
 	else
 		break
 	fi

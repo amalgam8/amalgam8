@@ -1,5 +1,28 @@
 # Changelog
 
+## 1.0.0 (March 8, 2017)
+
+- Switched Amalgam8 sidecar to use Envoy proxy from Lyft. (https://github.com/lyft/envoy)
+
+- Support for HTTP/2, gRPC proxying (downstream and upstream).
+
+- Support for gRPC bridging over HTTP/1.1.
+
+- Support for configuring circuit breakers, bulkheads, timeouts, retries.
+
+- Support for different load balancing algorithms (round robin, least conn, random). ([PR#494](https://github.com/amalgam8/amalgam8/pull/494))
+
+- Deeper integration with Kubernetes: rules are now stored as third party resources. ([PR#534](https://github.com/amalgam8/amalgam8/pull/534))
+
+- A fully revamped Go based cross platform CLI (a8ctl). ([PR#396](https://github.com/amalgam8/amalgam8/pull/396))
+
+- Assorted bug fixes.
+
+- NOTE: breaking changes:
+  - Removed the bulk set API. ([PR#537](https://github.com/amalgam8/amalgam8/pull/537))
+  - Removed a8ctl service-list command. ([PR#536](https://github.com/amalgam8/amalgam8/pull/536))
+  - Removed a8ctl traffic-set, traffic-step, and traffic-abort commands. ([PR#535](https://github.com/amalgam8/amalgam8/pull/535))
+
 ## 0.4.2 (November 10, 2016)
 
 - Bug fix for sidecar proxy host header propagation logic. ([PR#384](https://github.com/amalgam8/amalgam8/pull/384))

@@ -25,7 +25,6 @@ import (
 	"github.com/amalgam8/amalgam8/cli/utils"
 	ctrl "github.com/amalgam8/amalgam8/controller/client"
 	"github.com/amalgam8/amalgam8/pkg/api"
-	reg "github.com/amalgam8/amalgam8/registry/client"
 	"github.com/urfave/cli"
 )
 
@@ -39,7 +38,6 @@ type prettyRouteList struct {
 // RouteListCommand is used for the route-list command.
 type RouteListCommand struct {
 	ctx        *cli.Context
-	registry   *reg.Client
 	controller *ctrl.Client
 	term       terminal.UI
 }
@@ -94,14 +92,6 @@ func (cmd *RouteListCommand) OnUsageError(ctx *cli.Context, err error, isSubcomm
 // Action runs when no subcommands are specified
 // https://godoc.org/github.com/urfave/cli#ActionFunc
 func (cmd *RouteListCommand) Action(ctx *cli.Context) error {
-	registry, err := NewRegistry(ctx)
-	if err != nil {
-		// Exit if the registry returned an error
-		return nil
-	}
-	// Update the registry
-	cmd.registry = registry
-
 	controller, err := NewController(ctx)
 	if err != nil {
 		// Exit if the controller returned an error
@@ -160,23 +150,6 @@ func (cmd *RouteListCommand) PrettyPrint(filter *api.RuleFilter, format string) 
 		)
 	}
 
-	services, err := cmd.registry.ListServices()
-	if err != nil {
-		return err
-	}
-
-	// add services that don't have routing rules
-	for _, service := range services {
-		if _, ok := routes.Services[service]; !ok {
-			routeList = append(
-				routeList,
-				prettyRouteList{
-					Service: service,
-				},
-			)
-		}
-	}
-
 	return utils.MarshallReader(cmd.ctx.App.Writer, routeList, format)
 }
 
@@ -213,18 +186,6 @@ func (cmd *RouteListCommand) RouteTable(filter *api.RuleFilter) error {
 				strings.Join(selectors, ", "),
 			},
 		)
-	}
-
-	services, err := cmd.registry.ListServices()
-	if err != nil {
-		return err
-	}
-
-	// add services that don't have routing rules
-	for _, service := range services {
-		if _, ok := routes.Services[service]; !ok {
-			table.AddRow([]string{service, "", ""})
-		}
 	}
 
 	table.SortByColumnIndex(0)

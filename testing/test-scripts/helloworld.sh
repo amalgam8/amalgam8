@@ -28,23 +28,14 @@ dump_debug() {
         docker exec -it gateway a8sidecar --debug show-state
         docker logs gateway
         docker exec gateway ps aux
-        docker exec gateway cat /var/log/nginx/access.log
-        docker exec gateway cat /var/log/nginx/error.log
-        PID=$(docker exec gateway cat /var/run/nginx.pid)
-        echo $PID
-        OUTPUT=$(docker exec gateway kill -s 0 $PID)
-        echo $?
-        echo $OUTPUT
     fi
 
     if [ "$ENV" == "k8s" ]; then
         kubectl get routingrule -o json
-	PODNAME=$(kubectl get pods | grep gateway | awk '{print $1}')
-	kubectl exec $PODNAME -- a8sidecar --debug show-state
-	kubectl logs $PODNAME
-	kubectl exec $PODNAME -- ps aux
-	kubectl exec $PODNAME -- cat /var/log/nginx/access.log
-	kubectl exec $PODNAME -- cat /var/log/nginx/error.log
+        PODNAME=$(kubectl get pods | grep gateway | awk '{print $1}')
+        kubectl exec $PODNAME -- a8sidecar --debug show-state
+        kubectl logs $PODNAME
+        kubectl exec $PODNAME -- ps aux
     fi
 }
 
@@ -68,11 +59,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 
     echo ""
     echo "Set/verify the Hello World default route to v1"
-    if [ "$ENV" == "docker" ]; then
-        create_rule $EXAMPLESDIR/docker-helloworld-default-route-rules.json
-    else
-        create_rule $EXAMPLESDIR/k8s-helloworld-default-route-rules.yaml
-    fi
+    create_rule $EXAMPLESDIR/helloworld-default-route-rules.json
 
     sleep 15
 
@@ -140,11 +127,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 
     echo ""
     echo "Set/verify the Hello World route to 75%/v1 25%/v2"
-    if [ "$ENV" == "docker" ]; then
-        create_rule $EXAMPLESDIR/docker-helloworld-v1-v2-route-rules.json
-    else
-        create_rule $EXAMPLESDIR/k8s-helloworld-v1-v2-route-rules.yaml
-    fi
+    create_rule $EXAMPLESDIR/helloworld-v1-v2-route-rules.json
 
     sleep 20
 

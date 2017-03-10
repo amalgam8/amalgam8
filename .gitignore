@@ -17,13 +17,17 @@ release/
 *.gradle
 *.war
 
+# ignore generated i18n_resources
+cli/utils/i18n_resources.go
+
 # Ignore the generated example yamls
 examples/bluemix.cfg
 examples/docker-bookinfo.yaml
 examples/docker-controlplane.yaml
-examples/docker-helloworld*.json
+examples/helloworld*.json
 examples/docker-helloworld*.yaml
 examples/docker-bookinfo*.yaml
 examples/k8s-controlplane.yaml
+examples/k8s-bookinfo.yaml
 examples/k8s-helloworld*.yaml
-examples/k8s-bookinfo*.yaml
+examples/bookinfo*.yaml

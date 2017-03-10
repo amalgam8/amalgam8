@@ -26,6 +26,7 @@ const (
 	dbUserFlag       = "database_username"
 	dbPasswordFlag   = "database_password"
 	dbHostFlag       = "database_host"
+	dbNamespace      = "database_namespace"
 	secretKeyFlag    = "encryption_key"
 	logLevelFlag     = "log_level"
 	authModeFlag     = "auth_mode"
@@ -91,6 +92,11 @@ var Flags = []cli.Flag{
 		Name:   dbHostFlag,
 		EnvVar: envVar(dbHostFlag),
 		Usage:  "database host",
+	},
+	cli.StringFlag{
+		Name:   dbNamespace,
+		EnvVar: envVar(dbNamespace),
+		Usage:  "database namespace",
 	},
 
 	cli.StringFlag{

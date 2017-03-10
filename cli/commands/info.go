@@ -73,14 +73,12 @@ func (cmd *InfoCommand) Action(ctx *cli.Context) error {
 	return cmd.DefaultAction(ctx)
 }
 
-// DefaultAction prints information about the registry and controller URL's and tokens.
+// DefaultAction prints information about the controller URL's and tokens.
 // Amalgam8 info...
 //
 // +---------------------+----------------------------+
 // | Env. Variable       | Value                      |
 // +---------------------+----------------------------+
-// | A8_REGISTRY_URL     | http://192.168.0.100:31300 |
-// | A8_REGISTRY_TOKEN   |                            |
 // | A8_CONTROLLER_URL   | http://192.168.0.100:31200 |
 // | A8_CONTROLLER_TOKEN |                            |
 // | A8_GREMLIN_URL      | http://192.168.0.100:31500 |
@@ -90,14 +88,7 @@ func (cmd *InfoCommand) Action(ctx *cli.Context) error {
 func (cmd *InfoCommand) DefaultAction(ctx *cli.Context) error {
 	table := cmd.term.NewTable()
 	table.SetHeader([]string{"Env. Variable", "Value"})
-	table.AddMultipleRows([][]string{{
-		common.RegistryURL.EnvVar(),
-		ctx.GlobalString(common.RegistryURL.Flag()),
-	},
-		{
-			common.RegistryToken.EnvVar(),
-			ctx.GlobalString(common.RegistryToken.Flag()),
-		},
+	table.AddMultipleRows([][]string{
 		{
 			common.ControllerURL.EnvVar(),
 			ctx.GlobalString(common.ControllerURL.Flag()),

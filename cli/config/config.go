@@ -29,14 +29,6 @@ func OnUsageError(ctx *cli.Context, err error, isSubcommand bool) error {
 		if strings.Contains(err.Error(), common.ErrInvalidFlagArg.Error()) {
 			flag := err.Error()[strings.LastIndex(err.Error(), "-")+1:]
 
-			if flag == common.RegistryURL.Flag() {
-				_, err = ValidateRegistryURL(ctx)
-				if err != nil {
-					fmt.Fprintf(ctx.App.Writer, "\nError: %#v\n\n", err.Error())
-					return nil
-				}
-			}
-
 			if flag == common.ControllerURL.Flag() {
 				_, err = ValidateControllerURL(ctx)
 				if err != nil {
@@ -58,13 +50,8 @@ func OnUsageError(ctx *cli.Context, err error, isSubcommand bool) error {
 func DefaultAction(ctx *cli.Context) error {
 	// Validate flags if not command has been specified
 	if ctx.NumFlags() > 0 && ctx.NArg() == 0 {
-		_, err := ValidateRegistryURL(ctx)
-		if err != nil {
-			fmt.Fprintf(ctx.App.Writer, "\nError: %#v\n\n", err.Error())
-			return nil
-		}
 
-		_, err = ValidateControllerURL(ctx)
+		_, err := ValidateControllerURL(ctx)
 		if err != nil {
 			fmt.Fprintf(ctx.App.Writer, "\nError: %#v\n\n", err.Error())
 			return nil
@@ -73,19 +60,6 @@ func DefaultAction(ctx *cli.Context) error {
 
 	cli.ShowAppHelp(ctx)
 	return nil
-}
-
-// ValidateRegistryURL .
-func ValidateRegistryURL(ctx *cli.Context) (string, error) {
-	u := ctx.GlobalString(common.RegistryURL.Flag())
-	if len(u) == 0 {
-		return "empty", common.ErrRegistryURLNotFound
-	}
-	_, err := url.ParseRequestURI(u)
-	if err != nil {
-		return u, common.ErrRegistryURLInvalid
-	}
-	return u, nil
 }
 
 // ValidateControllerURL .

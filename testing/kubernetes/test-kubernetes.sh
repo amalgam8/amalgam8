@@ -27,7 +27,6 @@ export A8_CONTROLLER_URL=http://localhost:31200
 export A8_REGISTRY_URL=http://localhost:31300
 export A8_GATEWAY_URL=http://localhost:32000
 export A8_LOG_SERVER=http://localhost:30200
-export A8_GREMLIN_URL=http://localhost:31500
 
 # The test script checks this var to determine if we're using docker or k8s
 export A8_CONTAINER_ENV="k8s"

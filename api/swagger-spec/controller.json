@@ -327,47 +327,6 @@
           }
         }
       },
-      "put": {
-        "summary": "Replace route rules by destination.",
-        "description": "Transactionally replace all route rules by destination.",
-        "parameters": [
-          {
-            "name": "rules",
-            "in": "body",
-            "description": "Rules to add",
-            "schema": {
-              "$ref": "#/definitions/ruleList"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully added rules.",
-            "schema": {
-              "$ref": "#/definitions/ids"
-            }
-          },
-          "400": {
-            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          },
-          "500": {
-            "description": "Request failed due to an internal server error.",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          },
-          "503": {
-            "description": "Dependency failure (database backend unreachable, etc.)",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      },
       "delete": {
         "summary": "Remove route rules by destination.",
         "description": "Delete all rules that define a route by destination.",
@@ -408,47 +367,6 @@
             "description": "Query was successful.",
             "schema": {
               "$ref": "#/definitions/ruleList"
-            }
-          },
-          "500": {
-            "description": "Request failed due to an internal server error.",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          },
-          "503": {
-            "description": "Dependency failure (database backend unreachable, etc.)",
-            "schema": {
-              "$ref": "#/definitions/error"
-            }
-          }
-        }
-      },
-      "put": {
-        "summary": "Replace action rules by destination.",
-        "description": "Transactionally replace all action rules by destination.",
-        "parameters": [
-          {
-            "name": "rules",
-            "in": "body",
-            "description": "Rules to add",
-            "schema": {
-              "$ref": "#/definitions/ruleList"
-            },
-            "required": true
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successfully added rules.",
-            "schema": {
-              "$ref": "#/definitions/ids"
-            }
-          },
-          "400": {
-            "description": "Invalid input (malformed JSON, invalid rule, etc.)",
-            "schema": {
-              "$ref": "#/definitions/error"
             }
           },
           "500": {

@@ -173,35 +173,6 @@ func (m *memory) DeleteRules(namespace string, filter api.RuleFilter) error {
 	return m.deleteRulesByFilter(namespace, filter)
 }
 
-func (m *memory) SetRules(namespace string, filter api.RuleFilter, rules []api.Rule) (NewRules, error) {
-	// Validate rules
-	if err := m.validateRules(rules); err != nil {
-		return NewRules{}, err
-	}
-
-	m.generateRuleIDs(rules)
-
-	// Delete the existing rules that match the filter and add the new rules
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if err := m.deleteRulesByFilter(namespace, filter); err != nil {
-		return NewRules{}, err
-	}
-
-	m.addRules(namespace, rules)
-
-	// Get the new IDs
-	ids := make([]string, len(rules))
-	for i, rule := range rules {
-		ids[i] = rule.ID
-	}
-
-	return NewRules{
-		IDs: ids,
-	}, nil
-}
-
 func (m *memory) deleteRulesByFilter(namespace string, filter api.RuleFilter) error {
 	ruleMap, exists := m.rules[namespace]
 	if !exists {
@@ -226,7 +197,9 @@ func (m *memory) deleteRulesByFilter(namespace string, filter api.RuleFilter) er
 
 func (m *memory) generateRuleIDs(rules []api.Rule) {
 	for i := range rules {
-		rules[i].ID = uuid.New() // Generate an ID for each rule
+		if rules[i].ID == "" {
+			rules[i].ID = uuid.New() // Generate an ID for each rule
+		}
 	}
 }
 

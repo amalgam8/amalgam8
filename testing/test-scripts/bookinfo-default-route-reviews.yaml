@@ -1,0 +1,8 @@
+rules:
+- id: bookinfo-default-route-reviews
+  priority: 1
+  destination: reviews
+  route:
+    backends:
+    - tags:
+      - version=v1

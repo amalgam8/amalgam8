@@ -501,7 +501,7 @@ log_level: debug
 					Domain: "amalgam8",
 				},
 				Proxy:        true,
-				ProxyAdapter: NGINXAdapter,
+				ProxyAdapter: EnvoyAdapter,
 				Register:     true,
 				DNS:          true,
 				Service: Service{

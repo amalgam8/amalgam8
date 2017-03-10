@@ -185,7 +185,7 @@ var _ = Describe("action-list", func() {
 
 	Describe("List of Actions", func() {
 
-		Describe("Validate Registry URL", func() {
+		Describe("Validate Controller URL", func() {
 
 			JustBeforeEach(func() {
 				app.Writer = bytes.NewBufferString("")

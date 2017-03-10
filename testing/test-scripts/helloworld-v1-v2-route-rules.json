@@ -1,2 +1,2 @@
-{"rules": [{"priority": 1, "route": {"backends": [{"weight": 0.25, "tags": ["version=v2"]},{"tags":["version=v1"]}]}, "destination": "helloworld"}]}
+{"rules": [{"id": "helloworld-v1-v2-route-rules", "priority": 1, "route": {"backends": [{"weight": 0.25, "tags": ["version=v2"]},{"tags":["version=v1"]}]}, "destination": "helloworld"}]}
 

@@ -179,6 +179,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${PRODUCTPAGE_IMAGE}
 
         #################################################################################
@@ -195,6 +196,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_PORT=9080 \
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${DETAILS_IMAGE}
 
         #################################################################################
@@ -211,6 +213,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_PORT=9080 \
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${RATINGS_IMAGE}
 
         #################################################################################
@@ -231,6 +234,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V1_IMAGE}
 
         echo "Starting bookinfo reviews microservice (v2)"
@@ -247,6 +251,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V2_IMAGE}
 
         echo "Starting bookinfo reviews microservice (v3)"
@@ -263,6 +268,7 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${REVIEWS_V3_IMAGE}
 
         #################################################################################
@@ -280,8 +286,10 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_REGISTRY_POLL=5s \
                 --env A8_CONTROLLER_URL=$CONTROLLER_URL \
                 --env A8_CONTROLLER_POLL=5s \
-                --env A8_SERVICE=gateway:none \
+                --env A8_SERVICE=gateway:version=none \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
+                --env HTTP_MONITOR_RC_LIST=200,201,202,204,300,301,302,401,403,404,426 \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
         #################################################################################
@@ -353,25 +361,27 @@ if [ "$ACTION" == "create" ]; then
         echo "Starting helloworld microservice (v1)"
 
         bluemix ic group-create --name helloworld_v1 \
-                --publish 9080 --memory 128 --auto --anti \
+                --publish 5000 --memory 128 --auto --anti \
                 --min 2 --max 2 --desired 2 \
                 --env A8_REGISTRY_URL=$REGISTRY_URL \
                 --env A8_SERVICE=helloworld:version=v1 \
-                --env A8_ENDPOINT_PORT=9080 \
+                --env A8_ENDPOINT_PORT=5000 \
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${HELLOWORLD_V1_IMAGE}
 
         echo "Starting helloworld microservice (v2)"
 
         bluemix ic group-create --name helloworld_v2 \
-                --publish 9080 --memory 128 --auto --anti \
+                --publish 5000 --memory 128 --auto --anti \
                 --min 2 --max 2 --desired 2 \
                 --env A8_REGISTRY_URL=$REGISTRY_URL \
                 --env A8_SERVICE=helloworld:version=v2 \
-                --env A8_ENDPOINT_PORT=9080 \
+                --env A8_ENDPOINT_PORT=5000 \
                 --env A8_ENDPOINT_TYPE=http \
                 --env A8_REGISTER=true \
+                --env GODEBUG=netdns=go \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/${HELLOWORLD_V2_IMAGE}
 
         #################################################################################
@@ -389,8 +399,10 @@ if [ "$ACTION" == "create" ]; then
                 --env A8_REGISTRY_POLL=5s \
                 --env A8_CONTROLLER_URL=$CONTROLLER_URL \
                 --env A8_CONTROLLER_POLL=5s \
-                --env A8_SERVICE=gateway:none \
+                --env A8_SERVICE=gateway:version=none \
                 --env A8_PROXY=true \
+                --env GODEBUG=netdns=go \
+                --env HTTP_MONITOR_RC_LIST=200,201,202,204,300,301,302,401,403,404,426 \
                 ${BLUEMIX_REGISTRY_HOST}/${BLUEMIX_REGISTRY_NAMESPACE}/$GATEWAY_IMAGE
 
         #################################################################################

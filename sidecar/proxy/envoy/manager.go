@@ -28,9 +28,12 @@ import (
 
 	"io/ioutil"
 
+	"strconv"
+
 	"github.com/amalgam8/amalgam8/pkg/api"
 	"github.com/amalgam8/amalgam8/sidecar/config"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
+	"github.com/amalgam8/amalgam8/sidecar/util"
 )
 
 // Envoy config related files
@@ -94,7 +97,7 @@ func NewManager(identity identity.Provider, conf *config.Config) (Manager, error
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
-		GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
+		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -112,7 +115,7 @@ type manager struct {
 	listenerPort    int //Single listener port. TODO: Change to array, with port type Http|TCP
 	workingDir      string
 	loggingDir      string
-	GrpcHttp1Bridge bool
+	GRPCHTTP1Bridge bool
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -174,8 +177,8 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	filters := buildFaults(rules, inst.ServiceName, inst.Tags)
 
-	if m.GrpcHttp1Bridge {
-		filters = append(filters, buildGrpcHttp1BridgeFilter())
+	if m.GRPCHTTP1Bridge {
+		filters = append(filters, buildGRPCHTTP1BridgeFilter())
 	}
 
 	traceKey := "gremlin_recipe_id"
@@ -329,68 +332,62 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 	SanitizeRules(rules)
 	rules = AddDefaultRouteRules(rules, instances)
 
-	backends := make(map[string]*api.Backend)
+	staticClusters := make(map[string]struct{})
+	instancesByClusterMap := make(map[string][]*api.ServiceInstance)
+	for _, inst := range instances {
+		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
+		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
+			staticClusters[clusterName] = struct{}{}
+			staticClusters[inst.ServiceName] = struct{}{}
+		}
+		instancesByClusterMap[clusterName] = append(instancesByClusterMap[clusterName], inst)
+		instancesByClusterMap[inst.ServiceName] = append(instancesByClusterMap[inst.ServiceName], inst)
+	}
+
+	clusterMap := make(map[string]*api.Backend)
 	for _, rule := range rules {
 		if rule.Route != nil {
 			for _, backend := range rule.Route.Backends {
 				key := BuildServiceKey(backend.Name, backend.Tags)
 				// TODO if two backends map to the same key, it will overwrite
 				//  and will lose resilience field options in this case
-				backends[key] = &backend
+				clusterMap[key] = &backend
 			}
 		}
 	}
 
-	clusters := make([]Cluster, 0, len(backends))
-	for name, backend := range backends {
-		cluster := Cluster{
-			Name:             name,
-			ServiceName:      name,
-			Type:             "sds",
-			LbType:           "round_robin",
-			ConnectTimeoutMs: 1000,
-			CircuitBreakers:  &CircuitBreakers{},
-			OutlierDetection: &OutlierDetection{
-				MaxEjectionPercent: 100,
-			},
-			SSLContext: tlsConfig,
+	clusters := make([]Cluster, 0, len(clusterMap))
+
+	for clusterName, backend := range clusterMap {
+		cluster := buildCluster(clusterName, backend, tlsConfig)
+
+		// if cluster contains strict_dns hosts, append them
+		if _, exists := staticClusters[clusterName]; exists {
+			cluster.Type = "strict_dns"
+			cluster.ServiceName = ""
+			hosts := make([]Host, 0, len(instancesByClusterMap[clusterName]))
+			for _, inst := range instancesByClusterMap[clusterName] {
+				portSet := false
+				url := fmt.Sprintf("tcp://%v", inst.Endpoint.Value)
+				// Envoy complains if no port provided, append :80 by default
+				for _, p := range strings.Split(inst.Endpoint.Value, ":") {
+					if _, err := strconv.Atoi(p); err == nil {
+						portSet = true
+						break
+					}
+				}
+				if !portSet {
+					url = fmt.Sprintf("tcp://%v:80", inst.Endpoint.Value)
+				}
+				host := Host{
+					URL: url,
+				}
+				hosts = append(hosts, host)
+			}
+			cluster.Hosts = hosts
+
 		}
-
-		if backend.LbType != "" {
-			cluster.LbType = backend.LbType
-		}
-
-		if backend.Resilience != nil {
-			// Cluster level settings
-			if backend.Resilience.MaxRequestsPerConnection > 0 {
-				cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
-			}
-
-			// Envoy Circuit breaker config options
-			if backend.Resilience.MaxConnections > 0 {
-				cluster.CircuitBreakers.MaxConnections = backend.Resilience.MaxConnections
-			}
-			if backend.Resilience.MaxRequests > 0 {
-				cluster.CircuitBreakers.MaxRequests = backend.Resilience.MaxRequests
-			}
-			if backend.Resilience.MaxPendingRequest > 0 {
-				cluster.CircuitBreakers.MaxPendingRequest = backend.Resilience.MaxPendingRequest
-			}
-
-			// Envoy outlier detection settings that complete circuit breaker
-			if backend.Resilience.SleepWindow > 0 {
-				cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
-			}
-			if backend.Resilience.ConsecutiveErrors > 0 {
-				cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
-			}
-			if backend.Resilience.DetectionInterval > 0 {
-				cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
-			}
-		}
-
 		clusters = append(clusters, cluster)
-
 	}
 
 	sort.Sort(ClustersByName(clusters))
@@ -403,15 +400,85 @@ func BuildWeightKey(service string, tags []string) string {
 	return fmt.Sprintf("%v.%v", service, BuildServiceKey("_", tags))
 }
 
+func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContext) Cluster {
+	cluster := Cluster{
+		Name:             clusterName,
+		ServiceName:      clusterName,
+		Type:             "sds",
+		LbType:           "round_robin",
+		ConnectTimeoutMs: 1000,
+		CircuitBreakers:  &CircuitBreakers{},
+		OutlierDetection: &OutlierDetection{
+			MaxEjectionPercent: 100,
+		},
+		SSLContext: tlsConfig,
+	}
+
+	if backend != nil && backend.LbType != "" {
+		// Set default value of LbType to be "round_robin"
+		cluster.LbType = backend.LbType
+	}
+
+	if backend.Resilience != nil {
+		// Cluster level settings
+		if backend.Resilience.MaxRequestsPerConnection > 0 {
+			cluster.MaxRequestsPerConnection = backend.Resilience.MaxRequestsPerConnection
+		}
+
+		// Envoy Circuit breaker config options
+		if backend.Resilience.MaxConnections > 0 {
+			cluster.CircuitBreakers.Default.MaxConnections = backend.Resilience.MaxConnections
+		}
+		if backend.Resilience.MaxRequests > 0 {
+			cluster.CircuitBreakers.Default.MaxRequests = backend.Resilience.MaxRequests
+		}
+		if backend.Resilience.MaxPendingRequest > 0 {
+			cluster.CircuitBreakers.Default.MaxPendingRequest = backend.Resilience.MaxPendingRequest
+		}
+
+		// Envoy outlier detection settings that complete circuit breaker
+		if backend.Resilience.SleepWindow > 0 {
+			cluster.OutlierDetection.BaseEjectionTimeMS = int(backend.Resilience.SleepWindow * 1000)
+		}
+		if backend.Resilience.ConsecutiveErrors > 0 {
+			cluster.OutlierDetection.ConsecutiveError = backend.Resilience.ConsecutiveErrors
+		}
+		if backend.Resilience.DetectionInterval > 0 {
+			cluster.OutlierDetection.IntervalMS = int(backend.Resilience.DetectionInterval * 1000)
+		}
+	}
+
+	return cluster
+}
+
 // BuildRoutes builds routes based on rules.  Assumes at least one route for each service
 func BuildRoutes(ruleList []api.Rule, instances []*api.ServiceInstance) []Route {
 	SanitizeRules(ruleList)
 	rules := AddDefaultRouteRules(ruleList, instances)
 
+	staticClusters := make(map[string]struct{})
+	for _, inst := range instances {
+		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
+		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
+			staticClusters[clusterName] = struct{}{}
+			staticClusters[inst.ServiceName] = struct{}{}
+		}
+	}
+
 	routes := []Route{}
 	for _, rule := range rules {
 		if rule.Route != nil {
-			routes = append(routes, buildRoute(&rule))
+			route := buildRoute(&rule)
+			// Enable auto_host_rewrite if cluster contains strict_dns hosts
+			if _, ok := staticClusters[route.Cluster]; ok {
+				route.AutoHostRewrite = true
+			}
+			for _, w := range route.WeightedClusters.Clusters {
+				if _, ok := staticClusters[w.Name]; ok {
+					route.AutoHostRewrite = true
+				}
+			}
+			routes = append(routes, route)
 		}
 	}
 
@@ -455,6 +522,14 @@ func buildRoute(rule *api.Rule) Route {
 		WeightedClusters: WeightedClusters{
 			Clusters: make([]WeightedCluster, 0),
 		},
+	}
+
+	if rule.Route.HTTPReqTimeout > 0 {
+		// convert from float sec to in ms
+		route.TimeoutMS = int(rule.Route.HTTPReqTimeout * 1000)
+	}
+	if rule.Route.HTTPReqRetries > 0 {
+		route.RetryPolicy.NumRetries = rule.Route.HTTPReqRetries
 	}
 
 	if rule.Route.HTTPReqTimeout > 0 {
@@ -751,12 +826,12 @@ func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filt
 	return filters
 }
 
-func buildGrpcHttp1BridgeFilter() Filter {
+func buildGRPCHTTP1BridgeFilter() Filter {
 	// Construct http1_grpc_bridge filter
 	return Filter{
 		Type:   "both",
 		Name:   "grpc_http1_bridge",
-		Config: &GrpcHttp1BridgeFilter{},
+		Config: &GRPCHTTP1BridgeFilter{},
 	}
 }
 

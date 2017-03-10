@@ -15,14 +15,10 @@
 package sidecar
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
-
-	"net/http"
 
 	"github.com/Sirupsen/logrus"
 	amalgam8registry "github.com/amalgam8/amalgam8/pkg/adapters/discovery/amalgam8"
@@ -35,7 +31,6 @@ import (
 	kubepkg "github.com/amalgam8/amalgam8/pkg/kubernetes"
 	"github.com/amalgam8/amalgam8/pkg/version"
 	"github.com/amalgam8/amalgam8/sidecar/config"
-	"github.com/amalgam8/amalgam8/sidecar/debug"
 	"github.com/amalgam8/amalgam8/sidecar/dns"
 	"github.com/amalgam8/amalgam8/sidecar/identity"
 	"github.com/amalgam8/amalgam8/sidecar/proxy"
@@ -43,7 +38,6 @@ import (
 	"github.com/amalgam8/amalgam8/sidecar/register"
 	"github.com/amalgam8/amalgam8/sidecar/register/healthcheck"
 	"github.com/amalgam8/amalgam8/sidecar/supervisor"
-	"github.com/ant0ine/go-json-rest/rest"
 	"github.com/urfave/cli"
 	"k8s.io/client-go/kubernetes"
 )
@@ -88,11 +82,6 @@ func sidecarCommand(context *cli.Context) error {
 // Run the sidecar with the given configuration.
 func Run(conf config.Config) error {
 	var err error
-
-	if conf.Debug != "" {
-		cliCommand(conf.Debug)
-		return nil
-	}
 
 	if err = conf.Validate(); err != nil {
 		logrus.WithError(err).Error("Validation of config failed")
@@ -265,8 +254,6 @@ func buildProxyAdapter(conf *config.Config, identity identity.Provider, discover
 	rules monitor.RulesMonitor, discoveryClient api.ServiceDiscovery, rulesClient api.RulesService) (proxy.Adapter, error) {
 
 	switch conf.ProxyAdapter {
-	case config.NGINXAdapter:
-		return proxy.NewNGINXAdapter(conf, identity, discovery, rules)
 	case config.EnvoyAdapter:
 		return proxy.NewEnvoyAdapter(conf, discovery, identity, rules, discoveryClient, rulesClient)
 	default:
@@ -302,32 +289,6 @@ func startProxy(conf *config.Config, identity identity.Provider, discovery api.S
 		return err
 	}
 
-	debugger := debug.NewAPI()
-	rulesMonitor.AddListener(debugger)
-	discoveryMonitor.AddListener(debugger)
-
-	a := rest.NewApi()
-	a.Use(
-		&rest.TimerMiddleware{},
-		&rest.RecorderMiddleware{},
-		&rest.RecoverMiddleware{EnableResponseStackTrace: false},
-		&rest.ContentTypeCheckerMiddleware{},
-	)
-
-	routes := debugger.Routes()
-	router, err := rest.MakeRouter(
-		routes...,
-	)
-	if err != nil {
-		logrus.WithError(err).Error("Could not start API server")
-		return err
-	}
-	a.SetApp(router)
-
-	go func() {
-		http.ListenAndServe(fmt.Sprintf(":%v", 6116), a.MakeHandler())
-	}()
-
 	go func() {
 		if err := discoveryMonitor.Start(); err != nil {
 			logrus.WithError(err).Error("Discovery monitor failed")
@@ -341,93 +302,4 @@ func startProxy(conf *config.Config, identity identity.Provider, discovery api.S
 	}()
 
 	return nil
-}
-
-// Instance TODO
-type Instance struct {
-	Tags string `json:"tags"`
-	Type string `json:"type"`
-	IP   string `json:"ip"`
-	Port int    `json:"port"`
-}
-
-// NGINXState nginx cached lua state
-type NGINXState struct {
-	Routes    map[string][]api.Rule `json:"routes"`
-	Instances map[string][]Instance `json:"instances"`
-	Actions   map[string][]api.Rule `json:"actions"`
-}
-
-func cliCommand(command string) {
-
-	switch command {
-	case "show-state":
-		httpClient := http.Client{
-			Timeout: time.Second * 10,
-		}
-		req, err := http.NewRequest("GET", "http://localhost:6116/state", nil)
-		if err != nil {
-			fmt.Println("Error occurred building the request:", err.Error())
-			return
-		}
-
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			fmt.Println("Error occurred sending the request:", err.Error())
-			return
-		}
-
-		respBytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error occurred reading response body:", err.Error())
-			return
-		}
-
-		sidecarstate := struct {
-			Instances []api.ServiceInstance `json:"instances"`
-			Rules     []api.Rule            `json:"rules"`
-		}{}
-
-		err = json.Unmarshal(respBytes, &sidecarstate)
-		if err != nil {
-			fmt.Println("Error occurred loading JSON response:", err.Error())
-			return
-		}
-
-		req, err = http.NewRequest("GET", "http://localhost:5813/a8-admin", nil)
-		if err != nil {
-			fmt.Println("Error occurred building the request:", err.Error())
-			return
-		}
-
-		resp, err = httpClient.Do(req)
-		if err != nil {
-			fmt.Println("Error occurred sending the request:", err.Error())
-			return
-		}
-
-		respBytes, err = ioutil.ReadAll(resp.Body)
-		if err != nil {
-			fmt.Println("Error occurred reading response body:", err.Error())
-			return
-		}
-
-		nginxstate := NGINXState{}
-
-		err = json.Unmarshal(respBytes, &nginxstate)
-		if err != nil {
-			fmt.Println("Error occurred loading JSON response:", err.Error())
-			return
-		}
-
-		sidecarBytes, _ := json.MarshalIndent(&sidecarstate, "", "   ")
-		nginxBytes, _ := json.MarshalIndent(&nginxstate, "", "   ")
-		fmt.Println("\n**************\nSidecar cached state:\n**************")
-		fmt.Println(string(sidecarBytes))
-		fmt.Println("\n**************\nNginx cached state:\n**************")
-		fmt.Println(string(nginxBytes))
-
-	default:
-		fmt.Println("Unrecognized command: ", command)
-	}
 }

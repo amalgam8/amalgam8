@@ -46,12 +46,11 @@ const (
 
 // Supported proxy adapters
 const (
-	NGINXAdapter = "nginx"
 	EnvoyAdapter = "envoy"
 )
 
 // SupportedAdapters is the set of supported proxy adapters
-var SupportedAdapters = []string{NGINXAdapter, EnvoyAdapter}
+var SupportedAdapters = []string{EnvoyAdapter}
 
 // Command to be managed by sidecar app supervisor
 type Command struct {
@@ -139,7 +138,7 @@ type ProxyConfig struct {
 	WorkingDir       string `yaml:"working_dir"`
 	LoggingDir       string `yaml:"logging_dir"`
 	ProxyBinary      string `yaml:"proxy_binary_path"`
-	GrpcHttp1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
+	GRPCHTTP1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
 }
 
 // Config stores the various configuration options for the sidecar
@@ -171,8 +170,6 @@ type Config struct {
 	LogLevel string `yaml:"log_level"`
 
 	Commands []Command `yaml:"commands"`
-
-	Debug string
 }
 
 // New creates a new Config object from the given commandline flags, environment variables, and configuration file context.
@@ -270,7 +267,6 @@ func (c *Config) loadFromContext(context *cli.Context) error {
 	loadFromContextIfSet(&c.Dnsconfig.Port, dnsConfigPortFlag)
 	loadFromContextIfSet(&c.Dnsconfig.Domain, dnsConfigDomainFlag)
 	loadFromContextIfSet(&c.LogLevel, logLevelFlag)
-	loadFromContextIfSet(&c.Debug, debugFlag)
 
 	if context.IsSet(serviceFlag) {
 		name, tags := parseServiceNameAndTags(context.String(serviceFlag))

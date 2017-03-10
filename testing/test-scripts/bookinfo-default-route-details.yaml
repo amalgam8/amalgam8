@@ -1,0 +1,8 @@
+rules:
+- id: bookinfo-default-route-details
+  priority: 1
+  destination: details
+  route:
+    backends:
+    - tags:
+      - version=v1

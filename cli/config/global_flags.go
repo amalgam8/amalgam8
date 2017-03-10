@@ -26,18 +26,6 @@ func GlobalFlags() []cli.Flag {
 	return []cli.Flag{
 
 		cli.StringFlag{
-			Name:   common.RegistryURL.Flag(),
-			EnvVar: common.RegistryURL.EnvVar(),
-			Usage:  T("registry_url_usage"),
-		},
-
-		cli.StringFlag{
-			Name:   common.RegistryToken.Flag(),
-			EnvVar: common.RegistryToken.EnvVar(),
-			Usage:  T("registry_token_usage"),
-		},
-
-		cli.StringFlag{
 			Name:   common.ControllerURL.Flag(),
 			EnvVar: common.ControllerURL.EnvVar(),
 			Usage:  T("controller_url_usage"),

@@ -15,16 +15,12 @@ func GlobalCommands(term terminal.UI) []cli.Command {
 	}
 
 	return []cli.Command{
-		cmds.NewServiceListCommand(term).GetMetadata(),
 		cmds.NewRouteListCommand(term).GetMetadata(),
 		cmds.NewActionListCommand(term).GetMetadata(),
 		cmds.NewRuleCreateCommand(term).GetMetadata(),
 		cmds.NewRuleUpdateCommand(term).GetMetadata(),
 		cmds.NewRuleGetCommand(term).GetMetadata(),
 		cmds.NewRuleDeleteCommand(term).GetMetadata(),
-		cmds.NewTrafficStartCommand(term).GetMetadata(),
-		cmds.NewTrafficStepCommand(term).GetMetadata(),
-		cmds.NewTrafficAbortCommand(term).GetMetadata(),
 		cmds.NewRecipeRunCommand(term).GetMetadata(),
 		cmds.NewInfoCommand(term).GetMetadata(),
 	}

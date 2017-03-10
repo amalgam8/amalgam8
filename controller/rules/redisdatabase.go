@@ -210,7 +210,7 @@ func (rdb *redisDB) UpdateEntries(namespace string, entries map[string]string) e
 	return err
 }
 
-func (rdb *redisDB) DeleteEntries(namespace string, ids []string) error {
+func (rdb *redisDB) DeleteEntriesByID(namespace string, ids []string) error {
 	conn := rdb.pool.Get()
 	defer conn.Close()
 
@@ -248,24 +248,10 @@ func (rdb *redisDB) DeleteAllEntries(namespace string) error {
 	return err
 }
 
-func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, rules []api.Rule) error {
+func (rdb *redisDB) DeleteEntriesByFilter(namespace string, filter api.RuleFilter) error {
 	var err error
 
 	key := buildRulesKey(namespace)
-
-	entries := make(map[string]string)
-	for _, rule := range rules {
-		entry, err := json.Marshal(&rule)
-		if err != nil {
-			return err
-		}
-		entries[rule.ID] = string(entry)
-	}
-
-	entries, err = rdb.encrypt(entries)
-	if err != nil {
-		return err
-	}
 
 	conn := rdb.pool.Get()
 	defer conn.Close() // Automatically calls DISCARD if necessary
@@ -326,17 +312,6 @@ func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, ru
 		}
 	}
 
-	// Add new rules
-	if len(entries) > 0 {
-		args := buildHMSetArgs(key, entries)
-
-		logrus.Debug("HMSET ", args)
-		err = conn.Send("HMSET", args...)
-		if err != nil {
-			return err
-		}
-	}
-
 	// Execute transaction
 	_, err = redis.Values(conn.Do("EXEC"))
 
@@ -348,7 +323,7 @@ func (rdb *redisDB) SetByDestination(namespace string, filter api.RuleFilter, ru
 		return err
 	}
 
-	_, err = redis.Int64(conn.Do("INCR", buildNamespaceKey(namespace, "revision"))) // FIXME: pipeline
+	_, err = redis.Int64(conn.Do("INCR", buildNamespaceKey(namespace, "revision"))) // TODO: pipeline
 
 	return err
 }

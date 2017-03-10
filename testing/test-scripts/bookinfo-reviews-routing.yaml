@@ -1,0 +1,11 @@
+rules:
+- id: bookinfo-reviews-routing
+  priority: 1
+  destination: reviews
+  route:
+    backends:
+    - tags:
+      - version=v1
+      weight: 0.25
+    - tags:
+      - version=v3

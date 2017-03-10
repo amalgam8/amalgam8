@@ -98,7 +98,7 @@ func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLC
 			EnvoyConfig:               conf.ProxyConfig.WorkingDir + envoyConfigFile,
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
-		GrpcHttp1Bridge: conf.ProxyConfig.GrpcHttp1Bridge,
+		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
 		tcpProxyConfigs: conf.TCPProxyConfigs,
 	}
 

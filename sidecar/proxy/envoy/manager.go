@@ -91,6 +91,7 @@ func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLC
 		listenerPort: conf.ProxyConfig.HTTPListenerPort,
 		workingDir:   conf.ProxyConfig.WorkingDir,
 		loggingDir:   conf.ProxyConfig.LoggingDir,
+		tlsConfig: tlsConfig,
 		service: NewService(ServiceConfig{
 			DrainTimeSeconds:          3,
 			ParentShutdownTimeSeconds: 5,

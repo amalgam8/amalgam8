@@ -83,7 +83,7 @@ type Manager interface {
 }
 
 // NewManager creates new instance
-func NewManager(identity identity.Provider, conf *config.Config) (Manager, error) {
+func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLContext) (Manager, error) {
 	m := &manager{
 		identity:     identity,
 		sdsPort:      conf.ProxyConfig.DiscoveryPort,
@@ -116,6 +116,7 @@ type manager struct {
 	workingDir      string
 	loggingDir      string
 	GRPCHTTP1Bridge bool
+	tlsConfig       *SSLContext
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -228,6 +229,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 						},
 					},
 				},
+				SSLContext: m.tlsConfig,
 			},
 		},
 		Admin: Admin{
@@ -411,7 +413,7 @@ func buildCluster(clusterName string, backend *api.Backend, tlsConfig *SSLContex
 		OutlierDetection: &OutlierDetection{
 			MaxEjectionPercent: 100,
 		},
-		SSLContext: tlsConfig,
+		//SSLContext: tlsConfig,
 	}
 
 	if backend != nil && backend.LbType != "" {

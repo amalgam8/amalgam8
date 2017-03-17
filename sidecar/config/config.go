@@ -396,7 +396,6 @@ func (c *Config) Validate() error {
 			validators = append(validators,
 				IsNotEmpty("Certificate chain file", c.ProxyConfig.CertChainFile),
 				IsNotEmpty("Private key file", c.ProxyConfig.PrivateKeyFile),
-				IsNotEmpty("CA cert file", c.ProxyConfig.CACertFile),
 			)
 		}
 	}

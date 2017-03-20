@@ -99,7 +99,7 @@ func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLC
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
 		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
-		tcpProxyConfigs: conf.TCPProxyConfigs,
+		tcpProxyConfigs: conf.ProxyConfig.TCPProxies,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -288,7 +288,7 @@ func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLog
 				{
 					Type: "read",
 					Name: "http_connection_manager",
-					Config: HttpFilterConfig{
+					Config: HTTPFilterConfig{
 						CodecType:         "auto",
 						StatPrefix:        "ingress_http",
 						UserAgent:         true,

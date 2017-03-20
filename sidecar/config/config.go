@@ -128,17 +128,18 @@ type HealthCheck struct {
 
 // ProxyConfig stores proxy configuration.
 type ProxyConfig struct {
-	TLS              bool   `yaml:"tls"`
-	CertChainFile    string `yaml:"cert_chain_file"`
-	PrivateKeyFile   string `yaml:"private_key_file"`
-	CACertFile       string `yaml:"ca_cert_file"`
-	HTTPListenerPort int    `yaml:"http_listener_port"`
-	DiscoveryPort    int    `yaml:"sds_port"`
-	AdminPort        int    `yaml:"admin_port"`
-	WorkingDir       string `yaml:"working_dir"`
-	LoggingDir       string `yaml:"logging_dir"`
-	ProxyBinary      string `yaml:"proxy_binary_path"`
-	GRPCHTTP1Bridge  bool   `yaml:"grpc_http1_bridge,omitempty"`
+	TLS              bool             `yaml:"tls"`
+	CertChainFile    string           `yaml:"cert_chain_file"`
+	PrivateKeyFile   string           `yaml:"private_key_file"`
+	CACertFile       string           `yaml:"ca_cert_file"`
+	HTTPListenerPort int              `yaml:"http_listener_port"`
+	DiscoveryPort    int              `yaml:"sds_port"`
+	AdminPort        int              `yaml:"admin_port"`
+	WorkingDir       string           `yaml:"working_dir"`
+	LoggingDir       string           `yaml:"logging_dir"`
+	ProxyBinary      string           `yaml:"proxy_binary_path"`
+	GRPCHTTP1Bridge  bool             `yaml:"grpc_http1_bridge,omitempty"`
+	TCPProxies       []TCPProxyConfig `yaml:"tcp_proxies"`
 }
 
 type TCPProxyConfig struct {
@@ -171,8 +172,6 @@ type Config struct {
 	HealthChecks []HealthCheck `yaml:"healthchecks"`
 
 	ProxyConfig ProxyConfig `yaml:"proxy_config"`
-
-	TCPProxyConfigs []TCPProxyConfig `yaml:"tcp_proxy_configs"`
 
 	LogLevel string `yaml:"log_level"`
 

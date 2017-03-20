@@ -5,6 +5,7 @@ commands:
   - cmd: [ "/opt/microservices/productpage", "9080", "http://localhost:6379" ]
     on_exit: terminate
 
-tcp_proxy_configs:
-  - service: tcphelloworld
-    listener_port: 12345
+proxy_config:
+  tcp_proxies:
+    - service: tcphelloworld
+      listener_port: 12345

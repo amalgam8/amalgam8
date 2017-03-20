@@ -119,7 +119,7 @@ type TCPRoute struct {
 
 // HttpRouteConfig definition.
 // See: https://lyft.github.io/envoy/docs/configuration/http_conn_man/route_config/route_config.html#config-http-conn-man-route-table
-type HttpRouteConfig struct {
+type HTTPRouteConfig struct {
 	VirtualHosts []VirtualHost `json:"virtual_hosts"`
 }
 
@@ -144,12 +144,12 @@ type RDS struct {
 }
 
 // HttpFilterConfig definition.
-type HttpFilterConfig struct {
+type HTTPFilterConfig struct {
 	CodecType         string           `json:"codec_type"`
 	StatPrefix        string           `json:"stat_prefix"`
 	GenerateRequestID bool             `json:"generate_request_id"`
 	UserAgent         bool             `json:"add_user_agent"`
-	RouteConfig       *HttpRouteConfig `json:"route_config,omitempty"`
+	RouteConfig       *HTTPRouteConfig `json:"route_config,omitempty"`
 	RDS               *RDS             `json:"rds,omitempty"`
 	Filters           []Filter         `json:"filters"`
 	AccessLog         []AccessLog      `json:"access_log"`

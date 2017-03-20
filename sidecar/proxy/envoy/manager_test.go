@@ -843,7 +843,7 @@ func TestBuildListeners(t *testing.T) {
 				{
 					Type: "read",
 					Name: "http_connection_manager",
-					Config: HttpFilterConfig{
+					Config: HTTPFilterConfig{
 						CodecType:         "auto",
 						StatPrefix:        "ingress_http",
 						UserAgent:         true,

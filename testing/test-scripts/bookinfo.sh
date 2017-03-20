@@ -164,23 +164,25 @@ echo "works!"
 
 
 ############Test TCP Bridge in Envoy##############
-echo "testing tcp bridge in envoy..."
-retry_count=1
-while [  $retry_count -le $((MAX_LOOP)) ]; do
-    echo  "Sending a message to tcphelloworld, expecting same words echoing back..."
-    python $TCPAPPDIR/test.py localhost 12345 > /tmp/$TCPHELLOWORLD_OUTPUT
-    diff $SCRIPTDIR/$TCPHELLOWORLD_OUTPUT /tmp/$TCPHELLOWORL_OUTPUT
+# Only supported in Docker environment currently
+if [ "$ENV" == "docker" ]; then
+    echo "testing tcp bridge in envoy..."
+    retry_count=1
+    while [  $retry_count -le $((MAX_LOOP)) ]; do
+        echo  "Sending a message to tcphelloworld, expecting same words echoing back..."
+        python $TCPAPPDIR/test.py localhost 12345 > /tmp/$TCPHELLOWORLD_OUTPUT
+        diff $SCRIPTDIR/$TCPHELLOWORLD_OUTPUT /tmp/$TCPHELLOWORL_OUTPUT
 
-    if [ $? -gt 0 ]; then
-        echo "failed."
-	echo "The message received does not match the message sent to service"
-	exit 1
-    else
-	break
-    fi
-done
-echo "works!"
-
+        if [ $? -gt 0 ]; then
+            echo "failed."
+	    echo "The message received does not match the message sent to service"
+	    exit 1
+        else
+	    break
+        fi
+    done
+    echo "works!"
+fi
 ######Version Routing##############
 echo "testing version routing.."
 MAX_LOOP=5

@@ -201,6 +201,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
 	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs)
+	rdsClusters := BuildRDSClusters(m.tcpProxyConfigs, m.sdsPort)
 	return Config{
 		RootRuntime: RootRuntime{
 			SymlinkRoot:  m.workingDir + runtimePath,
@@ -212,20 +213,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
-			Clusters: []Cluster{
-				{
-					Name:             "rds",
-					Type:             "strict_dns",
-					ConnectTimeoutMs: 1000,
-					LbType:           "round_robin",
-					Hosts: []Host{
-						{
-							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
-						},
-					},
-					MaxRequestsPerConnection: 1,
-				},
-			},
+			Clusters: rdsClusters,
 			SDS: SDS{
 				Cluster: Cluster{
 					Name:             "sds",
@@ -258,6 +246,37 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			},
 		},
 	}, nil
+}
+
+func BuildRDSClusters(tcpProxyList []config.TCPProxyConfig, sdsPort int) []Cluster {
+	clusters := []Cluster{
+		{
+			Name:             "rds",
+			Type:             "strict_dns",
+			ConnectTimeoutMs: 1000,
+			LbType:           "round_robin",
+			Hosts: []Host{
+				{
+					URL: fmt.Sprintf("tcp://127.0.0.1:%v", sdsPort),
+				},
+			},
+			MaxRequestsPerConnection: 1,
+		},
+	}
+
+	for _, proxy := range tcpProxyList {
+		cluster := Cluster{
+			Name:             proxy.Service,
+			ServiceName:      proxy.Service,
+			Type:             "sds",
+			ConnectTimeoutMs: 1000,
+			LbType:           "round_robin",
+			MaxRequestsPerConnection: 1,
+		}
+		clusters = append(clusters, cluster)
+	}
+
+	return clusters
 }
 
 func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig) []Listener {
@@ -301,7 +320,7 @@ func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLog
 					Name: "tcp_proxy",
 					Config: TCPFilterConfig{
 						RouteConfig: &TCPRouteConfig{
-							Routes: []TCPRoute{{Cluster: proxy.Cluster}},
+							Routes: []TCPRoute{{Cluster: proxy.Service}},
 						},
 					},
 				},

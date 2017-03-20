@@ -890,9 +890,9 @@ func TestBuildListeners(t *testing.T) {
 		},
 	}
 	configYaml := []byte(`
-- cluster: service1
+- service: service1
   listener_port: 80
-- cluster: service2
+- service: service2
   listener_port: 90
 `)
 	var conf []config.TCPProxyConfig

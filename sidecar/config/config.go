@@ -142,7 +142,7 @@ type ProxyConfig struct {
 }
 
 type TCPProxyConfig struct {
-	Cluster      string `yaml:"cluster"`
+	Service      string `yaml:"service"`
 	ListenerPort int    `yaml:"listener_port"`
 }
 

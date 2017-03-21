@@ -899,7 +899,7 @@ func TestBuildListeners(t *testing.T) {
 	err := yaml.Unmarshal(configYaml, &conf)
 	assert.NoError(t, err)
 
-	listeners := BuildListeners(testPort, testFilters, testFormat, testPath, conf)
+	listeners := BuildListeners(testPort, testFilters, testFormat, testPath, conf, nil)
 
 	assert.Equal(t, testListeners, listeners)
 }

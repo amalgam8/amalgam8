@@ -200,7 +200,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
-	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs)
+	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs, m.tlsConfig)
 
 	staticClusters := []Cluster{
 		{
@@ -275,7 +275,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	}, nil
 }
 
-func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig) []Listener {
+func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig, tlsConfig *SSLContext) []Listener {
 	// Build Http Listeners
 	listeners := []Listener{
 		{
@@ -304,6 +304,7 @@ func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLog
 					},
 				},
 			},
+			SSLContext: tlsConfig,
 		},
 	}
 	// Build TCP Proxy Listeners

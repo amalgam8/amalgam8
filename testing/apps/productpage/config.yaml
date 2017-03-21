@@ -7,5 +7,5 @@ commands:
 
 proxy_config:
   tcp_proxies:
-    - service: tcphelloworld
+    - service: tcphelloworld:version=v1
       listener_port: 12345

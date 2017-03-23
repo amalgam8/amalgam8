@@ -99,6 +99,7 @@ func NewManager(identity identity.Provider, conf *config.Config, tlsConfig *SSLC
 			EnvoyBinary:               conf.ProxyConfig.ProxyBinary,
 		}),
 		GRPCHTTP1Bridge: conf.ProxyConfig.GRPCHTTP1Bridge,
+		tcpProxyConfigs: conf.ProxyConfig.TCPProxies,
 	}
 
 	if err := buildFS(m.workingDir); err != nil {
@@ -118,6 +119,7 @@ type manager struct {
 	loggingDir      string
 	GRPCHTTP1Bridge bool
 	tlsConfig       *SSLContext
+	tcpProxyConfigs []config.TCPProxyConfig
 }
 
 func (m *manager) Update(instances []api.ServiceInstance, rules []api.Rule) error {
@@ -198,60 +200,47 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
+	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs, m.tlsConfig)
+
+	staticClusters := []Cluster{
+		{
+			Name:             "rds",
+			Type:             "strict_dns",
+			ConnectTimeoutMs: 1000,
+			LbType:           "round_robin",
+			Hosts: []Host{
+				{
+					URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
+				},
+			},
+			MaxRequestsPerConnection: 1,
+		},
+	}
+
+	for _, proxy := range m.tcpProxyConfigs {
+		cluster := Cluster{
+			Name:             proxy.Service,
+			ServiceName:      proxy.Service,
+			Type:             "sds",
+			ConnectTimeoutMs: 1000,
+			LbType:           "round_robin",
+			MaxRequestsPerConnection: 1,
+		}
+		staticClusters = append(staticClusters, cluster)
+	}
+
 	return Config{
 		RootRuntime: RootRuntime{
 			SymlinkRoot:  m.workingDir + runtimePath,
 			Subdirectory: "traffic_shift",
 		},
-		Listeners: []Listener{
-			{
-				Port: m.listenerPort,
-				Filters: []NetworkFilter{
-					{
-						Type: "read",
-						Name: "http_connection_manager",
-						Config: NetworkFilterConfig{
-							CodecType:         "auto",
-							StatPrefix:        "ingress_http",
-							UserAgent:         true,
-							GenerateRequestID: true,
-							RDS: &RDS{
-								Cluster:         "rds",
-								RouteConfigName: "amalgam8",
-								RefreshDelayMS:  1000,
-							},
-							Filters: filters,
-							AccessLog: []AccessLog{
-								{
-									Path:   m.loggingDir + accessLog,
-									Format: format,
-								},
-							},
-						},
-					},
-				},
-				SSLContext: m.tlsConfig,
-			},
-		},
+		Listeners: listeners,
 		Admin: Admin{
 			AccessLogPath: m.loggingDir + adminLog,
 			Port:          m.adminPort,
 		},
 		ClusterManager: ClusterManager{
-			Clusters: []Cluster{
-				{
-					Name:             "rds",
-					Type:             "strict_dns",
-					ConnectTimeoutMs: 1000,
-					LbType:           "round_robin",
-					Hosts: []Host{
-						{
-							URL: fmt.Sprintf("tcp://127.0.0.1:%v", m.sdsPort),
-						},
-					},
-					MaxRequestsPerConnection: 1,
-				},
-			},
+			Clusters: staticClusters,
 			SDS: SDS{
 				Cluster: Cluster{
 					Name:             "sds",
@@ -284,6 +273,60 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 			},
 		},
 	}, nil
+}
+
+func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig, tlsConfig *SSLContext) []Listener {
+	// Build Http Listeners
+	listeners := []Listener{
+		{
+			Port: httpPort,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "http_connection_manager",
+					Config: HTTPFilterConfig{
+						CodecType:         "auto",
+						StatPrefix:        "ingress_http",
+						UserAgent:         true,
+						GenerateRequestID: true,
+						RDS: &RDS{
+							Cluster:         "rds",
+							RouteConfigName: "amalgam8",
+							RefreshDelayMS:  1000,
+						},
+						Filters: filters,
+						AccessLog: []AccessLog{
+							{
+								Path:   httpAccessLogPath,
+								Format: format,
+							},
+						},
+					},
+				},
+			},
+			SSLContext: tlsConfig,
+		},
+	}
+	// Build TCP Proxy Listeners
+	for _, proxy := range tcpProxyList {
+		listener := Listener{
+			Port: proxy.ListenerPort,
+			Filters: []NetworkFilter{
+				{
+					Type: "read",
+					Name: "tcp_proxy",
+					Config: TCPFilterConfig{
+						RouteConfig: &TCPRouteConfig{
+							Routes: []TCPRoute{{Cluster: proxy.Service}},
+						},
+					},
+				},
+			},
+		}
+		listeners = append(listeners, listener)
+	}
+
+	return listeners
 }
 
 const (

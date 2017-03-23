@@ -4,3 +4,8 @@ commands:
     on_exit: ignore
   - cmd: [ "/opt/microservices/productpage", "9080", "http://localhost:6379" ]
     on_exit: terminate
+
+proxy_config:
+  tcp_proxies:
+    - service: tcphelloworld:version=v1
+      listener_port: 12345

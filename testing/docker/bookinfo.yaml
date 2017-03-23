@@ -33,6 +33,19 @@ gateway:
   container_name: gateway
   command: /usr/bin/run_filebeat.sh
 
+tcphelloworld:
+  image: amalgam8/a8-tcp:latest
+  environment:
+    - A8_REGISTRY_URL=http://registry:8080
+    - A8_SERVICE=tcphelloworld:version=v1
+    - A8_REGISTER=true
+    - A8_ENDPOINT_PORT=1111
+    - A8_ENDPOINT_TYPE=tcp
+  ports:
+    - "1111:1111"
+  external_links:
+    - registry
+
 details-v1:
   image: amalgam8/a8-${A8_TEST_ENV}-bookinfo-details-sidecar-v1:${A8_RELEASE}
   environment:
@@ -115,6 +128,8 @@ productpage-v1:
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health,file:///bin/ls
     - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
+  ports:
+    - "12345:12345"
   external_links:
     - elasticsearch
     - controller

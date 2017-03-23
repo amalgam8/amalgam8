@@ -17,6 +17,7 @@
 # Set local vars
 SCRIPTDIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 EXAMPLESDIR=$SCRIPTDIR/../../examples
+TCPAPPDIR=$SCRIPTDIR/../apps/tcp
 A8_TEST_SUITE=$1
 if [ "$A8_TEST_SUITE" == "examples" ]; then
     PRODUCTPAGE_V1_OUTPUT="productpage_v1.html"
@@ -29,6 +30,7 @@ else
     PRODUCTPAGE_V2_OUTPUT="productpage_v2.json"
     PRODUCTPAGE_V3_OUTPUT="productpage_v3.json"
     PRODUCTPAGE_RULEMATCH="productpage_rulematch.json"
+    TCPHELLOWORLD_OUTPUT="tcphelloworld_output"
     RULESDIR=$SCRIPTDIR
 fi
 # docker or k8s
@@ -160,6 +162,27 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 done
 echo "works!"
 
+
+############Test TCP Bridge in Envoy##############
+# Only supported in Docker environment currently
+if [ "$ENV" == "docker" ]; then
+    echo "testing tcp bridge in envoy..."
+    retry_count=1
+    while [  $retry_count -le $((MAX_LOOP)) ]; do
+        echo  "Sending a message to tcphelloworld, expecting same words echoing back..."
+        python $TCPAPPDIR/test.py localhost 12345 > /tmp/$TCPHELLOWORLD_OUTPUT
+        diff $SCRIPTDIR/$TCPHELLOWORLD_OUTPUT /tmp/$TCPHELLOWORL_OUTPUT
+
+        if [ $? -gt 0 ]; then
+            echo "failed."
+	    echo "The message received does not match the message sent to service"
+	    exit 1
+        else
+	    break
+        fi
+    done
+    echo "works!"
+fi
 ######Version Routing##############
 echo "testing version routing.."
 MAX_LOOP=5
@@ -299,6 +322,7 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
     fi
 done
 echo "works!"
+
 
 #####Clear rules and check
 echo "clearing fault injection rule.."

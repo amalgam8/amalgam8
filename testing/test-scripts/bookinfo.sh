@@ -162,15 +162,13 @@ while [  $retry_count -le $((MAX_LOOP)) ]; do
 done
 echo "works!"
 
-
 ############Test TCP Bridge in Envoy##############
 # Only supported in Docker environment currently
-if [ "$ENV" == "docker" ] && [ "$A8_TEST_SUITE" == "examples" ]; then
+if [ "$ENV" == "docker" ] && [ "$A8_TEST_ENV" == "testing" ]; then
     echo "testing tcp bridge in envoy..."
     retry_count=1
     while [  $retry_count -le $((MAX_LOOP)) ]; do
         echo  "Sending a message to tcphelloworld, expecting same words echoing back..."
-#        python $TCPAPPDIR/test.py localhost 12345 > /tmp/$TCPHELLOWORLD_OUTPUT
         curl -s localhost:32000/productpage/tcp > /tmp/$TCPHELLOWORLD_OUTPUT
         diff $SCRIPTDIR/$TCPHELLOWORLD_OUTPUT /tmp/$TCPHELLOWORL_OUTPUT
 

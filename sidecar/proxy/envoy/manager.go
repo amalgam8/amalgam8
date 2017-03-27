@@ -200,7 +200,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 
 	format := fmt.Sprintf(envoyLogFormat, buildSourceName(inst.ServiceName, inst.Tags), traceKey, traceVal)
 
-	listeners := BuildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs, m.tlsConfig)
+	listeners := buildListeners(m.listenerPort, filters, format, m.loggingDir+accessLog, m.tcpProxyConfigs, m.tlsConfig)
 
 	staticClusters := []Cluster{
 		{
@@ -275,7 +275,7 @@ func (m *manager) generateConfig(rules []api.Rule, instances []api.ServiceInstan
 	}, nil
 }
 
-func BuildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig, tlsConfig *SSLContext) []Listener {
+func buildListeners(httpPort int, filters []Filter, format string, httpAccessLogPath string, tcpProxyList []config.TCPProxyConfig, tlsConfig *SSLContext) []Listener {
 	// Build Http Listeners
 	listeners := []Listener{
 		{
@@ -384,10 +384,14 @@ func BuildClusters(instances []*api.ServiceInstance, rules []api.Rule, tlsConfig
 		clusterName := BuildServiceKey(inst.ServiceName, inst.Tags)
 		if _, _, err := util.SplitHostPort(inst.Endpoint); err != nil {
 			staticClusters[clusterName] = struct{}{}
-			staticClusters[inst.ServiceName] = struct{}{}
+			if clusterName != inst.ServiceName {
+				staticClusters[inst.ServiceName] = struct{}{}
+			}
 		}
 		instancesByClusterMap[clusterName] = append(instancesByClusterMap[clusterName], inst)
-		instancesByClusterMap[inst.ServiceName] = append(instancesByClusterMap[inst.ServiceName], inst)
+		if clusterName != inst.ServiceName {
+			instancesByClusterMap[inst.ServiceName] = append(instancesByClusterMap[inst.ServiceName], inst)
+		}
 	}
 
 	clusterMap := make(map[string]*api.Backend)

@@ -15,10 +15,12 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"time"
@@ -60,7 +62,31 @@ func main() {
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
+	http.HandleFunc("/tcp", tcpHandler)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+func tcpHandler(w http.ResponseWriter, r *http.Request) {
+	// connect to this socket
+	resp := ""
+	conn, err := net.Dial("tcp", "127.0.0.1:12345")
+	if err != nil {
+		log.Printf("Opening tcp connection: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
+	text := "This is the message.  It will be repeated."
+	// send to socket
+	fmt.Fprintf(conn, text+"\n")
+	// listen for reply
+	resp, err = bufio.NewReader(conn).ReadString('\n')
+	if err != nil {
+		log.Printf("Error reading from tcp connection: %v", err)
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
+	fmt.Print("Message from server: " + resp)
+
+	w.Header().Set("Content-Type", "text/json")
+	w.Write([]byte(resp))
 }
 
 func productpageHandler(w http.ResponseWriter, r *http.Request) {

@@ -128,8 +128,6 @@ productpage-v1:
     - A8_REGISTRY_POLL=5s
     - A8_HEALTHCHECKS=http://localhost:9080/health,file:///bin/ls
     - A8_ELASTICSEARCH_SERVER=elasticsearch:9200
-  ports:
-    - "12345:12345"
   external_links:
     - elasticsearch
     - controller

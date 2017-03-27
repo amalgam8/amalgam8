@@ -647,6 +647,11 @@ func SanitizeRules(ruleList []api.Rule) {
 				}
 			}
 		}
+		for j := range ruleList[i].Actions {
+			if ruleList[i].Actions[j].Probability == 0 {
+				ruleList[i].Actions[j].Probability = 1
+			}
+		}
 	}
 
 	sort.Sort(sort.Reverse(ByPriority(ruleList))) // Descending order
@@ -799,6 +804,8 @@ func updateFS(workingDir string, instances []api.ServiceInstance, ruleList []api
 
 func buildFaults(ctlrRules []api.Rule, serviceName string, tags []string) []Filter {
 	var filters []Filter
+
+	SanitizeRules(ctlrRules)
 
 	tagMap := make(map[string]struct{})
 	for _, tag := range tags {

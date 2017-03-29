@@ -17,6 +17,6 @@ FROM amalgam8/a8-sidecar:latest
 WORKDIR /opt/microservices
 COPY config.yaml /opt/microservices/
 COPY productpage /opt/microservices/
-EXPOSE 9080 12345
+EXPOSE 9080
 
 ENTRYPOINT ["a8sidecar", "--config", "/opt/microservices/config.yaml"]

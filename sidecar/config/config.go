@@ -142,6 +142,7 @@ type ProxyConfig struct {
 	TCPProxies       []TCPProxyConfig `yaml:"tcp_proxies"`
 }
 
+// TCPProxyConfig tcp listeners for envoy
 type TCPProxyConfig struct {
 	Service      string `yaml:"service"`
 	ListenerPort int    `yaml:"listener_port"`

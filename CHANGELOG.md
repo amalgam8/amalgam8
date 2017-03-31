@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 (March 31, 2017)
+
+- Bug fix for default rule probability in Envoy config generation. ([PR#552](https://github.com/amalgam8/amalgam8/pull/552))
+
+- Bug fix for TLS validation logic and Envoy config generation. ([PR#549](https://github.com/amalgam8/amalgam8/pull/549))
+
+- TCP proxy support added to sidecar. ([PR#548](https://github.com/amalgam8/amalgam8/pull/548))
+
 ## 1.0.0 (March 8, 2017)
 
 - Switched Amalgam8 sidecar to use Envoy proxy from Lyft. (https://github.com/lyft/envoy)

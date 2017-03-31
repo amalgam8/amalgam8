@@ -2,7 +2,7 @@
 
 ## 1.1.0 (March 31, 2017)
 
-- Bug fix for default rule probability in envoy config generation.  ([PR#552](https://github.com/amalgam8/amalgam8/pull/552))
+- Bug fix for default rule probability in envoy config generation. ([PR#552](https://github.com/amalgam8/amalgam8/pull/552))
 
 - Bug fix for TLS validation logic and envoy config generation. ([PR#549](https://github.com/amalgam8/amalgam8/pull/549))
 

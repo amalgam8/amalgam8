@@ -39,7 +39,7 @@ Registry and the Amalgam8 Sidecar, run the following commands:
 
 ```bash
 cd $GOPATH/src/github.com/amalgam8/amalgam8
-GOOS=linux GOARCH=amd64 make build dockerize
+make build dockerize
 ```
 
 You should now have three docker images, namely `a8-controller:latest`,
@@ -118,12 +118,24 @@ The following Makefile targets are available for the `amalgam8` repository.
 
 ## Building the CLI
 
-To use the latest and potentially unstable version of the `a8ctl` CLI, run
-the following command from `$GOPATH/src/github.com/amalgam8/a8ctl` folder:
+To build the latest version of the `a8ctl` CLI, run
+the following command from `$GOPATH/src/github.com/amalgam8/amalgam8` folder:
 
 ```bash
-python setup.py develop
+export PATH=$PATH:$GOPATH/src/github.com/amalgam8/amalgam8/bin
+
+# linux users
+make build.cli.linux
+
+# OSX users
+make build.cli.darwin
+
+# windows users
+make build.cli.windows
 ```
+
+Alternatively, a pre-built CLI for your operating system can be downloaded from the 
+releases page [here](https://github.com/amalgam8/amalgam8/releases)
 
 ---
 

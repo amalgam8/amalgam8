@@ -304,9 +304,10 @@ release.examples:
 release.cli: build.cli.linux build.cli.darwin build.cli.windows
 	@echo "--> packaging cli for release"
 	@mkdir -p $(RELEASEDIR)
-	@cp $(BINDIR)/$(CLI_APP_NAME)-linux $(RELEASEDIR)/
-	@cp $(BINDIR)/$(CLI_APP_NAME)-darwin $(RELEASEDIR)/
-	@cp $(BINDIR)/$(CLI_APP_NAME)-windows.exe $(RELEASEDIR)/
+	@tar --transform='s|$(CLI_APP_NAME)-linux|$(CLI_APP_NAME)|' -C $(BINDIR) -czf $(RELEASEDIR)/$(CLI_APP_NAME)-linux.tar.gz $(CLI_APP_NAME)-linux
+	@tar --transform='s|$(CLI_APP_NAME)-darwin|$(CLI_APP_NAME)|' -C $(BINDIR) -czf $(RELEASEDIR)/$(CLI_APP_NAME)-darwin.tar.gz $(CLI_APP_NAME)-darwin
+	@cp $(BINDIR)/$(CLI_APP_NAME)-windows.exe $(RELEASEDIR)/$(CLI_APP_NAME).exe
+	@pushd $(RELEASEDIR) && zip -9 $(CLI_APP_NAME)-windows.zip $(CLI_APP_NAME).exe && rm $(CLI_APP_NAME).exe && popd
 
 
 #---------------

@@ -19,7 +19,7 @@ import (
 )
 
 type appVersion struct {
-	VersionDelta int64  `json:"versions__delta,omitempty"`
+	VersionDelta int64  `json:"versions__delta,omitempty,string"`
 	Hashcode     string `json:"apps__hashcode,omitempty"`
 }
 

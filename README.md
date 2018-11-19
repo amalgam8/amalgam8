@@ -1,3 +1,7 @@
+# Amalgam8 has Relocated!
+
+After deciding to collaborate with additional companies on a more verbose proxy solution, we decided to start with a new project and repo since incorporating the additional features would have meant a significant overhaul of the existing code.  Please check out all the new features available at [istio.io](https://istio.io)
+
 # Amalgam8 - Microservice Routing Fabric
 
 [![GoReportCard Widget]][GoReportCard] [![Travis Widget]][Travis]

@@ -19,10 +19,10 @@ After deciding to collaborate with additional companies on a more verbose proxy 
 src="http://img.youtube.com/vi/gvjhrxwX7S8/0.jpg" alt="Introduction to
 Amalgam8 Microservice Routing Fabric" width="240" height="180" border="10"/></a>
 
-1. [Try the demo applications](https://amalgam8.io/docs/demo/) with a
+1. [Try the demo applications](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/1-demo) with a
    container runtime of your choice.
 
-1. [Integrate the sidecar](https://www.amalgam8.io/docs/sidecar/)
+1. [Integrate the sidecar](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/3-sidecar)
    into your existing application to start using Amalgam8.
    
 ---
@@ -82,12 +82,12 @@ resilience testing, etc.
 ## Amalgam8 - Components
 
 * The Amalgam8 Control Plane consists of two multi-tenant components:
-    * [Service Registry](https://www.amalgam8.io/docs/control-plane-registry.html)
-    * [Route Controller](https://www.amalgam8.io/docs/control-plane-controller.html)
+    * [Service Registry](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/2-controlplane/2-registry)
+    * [Route Controller](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/2-controlplane/1-controller)
 
     The registry and the controller store their state in a Redis backend.
 
-* In the data plane, the [Amalgam8 sidecar](https://amalgam8.io/docs/sidecar/) runs alongside each
+* In the data plane, the [Amalgam8 sidecar](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/3-sidecar) runs alongside each
   microservice instance. The sidecar is an
   [Envoy](https://lyft.github.io/envoy/) reverse proxy. In addition to proxying
   requests to other microservices, the sidecar is responsible for service
@@ -102,20 +102,14 @@ resilience testing, etc.
 
 ## Documentation
 
-Detailed documentation on Amalgam8 can be found at [https://amalgam8.io/docs](https://amalgam8.io/docs). 
+Detailed documentation on Amalgam8 can be found at [https://amalgam8.io/docs](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs). 
 
 ## Demos
 
 To get started with Amalgam8, we suggest exploring some of the [demo
-applications](https://amalgam8.io/docs/demo). The walkthroughs 
+applications](https://github.com/amalgam8/amalgam8.github.io/tree/master/_docs/1-demo). The walkthroughs 
 demonstrate some of Amalgam8's key features. Detailed instructions are
 available for different container runtimes and cloud platforms.
-
-## Getting Help
-
-If you have any questions or feedback, you can reach us via our public
-Slack channel (#amalgam8). To join this channel, please use the following
-self invite URL: https://amalgam8-slack-invite.mybluemix.net
 
 ---
 
